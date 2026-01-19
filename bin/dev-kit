@@ -1,0 +1,146 @@
+#!/bin/bash
+set -euo pipefail
+
+usage() {
+  cat <<'USAGE'
+Usage: dev-kit <command>
+
+Commands:
+  help        Show this help
+  version     Print version
+  paths       Show key local paths
+  codex       Show Codex rules/config locations
+  install     Install dev-kit to ~/.local/bin
+  uninstall   Remove dev-kit from ~/.local/bin
+  enable      Append source line to a shell profile (bash/zsh)
+  init        Session bootstrap (quiet after first run)
+
+Notes:
+  This CLI is intentionally minimal. New commands will be added as we go.
+USAGE
+}
+
+resolve_self() {
+  if command -v python3 >/dev/null 2>&1; then
+    python3 - <<'PY' "$0"
+import os,sys
+print(os.path.realpath(sys.argv[1]))
+PY
+    return
+  fi
+  echo "$0"
+}
+
+SCRIPT_PATH="$(resolve_self)"
+REPO_DIR="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)"
+ENGINE_DIR="$HOME/.engineering/dev-kit"
+ENV_FILE="$ENGINE_DIR/env.sh"
+CONFIG_FILE="$ENGINE_DIR/config.env"
+
+print_enable_line() {
+  echo "source \"$ENV_FILE\""
+}
+
+config_bool() {
+  local key="$1"
+  local default="${2:-false}"
+  local val=""
+  if [ -f "$CONFIG_FILE" ]; then
+    val="$(awk -F= -v k="$key" '
+      $1 ~ "^[[:space:]]*"k"[[:space:]]*$" {
+        gsub(/[[:space:]]/,"",$2);
+        print tolower($2);
+        exit
+      }
+    ' "$CONFIG_FILE")"
+  fi
+  case "$val" in
+    true|false) echo "$val" ;;
+    *) echo "$default" ;;
+  esac
+}
+
+append_line() {
+  local profile="$1"
+  local line
+  line="$(print_enable_line)"
+  if [ -f "$profile" ] && grep -Fqx "$line" "$profile"; then
+    echo "Already enabled in: $profile"
+    return 0
+  fi
+  if [ -t 0 ]; then
+    printf "Append to %s? [y/N] " "$profile"
+    read -r answer || true
+    case "$answer" in
+      y|Y|yes|YES)
+        printf "\n%s\n" "$line" >> "$profile"
+        echo "Enabled in: $profile"
+        ;;
+      *)
+        echo "Not modified. Add this line manually if desired:"
+        print_enable_line
+        ;;
+    esac
+  else
+    echo "Non-interactive. Add this line to your profile:"
+    print_enable_line
+  fi
+}
+
+cmd="${1:-help}"
+case "$cmd" in
+  help|-h|--help)
+    usage
+    ;;
+  version)
+    echo "dev-kit 0.1.0"
+    ;;
+  paths)
+    echo "repo: $HOME/git/udx/dev-kit"
+    echo "engineering: $HOME/.engineering"
+    echo "cde: $HOME/git/udx/cde"
+    echo "config: $CONFIG_FILE"
+    ;;
+  codex)
+    echo "rules: $HOME/.codex/rules/default.rules"
+    echo "config: $HOME/.codex/config.env"
+    ;;
+  install)
+    "$REPO_DIR/scripts/install.sh"
+    ;;
+  uninstall)
+    "$REPO_DIR/scripts/uninstall.sh" "${2:-}"
+    ;;
+  enable)
+    profile="$HOME/.bash_profile"
+    case "${2:-}" in
+      --shell=bash) profile="$HOME/.bash_profile" ;;
+      --shell=zsh) profile="$HOME/.zshrc" ;;
+      --file=*) profile="${2#--file=}" ;;
+    esac
+    append_line "$profile"
+    ;;
+  init)
+    if [ ! -d "$ENGINE_DIR" ]; then
+      mkdir -p "$ENGINE_DIR"
+    fi
+    quiet="$(config_bool quiet false)"
+    codex_suggest="$(config_bool codex_suggest true)"
+    if [ ! -f "$ENGINE_DIR/.init_done" ]; then
+      if [ "$quiet" != "true" ]; then
+        echo "dev-kit: initialized (run 'dev-kit help' for commands)"
+      fi
+      touch "$ENGINE_DIR/.init_done"
+    fi
+    if [ "$codex_suggest" = "true" ] && [ "$quiet" != "true" ]; then
+      if command -v codex >/dev/null 2>&1; then
+        echo "dev-kit: Codex detected. Consider enabling Codex support and rules integration."
+      fi
+    fi
+    ;;
+  *)
+    echo "Unknown command: $cmd" >&2
+    usage
+    exit 1
+    ;;
+esac
