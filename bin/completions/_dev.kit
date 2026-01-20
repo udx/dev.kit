@@ -1,0 +1,57 @@
+#compdef dev.kit
+
+_dev_kit() {
+  local -a commands
+  commands=(
+    'help:Show help'
+    'version:Print version'
+    'paths:Show key paths'
+    'codex:Codex helpers'
+    'install:Install dev.kit'
+    'update:Update dev.kit'
+    'uninstall:Uninstall dev.kit'
+    'enable:Enable shell integration'
+    'init:Session bootstrap'
+    'test:Run module tests'
+    'session:Session helpers'
+    'doctor:Health checks'
+    'capture:Capture logs'
+    'config:Config helpers'
+  )
+
+  if (( CURRENT == 2 )); then
+    _describe 'command' commands
+    return
+  fi
+
+  case "$words[2]" in
+    codex)
+      _arguments '--get-rules' '--plan-rules' '--apply-rules'
+      ;;
+    install)
+      _arguments '--fix'
+      ;;
+    uninstall)
+      _arguments '--purge'
+      ;;
+    enable)
+      _arguments '--shell=bash' '--shell=zsh' '--file=' '--force'
+      ;;
+    test)
+      _arguments '--module' '--module=' '--all' '--mock' '--run'
+      ;;
+    session)
+      _arguments '1:subcommand:(start status summary save)' '--force'
+      ;;
+    capture)
+      _arguments '1:subcommand:(start stop status show shell clear auto-clean)' \
+        '--input' '--no-shell' '--force' '2:toggle:(on off)'
+      ;;
+    config)
+      _arguments '1:subcommand:(show reset set)' '--force' \
+        '2:key:(quiet codex_suggest capture.enabled capture.full capture.auto_clean capture.auto_clean_iteration capture.ttl_days_global capture.ttl_days_repo)'
+      ;;
+  esac
+}
+
+_dev_kit "$@"
