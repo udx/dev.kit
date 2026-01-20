@@ -12,3 +12,4 @@ Safety
 
 Prompting inspiration
 - Follow Codex prompting guidance for tool use and concise responses
+- When asked for a PR, confirm target branch (main/master) and check remote diff (origin/main..origin/development) before drafting
