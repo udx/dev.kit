@@ -1,0 +1,94 @@
+{
+  "id": "session",
+  "version": "0.1",
+  "title": "Work Session",
+  "components": {
+    "docs": [
+      {
+        "id": "dev.tenets",
+        "path": "docs/principles/development-tenets.md",
+        "tags": ["workflow", "quality", "tenets"]
+      }
+    ],
+    "prompts": [
+      {
+        "id": "session.start",
+        "text": "start dev.kit session",
+        "workflow_id": "session.start"
+      },
+      {
+        "id": "session.summary",
+        "text": "generate end of day summary",
+        "workflow_id": "session.summary"
+      },
+      {
+        "id": "session.save",
+        "text": "save session summary",
+        "workflow_id": "session.save"
+      }
+    ],
+    "workflows": [
+      {
+        "id": "session.start",
+        "title": "Start a work session",
+        "steps": [
+          {
+            "id": "session.start",
+            "command": "dev.kit session start",
+            "note": "Creates a local session file.",
+            "runnable": false
+          }
+        ],
+        "response": {
+          "instructions": [
+            "Start a session before work to capture context for summaries."
+          ],
+          "normalized": "Use dev.kit session start to begin tracking a work session."
+        }
+      },
+      {
+        "id": "session.summary",
+        "title": "Preview session summary",
+        "steps": [
+          {
+            "id": "session.summary",
+            "command": "dev.kit session summary",
+            "note": "Preview the session summary template with current context.",
+            "runnable": false
+          }
+        ],
+        "response": {
+          "instructions": [
+            "Preview the summary before saving."
+          ],
+          "normalized": "Use dev.kit session summary to preview the end-of-day summary."
+        }
+      },
+      {
+        "id": "session.save",
+        "title": "Save session summary",
+        "edge_cases": [
+          "If no session is active, start one before saving.",
+          "If a summary file exists, a numeric suffix is added."
+        ],
+        "steps": [
+          {
+            "id": "session.save",
+            "command": "dev.kit session save",
+            "note": "Preview and save summary to docs/experience/.",
+            "runnable": false,
+            "protected": true,
+            "preview_command": "dev.kit session summary"
+          }
+        ],
+        "response": {
+          "instructions": [
+            "Preview the summary, then confirm save.",
+            "Keep summaries short and actionable."
+          ],
+          "normalized": "Use dev.kit session save to preview and store a daily summary under docs/experience/."
+        }
+      }
+    ]
+  }
+}

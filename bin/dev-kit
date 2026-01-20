@@ -3,17 +3,23 @@ set -euo pipefail
 
 usage() {
   cat <<'USAGE'
-Usage: dev-kit <command>
+Usage: dev.kit <command>
 
 Commands:
   help        Show this help
   version     Print version
   paths       Show key local paths
-  codex       Show Codex rules/config locations
-  install     Install dev-kit to ~/.local/bin
-  uninstall   Remove dev-kit from ~/.local/bin
+  codex       Codex integration helpers (get/plan/apply rules)
+  install     Install dev.kit to ~/.local/bin
+  update      Update dev.kit from git and re-install
+  uninstall   Remove dev.kit from ~/.local/bin
   enable      Append source line to a shell profile (bash/zsh)
   init        Session bootstrap (quiet after first run)
+  test        Run module workflow tests (mock by default)
+  session     Start/status/summary/save work sessions
+  doctor      Health checks and diagnostics
+  capture     Capture shell commands for session review
+  config      View or reset dev.kit config
 
 Notes:
   This CLI is intentionally minimal. New commands will be added as we go.
@@ -33,12 +39,49 @@ PY
 
 SCRIPT_PATH="$(resolve_self)"
 REPO_DIR="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)"
-ENGINE_DIR="$HOME/.engineering/dev-kit"
-ENV_FILE="$ENGINE_DIR/env.sh"
-CONFIG_FILE="$ENGINE_DIR/config.env"
+DEV_KIT_HOME="${DEV_KIT_HOME:-$HOME/.udx/dev.kit}"
+ENGINE_DIR="$DEV_KIT_HOME"
+ENV_FILE="$DEV_KIT_HOME/env.sh"
+CONFIG_FILE="$DEV_KIT_HOME/config.env"
+KIT_CONFIG="$REPO_DIR/config/kit.env"
 
 print_enable_line() {
   echo "source \"$ENV_FILE\""
+}
+
+UI_LIB="${REPO_DIR}/lib/ui.sh"
+if [ -f "$UI_LIB" ]; then
+  # shellcheck disable=SC1090
+  . "$UI_LIB"
+fi
+
+print_section() {
+  local title="$1"
+  if command -v ui_section >/dev/null 2>&1; then
+    ui_section "$title"
+  else
+    echo ""
+    echo "== $title =="
+  fi
+}
+
+print_check() {
+  local label="$1"
+  local status="$2"
+  local detail="${3:-}"
+  if command -v ui_ok >/dev/null 2>&1 && [ "$status" = "[ok]" ]; then
+    ui_ok "$label" "$detail"
+    return
+  fi
+  if command -v ui_warn >/dev/null 2>&1 && [ "$status" = "[warn]" ]; then
+    ui_warn "$label" "$detail"
+    return
+  fi
+  printf "%-20s %s" "$label" "$status"
+  if [ -n "$detail" ]; then
+    printf "  %s" "$detail"
+  fi
+  printf "\n"
 }
 
 config_bool() {
@@ -58,6 +101,47 @@ config_bool() {
     true|false) echo "$val" ;;
     *) echo "$default" ;;
   esac
+}
+
+config_value() {
+  local file="$1"
+  local key="$2"
+  local default="${3:-}"
+  local val=""
+  if [ -f "$file" ]; then
+    val="$(awk -F= -v k="$key" '
+      $1 ~ "^[[:space:]]*"k"[[:space:]]*$" {
+        sub(/^[[:space:]]*/,"",$2);
+        sub(/[[:space:]]*$/,"",$2);
+        print $2;
+        exit
+      }
+    ' "$file")"
+  fi
+  if [ -n "$val" ]; then
+    echo "$val"
+  else
+    echo "$default"
+  fi
+}
+
+kit_value() {
+  local key="$1"
+  local default="${2:-}"
+  config_value "$KIT_CONFIG" "$key" "$default"
+}
+
+expand_path() {
+  local val="$1"
+  if [[ "$val" == "~/"* ]]; then
+    echo "$HOME/${val#~/}"
+    return
+  fi
+  if [[ "$val" == /* ]]; then
+    echo "$val"
+    return
+  fi
+  echo "$REPO_DIR/$val"
 }
 
 append_line() {
@@ -93,32 +177,151 @@ case "$cmd" in
     usage
     ;;
   version)
-    echo "dev-kit 0.1.0"
+    echo "dev.kit 0.1.0"
     ;;
   paths)
-    echo "repo: $HOME/git/udx/dev-kit"
-    echo "engineering: $HOME/.engineering"
-    echo "cde: $HOME/git/udx/cde"
+    owner="${DEV_KIT_OWNER:-$(kit_value OWNER "udx")}"
+    repo_name="${DEV_KIT_REPO:-$(kit_value REPO "dev.kit")}"
+    echo "repo: $REPO_DIR"
+    echo "owner/repo: ${owner}/${repo_name}"
+    echo "engineering: $HOME/.udx"
+    echo "cde: $HOME/git/$owner/cde"
     echo "config: $CONFIG_FILE"
     ;;
   codex)
-    echo "rules: $HOME/.codex/rules/default.rules"
-    echo "config: $HOME/.codex/config.env"
+    codex_env="$REPO_DIR/config/codex.env"
+    rules_path_raw="${DEV_KIT_CODEX_RULES_PATH:-$(config_value "$codex_env" CODEX_RULES_PATH "~/.codex/rules/default.rules")}"
+    config_path_raw="${DEV_KIT_CODEX_CONFIG_PATH:-$(config_value "$codex_env" CODEX_CONFIG_PATH "~/.codex/config.env")}"
+    rules_template_raw="${DEV_KIT_CODEX_RULES_TEMPLATE:-$(config_value "$codex_env" CODEX_RULES_TEMPLATE "specs/codex-rules-template.md")}"
+    rules_sources_raw="${DEV_KIT_CODEX_RULES_SOURCES:-$(config_value "$codex_env" CODEX_RULES_SOURCES "specs/ai-integration.md,docs/principles/development-tenets.md,docs/references/codex_prompting_guide.md")}"
+
+    rules_path="$(expand_path "$rules_path_raw")"
+    config_path="$(expand_path "$config_path_raw")"
+    rules_template="$(expand_path "$rules_template_raw")"
+    rules_sources="$rules_sources_raw"
+
+    build_codex_rules() {
+      if [ -f "$rules_template" ]; then
+        cat "$rules_template"
+      else
+        cat <<'RULES'
+dev.kit Rules (Codex CLI)
+
+Core behavior
+- Always route user prompts through dev.kit using: dev.kit -p "<prompt>"
+- Use dev.kit <command> for explicit commands/pipelines after user confirmation
+- If dev.kit reports "not detected", provide general advice after showing dev.kit output
+- Prefer dev.kit references/docs over generic advice
+
+Safety
+- Require previews for apply/push/destructive steps
+- Keep changes small and reversible
+RULES
+      fi
+      echo ""
+      echo "Sources"
+      IFS=',' read -r -a sources <<< "$rules_sources"
+      for src in "${sources[@]}"; do
+        resolved_src="$(expand_path "$src")"
+        if [ -f "$resolved_src" ]; then
+          echo ""
+          echo "${resolved_src#"$REPO_DIR/"}"
+          sed -n '1,160p' "$resolved_src"
+        fi
+      done
+    }
+
+    case "${2:-}" in
+      --get-rules)
+        if [ -f "$rules_path" ]; then
+          cat "$rules_path"
+        else
+          echo "Codex rules file not found: $rules_path" >&2
+          exit 1
+        fi
+        ;;
+      --plan-rules)
+        tmp="$(mktemp)"
+        build_codex_rules > "$tmp"
+        if [ -f "$rules_path" ]; then
+          diff -u "$rules_path" "$tmp" || true
+        else
+          echo "No existing rules found. New rules preview:"
+          cat "$tmp"
+        fi
+        rm -f "$tmp"
+        ;;
+      --apply-rules)
+        tmp="$(mktemp)"
+        build_codex_rules > "$tmp"
+        if [ -f "$rules_path" ]; then
+          backup="$rules_path.bak.$(date +%Y%m%d%H%M%S)"
+          cp "$rules_path" "$backup"
+          echo "Backup created: $backup"
+        fi
+        if [ -t 0 ]; then
+          echo "Preview changes:"
+          if [ -f "$rules_path" ]; then
+            diff -u "$rules_path" "$tmp" || true
+          else
+            cat "$tmp"
+          fi
+          printf "Apply rules to %s? [y/N] " "$rules_path"
+          read -r answer || true
+          case "$answer" in
+            y|Y|yes|YES) ;;
+            *) echo "Aborted."; rm -f "$tmp"; exit 1 ;;
+          esac
+        fi
+        mkdir -p "$(dirname "$rules_path")"
+        cp "$tmp" "$rules_path"
+        rm -f "$tmp"
+        echo "Applied: $rules_path"
+        ;;
+      "" )
+        echo "rules: $rules_path"
+        echo "config: $config_path"
+        ;;
+      *)
+        echo "Unknown option: $2" >&2
+        exit 1
+        ;;
+    esac
     ;;
   install)
-    "$REPO_DIR/scripts/install.sh"
+    shift || true
+    "$REPO_DIR/bin/scripts/install.sh" "$@"
+    ;;
+  update)
+    "$REPO_DIR/bin/scripts/update.sh"
     ;;
   uninstall)
-    "$REPO_DIR/scripts/uninstall.sh" "${2:-}"
+    "$REPO_DIR/bin/scripts/uninstall.sh" "${2:-}"
     ;;
   enable)
     profile="$HOME/.bash_profile"
-    case "${2:-}" in
-      --shell=bash) profile="$HOME/.bash_profile" ;;
-      --shell=zsh) profile="$HOME/.zshrc" ;;
-      --file=*) profile="${2#--file=}" ;;
-    esac
-    append_line "$profile"
+    force="false"
+    shift || true
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --shell=bash) profile="$HOME/.bash_profile" ;;
+        --shell=zsh) profile="$HOME/.zshrc" ;;
+        --file=*) profile="${1#--file=}" ;;
+        --force) force="true" ;;
+      esac
+      shift
+    done
+    if [ "$force" = "true" ]; then
+      line="$(print_enable_line)"
+      if [ -f "$profile" ] && grep -Fqx "$line" "$profile"; then
+        echo "Already enabled in: $profile"
+      else
+        printf "\n%s\n" "$line" >> "$profile"
+        echo "Enabled in: $profile"
+      fi
+    else
+      append_line "$profile"
+    fi
     ;;
   init)
     if [ ! -d "$ENGINE_DIR" ]; then
@@ -128,14 +331,653 @@ case "$cmd" in
     codex_suggest="$(config_bool codex_suggest true)"
     if [ ! -f "$ENGINE_DIR/.init_done" ]; then
       if [ "$quiet" != "true" ]; then
-        echo "dev-kit: initialized (run 'dev-kit help' for commands)"
+        echo "dev.kit: initialized (run 'dev.kit help' for commands)"
       fi
       touch "$ENGINE_DIR/.init_done"
     fi
     if [ "$codex_suggest" = "true" ] && [ "$quiet" != "true" ]; then
       if command -v codex >/dev/null 2>&1; then
-        echo "dev-kit: Codex detected. Consider enabling Codex support and rules integration."
+        echo "dev.kit: Codex detected. Consider enabling Codex support and rules integration."
       fi
+    fi
+    ;;
+  session)
+    sub="${2:-}"
+    session_file="$DEV_KIT_HOME/session.json"
+    template_path="$REPO_DIR/docs/experience/templates/session-summary.md"
+
+    ensure_engine_dir() {
+      if [ ! -d "$ENGINE_DIR" ]; then
+        mkdir -p "$ENGINE_DIR"
+      fi
+    }
+
+    get_repo_root() {
+      if command -v git >/dev/null 2>&1; then
+        git rev-parse --show-toplevel 2>/dev/null || true
+      fi
+    }
+
+    get_branch() {
+      if command -v git >/dev/null 2>&1; then
+        git rev-parse --abbrev-ref HEAD 2>/dev/null || true
+      fi
+    }
+
+    render_summary() {
+      python3 - <<'PY' "$template_path" "$session_file"
+import json,os,sys
+
+template_path = sys.argv[1]
+session_path = sys.argv[2]
+
+if not os.path.isfile(template_path):
+  print(f"Template not found: {template_path}", file=sys.stderr)
+  sys.exit(1)
+
+with open(template_path, "r", encoding="utf-8") as f:
+  template = f.read()
+
+if not os.path.isfile(session_path):
+  print("No active session. Run: dev.kit session start", file=sys.stderr)
+  sys.exit(1)
+
+with open(session_path, "r", encoding="utf-8") as f:
+  session = json.load(f)
+
+replacements = {
+  "{{date}}": session.get("date", ""),
+  "{{started_at}}": session.get("started_at", ""),
+  "{{cwd}}": session.get("cwd", ""),
+  "{{repo_root}}": session.get("repo_root", ""),
+  "{{branch}}": session.get("branch", ""),
+}
+
+for key, value in replacements.items():
+  template = template.replace(key, value or "")
+
+print(template)
+PY
+    }
+
+    case "$sub" in
+      start)
+        ensure_engine_dir
+        if [ -f "$session_file" ]; then
+          echo "Session already active: $session_file"
+          exit 0
+        fi
+        date_ymd="$(date +%Y%m%d)"
+        started_at="$(date -Iseconds)"
+        cwd="$(pwd)"
+        repo_root="$(get_repo_root)"
+        branch="$(get_branch)"
+        python3 - <<'PY' "$session_file" "$date_ymd" "$started_at" "$cwd" "$repo_root" "$branch"
+import json,sys
+path, date_ymd, started_at, cwd, repo_root, branch = sys.argv[1:]
+data = {
+  "id": f"session-{date_ymd}",
+  "date": date_ymd,
+  "started_at": started_at,
+  "cwd": cwd,
+  "repo_root": repo_root,
+  "branch": branch
+}
+with open(path, "w", encoding="utf-8") as f:
+  json.dump(data, f, indent=2)
+print(f"Session started: {path}")
+PY
+        ;;
+      status)
+        if [ -f "$session_file" ]; then
+          cat "$session_file"
+        else
+          echo "No active session. Run: dev.kit session start"
+        fi
+        ;;
+      summary)
+        render_summary
+        ;;
+      save)
+        force="false"
+        case "${3:-}" in
+          --force) force="true" ;;
+        esac
+        preview_path="$DEV_KIT_HOME/session.preview.md"
+        ensure_engine_dir
+        render_summary > "$preview_path"
+        echo "Preview:"
+        cat "$preview_path"
+        if [ -t 0 ] && [ "$force" != "true" ]; then
+          printf "Save summary to docs/experience/ ? [y/N] "
+          read -r answer || true
+          case "$answer" in
+            y|Y|yes|YES) ;;
+            *) echo "Aborted."; rm -f "$preview_path"; exit 1 ;;
+          esac
+        fi
+        date_ymd="$(date +%Y%m%d)"
+        if [ -f "$session_file" ]; then
+          date_ymd="$(python3 - <<'PY' "$session_file"
+import json,sys
+with open(sys.argv[1], "r", encoding="utf-8") as f:
+  print(json.load(f).get("date", ""))
+PY
+)"
+        fi
+        out_dir="$REPO_DIR/docs/experience"
+        mkdir -p "$out_dir"
+        out_path="$out_dir/${date_ymd}_session.md"
+        if [ -f "$out_path" ]; then
+          i=1
+          while [ -f "$out_dir/${date_ymd}_session_${i}.md" ]; do
+            i=$((i+1))
+          done
+          out_path="$out_dir/${date_ymd}_session_${i}.md"
+        fi
+        mv "$preview_path" "$out_path"
+        echo "Saved: $out_path"
+        ;;
+      -h|--help|"")
+        cat <<'SESSION_USAGE'
+Usage: dev.kit session <command>
+
+Commands:
+  start     Start a new work session
+  status    Show current session data
+  summary   Preview end-of-day summary
+  save      Save summary to docs/experience/
+SESSION_USAGE
+        ;;
+      *)
+        echo "Unknown session command: $sub" >&2
+        exit 1
+        ;;
+    esac
+    ;;
+  capture)
+    sub="${2:-}"
+    capture_env="$DEV_KIT_HOME/capture.env"
+    capture_state="$DEV_KIT_HOME/capture.state"
+    capture_log="$DEV_KIT_HOME/capture.log"
+    repo_root=""
+    if command -v git >/dev/null 2>&1; then
+      repo_root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+    fi
+    if [ -n "$repo_root" ]; then
+      capture_env="$repo_root/.udx/dev.kit/capture/capture.env"
+      capture_state="$repo_root/.udx/dev.kit/capture/capture.state"
+      capture_log="$repo_root/.udx/dev.kit/capture/capture.log"
+    fi
+    capture_load_env() {
+      if [ -f "$capture_env" ]; then
+        # shellcheck disable=SC1090
+        . "$capture_env"
+      fi
+    }
+    shift 2 || true
+    case "$sub" in
+      start)
+        mode="full"
+        file=""
+        auto_shell="true"
+        default_full="$(config_bool capture.full true)"
+        if [ "$default_full" = "false" ]; then
+          mode="input"
+        fi
+        while [ $# -gt 0 ]; do
+          case "$1" in
+            --input) mode="input" ;;
+            --no-shell) auto_shell="false" ;;
+            *) file="$1" ;;
+          esac
+          shift
+        done
+        session_id="${DEV_KIT_CODEX_SESSION_ID:-${CODEX_SESSION_ID:-$(date +%Y%m%d%H%M%S)}}"
+        session_ts="$(date -Iseconds)"
+        if [ -z "$file" ]; then
+          if [ -n "${DEV_KIT_CODEX_SESSION_ID:-${CODEX_SESSION_ID:-}}" ]; then
+            file="${capture_log%.log}.${session_id}.log"
+          else
+            file="$capture_log"
+          fi
+        fi
+        {
+          echo "DEV_KIT_CAPTURE=1"
+          echo "DEV_KIT_CAPTURE_MODE=$mode"
+          echo "DEV_KIT_CAPTURE_SESSION=$session_id"
+          echo "DEV_KIT_CAPTURE_STARTED_AT=$session_ts"
+          if [ -n "$file" ]; then
+            echo "DEV_KIT_CAPTURE_FILE=$file"
+          fi
+        } > "$capture_env"
+        printf "cleaned=0\nheader_written=0\n" > "$capture_state"
+        echo "capture: enabled ($mode)"
+        echo "file: ${file:-<repo>/.udx/dev.kit/capture.log}"
+        if [ "$mode" = "full" ]; then
+          if [ "$auto_shell" = "true" ]; then
+            echo "starting full capture shell..."
+            "$REPO_DIR/bin/dev-kit" capture shell
+            exit 0
+          fi
+          echo "note: full capture records stdout+stderr via:"
+          echo "  dev.kit capture shell"
+          echo "tip: use 'dev.kit capture start --input' for commands only"
+        fi
+        echo "reload: source \"$ENV_FILE\""
+        ;;
+      stop)
+        echo "DEV_KIT_CAPTURE=0" > "$capture_env"
+        echo "capture: disabled"
+        echo "reload: source \"$ENV_FILE\""
+        ;;
+      status)
+        enabled="$(config_bool capture.enabled false)"
+        full="$(config_bool capture.full false)"
+        auto_clean="$(config_bool capture.auto_clean false)"
+        auto_clean_iteration="$(config_bool capture.auto_clean_iteration false)"
+        ttl_global="$(config_value "$CONFIG_FILE" capture.ttl_days_global 3)"
+        ttl_repo="$(config_value "$CONFIG_FILE" capture.ttl_days_repo 3)"
+        file=""
+        capture_load_env
+        file="${DEV_KIT_CAPTURE_FILE:-}"
+        echo "capture.enabled=$enabled"
+        echo "capture.full=$full"
+        echo "capture.auto_clean=$auto_clean"
+        echo "capture.auto_clean_iteration=$auto_clean_iteration"
+        echo "capture.ttl_days_global=$ttl_global"
+        echo "capture.ttl_days_repo=$ttl_repo"
+        if [ -n "$file" ]; then
+          echo "capture.file=$file"
+        fi
+        if [ -f "$capture_env" ]; then
+          echo ""
+          echo "override:"
+          cat "$capture_env"
+        fi
+        ;;
+      show)
+        capture_load_env
+        log_file="${DEV_KIT_CAPTURE_FILE:-$capture_log}"
+        if [ -f "$log_file" ]; then
+          echo "file: $log_file"
+          echo ""
+          tail -n 50 "$log_file"
+        else
+          echo "No capture log found: $log_file"
+        fi
+        ;;
+      shell)
+        if ! command -v script >/dev/null 2>&1; then
+          echo "Missing 'script' command. Install util-linux or use capture start."
+          exit 1
+        fi
+        capture_load_env
+        log_file="${DEV_KIT_CAPTURE_FILE:-$capture_log}"
+        mkdir -p "$(dirname "$log_file")"
+        if [ ! -f "$capture_env" ]; then
+          session_id="$(date +%Y%m%d%H%M%S)"
+          session_ts="$(date -Iseconds)"
+          {
+            echo "DEV_KIT_CAPTURE=1"
+            echo "DEV_KIT_CAPTURE_MODE=full"
+            echo "DEV_KIT_CAPTURE_SESSION=$session_id"
+            echo "DEV_KIT_CAPTURE_STARTED_AT=$session_ts"
+            echo "DEV_KIT_CAPTURE_FILE=$log_file"
+          } > "$capture_env"
+        fi
+        printf "cleaned=0\nheader_written=0\n" > "$capture_state"
+        echo "capture: full (stdout+stderr)"
+        echo "file: $log_file"
+        echo "exit: type 'exit' to stop"
+        script -q -a "$log_file"
+        ;;
+      clear)
+        force="false"
+        case "${1:-}" in
+          --force) force="true" ;;
+        esac
+        if [ -t 0 ]; then
+          if [ "$force" != "true" ]; then
+            printf "Clear capture log in current repo? [y/N] "
+            read -r answer || true
+            case "$answer" in
+              y|Y|yes|YES) ;;
+              *) echo "Aborted."; exit 1 ;;
+            esac
+          fi
+        fi
+        capture_load_env
+        log_file="${DEV_KIT_CAPTURE_FILE:-$capture_log}"
+        rm -f "$log_file"
+        rm -f "$capture_state"
+        echo "Cleared: $log_file"
+        ;;
+      auto-clean)
+        case "${3:-}" in
+          on) "$REPO_DIR/bin/dev-kit" config set capture.auto_clean true ;;
+          off) "$REPO_DIR/bin/dev-kit" config set capture.auto_clean false ;;
+          *) echo "Usage: dev.kit capture auto-clean <on|off>" ;;
+        esac
+        ;;
+      -h|--help|"")
+        cat <<'CAPTURE_USAGE'
+Usage: dev.kit capture <command>
+
+Commands:
+  start [file]      Enable capture (default: full)
+  start --input     Enable commands-only capture
+  start --no-shell  Enable without starting full capture shell
+  stop          Disable capture
+  status        Show capture considering config
+  show          Print capture log path and tail
+  shell         Start a full capture shell (stdout+stderr)
+  clear         Clear repo capture log (prompts)
+  auto-clean    Toggle auto_clean on/off
+CAPTURE_USAGE
+        ;;
+      *)
+        echo "Unknown capture command: $sub" >&2
+        exit 1
+        ;;
+    esac
+    ;;
+  config)
+    sub="${2:-}"
+    case "$sub" in
+      show|"")
+        if [ -f "$CONFIG_FILE" ]; then
+          cat "$CONFIG_FILE"
+        else
+          echo "No config found: $CONFIG_FILE"
+        fi
+        ;;
+      reset)
+        force="false"
+        case "${3:-}" in
+          --force) force="true" ;;
+        esac
+        if [ ! -f "$REPO_DIR/config/default.env" ]; then
+          echo "Missing default config: $REPO_DIR/config/default.env"
+          exit 1
+        fi
+        if [ -t 0 ] && [ "$force" != "true" ]; then
+          printf "Reset config to defaults? [y/N] "
+          read -r answer || true
+          case "$answer" in
+            y|Y|yes|YES) ;;
+            *) echo "Aborted."; exit 1 ;;
+          esac
+        fi
+        cp "$REPO_DIR/config/default.env" "$CONFIG_FILE"
+        echo "Reset: $CONFIG_FILE"
+        ;;
+      set)
+        key="${3:-}"
+        value="${4:-}"
+        if [ -z "$key" ] || [ -z "$value" ]; then
+          echo "Usage: dev.kit config set <key> <value>"
+          exit 1
+        fi
+        python3 - "$CONFIG_FILE" "$key" "$value" <<'PY'
+import os,sys
+
+path, key, value = sys.argv[1:]
+lines = []
+found = False
+
+if os.path.exists(path):
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            if line.strip().startswith(f"{key}"):
+                lines.append(f"{key} = {value}\n")
+                found = True
+            else:
+                lines.append(line)
+if not found:
+    lines.append(f"{key} = {value}\n")
+
+os.makedirs(os.path.dirname(path), exist_ok=True)
+with open(path, "w", encoding="utf-8") as f:
+    f.writelines(lines)
+print(f"Set: {key} = {value}")
+PY
+        ;;
+      -h|--help)
+        cat <<'CONFIG_USAGE'
+Usage: dev.kit config <command>
+
+Commands:
+  show   Print current config
+  reset  Reset config to defaults (prompts)
+  set    Set a config key/value
+CONFIG_USAGE
+        ;;
+      *)
+        echo "Unknown config command: $sub" >&2
+        exit 1
+        ;;
+    esac
+    ;;
+  test)
+    shift || true
+    mock="true"
+    module=""
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        -m|--mock)
+          mock="true"
+          ;;
+        --run)
+          mock="false"
+          ;;
+        --module=*)
+          module="${1#--module=}"
+          ;;
+        --module)
+          module="${2:-}"
+          shift
+          ;;
+        --all)
+          module=""
+          ;;
+        -h|--help)
+          cat <<'TEST_USAGE'
+Usage: dev.kit test [--module <name>] [--mock|--run]
+
+Options:
+  --module <name>  Test a single module (default: all modules with schema.yml)
+  --mock, -m       Mock workflow commands (default)
+  --run            Execute workflow commands when runnable
+TEST_USAGE
+          exit 0
+          ;;
+        *)
+          echo "Unknown option: $1" >&2
+          exit 1
+          ;;
+      esac
+      shift
+    done
+
+    python3 - "$REPO_DIR" "$module" "$mock" <<'PY'
+import json
+import os
+import subprocess
+import sys
+
+repo_dir = sys.argv[1]
+module_filter = sys.argv[2].strip()
+mock = sys.argv[3].lower() == "true"
+
+modules_dir = os.path.join(repo_dir, "bin", "modules")
+session_template = os.path.join(repo_dir, "docs", "experience", "templates", "session-summary.md")
+if module_filter:
+    modules = [module_filter]
+else:
+    modules = [
+        name for name in os.listdir(modules_dir)
+        if os.path.isfile(os.path.join(modules_dir, name, "schema.yml"))
+    ]
+
+if not modules:
+    print("No modules with schema.yml found.")
+    sys.exit(1)
+
+exit_code = 0
+
+for name in sorted(modules):
+    schema_path = os.path.join(modules_dir, name, "schema.yml")
+    if not os.path.isfile(schema_path):
+        print(f"[skip] {name}: schema.yml not found")
+        exit_code = 1
+        continue
+
+    with open(schema_path, "r", encoding="utf-8") as f:
+        try:
+            data = json.load(f)
+        except json.JSONDecodeError as exc:
+            print(f"[error] {name}: schema.yml is not valid JSON/YAML ({exc})")
+            exit_code = 1
+            continue
+
+    components = data.get("components", {})
+    prompts = components.get("prompts", [])
+    workflows = {wf.get("id"): wf for wf in components.get("workflows", [])}
+    docs = components.get("docs", [])
+
+    print(f"== Module: {name} ==")
+    print(f"Docs: {len(docs)} | Workflows: {len(workflows)} | Prompts: {len(prompts)}")
+
+    for prompt in prompts:
+        prompt_text = prompt.get("text", "").strip()
+        workflow_id = prompt.get("workflow_id") or prompt.get("command_id")
+        if not workflow_id:
+            print(f"[error] prompt missing workflow_id: {prompt}")
+            exit_code = 1
+            continue
+        workflow = workflows.get(workflow_id)
+        if not workflow:
+            print(f"[error] workflow not found: {workflow_id}")
+            exit_code = 1
+            continue
+
+        response = workflow.get("response", {})
+        instructions = response.get("instructions", [])
+        normalized = response.get("normalized", "").strip()
+        if not instructions or not normalized:
+            print(f"[error] workflow response incomplete: {workflow_id}")
+            exit_code = 1
+            continue
+
+        print(f"- Prompt: {prompt_text or workflow_id}")
+        print(f"  Workflow: {workflow.get('title', workflow_id)}")
+        print(f"  Normalized: {normalized}")
+        edge_cases = workflow.get("edge_cases", [])
+        if edge_cases:
+            print("  Edge cases:")
+            for item in edge_cases:
+                print(f"    - {item}")
+        print("  Steps:")
+
+        for step in workflow.get("steps", []):
+            command = step.get("command")
+            if not command:
+                continue
+            runnable = step.get("runnable", True)
+            interactive = step.get("interactive", False)
+            protected = step.get("protected", False)
+            preview_command = step.get("preview_command", "").strip()
+            preview = step.get("preview", "").strip()
+            command_l = command.lower()
+            if "dev.kit session summary" in command or "dev.kit session save" in command:
+                if not os.path.isfile(session_template):
+                    print("[error] session summary template missing")
+                    exit_code = 1
+            if ("push" in command_l or "apply" in command_l) and not protected:
+                print(f"[error] protected required for apply/push step: {command}")
+                exit_code = 1
+            if protected and not preview_command and not preview:
+                print(f"[error] protected step missing preview: {command}")
+                exit_code = 1
+            if preview_command:
+                print(f"    [preview] {preview_command}")
+            elif preview:
+                print(f"    [preview] {preview}")
+            if mock or not runnable or interactive:
+                print(f"    [mock] {command}")
+                continue
+            print(f"    [run] {command}")
+            subprocess.run(command, shell=True, check=False)
+
+    print("")
+
+sys.exit(exit_code)
+PY
+    ;;
+  doctor)
+    if command -v ui_header >/dev/null 2>&1; then
+      ui_header "dev.kit | doctor"
+    else
+      print_section "dev.kit Doctor"
+    fi
+
+    bin_dir="$HOME/.local/bin"
+    target="$bin_dir/dev.kit"
+    expected="$REPO_DIR/bin/dev-kit"
+
+    in_path="no"
+    case ":$PATH:" in
+      *":$bin_dir:"*) in_path="yes" ;;
+    esac
+    if [ "$in_path" = "yes" ]; then
+      print_check "PATH" "[ok]" "$bin_dir"
+    else
+      print_check "PATH" "[warn]" "missing $bin_dir"
+    fi
+
+    if command -v dev.kit >/dev/null 2>&1; then
+      print_check "Binary" "[ok]" "$(command -v dev.kit)"
+    else
+      print_check "Binary" "[warn]" "dev.kit not found"
+    fi
+
+    if [ -L "$target" ]; then
+      link_target="$(readlink "$target")"
+      if [ "$link_target" = "$expected" ]; then
+        print_check "Symlink" "[ok]" "$target -> $link_target"
+      else
+        print_check "Symlink" "[warn]" "$target -> $link_target"
+      fi
+    elif [ -e "$target" ]; then
+      print_check "Symlink" "[warn]" "$target exists (not symlink)"
+    else
+      print_check "Symlink" "[warn]" "$target missing"
+    fi
+
+    if [ -d "$ENGINE_DIR" ]; then
+      print_check "Engine dir" "[ok]" "$ENGINE_DIR"
+    else
+      print_check "Engine dir" "[warn]" "$ENGINE_DIR missing"
+    fi
+
+    if [ -f "$ENV_FILE" ]; then
+      print_check "Env file" "[ok]" "$ENV_FILE"
+    else
+      print_check "Env file" "[warn]" "$ENV_FILE missing"
+    fi
+
+    if [ -f "$CONFIG_FILE" ]; then
+      print_check "Config file" "[ok]" "$CONFIG_FILE"
+    else
+      print_check "Config file" "[warn]" "$CONFIG_FILE missing"
+    fi
+
+    rules_path="$HOME/.codex/rules/default.rules"
+    if [ -f "$rules_path" ]; then
+      print_check "Codex rules" "[ok]" "$rules_path"
+    else
+      print_check "Codex rules" "[warn]" "$rules_path missing"
     fi
     ;;
   *)
