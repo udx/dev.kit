@@ -21,3 +21,7 @@ Docs
 
 Next Step
 - Add `dev.kit` autocomplete for supported commands.
+
+Ideas
+- Define AI/Human vocabulary mapping (shared properties and roles).
+- Improve CLI UI inspired by Codex CLI (sticky input at bottom).
