@@ -1,6 +1,6 @@
 # dev.kit
 
-Local engineering kit for bootstrapping and orchestrating developer workflows. Can be integrated with AI CLI (Codex|Claude|Gemini) for automated execution and a standardized knowledge base.
+Engineering kit for bootstrapping and orchestrating developer workflows. Can be integrated with AI CLI (Codex|Claude|Gemini) for automated execution and a standardized knowledge base.
 
 Why use it:
 - Consistent entrypoint for local workflows.
