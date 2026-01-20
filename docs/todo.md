@@ -4,6 +4,7 @@ High Priority
 - Add `contexts.json` registry wiring for repo/module contexts.
 - Add `dev.kit clean --repos` for safe cleanup using registry.
 - Add uninstall post-execute report with unresolved contexts.
+- Gate `dev.kit session` behind AI integration enabled (with notice when disabled).
 
 Capture System
 - Expose repo/global defaults in `dev.kit capture status`.

@@ -53,6 +53,14 @@ Loop used throughout:
 - Enable flow appends a single `source` line with confirmation.
 - Session init prints a small “dev.kit: active” notice unless quiet mode.
 
+## Recent Iteration (Summary)
+
+- Refactored layout: modules in `bin/modules`, scripts in `bin/scripts`, env in `bin/env`.
+- Added shell autocomplete for dev.kit (bash/zsh).
+- Implemented capture with repo-scoped context under `.udx/dev.kit/<module>/`.
+- Consolidated docs, guides, and experience logs under `docs/`.
+- Added context registry helper for future cleanup automation.
+
 ## Next Extensions (Planned)
 
 - Module router: `dev.kit <module> ...` with `lib/<module>.sh` handlers.

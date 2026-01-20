@@ -7,17 +7,22 @@ Context
 - Branch: {{branch}}
 
 Goals
-- TODO
+- (what did we plan to achieve today?)
 
 Progress
-- TODO
+- (what shipped or changed?)
 
 Decisions
-- TODO
+- (what choices did we make and why?)
+
+Risks
+- (what might break or needs follow-up?)
 
 Blockers
-- TODO
+- (anything stuck?)
 
 Next Steps
-- TODO
+- (what is the first action tomorrow?)
 
+Notes / Free-form
+- (anything else worth capturing?)
