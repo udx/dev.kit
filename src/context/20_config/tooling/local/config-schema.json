@@ -1,0 +1,17 @@
+{
+  "title": "dev.kit local config",
+  "fields": [
+    {
+      "key": "quiet",
+      "default": "false",
+      "options": ["true", "false"],
+      "description": "Reduce non-essential output."
+    },
+    {
+      "key": "codex_suggest",
+      "default": "true",
+      "options": ["true", "false"],
+      "description": "Suggest Codex integration when detected."
+    }
+  ]
+}

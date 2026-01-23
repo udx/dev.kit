@@ -1,0 +1,118 @@
+
+== paths ==
++ /Users/jonyfq/git/udx/dev.kit/bin/dev-kit paths
+repo: /Users/jonyfq/git/udx/dev.kit
+owner/repo: udx/dev.kit
+engineering: /Users/jonyfq/.udx
+cde: /Users/jonyfq/git/udx/cde
+config: /Users/jonyfq/.udx/dev.kit/config.env
+
+== doctor (pre) ==
++ /Users/jonyfq/git/udx/dev.kit/bin/dev-kit doctor
+
+[32m› UDX[0m
+[36m› dev.kit | doctor[0m
+[36m  ----------------[0m
+
+OK  PATH
+   /Users/jonyfq/.local/bin
+OK  Binary
+   /Users/jonyfq/.local/bin/dev.kit
+OK  Symlink
+   /Users/jonyfq/.local/bin/dev.kit -> /Users/jonyfq/git/udx/dev.kit/bin/dev-kit
+OK  Engine dir
+   /Users/jonyfq/.udx/dev.kit
+OK  Env file
+   /Users/jonyfq/.udx/dev.kit/env.sh
+OK  Config file
+   /Users/jonyfq/.udx/dev.kit/config.env
+OK  Codex rules
+   /Users/jonyfq/.codex/rules/default.rules
+
+== install ==
++ /Users/jonyfq/git/udx/dev.kit/bin/dev-kit install
+
+[32m› UDX[0m
+[36m› dev.kit | install[0m
+[36m  -----------------[0m
+
+OK  Already installed
+   /Users/jonyfq/.local/bin/dev.kit
+OK  Env installed
+   /Users/jonyfq/.udx/dev.kit/env.sh
+OK  Lib installed
+   /Users/jonyfq/.udx/dev.kit/lib/context.sh
+OK  Completions installed
+   /Users/jonyfq/.udx/dev.kit/completions
+
+
+[33mNext step (auto-init)[0m
+  dev.kit enable --shell=bash
+
+
+== enable shell ==
++ /Users/jonyfq/git/udx/dev.kit/bin/dev-kit enable --shell=bash
+Already enabled in: /Users/jonyfq/.bash_profile
+
+== doctor (post) ==
++ /Users/jonyfq/git/udx/dev.kit/bin/dev-kit doctor
+
+[32m› UDX[0m
+[36m› dev.kit | doctor[0m
+[36m  ----------------[0m
+
+OK  PATH
+   /Users/jonyfq/.local/bin
+OK  Binary
+   /Users/jonyfq/.local/bin/dev.kit
+OK  Symlink
+   /Users/jonyfq/.local/bin/dev.kit -> /Users/jonyfq/git/udx/dev.kit/bin/dev-kit
+OK  Engine dir
+   /Users/jonyfq/.udx/dev.kit
+OK  Env file
+   /Users/jonyfq/.udx/dev.kit/env.sh
+OK  Config file
+   /Users/jonyfq/.udx/dev.kit/config.env
+OK  Codex rules
+   /Users/jonyfq/.codex/rules/default.rules
+
+== uninstall (purge) ==
++ /Users/jonyfq/git/udx/dev.kit/bin/dev-kit uninstall --purge
+OK  Removed
+   /Users/jonyfq/.local/bin/dev.kit
+OK  Purged
+   /Users/jonyfq/.udx/dev.kit
+
+== summary ==
+output: /Users/jonyfq/git/udx/dev.kit/tmp/ux/dev-kit-install-cleanup.log
+purge: true
+shell: bash
+
+== paths ==
++ /Users/jonyfq/git/udx/dev.kit/bin/dev-kit paths
+[dry-run] skipped
+
+== doctor (pre) ==
++ /Users/jonyfq/git/udx/dev.kit/bin/dev-kit doctor
+[dry-run] skipped
+
+== install ==
++ /Users/jonyfq/git/udx/dev.kit/bin/dev-kit install
+[dry-run] skipped
+
+== enable shell ==
++ /Users/jonyfq/git/udx/dev.kit/bin/dev-kit enable --shell=bash
+[dry-run] skipped
+
+== doctor (post) ==
++ /Users/jonyfq/git/udx/dev.kit/bin/dev-kit doctor
+[dry-run] skipped
+
+== uninstall ==
++ /Users/jonyfq/git/udx/dev.kit/bin/dev-kit uninstall
+[dry-run] skipped
+
+== summary ==
+output: /Users/jonyfq/git/udx/dev.kit/tmp/ux/dev-kit-install-cleanup.log
+purge: false
+shell: bash

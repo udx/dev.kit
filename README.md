@@ -25,5 +25,5 @@ Flow:
 
 Docs:
 - `docs/index.md` (entry point)
-- `docs/overview.md` (short guide)
+- `docs/src/overview.md` (short guide)
 - `docs/concepts/devsecops-demo.md` (team demo)

@@ -18,4 +18,4 @@ Notes
 - Always verify commits are unpushed before using reset.
 - Prefer `--force-with-lease` when rewriting remote history.
 - Keep iterations small and reversible.
-- See `docs/principles/development-tenets.md` for workflow norms.
+- See `docs/src/configs/principles/development-tenets.md` for workflow norms.

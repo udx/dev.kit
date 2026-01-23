@@ -2,8 +2,30 @@
   "id": "codex",
   "version": "0.1",
   "title": "Codex Integration",
+  "description": "Manage Codex integration, rules, and module metadata for dev.kit.",
+  "tags": ["codex", "ai", "rules", "integration"],
   "components": {
     "docs": [
+      {
+        "id": "codex.overview",
+        "path": "src/context/30_module/ai/codex/overview.md",
+        "tags": ["codex", "ai", "module"]
+      },
+      {
+        "id": "codex.workflows",
+        "path": "src/context/30_module/ai/codex/workflows.md",
+        "tags": ["codex", "workflow"]
+      },
+      {
+        "id": "codex.skills",
+        "path": "src/context/30_module/ai/codex/skills.md",
+        "tags": ["codex", "skills"]
+      },
+      {
+        "id": "codex.mcp",
+        "path": "src/context/30_module/ai/codex/mcp.md",
+        "tags": ["codex", "mcp"]
+      },
       {
         "id": "codex.integration",
         "path": "src/context/20_config/guides/codex-integration.md",
@@ -15,19 +37,19 @@
         "tags": ["codex", "prompting", "rules"]
       },
       {
-        "id": "codex.overview",
-        "path": "src/context/30_module/ai/codex/overview.md",
-        "tags": ["codex", "ai", "module"]
-      },
-      {
         "id": "ai.integration.contract",
         "path": "src/context/40_ai/overview.md",
         "tags": ["ai", "contract"]
       },
       {
-        "id": "dev.tenets",
-        "path": "src/context/20_config/principles/development-tenets.md",
-        "tags": ["workflow", "quality", "tenets"]
+        "id": "ai.deterministic.prompting",
+        "path": "src/context/20_config/principles/ai/deterministic-artifact-generation.md",
+        "tags": ["ai", "deterministic", "prompting"]
+      },
+      {
+        "id": "experience.incremental",
+        "path": "src/context/20_config/principles/incremental-experience.md",
+        "tags": ["experience", "iteration"]
       }
     ],
     "prompts": [

@@ -6,7 +6,7 @@
     "docs": [
       {
         "id": "capture.guide",
-        "path": "docs/guides/capture.md",
+        "path": "docs/src/configs/guides/capture.md",
         "tags": ["capture", "logging", "workflow"]
       }
     ],

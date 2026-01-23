@@ -6,7 +6,7 @@
     "docs": [
       {
         "id": "dev.tenets",
-        "path": "docs/principles/development-tenets.md",
+        "path": "docs/src/configs/principles/development-tenets.md",
         "tags": ["workflow", "quality", "tenets"]
       }
     ],
@@ -75,7 +75,7 @@
           {
             "id": "session.save",
             "command": "dev.kit session save",
-            "note": "Preview and save summary to docs/experience/.",
+            "note": "Preview and save summary to docs/src/configs/experience/.",
             "runnable": false,
             "protected": true,
             "preview_command": "dev.kit session summary"
@@ -86,7 +86,7 @@
             "Preview the summary, then confirm save.",
             "Keep summaries short and actionable."
           ],
-          "normalized": "Use dev.kit session save to preview and store a daily summary under docs/experience/."
+          "normalized": "Use dev.kit session save to preview and store a daily summary under docs/src/configs/experience/."
         }
       }
     ]

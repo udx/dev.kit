@@ -5,7 +5,30 @@ REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 UI_LIB="${REPO_DIR}/lib/ui.sh"
 BIN_DIR="${HOME}/.local/bin"
 TARGET="${BIN_DIR}/dev.kit"
-ENGINE_DIR="${HOME}/.udx/dev.kit"
+KIT_CONFIG="${REPO_DIR}/config/kit.env"
+kit_value() {
+  local key="$1"
+  local default="${2:-}"
+  local val=""
+  if [ -f "$KIT_CONFIG" ]; then
+    val="$(awk -F= -v k="$key" '
+      $1 ~ "^[[:space:]]*"k"[[:space:]]*$" {
+        sub(/^[[:space:]]*/,"",$2);
+        sub(/[[:space:]]*$/,"",$2);
+        print $2;
+        exit
+      }
+    ' "$KIT_CONFIG")"
+  fi
+  if [ -n "$val" ]; then
+    echo "$val"
+  else
+    echo "$default"
+  fi
+}
+DEV_KIT_OWNER="${DEV_KIT_OWNER:-$(kit_value OWNER "udx")}"
+DEV_KIT_REPO="${DEV_KIT_REPO:-$(kit_value REPO "dev.kit")}"
+ENGINE_DIR="${HOME}/.${DEV_KIT_OWNER}/${DEV_KIT_REPO}"
 ENV_SRC="${REPO_DIR}/bin/env/dev-kit.sh"
 ENV_DST="${ENGINE_DIR}/env.sh"
 COMP_SRC_DIR="${REPO_DIR}/bin/completions"
@@ -15,7 +38,6 @@ CONFIG_DST="${ENGINE_DIR}/config.env"
 LIB_SRC_DIR="${REPO_DIR}/lib"
 LIB_DST_DIR="${ENGINE_DIR}/lib"
 PROFILE=""
-FIX_MODE="false"
 
 detect_profile() {
   case "${SHELL:-}" in
@@ -126,8 +148,14 @@ if [ -f "$CONFIG_SRC" ] && [ ! -f "$CONFIG_DST" ]; then
   fi
 fi
 
-if [ "${1:-}" = "--fix" ]; then
-  FIX_MODE="true"
+if [ ! -w "$ENGINE_DIR" ]; then
+  if command -v ui_warn >/dev/null 2>&1; then
+    ui_warn "Config unavailable" "$ENGINE_DIR is not writable"
+  else
+    echo "WARN Config unavailable"
+    echo "   $ENGINE_DIR is not writable"
+  fi
+  exit 1
 fi
 
 detect_profile
@@ -143,7 +171,7 @@ case "${SHELL:-}" in
 esac
 path_line="export PATH=\"$BIN_DIR:\$PATH\""
 if ! command -v dev.kit >/dev/null 2>&1; then
-  if [ "$FIX_MODE" = "true" ] && [ -n "$PROFILE" ]; then
+  if [ -n "$PROFILE" ] && [ -t 0 ]; then
     if [ -f "$PROFILE" ] && grep -Fqx "$path_line" "$PROFILE"; then
       if command -v ui_ok >/dev/null 2>&1; then
         ui_ok "PATH already set" "$PROFILE"
@@ -152,15 +180,22 @@ if ! command -v dev.kit >/dev/null 2>&1; then
         echo "   $PROFILE"
       fi
     else
-      printf "\n%s\n" "$path_line" >> "$PROFILE"
-      if command -v ui_ok >/dev/null 2>&1; then
-        ui_ok "PATH updated" "$PROFILE"
-        echo "   Reload your shell to use dev.kit"
-      else
-        echo "OK  PATH updated"
-        echo "   $PROFILE"
-        echo "   Reload your shell to use dev.kit"
-      fi
+      printf "Add dev.kit to PATH in %s? [y/N] " "$PROFILE"
+      read -r answer || true
+      case "$answer" in
+        y|Y|yes|YES)
+          printf "\n%s\n" "$path_line" >> "$PROFILE"
+          if command -v ui_ok >/dev/null 2>&1; then
+            ui_ok "PATH updated" "$PROFILE"
+            echo "   Reload your shell to use dev.kit"
+          else
+            echo "OK  PATH updated"
+            echo "   $PROFILE"
+            echo "   Reload your shell to use dev.kit"
+          fi
+          ;;
+        *) ;;
+      esac
     fi
     if command -v ui_section >/dev/null 2>&1; then
       ui_section "Next steps (activate)"
@@ -183,7 +218,6 @@ if ! command -v dev.kit >/dev/null 2>&1; then
       echo "Next step (PATH)"
     fi
     echo "  $path_line"
-    echo "  Tip: ${REPO_DIR}/bin/dev-kit install --fix"
   fi
 fi
 
