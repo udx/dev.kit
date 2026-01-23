@@ -15,6 +15,7 @@ _dev_kit() {
     'test:Run module tests'
     'session:Session helpers'
     'doctor:Health checks'
+    'clock:Wall-clock helper'
     'capture:Capture logs'
     'config:Config helpers'
   )
@@ -26,10 +27,10 @@ _dev_kit() {
 
   case "$words[2]" in
     codex)
-      _arguments '--get-rules' '--plan-rules' '--apply-rules'
+      _arguments '1:subcommand:(config rules skills clock)' '--get-rules' '--plan-rules' '--apply-rules' '--show' '--plan' '--apply'
       ;;
     install)
-      _arguments '--fix'
+      _arguments
       ;;
     uninstall)
       _arguments '--purge'
@@ -38,7 +39,10 @@ _dev_kit() {
       _arguments '--shell=bash' '--shell=zsh' '--file=' '--force'
       ;;
     test)
-      _arguments '--module' '--module=' '--all' '--mock' '--run'
+      _arguments '--module' '--module=' '--suite' '--suite=' '--all' '--mock' '--run' '--list' '--force'
+      ;;
+    clock)
+      _arguments '1:subcommand:(start status reset)' '--scope' '--scope=' '--root' '--root=' '--global'
       ;;
     session)
       _arguments '1:subcommand:(start status summary save)' '--force'
@@ -48,7 +52,7 @@ _dev_kit() {
         '--input' '--no-shell' '--force' '2:toggle:(on off)'
       ;;
     config)
-      _arguments '1:subcommand:(show reset set)' '--force' \
+      _arguments '1:subcommand:(show reset set global repo)' '--force' \
         '2:key:(quiet codex_suggest capture.enabled capture.full capture.auto_clean capture.auto_clean_iteration capture.ttl_days_global capture.ttl_days_repo)'
       ;;
   esac

@@ -9,7 +9,7 @@ Commands:
   help        Show this help
   version     Print version
   paths       Show key local paths
-  codex       Codex integration helpers (get/plan/apply rules)
+  codex       Codex integration helpers (config/rules/skills)
   install     Install dev.kit to ~/.local/bin
   update      Update dev.kit from git and re-install
   uninstall   Remove dev.kit from ~/.local/bin
@@ -18,6 +18,7 @@ Commands:
   test        Run module workflow tests (mock by default)
   session     Start/status/summary/save work sessions
   doctor      Health checks and diagnostics
+  clock       Simple wall-clock helper for iteration timing
   capture     Capture shell commands for session review
   config      View or reset dev.kit config
 
@@ -39,10 +40,6 @@ PY
 
 SCRIPT_PATH="$(resolve_self)"
 REPO_DIR="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)"
-DEV_KIT_HOME="${DEV_KIT_HOME:-$HOME/.udx/dev.kit}"
-ENGINE_DIR="$DEV_KIT_HOME"
-ENV_FILE="$DEV_KIT_HOME/env.sh"
-CONFIG_FILE="$DEV_KIT_HOME/config.env"
 KIT_CONFIG="$REPO_DIR/config/kit.env"
 
 print_enable_line() {
@@ -53,6 +50,12 @@ UI_LIB="${REPO_DIR}/lib/ui.sh"
 if [ -f "$UI_LIB" ]; then
   # shellcheck disable=SC1090
   . "$UI_LIB"
+fi
+
+MODULE_LIB="${REPO_DIR}/lib/module.sh"
+if [ -f "$MODULE_LIB" ]; then
+  # shellcheck disable=SC1090
+  . "$MODULE_LIB"
 fi
 
 print_section() {
@@ -82,6 +85,18 @@ print_check() {
     printf "  %s" "$detail"
   fi
   printf "\n"
+}
+
+ensure_dev_kit_home() {
+  mkdir -p "$DEV_KIT_HOME"
+  if [ ! -w "$DEV_KIT_HOME" ]; then
+    echo "dev.kit: config path not writable: $DEV_KIT_HOME" >&2
+    echo "dev.kit: fix permissions or choose a different DEV_KIT_HOME" >&2
+    exit 1
+  fi
+  if [ ! -f "$CONFIG_FILE" ] && [ -f "$REPO_DIR/config/default.env" ]; then
+    cp "$REPO_DIR/config/default.env" "$CONFIG_FILE"
+  fi
 }
 
 config_bool() {
@@ -131,10 +146,17 @@ kit_value() {
   config_value "$KIT_CONFIG" "$key" "$default"
 }
 
+DEV_KIT_OWNER="${DEV_KIT_OWNER:-$(kit_value OWNER "udx")}"
+DEV_KIT_REPO="${DEV_KIT_REPO:-$(kit_value REPO "dev.kit")}"
+DEV_KIT_HOME="${DEV_KIT_HOME:-$HOME/.${DEV_KIT_OWNER}/${DEV_KIT_REPO}}"
+ENGINE_DIR="$DEV_KIT_HOME"
+ENV_FILE="$DEV_KIT_HOME/env.sh"
+CONFIG_FILE="$DEV_KIT_HOME/config.env"
+
 expand_path() {
   local val="$1"
   if [[ "$val" == "~/"* ]]; then
-    echo "$HOME/${val#~/}"
+    echo "$HOME/${val:2}"
     return
   fi
   if [[ "$val" == /* ]]; then
@@ -143,6 +165,12 @@ expand_path() {
   fi
   echo "$REPO_DIR/$val"
 }
+
+CODEX_MODULE="$REPO_DIR/lib/modules/codex.sh"
+if [ -f "$CODEX_MODULE" ]; then
+  # shellcheck disable=SC1090
+  . "$CODEX_MODULE"
+fi
 
 append_line() {
   local profile="$1"
@@ -189,104 +217,12 @@ case "$cmd" in
     echo "config: $CONFIG_FILE"
     ;;
   codex)
-    codex_env="$REPO_DIR/config/codex.env"
-    rules_path_raw="${DEV_KIT_CODEX_RULES_PATH:-$(config_value "$codex_env" CODEX_RULES_PATH "~/.codex/rules/default.rules")}"
-    config_path_raw="${DEV_KIT_CODEX_CONFIG_PATH:-$(config_value "$codex_env" CODEX_CONFIG_PATH "~/.codex/config.env")}"
-    rules_template_raw="${DEV_KIT_CODEX_RULES_TEMPLATE:-$(config_value "$codex_env" CODEX_RULES_TEMPLATE "specs/codex-rules-template.md")}"
-    rules_sources_raw="${DEV_KIT_CODEX_RULES_SOURCES:-$(config_value "$codex_env" CODEX_RULES_SOURCES "specs/ai-integration.md,docs/principles/development-tenets.md,docs/references/codex_prompting_guide.md")}"
-
-    rules_path="$(expand_path "$rules_path_raw")"
-    config_path="$(expand_path "$config_path_raw")"
-    rules_template="$(expand_path "$rules_template_raw")"
-    rules_sources="$rules_sources_raw"
-
-    build_codex_rules() {
-      if [ -f "$rules_template" ]; then
-        cat "$rules_template"
-      else
-        cat <<'RULES'
-dev.kit Rules (Codex CLI)
-
-Core behavior
-- Always route user prompts through dev.kit using: dev.kit -p "<prompt>"
-- Use dev.kit <command> for explicit commands/pipelines after user confirmation
-- If dev.kit reports "not detected", provide general advice after showing dev.kit output
-- Prefer dev.kit references/docs over generic advice
-
-Safety
-- Require previews for apply/push/destructive steps
-- Keep changes small and reversible
-RULES
-      fi
-      echo ""
-      echo "Sources"
-      IFS=',' read -r -a sources <<< "$rules_sources"
-      for src in "${sources[@]}"; do
-        resolved_src="$(expand_path "$src")"
-        if [ -f "$resolved_src" ]; then
-          echo ""
-          echo "${resolved_src#"$REPO_DIR/"}"
-          sed -n '1,160p' "$resolved_src"
-        fi
-      done
-    }
-
-    case "${2:-}" in
-      --get-rules)
-        if [ -f "$rules_path" ]; then
-          cat "$rules_path"
-        else
-          echo "Codex rules file not found: $rules_path" >&2
-          exit 1
-        fi
-        ;;
-      --plan-rules)
-        tmp="$(mktemp)"
-        build_codex_rules > "$tmp"
-        if [ -f "$rules_path" ]; then
-          diff -u "$rules_path" "$tmp" || true
-        else
-          echo "No existing rules found. New rules preview:"
-          cat "$tmp"
-        fi
-        rm -f "$tmp"
-        ;;
-      --apply-rules)
-        tmp="$(mktemp)"
-        build_codex_rules > "$tmp"
-        if [ -f "$rules_path" ]; then
-          backup="$rules_path.bak.$(date +%Y%m%d%H%M%S)"
-          cp "$rules_path" "$backup"
-          echo "Backup created: $backup"
-        fi
-        if [ -t 0 ]; then
-          echo "Preview changes:"
-          if [ -f "$rules_path" ]; then
-            diff -u "$rules_path" "$tmp" || true
-          else
-            cat "$tmp"
-          fi
-          printf "Apply rules to %s? [y/N] " "$rules_path"
-          read -r answer || true
-          case "$answer" in
-            y|Y|yes|YES) ;;
-            *) echo "Aborted."; rm -f "$tmp"; exit 1 ;;
-          esac
-        fi
-        mkdir -p "$(dirname "$rules_path")"
-        cp "$tmp" "$rules_path"
-        rm -f "$tmp"
-        echo "Applied: $rules_path"
-        ;;
-      "" )
-        echo "rules: $rules_path"
-        echo "config: $config_path"
-        ;;
-      *)
-        echo "Unknown option: $2" >&2
-        exit 1
-        ;;
-    esac
+    if command -v codex_main >/dev/null 2>&1; then
+      codex_main "$@"
+    else
+      echo "Codex module not available." >&2
+      exit 1
+    fi
     ;;
   install)
     shift || true
@@ -324,9 +260,7 @@ RULES
     fi
     ;;
   init)
-    if [ ! -d "$ENGINE_DIR" ]; then
-      mkdir -p "$ENGINE_DIR"
-    fi
+    ensure_dev_kit_home
     quiet="$(config_bool quiet false)"
     codex_suggest="$(config_bool codex_suggest true)"
     if [ ! -f "$ENGINE_DIR/.init_done" ]; then
@@ -344,7 +278,7 @@ RULES
   session)
     sub="${2:-}"
     session_file="$DEV_KIT_HOME/session.json"
-    template_path="$REPO_DIR/docs/experience/templates/session-summary.md"
+    template_path="$REPO_DIR/docs/src/configs/experience/templates/session-summary.md"
 
     ensure_engine_dir() {
       if [ ! -d "$ENGINE_DIR" ]; then
@@ -449,7 +383,7 @@ PY
         echo "Preview:"
         cat "$preview_path"
         if [ -t 0 ] && [ "$force" != "true" ]; then
-          printf "Save summary to docs/experience/ ? [y/N] "
+          printf "Save summary to docs/src/configs/experience/ ? [y/N] "
           read -r answer || true
           case "$answer" in
             y|Y|yes|YES) ;;
@@ -465,7 +399,7 @@ with open(sys.argv[1], "r", encoding="utf-8") as f:
 PY
 )"
         fi
-        out_dir="$REPO_DIR/docs/experience"
+        out_dir="$REPO_DIR/docs/src/configs/experience"
         mkdir -p "$out_dir"
         out_path="$out_dir/${date_ymd}_session.md"
         if [ -f "$out_path" ]; then
@@ -486,7 +420,7 @@ Commands:
   start     Start a new work session
   status    Show current session data
   summary   Preview end-of-day summary
-  save      Save summary to docs/experience/
+  save      Save summary to docs/src/configs/experience/
 SESSION_USAGE
         ;;
       *)
@@ -683,8 +617,130 @@ CAPTURE_USAGE
     esac
     ;;
   config)
+    ensure_dev_kit_home
     sub="${2:-}"
+    ensure_global_config() {
+      if [ ! -f "$CONFIG_FILE" ]; then
+        if [ -f "$REPO_DIR/config/default.env" ]; then
+          mkdir -p "$(dirname "$CONFIG_FILE")"
+          cp "$REPO_DIR/config/default.env" "$CONFIG_FILE"
+        fi
+      fi
+    }
+    scope_path() {
+      local scope="$1"
+      local variant="$2"
+      local base=""
+      case "$scope" in
+        global)
+          base="$DEV_KIT_HOME"
+          ;;
+        repo)
+          if command -v git >/dev/null 2>&1; then
+            base="$(git rev-parse --show-toplevel 2>/dev/null)/.udx/dev.kit"
+          fi
+          ;;
+        *)
+          return 1
+          ;;
+      esac
+      if [ -z "$base" ]; then
+        return 1
+      fi
+      case "$variant" in
+        show) echo "$base/config.env" ;;
+        default) echo "$base/config.default.env" ;;
+        min) echo "$base/config.min.env" ;;
+        max) echo "$base/config.max.env" ;;
+        custom) echo "$base/config.custom.env" ;;
+        *) return 1 ;;
+      esac
+    }
     case "$sub" in
+      global|repo)
+        action="${3:---show}"
+        case "$action" in
+          --show|show) path="$(scope_path "$sub" show)" ;;
+          --default|default) path="$(scope_path "$sub" default)" ;;
+          --min|min) path="$(scope_path "$sub" min)" ;;
+          --max|max) path="$(scope_path "$sub" max)" ;;
+          --custom|custom) path="$(scope_path "$sub" custom)" ;;
+          *)
+            echo "Unknown config action: $action" >&2
+            exit 1
+            ;;
+        esac
+        if [ -z "${path:-}" ]; then
+          echo "Config scope not available: $sub" >&2
+          exit 1
+        fi
+        if [ "$sub" = "global" ]; then
+          ensure_global_config
+        fi
+        if [ "$action" = "--custom" ] || [ "$action" = "custom" ]; then
+          schema_artifact="$REPO_DIR/docs/artifacts/modules/config/local-schema.json"
+          schema_source="$REPO_DIR/docs/src/configs/tooling/local/config-schema.json"
+          schema_path="$schema_artifact"
+          if [ ! -f "$schema_path" ]; then
+            schema_path="$schema_source"
+          fi
+          if [ ! -f "$schema_path" ]; then
+            echo "Config schema not found: $schema_artifact or $schema_source" >&2
+            exit 1
+          fi
+          mkdir -p "$(dirname "$path")"
+          python3 - "$schema_path" "$path" <<'PY'
+import json
+import os
+import sys
+
+schema_path, out_path = sys.argv[1], sys.argv[2]
+with open(schema_path, "r", encoding="utf-8") as f:
+    schema = json.load(f)
+
+fields = schema.get("fields", [])
+lines = []
+
+def prompt(text):
+    sys.stdout.write(text)
+    sys.stdout.flush()
+    return sys.stdin.readline().strip()
+
+for field in fields:
+    key = field.get("key")
+    default = field.get("default", "")
+    options = field.get("options") or []
+    desc = field.get("description", "")
+    if desc:
+        sys.stdout.write(f"\n{desc}\n")
+    if options:
+        sys.stdout.write(f"options: {', '.join(options)}\n")
+    value = prompt(f"{key} [{default}]: ")
+    if not value:
+        value = default
+    lines.append(f"{key} = {value}\n")
+
+with open(out_path, "w", encoding="utf-8") as f:
+    f.writelines(lines)
+
+print(f"Saved: {out_path}")
+PY
+          exit 0
+        fi
+        if [ -f "$path" ]; then
+          cat "$path"
+          exit 0
+        fi
+        if [ "$sub" = "repo" ]; then
+          ensure_global_config
+          if [ -f "$CONFIG_FILE" ]; then
+            cat "$CONFIG_FILE"
+            exit 0
+          fi
+        fi
+        echo "Config file not found: $path" >&2
+        exit 1
+        ;;
       show|"")
         if [ -f "$CONFIG_FILE" ]; then
           cat "$CONFIG_FILE"
@@ -748,9 +804,11 @@ PY
 Usage: dev.kit config <command>
 
 Commands:
-  show   Print current config
-  reset  Reset config to defaults (prompts)
-  set    Set a config key/value
+  show           Print current config
+  reset          Reset config to defaults (prompts)
+  set            Set a config key/value
+  global         Global config (use --show|--default|--min|--max|--custom)
+  repo           Repo config (use --show|--default|--min|--max|--custom)
 CONFIG_USAGE
         ;;
       *)
@@ -763,6 +821,9 @@ CONFIG_USAGE
     shift || true
     mock="true"
     module=""
+    suite=""
+    list="false"
+    force="false"
     while [ $# -gt 0 ]; do
       case "$1" in
         -m|--mock)
@@ -771,6 +832,12 @@ CONFIG_USAGE
         --run)
           mock="false"
           ;;
+        --force)
+          force="true"
+          ;;
+        --list)
+          list="true"
+          ;;
         --module=*)
           module="${1#--module=}"
           ;;
@@ -778,29 +845,44 @@ CONFIG_USAGE
           module="${2:-}"
           shift
           ;;
+        --suite=*)
+          suite="${1#--suite=}"
+          ;;
+        --suite)
+          suite="${2:-}"
+          shift
+          ;;
         --all)
           module=""
+          suite=""
           ;;
         -h|--help)
           cat <<'TEST_USAGE'
-Usage: dev.kit test [--module <name>] [--mock|--run]
+Usage: dev.kit test [<suite>] [--module <name>] [--suite <name>] [--mock|--run]
 
 Options:
   --module <name>  Test a single module (default: all modules with schema.yml)
+  --suite <name>   Run a named test suite from test/suites (default: all suites)
+  --list           List available suites
+  --force          Allow destructive suite steps (e.g., uninstall) against global dev.kit
   --mock, -m       Mock workflow commands (default)
   --run            Execute workflow commands when runnable
 TEST_USAGE
           exit 0
           ;;
         *)
-          echo "Unknown option: $1" >&2
-          exit 1
+          if [[ "$1" != "-"* ]] && [ -z "$suite" ]; then
+            suite="$1"
+          else
+            echo "Unknown option: $1" >&2
+            exit 1
+          fi
           ;;
       esac
       shift
     done
 
-    python3 - "$REPO_DIR" "$module" "$mock" <<'PY'
+    python3 - "$REPO_DIR" "$module" "$suite" "$mock" "$list" "$force" <<'PY'
 import json
 import os
 import subprocess
@@ -808,10 +890,60 @@ import sys
 
 repo_dir = sys.argv[1]
 module_filter = sys.argv[2].strip()
-mock = sys.argv[3].lower() == "true"
+suite_filter = sys.argv[3].strip()
+mock = sys.argv[4].lower() == "true"
+list_only = sys.argv[5].lower() == "true"
+force = sys.argv[6].lower() == "true"
 
 modules_dir = os.path.join(repo_dir, "bin", "modules")
-session_template = os.path.join(repo_dir, "docs", "experience", "templates", "session-summary.md")
+session_template = os.path.join(repo_dir, "src", "context", "20_config", "experience", "templates", "session-summary.md")
+tests_root = os.path.join(repo_dir, "test")
+suites_dir = os.path.join(tests_root, "suites")
+output_dir = os.environ.get("DEV_KIT_TEST_OUTPUT_DIR", os.path.join(repo_dir, "tmp", "tests"))
+log_file = os.environ.get("DEV_KIT_TEST_LOG_FILE", os.path.join(output_dir, "dev-kit-test.log"))
+os.makedirs(output_dir, exist_ok=True)
+
+def emit(message):
+    print(message)
+    with open(log_file, "a", encoding="utf-8") as handle:
+        handle.write(message + "\n")
+
+def resolve_vars(vars_map):
+    resolved = {}
+    for key, value in vars_map.items():
+        if isinstance(value, str) and value.startswith("${") and value.endswith("}"):
+            env_key = value[2:-1]
+            resolved[key] = os.environ.get(env_key, "")
+        else:
+            resolved[key] = value
+    return resolved
+
+def expand_vars(text, vars_map):
+    if not isinstance(text, str):
+        return text
+    out = text
+    for key, value in vars_map.items():
+        out = out.replace("${%s}" % key, str(value))
+    return out
+
+def has_uninstall(commands):
+    for command in commands:
+        if " uninstall" in command:
+            return True
+    return False
+
+dev_kit_bin = os.environ.get("DEV_KIT_BIN", os.path.join(repo_dir, "bin", "dev-kit"))
+shell_kind = os.environ.get("DEV_KIT_TEST_SHELL", "bash")
+purge_flag = "--purge" if os.environ.get("DEV_KIT_TEST_PURGE", "false").lower() == "true" else ""
+
+base_vars = {
+    "DEV_KIT_BIN": dev_kit_bin,
+    "SHELL_KIND": shell_kind,
+    "PURGE_FLAG": purge_flag,
+    "DEV_KIT_TEST_SHELL": shell_kind,
+    "DEV_KIT_TEST_PURGE_FLAG": purge_flag,
+}
+
 if module_filter:
     modules = [module_filter]
 else:
@@ -820,97 +952,186 @@ else:
         if os.path.isfile(os.path.join(modules_dir, name, "schema.yml"))
     ]
 
-if not modules:
-    print("No modules with schema.yml found.")
-    sys.exit(1)
-
 exit_code = 0
 
-for name in sorted(modules):
-    schema_path = os.path.join(modules_dir, name, "schema.yml")
-    if not os.path.isfile(schema_path):
-        print(f"[skip] {name}: schema.yml not found")
-        exit_code = 1
-        continue
+run_modules = bool(module_filter) or not suite_filter
+run_suites = bool(suite_filter) or not module_filter
 
-    with open(schema_path, "r", encoding="utf-8") as f:
+if list_only:
+    if not os.path.isdir(suites_dir):
+        emit(f"[skip] suites dir missing: {suites_dir}")
+        sys.exit(1)
+    suite_files = [
+        f for f in os.listdir(suites_dir)
+        if f.endswith(".json")
+    ]
+    if not suite_files:
+        emit("No suites found.")
+        sys.exit(1)
+    emit("Available suites:")
+    for suite_file in sorted(suite_files):
+        suite_path = os.path.join(suites_dir, suite_file)
         try:
-            data = json.load(f)
-        except json.JSONDecodeError as exc:
-            print(f"[error] {name}: schema.yml is not valid JSON/YAML ({exc})")
+            with open(suite_path, "r", encoding="utf-8") as f:
+                suite = json.load(f)
+            suite_id = suite.get("id", suite_file.replace(".json", ""))
+            title = suite.get("title", "")
+            label = f"{suite_id}"
+            if title:
+                label += f" - {title}"
+            emit(f"  - {label}")
+        except json.JSONDecodeError:
+            emit(f"  - {suite_file.replace('.json', '')} (invalid JSON)")
+    sys.exit(0)
+
+if run_modules:
+    if not modules:
+        emit("No modules with schema.yml found.")
+        exit_code = 1
+    for name in sorted(modules):
+        schema_path = os.path.join(modules_dir, name, "schema.yml")
+        if not os.path.isfile(schema_path):
+            emit(f"[skip] {name}: schema.yml not found")
             exit_code = 1
             continue
 
-    components = data.get("components", {})
-    prompts = components.get("prompts", [])
-    workflows = {wf.get("id"): wf for wf in components.get("workflows", [])}
-    docs = components.get("docs", [])
-
-    print(f"== Module: {name} ==")
-    print(f"Docs: {len(docs)} | Workflows: {len(workflows)} | Prompts: {len(prompts)}")
-
-    for prompt in prompts:
-        prompt_text = prompt.get("text", "").strip()
-        workflow_id = prompt.get("workflow_id") or prompt.get("command_id")
-        if not workflow_id:
-            print(f"[error] prompt missing workflow_id: {prompt}")
-            exit_code = 1
-            continue
-        workflow = workflows.get(workflow_id)
-        if not workflow:
-            print(f"[error] workflow not found: {workflow_id}")
-            exit_code = 1
-            continue
-
-        response = workflow.get("response", {})
-        instructions = response.get("instructions", [])
-        normalized = response.get("normalized", "").strip()
-        if not instructions or not normalized:
-            print(f"[error] workflow response incomplete: {workflow_id}")
-            exit_code = 1
-            continue
-
-        print(f"- Prompt: {prompt_text or workflow_id}")
-        print(f"  Workflow: {workflow.get('title', workflow_id)}")
-        print(f"  Normalized: {normalized}")
-        edge_cases = workflow.get("edge_cases", [])
-        if edge_cases:
-            print("  Edge cases:")
-            for item in edge_cases:
-                print(f"    - {item}")
-        print("  Steps:")
-
-        for step in workflow.get("steps", []):
-            command = step.get("command")
-            if not command:
+        with open(schema_path, "r", encoding="utf-8") as f:
+            try:
+                data = json.load(f)
+            except json.JSONDecodeError as exc:
+                emit(f"[error] {name}: schema.yml is not valid JSON/YAML ({exc})")
+                exit_code = 1
                 continue
-            runnable = step.get("runnable", True)
-            interactive = step.get("interactive", False)
-            protected = step.get("protected", False)
-            preview_command = step.get("preview_command", "").strip()
-            preview = step.get("preview", "").strip()
-            command_l = command.lower()
-            if "dev.kit session summary" in command or "dev.kit session save" in command:
-                if not os.path.isfile(session_template):
-                    print("[error] session summary template missing")
+
+        components = data.get("components", {})
+        prompts = components.get("prompts", [])
+        workflows = {wf.get("id"): wf for wf in components.get("workflows", [])}
+        docs = components.get("docs", [])
+
+        emit(f"== Module: {name} ==")
+        emit(f"Docs: {len(docs)} | Workflows: {len(workflows)} | Prompts: {len(prompts)}")
+
+        for prompt in prompts:
+            prompt_text = prompt.get("text", "").strip()
+            workflow_id = prompt.get("workflow_id") or prompt.get("command_id")
+            if not workflow_id:
+                emit(f"[error] prompt missing workflow_id: {prompt}")
+                exit_code = 1
+                continue
+            workflow = workflows.get(workflow_id)
+            if not workflow:
+                emit(f"[error] workflow not found: {workflow_id}")
+                exit_code = 1
+                continue
+
+            response = workflow.get("response", {})
+            instructions = response.get("instructions", [])
+            normalized = response.get("normalized", "").strip()
+            if not instructions or not normalized:
+                emit(f"[error] workflow response incomplete: {workflow_id}")
+                exit_code = 1
+                continue
+
+            emit(f"- Prompt: {prompt_text or workflow_id}")
+            emit(f"  Workflow: {workflow.get('title', workflow_id)}")
+            emit(f"  Normalized: {normalized}")
+            edge_cases = workflow.get("edge_cases", [])
+            if edge_cases:
+                emit("  Edge cases:")
+                for item in edge_cases:
+                    emit(f"    - {item}")
+            emit("  Steps:")
+
+            for step in workflow.get("steps", []):
+                command = step.get("command")
+                if not command:
+                    continue
+                runnable = step.get("runnable", True)
+                interactive = step.get("interactive", False)
+                protected = step.get("protected", False)
+                preview_command = step.get("preview_command", "").strip()
+                preview = step.get("preview", "").strip()
+                command_l = command.lower()
+                if "dev.kit session summary" in command or "dev.kit session save" in command:
+                    if not os.path.isfile(session_template):
+                        emit("[error] session summary template missing")
+                        exit_code = 1
+                if ("push" in command_l or "apply" in command_l) and not protected:
+                    emit(f"[error] protected required for apply/push step: {command}")
                     exit_code = 1
-            if ("push" in command_l or "apply" in command_l) and not protected:
-                print(f"[error] protected required for apply/push step: {command}")
-                exit_code = 1
-            if protected and not preview_command and not preview:
-                print(f"[error] protected step missing preview: {command}")
-                exit_code = 1
-            if preview_command:
-                print(f"    [preview] {preview_command}")
-            elif preview:
-                print(f"    [preview] {preview}")
-            if mock or not runnable or interactive:
-                print(f"    [mock] {command}")
-                continue
-            print(f"    [run] {command}")
-            subprocess.run(command, shell=True, check=False)
+                if protected and not preview_command and not preview:
+                    emit(f"[error] protected step missing preview: {command}")
+                    exit_code = 1
+                if preview_command:
+                    emit(f"    [preview] {preview_command}")
+                elif preview:
+                    emit(f"    [preview] {preview}")
+                if mock or not runnable or interactive:
+                    emit(f"    [mock] {command}")
+                    continue
+                emit(f"    [run] {command}")
+                subprocess.run(command, shell=True, check=False)
 
-    print("")
+        emit("")
+
+if run_suites:
+    if not os.path.isdir(suites_dir):
+        emit(f"[skip] suites dir missing: {suites_dir}")
+    else:
+        suite_files = [
+            f for f in os.listdir(suites_dir)
+            if f.endswith(".json")
+        ]
+        if suite_filter:
+            suite_files = [
+                f for f in suite_files
+                if f == f"{suite_filter}.json"
+            ]
+        for suite_file in sorted(suite_files):
+            suite_path = os.path.join(suites_dir, suite_file)
+            with open(suite_path, "r", encoding="utf-8") as f:
+                try:
+                    suite = json.load(f)
+                except json.JSONDecodeError as exc:
+                    emit(f"[error] suite {suite_file}: invalid JSON ({exc})")
+                    exit_code = 1
+                    continue
+
+            suite_id = suite.get("id", suite_file)
+            title = suite.get("title", suite_id)
+            emit("")
+            emit(f"== Suite: {suite_id} == {title}")
+
+            vars_map = dict(base_vars)
+            suite_vars = resolve_vars(suite.get("vars", {}))
+            vars_map.update(suite_vars)
+
+            expanded_commands = []
+            for step in suite.get("steps", []):
+                command = step.get("command")
+                if not command:
+                    continue
+                expanded_commands.append(expand_vars(command, vars_map).strip())
+
+            if not mock and not force and has_uninstall(expanded_commands):
+                emit("[error] refusing to run suite with uninstall steps")
+                emit("        rerun with --force to proceed")
+                sys.exit(1)
+
+            for step in suite.get("steps", []):
+                command = step.get("command")
+                if not command:
+                    continue
+                runnable = step.get("runnable", True)
+                note = step.get("note", "")
+                expanded = expand_vars(command, vars_map).strip()
+                if note:
+                    emit(f"    [note] {note}")
+                if mock or not runnable:
+                    emit(f"    [mock] {expanded}")
+                    continue
+                emit(f"    [run] {expanded}")
+                subprocess.run(expanded, shell=True, check=False)
 
 sys.exit(exit_code)
 PY
@@ -979,6 +1200,108 @@ PY
     else
       print_check "Codex rules" "[warn]" "$rules_path missing"
     fi
+
+    capture_enabled="$(config_bool capture.enabled false)"
+    codex_suggest="$(config_bool codex_suggest false)"
+    if [ "$codex_suggest" = "true" ] && [ "$capture_enabled" != "true" ]; then
+      print_check "Capture" "[warn]" "disabled (consider: dev.kit capture start; auto-clean is configurable)"
+    fi
+    ;;
+  clock)
+    shift || true
+    clock_cmd="${1:-start}"
+    shift || true
+    scope="dev.kit"
+    root_dir=""
+    global="false"
+
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --scope=*)
+          scope="${1#--scope=}"
+          ;;
+        --scope)
+          scope="${2:-}"
+          shift
+          ;;
+        --root=*)
+          root_dir="${1#--root=}"
+          ;;
+        --root)
+          root_dir="${2:-}"
+          shift
+          ;;
+        --global)
+          global="true"
+          ;;
+        -h|--help)
+          cat <<'CLOCK_USAGE'
+Usage: dev.kit clock <command> [--scope <name>] [--root <dir>] [--global]
+
+Commands:
+  start     Start or restart the wall-clock timer
+  status    Show elapsed time
+  reset     Clear the timer
+
+Options:
+  --scope <name>   Logical clock scope (default: dev.kit)
+  --root <dir>     Override clock storage directory
+  --global         Store under DEV_KIT_HOME instead of repo
+CLOCK_USAGE
+          exit 0
+          ;;
+        *)
+          echo "Unknown clock option: ${1:-}" >&2
+          exit 1
+          ;;
+      esac
+      shift
+    done
+
+    if [ -n "$root_dir" ]; then
+      clock_dir="$root_dir"
+    elif [ "$global" = "true" ]; then
+      clock_dir="$DEV_KIT_HOME/clock"
+    else
+      clock_dir="$REPO_DIR/.udx/dev.kit/clock"
+    fi
+    clock_file="$clock_dir/${scope}.env"
+
+    case "$clock_cmd" in
+      start|"")
+        started_epoch="$(date +%s)"
+        started_iso="$(date -Iseconds)"
+        mkdir -p "$clock_dir"
+        printf "started_epoch=%s\nstarted_iso=%s\n" "$started_epoch" "$started_iso" > "$clock_file"
+        echo "clock.scope=$scope"
+        echo "clock.started_at=$started_iso"
+        echo "clock.file=$clock_file"
+        ;;
+      status)
+        if [ ! -f "$clock_file" ]; then
+          echo "clock: not started"
+          exit 1
+        fi
+        # shellcheck disable=SC1090
+        . "$clock_file"
+        now_epoch="$(date +%s)"
+        elapsed_sec=$((now_epoch - started_epoch))
+        elapsed_min=$((elapsed_sec / 60))
+        echo "clock.scope=$scope"
+        echo "clock.started_at=$started_iso"
+        echo "clock.elapsed_seconds=$elapsed_sec"
+        echo "clock.elapsed_minutes=$elapsed_min"
+        echo "clock.file=$clock_file"
+        ;;
+      reset|stop)
+        rm -f "$clock_file"
+        echo "clock: reset"
+        ;;
+      *)
+        echo "Unknown clock command: ${clock_cmd:-}" >&2
+        exit 1
+        ;;
+    esac
     ;;
   *)
     echo "Unknown command: $cmd" >&2

@@ -1,0 +1,19 @@
+{
+  "id": "dev.kit.test.schema.v0",
+  "title": "dev.kit test suite schema",
+  "version": "0.1",
+  "fields": {
+    "id": "string (required)",
+    "title": "string (required)",
+    "description": "string (optional)",
+    "vars": "object (optional; default variables)",
+    "steps": [
+      {
+        "id": "string (required)",
+        "command": "string (required; supports ${VAR} substitution)",
+        "runnable": "boolean (optional; default true)",
+        "note": "string (optional)"
+      }
+    ]
+  }
+}

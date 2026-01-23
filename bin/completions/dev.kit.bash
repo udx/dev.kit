@@ -7,17 +7,17 @@ _dev_kit_complete() {
   cmd="${COMP_WORDS[1]}"
 
   if [ $COMP_CWORD -eq 1 ]; then
-    COMPREPLY=( $(compgen -W "help version paths codex install update uninstall enable init test session doctor capture config" -- "$cur") )
+    COMPREPLY=( $(compgen -W "help version paths codex install update uninstall enable init test session doctor clock capture config" -- "$cur") )
     return 0
   fi
 
   case "$cmd" in
     codex)
-      COMPREPLY=( $(compgen -W "--get-rules --plan-rules --apply-rules" -- "$cur") )
+      COMPREPLY=( $(compgen -W "config rules skills clock --get-rules --plan-rules --apply-rules --show --plan --apply" -- "$cur") )
       return 0
       ;;
     install)
-      COMPREPLY=( $(compgen -W "--fix" -- "$cur") )
+      COMPREPLY=( )
       return 0
       ;;
     uninstall)
@@ -29,8 +29,14 @@ _dev_kit_complete() {
       return 0
       ;;
     test)
-      COMPREPLY=( $(compgen -W "--module --module= --all --mock --run" -- "$cur") )
+      COMPREPLY=( $(compgen -W "--module --module= --suite --suite= --all --mock --run --list --force" -- "$cur") )
       return 0
+      ;;
+    clock)
+      if [ $COMP_CWORD -eq 2 ]; then
+        COMPREPLY=( $(compgen -W "start status reset --scope --scope= --root --root= --global" -- "$cur") )
+        return 0
+      fi
       ;;
     session)
       if [ $COMP_CWORD -eq 2 ]; then
@@ -65,10 +71,14 @@ _dev_kit_complete() {
       ;;
     config)
       if [ $COMP_CWORD -eq 2 ]; then
-        COMPREPLY=( $(compgen -W "show reset set" -- "$cur") )
+        COMPREPLY=( $(compgen -W "show reset set global repo" -- "$cur") )
         return 0
       fi
       sub="${COMP_WORDS[2]}"
+      if [ "$sub" = "global" ] || [ "$sub" = "repo" ]; then
+        COMPREPLY=( $(compgen -W "--show --default --min --max --custom" -- "$cur") )
+        return 0
+      fi
       if [ "$sub" = "reset" ]; then
         COMPREPLY=( $(compgen -W "--force" -- "$cur") )
         return 0
