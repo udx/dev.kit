@@ -1,6 +1,6 @@
 # CDE context system
 
-The CDE context system is the handler and dispatcher for structured context in dev.kit. It uses integrated metadata, supports unlimited nested levels, and treats CDE-compliant context documents as configuration sources for different output types.
+The CDE context system is the dispatcher for structured context in dev.kit. It defines how Markdown sources become normalized artifacts for humans, programs, and AI.
 
 <details>
 <summary>Prompt(Context schema builder)</summary>
@@ -75,142 +75,65 @@ Parsing and normalization rules
 ## Transformation
 
 - Prompt: see `Prompt(Context schema builder)` in this file.
-- Destination: `src/schema/context.json`.
+- Destination: `public/schema/context.json`.
 
-## Context dispatcher
+## Role
 
-- `src/context` is the context handler and dispatcher for dev.kit.
+- `src/context/` is the context dispatcher for dev.kit.
 - Context documents are configuration inputs for different output types.
 - Context layers can be nested without a depth limit.
-- Integrated metadata is required to support deterministic parsing and merging.
+- Integrated metadata enables deterministic parsing and merging.
 
-## Development context layers
+## Context model
 
-- Software-specific standard (build).
-- 12-factor GitHub repo standard (deployment).
-- Context Driven Engineering standard (active context layer).
+### Index inheritance
+- `index.md` defines schema rules for the current directory scope.
+- Only directories containing an `index.md` participate as context layers.
+- A child directory `index.md` extends parent rules.
+- Overrides are allowed only when the parent explicitly permits overrides for a given key.
 
-## Dynamic schema
+### Merge order
+1. Apply parent rules (base).
+2. Apply child rules (extensions).
+3. If overrides are permitted: child values replace parent values for the same keys.
+4. If overrides are not permitted: child may only add new keys.
 
-- `index.md` defines global config schema rules (applies to all nested levels).
-- Child `index.md` extends parent rules; overrides are allowed only if parent explicitly permits.
-
-## Merge order
-- Parent rules apply first, then child rules.
-- If overrides are permitted, child values replace parent values for the same key.
-- If overrides are not permitted, child can only add new keys.
-
-## Dynamic variables
+### Dynamic variables
 - `$child` resolves to all child dirs in the current directory. Alias for `$child.dirs`.
 - `$child.files` resolves to all child files in the current directory.
 - `$child[context]` resolves to all child files in `context/`. If absent or empty, returns `[]`.
 - Non-wrapped variables are executable.
 - Non-executable text: wrap in code fences to keep literal.
 
-## Naming
+### Naming
 - Use lowercase kebab-case for directory and file names.
 - Use `index.md` as the entry point for each directory.
 
-## Dynamic structure
-- `src/`: CDE definition and global standards for dev.kit.
-- `src/context/`: context dispatcher and layered context documents.
-- `artifacts/`: build and execution outputs.
+## Source vs artifact
+
+- Source context lives under `src/context/` (human- and AI-readable intent).
+- Build outputs live under `public/`.
+- Artifacts are ready to copy/use; they should not be treated as source.
 
 ## Navigation
 
 - Each directory should contain an `index.md` that documents its direct children.
-- If missing, default behavior applies but may be inaccurate due to metadata absence.
 - Do not list deep files here; rely on child indexes for discovery.
-
-## Artifacts
-- Artifacts are derived with `dev.kit build [--context=configs/modules/ai/codex]` by related context definition.
-- Artifacts can be markdown, json, yml, or other module-specific formats.
+- If `index.md` is missing, defaults apply but may be inaccurate due to absent metadata.
 
 ## Artifact build
 
-- Source context lives under `src/context/`.
-- Build outputs live under `public/` or `src/schema/`.
 - Build steps must document inputs, outputs, and any client-specific overlays.
+- Context layers may define output formats (md/json/yml or module-specific).
+- Execution tooling should remain deterministic and repo-driven.
 
-## Validation & Tests
+## Validation & tests
 
 - Keep docs human-readable first.
 - Machine parsing should be simple, deterministic, and tolerate minor variations.
 - AI context depends on prompt generation and may vary across clients.
-- Explicit sections/headings are optional but recommended when they improve clarity.
 
-## Context layers
+## References
 
-### human/build
-Human-initiated, interactive build execution.
-
-- **custom**: Parameterized, operator-defined execution path.
-- **real-time**: Observable execution with live feedback and step visibility.
-- **multi-step**: Guided execution flow with state, checkpoints, and progressive disclosure (wizard-style, context-aware).
-
-### programmatic/deploy
-Machine-initiated, deterministic deployment execution.
-
-- **inputs**: Explicit input contract (flags, payloads, schema-validated parameters).
-- **default**: Opinionated execution using standard inputs and conventions.
-- **single/scroll**: Single, linear execution record optimized for inspection and automation.
-
-### ai/context
-Context-aware, adaptive execution and orchestration.
-
-- **interpret**: Derives intent from partial, ambiguous, or conversational input.
-- **compose**: Assembles workflows dynamically from standards and active context.
-- **mediate**: Bridges human intent and programmatic execution safely and predictably.
-- **optimize**: Adjusts steps, ordering, or defaults based on historical and situational context.
-
-## Standards stack
-
-1. Software Source Standard (Build)
-- Defines how source artifacts are discovered, built, tested, and packaged.
-- Language and runtime conventions.
-- Build steps and artifacts.
-- Test and scan expectations.
-
-2. 12-Factor GitHub Repo Standard (Deployment)
-- Defines how repositories behave as deployable units.
-- Declarative configuration.
-- Environment separation.
-- Immutable artifacts.
-- Explicit backing services.
-
-3. Context Driven Engineering Standard (Active Context Layer)
-- Defines how context influences execution across all layers.
-- Who is acting (human, system, AI).
-- Why the action is occurring (intent).
-- Where it runs (environment, trust boundary).
-- What constraints apply (policy, security, compliance).
-- What is already known (history, state, artifacts).
-- This layer is always active and never bypassed.
-
-## Vocabulary
-
-Vocabulary is layer-agnostic and maps consistently across experiences.
-
-### Experience
-- **interactive**: Human-friendly, conversational or wizard-based flow (CLI step-by-step, UI, AI-guided).
-- **programmatic**: Machine-friendly, explicit and deterministic (CLI flags, API payloads, CI pipelines).
-- **integrated**: Declarative, configuration-driven (config files, repo manifests, policy definitions).
-
-### Vocabulary - Layer Mapping (Conceptual)
-
-| vocabulary | human/build | programmatic/deploy | ai/context |
-|---|---|---|---|
-| interactive | Wizard, live logs | - | Conversational intent |
-| programmatic | Optional overrides | Primary interface | Execution target |
-| integrated | Presets, profiles | Defaults, contracts | Context memory |
-
-## Key design principle
-
-The same action must be expressible as:
-- a conversation (AI),
-- a guided flow (human),
-- or a contract (programmatic),
-without changing its meaning.
-
-AI does not introduce a new execution model.
-It operates as a context compiler that selects the appropriate layer and experience.
+- CDE definition: `src/index.md`.
+- Standards stack and vocabulary are defined there and referenced here.

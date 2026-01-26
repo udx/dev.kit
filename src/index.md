@@ -1,6 +1,6 @@
 # CDE definition
 
-Context Driven Engineering (CDE) is a repository standard that ensures components remain usable and consistent across all development context layers: human, programmatic, and AI. This document is the CDE definition for dev.kit.
+Context Driven Engineering (CDE) is a repository standard that keeps artifacts consistent across human, programmatic, and AI contexts. This document defines CDE for dev.kit.
 
 <details>
 <summary>Prompt(CDE schema builder)</summary>
@@ -75,11 +75,17 @@ Parsing and normalization rules
 ## Transformation
 
 - Prompt: see `Prompt(CDE schema builder)` in this file.
-- Destination: `src/schema/index.json`.
+- Destination: `public/schema/index.json`.
 
-## Development context layers
+## Purpose
 
-1. **Software-specific standard (build)**
+- Define the CDE standard for dev.kit.
+- Provide a shared vocabulary and model across human, programmatic, and AI contexts.
+- Keep CDE principles stable even as modules evolve.
+
+## Standards stack
+
+1. **Software source standard (build)**
    Defines how source artifacts are discovered, built, tested, scanned, signed, and packaged.
 
 2. **12-factor GitHub repo standard (deployment)**
@@ -88,74 +94,14 @@ Parsing and normalization rules
 3. **Context Driven Engineering (active context layer)**
    Defines how execution context influences behavior across all layers. This layer is always active and never bypassed.
 
-## Dynamic schema
-
-### Index inheritance
-- `index.md` defines schema rules for the current directory scope.
-- Only directories containing an `index.md` participate as context layers.
-- A child directory `index.md` extends parent rules.
-- Overrides are allowed only when the parent explicitly permits overrides for a given key.
-
-### Merge order
-1. Apply parent rules (base).
-2. Apply child rules (extensions).
-3. If overrides are permitted: child values replace parent values for the same keys.
-4. If overrides are not permitted: child may only add new keys.
-
-### Dynamic variables
-- `$child` resolves to all child dirs in the current directory. Alias for `$child.dirs`.
-- `$child.files` resolves to all child files in the current directory.
-- `$child[context]` resolves to all child files in `context/`. If absent or empty, returns `[]`.
-- Non-wrapped variables are executable.
-- Non-executable text: wrap in code fences to keep it literal.
-
-### Naming
-- Use lowercase kebab-case for directory and file names.
-- Use `index.md` as the entry point for each directory.
-
-## Repository structure
-
-- `src/`
-  Source manifests for humans, programs, and AI, including the CDE definition.
-
-- `public/`
-  Public artifacts of built documentation.
-
-**Note:** the artifacts destination can be configured per context layer.
-
-## Navigation
-
-- Each directory should contain an `index.md` that documents its direct children only.
-- Do not list deep files; rely on child indexes for discovery.
-- If `index.md` is missing, defaults apply but may be inaccurate due to absent metadata.
-
-## Artifacts
-
-- Artifacts are derived with:
-  - `dev.kit build [--context=configs/modules/ai/codex]`
-- Artifacts may be `md`, `json`, `yml`, or module-specific formats.
-
-## Artifact build
-
-- Source context lives under `src/` and `src/context/`.
-- Build outputs live under `public/` or `src/schema/`.
-- Build steps must document inputs, outputs, and any client-specific overlays.
-
-## Validation & Tests
-
-- Human readability is the primary goal.
-- Machine parsing should be simple, deterministic, and tolerant of minor variations.
-- AI context depends on prompt generation and may vary across clients.
-- Explicit sections/headings are optional but recommended when they improve clarity.
-
-## Context layers
+## Development context layers
 
 ### human/build
 Human-initiated, interactive build execution.
 
 - **custom**: Parameterized, operator-defined execution path.
 - **real-time**: Observable execution with live feedback and step visibility.
-- **multi-step**: Guided execution flow with state, checkpoints, and progressive disclosure (wizard-style, context-aware).
+- **multi-step**: Guided execution flow with state, checkpoints, and progressive disclosure.
 
 ### programmatic/deploy
 Machine-initiated, deterministic deployment execution.
@@ -174,11 +120,11 @@ Context-aware, adaptive execution and orchestration.
 
 ## Vocabulary
 
-Vocabulary is layer-agnostic and maps consistently across experiences and layers.
+Vocabulary is layer-agnostic and maps consistently across experiences.
 
 ### Core terms
 - **context layer**: A directory that contains an `index.md`. Only such directories participate in CDE context resolution.
-- **context asset**: A markdown documents located within a context layer (typically `index.md` or any document under that layer's `context/` subtree).
+- **context asset**: A markdown document located within a context layer (typically `index.md` or any document under that layer's `context/` subtree).
 - **context schema**: A JSON configuration that defines machine-validated structure for a context layer (e.g., `index.json`, `schema.json`, or an embedded JSON schema block).
 
 ### Experience
@@ -186,7 +132,7 @@ Vocabulary is layer-agnostic and maps consistently across experiences and layers
 - **programmatic**: Machine-friendly, explicit and deterministic (CLI flags, API payloads, CI pipelines).
 - **integrated**: Declarative, configuration-driven (config files, repo manifests, policy definitions).
 
-### AI Essentials and Human Analogy
+### AI essentials and human analogy
 
 | AI essential | Human analogy (what it looks like) | Typical output artifact |
 |------------|-------------------------------------|-------------------------|
@@ -206,6 +152,25 @@ Vocabulary is layer-agnostic and maps consistently across experiences and layers
 | **inputs** | Schema-driven extraction/validation | Validated payload |
 | **default** | Default selection using context + policy | Resolved configuration |
 | **single/scroll** | Post-run synthesis into one consumable trace | Run report |
+
+## Repository structure
+
+- `src/` Source manifests for humans, programs, and AI, including the CDE definition.
+- `src/context/` Layered context and build rules; see `src/context/index.md` for the dispatcher model.
+- `public/` Built artifacts intended to be copied or consumed directly.
+- `public/schema/` JSON artifacts derived from Markdown sources.
+
+## Artifacts and build
+
+- Sources live under `src/` and `src/context/`.
+- Outputs live under `public/`.
+- Build steps must document inputs, outputs, and any client-specific overlays.
+
+## Validation & tests
+
+- Human readability is the primary goal.
+- Machine parsing should be simple, deterministic, and tolerant of minor variations.
+- AI context depends on prompt generation and may vary across clients.
 
 ## Design principle
 

@@ -1,0 +1,24 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "dev.kit: Review Docs (write _feedback.md)",
+      "type": "shell",
+      "command": "${workspaceFolder}/_research/scripts/review-docs.sh",
+      "problemMatcher": []
+    },
+    {
+      "label": "dev.kit: Apply Task (prompt)",
+      "type": "shell",
+      "command": "${workspaceFolder}/_research/scripts/apply-task.sh ${input:taskId}",
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "taskId",
+      "type": "promptString",
+      "description": "Task ID (e.g., DOC-002, MF-001)"
+    }
+  ]
+}

@@ -13,7 +13,7 @@ _dev_kit_complete() {
 
   case "$cmd" in
     codex)
-      COMPREPLY=( $(compgen -W "config rules skills clock --get-rules --plan-rules --apply-rules --show --plan --apply" -- "$cur") )
+      COMPREPLY=( $(compgen -W "config rules skills clock --get-rules --plan-rules --build-rules --apply-rules --show --plan --build --apply" -- "$cur") )
       return 0
       ;;
     install)

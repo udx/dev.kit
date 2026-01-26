@@ -8,8 +8,8 @@ codex_main() {
   local config_path_raw="${DEV_KIT_CODEX_CONFIG_PATH:-$(config_value "$codex_env" CODEX_CONFIG_PATH "~/.codex/config.env")}"
   local rules_template_raw="${DEV_KIT_CODEX_RULES_TEMPLATE:-$(config_value "$codex_env" CODEX_RULES_TEMPLATE "src/context/20_config/ai/codex/rules-template.md")}"
   local rules_overrides_raw="${DEV_KIT_CODEX_RULES_OVERRIDES:-$(config_value "$codex_env" CODEX_RULES_OVERRIDES "src/context/20_config/ai/codex/overrides.md")}"
-  local rules_sources_raw="${DEV_KIT_CODEX_RULES_SOURCES:-$(config_value "$codex_env" CODEX_RULES_SOURCES "src/context/30_module/ai/codex/overview.md,src/context/20_config/standards/development-standards.md,src/context/20_config/principles/development-tenets.md,src/context/20_config/user-experience/cli-output.md,src/context/20_config/references/codex_prompting_guide.md,src/context/20_config/ai,src/context/index.md,src/index.md")}"
-  local rules_artifact_raw="${DEV_KIT_CODEX_RULES_ARTIFACT:-public/ai/codex.rules.md}"
+  local rules_sources_raw="${DEV_KIT_CODEX_RULES_SOURCES:-$(config_value "$codex_env" CODEX_RULES_SOURCES "src/context/30_module/ai/rules.md,src/context/30_module/ai/codex/overview.md,src/context/20_config/standards/development-standards.md,src/context/20_config/principles/development-tenets.md,src/context/20_config/user-experience/cli-output.md,src/context/20_config/references/codex_prompting_guide.md,src/context/20_config/ai,src/context/index.md,src/index.md")}"
+  local rules_artifact_raw="${DEV_KIT_CODEX_RULES_ARTIFACT:-public/modules/ai/codex/rules.md}"
 
   local rules_path="$(expand_path "$rules_path_raw")"
   local config_path="$(expand_path "$config_path_raw")"
@@ -123,6 +123,12 @@ RULES
     done
   }
 
+  write_rules_artifact() {
+    mkdir -p "$(dirname "$rules_artifact")"
+    build_codex_rules > "$rules_artifact"
+    echo "Wrote: $rules_artifact"
+  }
+
   resolve_rules_source() {
     if [ -f "$rules_artifact" ]; then
       echo "$rules_artifact"
@@ -208,6 +214,9 @@ RULES
       ;;
     rules)
       case "${2:-}" in
+        --build)
+          write_rules_artifact
+          ;;
         --apply)
           apply_rules_file
           ;;
@@ -230,7 +239,7 @@ RULES
       ;;
     clock)
       shift || true
-      "$REPO_DIR/bin/dev-kit" clock "$@" --scope codex --root "$REPO_DIR/.codex/dev.kit/clock"
+      "$REPO_DIR/bin/dev-kit" clock "$@" --scope codex --root "$REPO_DIR/.codex/clock"
       ;;
     skills)
       local skills_doc="$REPO_DIR/src/context/30_module/ai/skills.md"
@@ -243,6 +252,9 @@ RULES
       ;;
     --plan-rules)
       plan_rules_diff
+      ;;
+    --build-rules)
+      write_rules_artifact
       ;;
     --apply-rules)
       apply_rules_file
