@@ -9,7 +9,7 @@ fi
 TASK_ID="$1"
 ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)"
 FEEDBACK_FILE="$ROOT_DIR/docs/_feedback.md"
-WORKFLOW_DIR="$ROOT_DIR/workflows/$TASK_ID"
+WORKFLOW_DIR="$ROOT_DIR/src/workflows/$TASK_ID"
 WORKFLOW_FILE="$WORKFLOW_DIR/workflow.md"
 
 if [ ! -f "$FEEDBACK_FILE" ]; then

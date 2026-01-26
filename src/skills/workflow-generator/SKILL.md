@@ -23,6 +23,6 @@ Read this before generating or restructuring workflows:
 
 ## Placement rules
 
-- Parent workflows live in `workflows/`.
-- Child workflows live under `workflows/<parent>/<child>/index.md`.
+- Parent workflows live in `src/workflows/`.
+- Child workflows live under `src/workflows/<parent>/<child>/index.md`.
 - Keep filenames stable and human-readable.

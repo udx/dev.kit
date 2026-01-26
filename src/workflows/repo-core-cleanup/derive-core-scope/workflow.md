@@ -13,10 +13,10 @@ Inputs:
 - `docs/index.md`
 
 Intended file edits (proposed only):
-- Create `workflows/repo-core-cleanup/flow-notes.md`.
-- Create `workflows/repo-core-cleanup/core-scope.md`.
-- Create `workflows/repo-core-cleanup/keep-list.txt`.
-- Create `workflows/repo-core-cleanup/open-questions.md` when needed.
+- Create `src/workflows/repo-core-cleanup/flow-notes.md`.
+- Create `src/workflows/repo-core-cleanup/core-scope.md`.
+- Create `src/workflows/repo-core-cleanup/keep-list.txt`.
+- Create `src/workflows/repo-core-cleanup/open-questions.md` when needed.
 
 Validation checks:
 - Core scope summary is traceable to labels in `assets/flow.svg`.
@@ -31,33 +31,33 @@ Input:
 Logic/Tooling:
 - `codex exec "rg -n '<text|<tspan|<title' assets/flow.svg"`
 - `codex exec "sed -n '1,200p' assets/flow.svg"`
-- `codex exec "$EDITOR workflows/repo-core-cleanup/flow-notes.md"` to capture the mechanism labels and relationships.
+- `codex exec "$EDITOR src/workflows/repo-core-cleanup/flow-notes.md"` to capture the mechanism labels and relationships.
 Expected output/result:
-- `workflows/repo-core-cleanup/flow-notes.md` with a concise mechanism outline.
+- `src/workflows/repo-core-cleanup/flow-notes.md` with a concise mechanism outline.
 Done: false
 
 ### Step 2
 Task: Inventory repo files against mechanism cues
 Input:
-- `workflows/repo-core-cleanup/flow-notes.md`
+- `src/workflows/repo-core-cleanup/flow-notes.md`
 - Repo file tree
 Logic/Tooling:
 - `codex exec "rg --files > /tmp/repo-core-cleanup-files.txt"`
 - `codex exec "rg -n '' README.md docs/index.md"` to locate current entry points.
-- `codex exec "$EDITOR workflows/repo-core-cleanup/core-scope.md"` to map mechanism cues to required files.
+- `codex exec "$EDITOR src/workflows/repo-core-cleanup/core-scope.md"` to map mechanism cues to required files.
 Expected output/result:
-- `workflows/repo-core-cleanup/core-scope.md` mapping mechanism elements to files/dirs.
+- `src/workflows/repo-core-cleanup/core-scope.md` mapping mechanism elements to files/dirs.
 Done: false
 
 ### Step 3
 Task: Produce keep list and open questions
 Input:
-- `workflows/repo-core-cleanup/core-scope.md`
+- `src/workflows/repo-core-cleanup/core-scope.md`
 - `/tmp/repo-core-cleanup-files.txt`
 Logic/Tooling:
-- `codex exec "$EDITOR workflows/repo-core-cleanup/keep-list.txt"` to list required paths (one per line).
-- `codex exec "$EDITOR workflows/repo-core-cleanup/open-questions.md"` for any ambiguous mappings.
+- `codex exec "$EDITOR src/workflows/repo-core-cleanup/keep-list.txt"` to list required paths (one per line).
+- `codex exec "$EDITOR src/workflows/repo-core-cleanup/open-questions.md"` for any ambiguous mappings.
 Expected output/result:
-- `workflows/repo-core-cleanup/keep-list.txt` containing the minimal core set.
-- `workflows/repo-core-cleanup/open-questions.md` (optional).
+- `src/workflows/repo-core-cleanup/keep-list.txt` containing the minimal core set.
+- `src/workflows/repo-core-cleanup/open-questions.md` (optional).
 Done: false

@@ -17,7 +17,7 @@ The purpose of this document is architectural control, not narrative.
 - Output contracts: `docs/cde/output-contracts.md`
 - CDE contracts: `docs/cde/contracts.md`
 - Prompt-as-workflow: `docs/execution/prompt-as-workflow.md`
-- Iteration skill contract: `skills/iteration.md`
+- Iteration skill contract: `src/skills/iteration.md`
 - Runtime boundary: `docs/runtime/index.md`
 
 ## Core Engine Layout (Target)
@@ -27,11 +27,11 @@ The purpose of this document is architectural control, not narrative.
 - src/
 - config/
 - docs/
-- skills/
+- src/skills/
 - scripts/
-- prompts/
+- src/prompts/
 - tasks/
-- workflows/
+- src/workflows/
 - schemas/
 - templates/
 - assets/

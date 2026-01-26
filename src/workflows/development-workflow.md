@@ -14,7 +14,7 @@ done: false
 codex exec "
 Task: Run the Codex configuration workflow before any other steps.
 Input:
-- workflows/codex-config/index.md
+- src/workflows/codex-config/index.md
 Logic/Tooling:
 - Follow the referenced workflow steps in order.
 Expected output/result:
@@ -35,7 +35,7 @@ Logic/Tooling:
 - Define forbidden actions (network, deletes, recursive AI calls).
 Expected output/result:
 - Clear understanding of scope, safety rules, and allowed operations.
-"
+worker-run exec printenv | grep CODEX" true|false
 
 ---
 

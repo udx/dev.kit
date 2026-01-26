@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)"
 DOCS_DIR="$ROOT_DIR/docs"
-PROMPT_FILE="$ROOT_DIR/prompts/review-docs.md"
+PROMPT_FILE="$ROOT_DIR/src/prompts/review-docs.md"
 FEEDBACK_FILE="$DOCS_DIR/_feedback.md"
 TREE_FILE="$DOCS_DIR/_tree.txt"
 

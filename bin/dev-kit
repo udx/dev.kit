@@ -283,7 +283,7 @@ Input:
   - docs/execution/prompt-as-workflow.md
   - docs/execution/iteration-loop.md
   - docs/execution/extraction-gate.md
-  - skills/iteration.md
+  - src/skills/iteration.md
 
 Logic/Tooling:
 - Derive the minimal number of steps required to complete the request.

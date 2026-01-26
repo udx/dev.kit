@@ -32,7 +32,7 @@ Core engine must include:
   - execution (cli primitives, workflow IO schema, iteration loop, extraction gate, prompt-as-workflow)
   - runtime (capability detect, lifecycle)
   - adaptation (rules: produces artifacts only)
-- Iteration mechanism: skills/iteration.md, scripts/, prompts/, tasks/
+- Iteration mechanism: src/skills/iteration.md, scripts/, src/prompts/, tasks/
 - Minimal templates/assets/schemas needed by core
 - CLI behavior:
   - `dev.kit` shows helper/usage output by default
@@ -51,7 +51,7 @@ Extensions:
 - Move to extensions/ and not required by core
 
 Target layout (propose/justify, minimal diffs):
-bin/ lib/ src/ config/ docs/ skills/ scripts/ prompts/ tasks/ workflows/
+bin/ lib/ src/ config/ docs/ src/skills/ scripts/ src/prompts/ tasks/ src/workflows/
 schemas/ templates/ assets/ extensions/
 
 Required specs:
@@ -59,7 +59,13 @@ Required specs:
 - docs/execution/workflow-io-schema.md (DOC-003) encodes workflow IO schema
 
 You MUST produce artifacts:
-1) Update README.md and docs/index.md to reflect the new layout and entry points
+1) docs/_core-engine-plan.md
+   - target layout, keep/move/remove lists, extension mechanism, enforcement points, compatibility notes
+2) docs/_core-engine-migration.md
+   - bounded checklist, rollback notes, validation checklist
+3) src/workflows/core-engine-migration/workflow.md
+   - prompt-as-workflow format, bounded steps, child workflow extraction if needed
+4) Update README.md and docs/index.md to reflect the new layout and entry points
 
 Execution rules:
 - Artifacts only; no runtime behavior changes and no command execution.

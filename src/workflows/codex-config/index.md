@@ -69,11 +69,11 @@ done: false
 codex exec "
 Task: Install the workflow-generator skill for consistent workflow outputs.
 Input:
-- skills/workflow-generator/
+- src/skills/workflow-generator/
 - ~/.codex/skills/
 Logic/Tooling:
 - If ~/.codex/skills is missing, create it; otherwise log it exists
-- Install the skill using `scripts/install-codex-skill.sh skills/workflow-generator workflow-generator \"$HOME/.codex/skills\"`
+- Install the skill using `scripts/install-codex-skill.sh src/skills/workflow-generator workflow-generator \"$HOME/.codex/skills\"`
 - Verify SKILL.md frontmatter and references exist
 - If the install must run outside sandbox, paste the full output into `assets/fixtures/logs.txt`
 Expected output/result:
@@ -104,7 +104,7 @@ done: false
 codex exec "
 Task: Run the Codex rules minimization workflow.
 Input:
-- workflows/codex-config/codex-rules-minimal/index.md
+- src/workflows/codex-config/codex-rules-minimal/index.md
 Logic/Tooling:
 - Follow the referenced workflow steps in order
 Expected output/result:
@@ -136,7 +136,7 @@ done: false
 codex exec "
 Task: Run the repo-scoped skills workflow to support per-repo skills.
 Input:
-- workflows/codex-config/repo-skills/index.md
+- src/workflows/codex-config/repo-skills/index.md
 Logic/Tooling:
 - Follow the referenced workflow steps in order
 Expected output/result:

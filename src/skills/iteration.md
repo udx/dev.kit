@@ -18,7 +18,7 @@ Purpose: Define and enforce the repo-native iteration contract for agents.
 ## Rules
 - No execution authority. Agents only produce artifacts and workflows.
 - Read `docs/_feedback.md` as the source of review tasks.
-- Generate workflows under `workflows/<task-id>/workflow.md`.
+- Generate workflows under `src/workflows/<task-id>/workflow.md`.
 - Steps MUST be bounded, deterministic, and have explicit inputs/outputs.
 - Never mutate intent. Only propose changes via artifacts.
 - Mark review items resolved by updating the resolution log in `docs/_feedback.md`.

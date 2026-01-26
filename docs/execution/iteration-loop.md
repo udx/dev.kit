@@ -20,17 +20,17 @@ review
 
 - Review input: `docs/_tree.txt`
 - Review output: `docs/_feedback.md`
-- Workflow: `workflows/<task-id>/workflow.md`
-- Review prompt: `prompts/review-docs.md`
+- Workflow: `src/workflows/<task-id>/workflow.md`
+- Review prompt: `src/prompts/review-docs.md`
 - Helper scripts: `scripts/review-docs.sh`, `scripts/apply-task.sh`
 - Subtask loop: `docs/execution/subtask-loop.md` (task-specific prompt/feedback)
-- Skill contract: `skills/iteration.md`
+- Skill contract: `src/skills/iteration.md`
 
 ## See Also
 
 - Spec kernel entrypoint: `docs/index.md`
 - Repo overview: `README.md`
-- Iteration skill contract: `skills/iteration.md`
+- Iteration skill contract: `src/skills/iteration.md`
 
 ## Boundaries
 
