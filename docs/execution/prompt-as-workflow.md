@@ -29,7 +29,7 @@ Logic/Tooling:
 - Derive the minimal number of steps required to complete the request.
 - Each step must include: Task, Input, Logic/Tooling, Expected output/result.
 - Use CLI execution primitives for each step (even when only reading files).
-- Mark each step with done: false.
+- Mark each step with status: planned.
 - Follow the workflow-generator skill if available.
 - Apply the Extraction Gate; if 2+ answers are yes, extract a child workflow.
 - Child workflows should be nested under the parent workflow directory.
@@ -37,6 +37,6 @@ Logic/Tooling:
 - Keep steps deterministic, plan-first, and repo-scoped.
 
 Output/Result:
-- A single Markdown workflow file with ordered steps and done: false per step.
+- A single Markdown workflow file with ordered steps and status per step.
 - Any child workflow files referenced by parent steps.
 """

@@ -1,56 +1,37 @@
-<img src="assets/logo.svg">
+<img src="assets/logo.svg" alt="dev.kit logo">
 
-[![License](https://img.shields.io/github/license/udx/worker.svg)](LICENSE) [![Documentation](https://img.shields.io/badge/docs-dev.kit-blue.svg)](./docs/)
+# dev.kit
 
-Engineering kit for bootstrapping and orchestrating developer workflows. Designed for deterministic execution and a standardized knowledge base.
+Deterministic developer workflow kit for humans + AI. One CLI entrypoint, shared workflows/prompts, and a stable contract for iteration.
 
-Why use it:
-- Consistent entrypoint for local workflows.
-- Explicit, reversible setup with minimal shell edits.
-- Safe, discoverable automation for humans and AI.
-
-Install:
+Quick start:
+```
 curl -fsSL https://raw.githubusercontent.com/udx/dev.kit/main/bin/scripts/install.sh | bash
 
-Enable:
 dev.kit enable --shell=bash   # or --shell=zsh
-
-Flow:
-- Install creates `~/.udx/dev.kit/` and drops env/config there.
-- Enable opts into auto-init for new shells (and loads autocomplete).
-- Each session prints
-
-```
-> dev.kit: active
-> Run `dev.kit` to start
 ```
 
 Start here:
 - `docs/index.md`
 - `docs/execution/iteration-loop.md`
-- `docs/execution/subtask-loop.md`
-- `skills/iteration.md`
+- `docs/execution/cli-primitives.md`
 
-How to run review iteration:
-- `scripts/review-docs.sh`
-- VS Code tasks (see `scripts/` for entry points)
+Repo map (core):
+- `bin/` CLI entrypoints
+- `lib/` runtime library code
+- `src/` runtime source
+- `config/` runtime configuration
+- `docs/` specs and contracts
+- `workflows/` workflow artifacts
+- `prompts/` iteration prompts
+- `schemas/` workflow I/O schemas
+- `scripts/` helpers
 
-Repo map:
-| Area | Meaning |
-| --- | --- |
-| `bin/` | Product runtime CLI entrypoints (current). |
-| `lib/` | Product runtime library code (current). |
-| `src/` | Product runtime source (current). |
-| `config/` | Product runtime configuration (current). |
-| `docs/` | Spec kernel: design, contracts, and canonical repo interfaces. |
-| `workflows/` | Workflow artifacts and runbooks. |
-| `prompts/` | Iteration prompts and review inputs. |
-| `scripts/` | Iteration tooling (review/apply helpers). |
-| `templates/` | Reusable templates (docker, mermaid). |
-| `schemas/` | JSON/YAML/MD schemas. |
-| `assets/` | Diagrams, fixtures, and artifacts. |
-| `tasks/` | Subtask loop directories (prompt/feedback). |
-| `skills/` | Iteration skill contracts and workflow specs. |
-
-Legacy:
-- Legacy tree has been removed; see `docs/legacy-retirement.md` for provenance.
+Prompt for teammate AI:
+```
+You are my teammate working on dev.kit. Goal: keep the workflow engine deterministic, predictable, and easy to run locally.
+Start by reading `docs/index.md` and `docs/execution/iteration-loop.md`.
+Core code lives in `bin/`, `lib/`, `src/`, and `config/`. Workflows and prompts live in `workflows/` and `prompts/`.
+Keep changes small and reversible. Prefer explicit CLI behavior over hidden side effects.
+If unsure, ask before introducing new abstractions or reworking execution flow.
+```

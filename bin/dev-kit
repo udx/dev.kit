@@ -9,6 +9,7 @@ Commands:
   help        Show this help
   version     Print version
   paths       Show key local paths
+  exec        Normalize a request and run codex exec (prompt-as-workflow)
   codex       Codex integration helpers (config/rules/skills)
   install     Install dev.kit to ~/.local/bin
   update      Update dev.kit from git and re-install
@@ -223,6 +224,159 @@ case "$cmd" in
       echo "Codex module not available." >&2
       exit 1
     fi
+    ;;
+  exec)
+    shift || true
+    print_only="false"
+    show_log="false"
+    stream_logs="true"
+    case "${1:-}" in
+      --print|--dry-run)
+        print_only="true"
+        shift
+        ;;
+      --show-log)
+        show_log="true"
+        shift
+        ;;
+      --stream)
+        stream_logs="true"
+        shift
+        ;;
+      --no-stream|--quiet)
+        stream_logs="false"
+        shift
+        ;;
+      -h|--help)
+        cat <<'EXEC_USAGE'
+Usage: dev.kit exec [--print] [--show-log] [--stream|--no-stream] "<request>"
+
+Options:
+  --print, --dry-run  Print the normalized prompt without running codex
+  --show-log          Print full codex exec logs after completion
+  --stream            Stream codex exec logs to stdout (default)
+  --no-stream, --quiet  Suppress streaming logs (log file only)
+EXEC_USAGE
+        exit 0
+        ;;
+    esac
+
+    if [ "$#" -gt 0 ]; then
+      user_prompt="$*"
+    else
+      if [ -t 0 ]; then
+        echo "Missing request. Example: dev.kit exec \"optimize dev.kit repo\"" >&2
+        exit 1
+      fi
+      user_prompt="$(cat)"
+    fi
+
+    normalized_prompt="$(cat <<EOF
+You are a deterministic workflow generator.
+
+Task:
+Convert the user request into a workflow document using the prompt-as-workflow approach and the iteration contract.
+
+Input:
+- User request (freeform).
+- Repo docs:
+  - docs/execution/prompt-as-workflow.md
+  - docs/execution/iteration-loop.md
+  - docs/execution/extraction-gate.md
+  - skills/iteration.md
+
+Logic/Tooling:
+- Derive the minimal number of steps required to complete the request.
+- Each step must include: Task, Input, Logic/Tooling, Expected output/result.
+- Use CLI execution primitives for each step (even when only reading files).
+- Mark each step with done: false.
+- Follow the workflow-generator skill if available.
+- Apply the Extraction Gate; if 2+ answers are yes, extract a child workflow.
+- Child workflows should be nested under the parent workflow directory.
+- Reference the child workflow from the parent step.
+- Keep steps deterministic, plan-first, and repo-scoped.
+- Use the iteration contract: no execution authority; only output workflow artifacts.
+- If the work spans multiple iterations, define iteration boundaries and expected artifacts per iteration.
+- If the request is ambiguous, emit a request output formatted as a workflow-like step list:
+  - Step 1: Answer the question (state what is unclear).
+  - Step 2: Choose from options / ask for clarification.
+  - Step 3: Re-run after answers (ru).
+  - Step N: Modify the workflow accordingly.
+- Do not call dev.kit exec or any recursive execution wrapper.
+
+Output/Result:
+- A single Markdown workflow file with ordered steps and done: false per step.
+- Any child workflow files referenced by parent steps.
+
+User request:
+$user_prompt
+EOF
+)"
+
+    if [ "$print_only" = "true" ]; then
+      printf "%s\n" "$normalized_prompt"
+      exit 0
+    fi
+
+    if command -v codex >/dev/null 2>&1; then
+      ensure_dev_kit_home
+      log_dir="$DEV_KIT_HOME/exec"
+      mkdir -p "$log_dir"
+      log_path="$log_dir/exec-$(date +%Y%m%d%H%M%S).log"
+      result_path="$(mktemp)"
+
+      print_section "dev.kit exec"
+      print_check "prompt" "[ok]" "normalized"
+      print_check "codex" "[ok]" "running"
+
+      if [ "$stream_logs" = "true" ]; then
+        if codex exec --output-last-message "$result_path" "$normalized_prompt" 2>&1 | tee "$log_path"; then
+          print_check "codex" "[ok]" "log: $log_path"
+        else
+          status=$?
+          print_check "codex" "[warn]" "exit: $status (log: $log_path)"
+          if [ "$show_log" = "true" ] && [ "$stream_logs" != "true" ]; then
+            cat "$log_path"
+          else
+            echo "codex failed. Re-run with --show-log to see details." >&2
+          fi
+          rm -f "$result_path"
+          exit "$status"
+        fi
+      elif codex exec --output-last-message "$result_path" "$normalized_prompt" >"$log_path" 2>&1; then
+        print_check "codex" "[ok]" "log: $log_path"
+      else
+        status=$?
+        print_check "codex" "[warn]" "exit: $status (log: $log_path)"
+        if [ "$show_log" = "true" ]; then
+          cat "$log_path"
+        else
+          echo "codex failed. Re-run with --show-log to see details." >&2
+        fi
+        rm -f "$result_path"
+        exit "$status"
+      fi
+
+      echo ""
+      echo "Result:"
+      if [ -s "$result_path" ]; then
+        cat "$result_path"
+      else
+        echo "(no final response captured; see log: $log_path)"
+      fi
+      echo ""
+      echo "Next: review the workflow output; refine the request and re-run if needed."
+      rm -f "$result_path"
+      if [ "$show_log" = "true" ] && [ "$stream_logs" != "true" ]; then
+        echo ""
+        echo "Full log:"
+        cat "$log_path"
+      fi
+      exit 0
+    fi
+
+    echo "codex not found. Run with --print to copy the prompt manually." >&2
+    exit 1
     ;;
   install)
     shift || true
