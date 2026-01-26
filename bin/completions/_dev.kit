@@ -2,60 +2,51 @@
 
 _dev_kit() {
   local -a commands
-  commands=(
-    'help:Show help'
-    'version:Print version'
-    'paths:Show key paths'
-    'codex:Codex helpers'
-    'install:Install dev.kit'
-    'update:Update dev.kit'
-    'uninstall:Uninstall dev.kit'
-    'enable:Enable shell integration'
-    'init:Session bootstrap'
-    'test:Run module tests'
-    'session:Session helpers'
-    'doctor:Health checks'
-    'clock:Wall-clock helper'
-    'capture:Capture logs'
-    'config:Config helpers'
-  )
+  local -a subcommands
+  local -a options
+  local cmd cur
+  local -a help_lines
+  local -a parsed
+  commands=(${(f)"$(dev.kit help 2>/dev/null | awk '/^  /{print $1}')"})
+
+  cmd="$words[2]"
+  cur="$words[CURRENT]"
 
   if (( CURRENT == 2 )); then
     _describe 'command' commands
     return
   fi
 
-  case "$words[2]" in
-    codex)
-      _arguments '1:subcommand:(config rules skills clock)' '--get-rules' '--plan-rules' '--build-rules' '--apply-rules' '--show' '--plan' '--build' '--apply'
-      ;;
-    install)
-      _arguments
-      ;;
-    uninstall)
-      _arguments '--purge'
-      ;;
-    enable)
-      _arguments '--shell=bash' '--shell=zsh' '--file=' '--force'
-      ;;
-    test)
-      _arguments '--module' '--module=' '--suite' '--suite=' '--all' '--mock' '--run' '--list' '--force'
-      ;;
-    clock)
-      _arguments '1:subcommand:(start status reset)' '--scope' '--scope=' '--root' '--root=' '--global'
-      ;;
-    session)
-      _arguments '1:subcommand:(start status summary save)' '--force'
-      ;;
-    capture)
-      _arguments '1:subcommand:(start stop status show shell clear auto-clean)' \
-        '--input' '--no-shell' '--force' '2:toggle:(on off)'
-      ;;
-    config)
-      _arguments '1:subcommand:(show reset set global repo)' '--force' \
-        '2:key:(quiet codex_suggest capture.enabled capture.full capture.auto_clean capture.auto_clean_iteration capture.ttl_days_global capture.ttl_days_repo)'
-      ;;
-  esac
+  if (( CURRENT == 3 )); then
+    subcommands=(${(f)"$(dev.kit "$cmd" -h 2>/dev/null | awk '
+      /^Commands:/ {flag=1; next}
+      flag && $0 ~ /^  [a-zA-Z0-9]/ {print $1}
+      flag && $0 == "" {exit}
+    ')"})
+    if (( ${#subcommands} )); then
+      _describe 'subcommand' subcommands
+      return
+    fi
+  fi
+
+  if [[ "$cur" == -* ]]; then
+    options=(${(f)"$(dev.kit "$cmd" -h 2>/dev/null | awk '
+      /^Options:/ {flag=1; next}
+      flag && $0 == "" {exit}
+      flag {
+        for (i=1; i<=NF; i++) {
+          if ($i ~ /^--/) {
+            gsub(/,/, "", $i);
+            print $i
+          }
+        }
+      }
+    ' | sort -u)"})
+    if (( ${#options} )); then
+      compadd -- $options
+      return
+    fi
+  fi
 }
 
 _dev_kit "$@"

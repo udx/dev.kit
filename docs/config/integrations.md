@@ -11,6 +11,7 @@ Define how integrations are enabled through contract-driven wiring.
 - Integrations are opt-in.
 - Global config stays minimal by default.
 - Local overrides are temporary and explicit.
+- AI integrations require `ai.enabled = true` to allow `dev.kit exec` to run external AI CLIs.
 
 ## Constraints
 

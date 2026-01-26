@@ -5,29 +5,8 @@ REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 UI_LIB="${REPO_DIR}/lib/ui.sh"
 BIN_DIR="${HOME}/.local/bin"
 TARGET="${BIN_DIR}/dev.kit"
-KIT_CONFIG="${REPO_DIR}/config/kit.env"
-kit_value() {
-  local key="$1"
-  local default="${2:-}"
-  local val=""
-  if [ -f "$KIT_CONFIG" ]; then
-    val="$(awk -F= -v k="$key" '
-      $1 ~ "^[[:space:]]*"k"[[:space:]]*$" {
-        sub(/^[[:space:]]*/,"",$2);
-        sub(/[[:space:]]*$/,"",$2);
-        print $2;
-        exit
-      }
-    ' "$KIT_CONFIG")"
-  fi
-  if [ -n "$val" ]; then
-    echo "$val"
-  else
-    echo "$default"
-  fi
-}
-DEV_KIT_OWNER="${DEV_KIT_OWNER:-$(kit_value OWNER "udx")}"
-DEV_KIT_REPO="${DEV_KIT_REPO:-$(kit_value REPO "dev.kit")}"
+DEV_KIT_OWNER="${DEV_KIT_OWNER:-udx}"
+DEV_KIT_REPO="${DEV_KIT_REPO:-dev.kit}"
 ENGINE_DIR="${HOME}/.${DEV_KIT_OWNER}/${DEV_KIT_REPO}"
 ENV_SRC="${REPO_DIR}/bin/env/dev-kit.sh"
 ENV_DST="${ENGINE_DIR}/env.sh"
@@ -116,13 +95,13 @@ fi
 
 if [ -d "$LIB_SRC_DIR" ]; then
   mkdir -p "$LIB_DST_DIR"
-  cp "$LIB_SRC_DIR/context.sh" "$LIB_DST_DIR/context.sh" 2>/dev/null || true
-  if [ -f "$LIB_DST_DIR/context.sh" ]; then
+  cp "$LIB_SRC_DIR/ui.sh" "$LIB_DST_DIR/ui.sh" 2>/dev/null || true
+  if [ -f "$LIB_DST_DIR/ui.sh" ]; then
     if command -v ui_ok >/dev/null 2>&1; then
-      ui_ok "Lib installed" "$LIB_DST_DIR/context.sh"
+      ui_ok "UI installed" "$LIB_DST_DIR/ui.sh"
     else
-      echo "OK  Lib installed"
-      echo "   $LIB_DST_DIR/context.sh"
+      echo "OK  UI installed"
+      echo "   $LIB_DST_DIR/ui.sh"
     fi
   fi
 fi
@@ -165,13 +144,19 @@ case "$PROFILE" in
   "$HOME/.zshrc") reload_cmd="source \"$HOME/.zshrc\"" ;;
   "$HOME/.bash_profile") reload_cmd="source \"$HOME/.bash_profile\"" ;;
 esac
-shell_flag="--shell=bash"
-case "${SHELL:-}" in
-  */zsh) shell_flag="--shell=zsh" ;;
-esac
 path_line="export PATH=\"$BIN_DIR:\$PATH\""
+path_prompt="true"
+if [ -f "$CONFIG_DST" ]; then
+  path_prompt="$(awk -F= '
+    $1 ~ "^[[:space:]]*install.path_prompt[[:space:]]*$" {
+      gsub(/[[:space:]]/,"",$2);
+      print tolower($2);
+      exit
+    }
+  ' "$CONFIG_DST")"
+fi
 if ! command -v dev.kit >/dev/null 2>&1; then
-  if [ -n "$PROFILE" ] && [ -t 0 ]; then
+  if [ -n "$PROFILE" ] && [ -t 0 ] && [ "$path_prompt" != "false" ]; then
     if [ -f "$PROFILE" ] && grep -Fqx "$path_line" "$PROFILE"; then
       if command -v ui_ok >/dev/null 2>&1; then
         ui_ok "PATH already set" "$PROFILE"
@@ -198,17 +183,13 @@ if ! command -v dev.kit >/dev/null 2>&1; then
       esac
     fi
     if command -v ui_section >/dev/null 2>&1; then
-      ui_section "Next steps (activate)"
+      ui_section "Next steps"
     else
       echo ""
-      echo "Next steps (activate)"
+      echo "Next steps"
     fi
     echo "  $reload_cmd"
     echo "  hash -r"
-    echo "  dev.kit enable $shell_flag"
-    echo ""
-    echo "  Or run once:"
-    echo "  ${REPO_DIR}/bin/dev-kit enable $shell_flag"
     exit 0
   else
     if command -v ui_section >/dev/null 2>&1; then
@@ -227,5 +208,10 @@ if command -v ui_section >/dev/null 2>&1; then
 else
   echo "Next step (auto-init)"
 fi
-echo "  dev.kit enable $shell_flag"
+echo "  Reload your shell:"
+echo "    $reload_cmd"
+echo "    hash -r"
+echo ""
+echo "  Then run:"
+echo "    dev.kit exec \"...\""
 echo ""

@@ -19,7 +19,7 @@ workflow:
         - docs/execution/prompt-as-workflow.md
         - docs/cde/output-contracts.md
         - docs/execution/workflow-io-schema.md
-        - src/prompts/dev.kit.developer.md
+        - src/prompts/developer/index.md
       actions:
         - Read the listed docs and prompt to establish scope and guardrails.
       outputs:

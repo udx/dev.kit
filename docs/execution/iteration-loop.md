@@ -21,8 +21,7 @@ review
 - Review input: `docs/_tree.txt`
 - Review output: `docs/_feedback.md`
 - Workflow: `src/workflows/<task-id>/workflow.md`
-- Review prompt: `src/prompts/review-docs.md`
-- Helper scripts: `scripts/review-docs.sh`, `scripts/apply-task.sh`
+- Helper scripts: `scripts/apply-task.sh`
 - Subtask loop: `docs/execution/subtask-loop.md` (task-specific prompt/feedback)
 - Skill contract: `src/skills/iteration.md`
 

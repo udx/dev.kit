@@ -13,10 +13,12 @@ The purpose of this document is architectural control, not narrative.
 - Iteration loop: `docs/execution/iteration-loop.md`
 - Subtask loop: `docs/execution/subtask-loop.md`
 - CLI primitives: `docs/execution/cli-primitives.md`
+- CLI structure: `docs/cli/index.md`
 - Workflow IO schema (step state): `docs/execution/workflow-io-schema.md`
 - Output contracts: `docs/cde/output-contracts.md`
 - CDE contracts: `docs/cde/contracts.md`
 - Prompt-as-workflow: `docs/execution/prompt-as-workflow.md`
+- Prompts reference: `docs/prompts.md`
 - Iteration skill contract: `src/skills/iteration.md`
 - Runtime boundary: `docs/runtime/index.md`
 

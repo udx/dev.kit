@@ -14,22 +14,20 @@ ui_color() {
   fi
 }
 
-LOG_LIB="${LOG_LIB:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/logging.sh}"
-if [ -f "$LOG_LIB" ]; then
-  # shellcheck disable=SC1090
-  . "$LOG_LIB"
-fi
-
 ui_reset() {
   ui_color "0"
 }
 
-ui_blue() {
-  ui_color "34"
+ui_dim() {
+  ui_color "2"
 }
 
 ui_cyan() {
   ui_color "36"
+}
+
+ui_magenta() {
+  ui_color "35"
 }
 
 ui_yellow() {
@@ -38,6 +36,37 @@ ui_yellow() {
 
 ui_emerald() {
   ui_color "32"
+}
+
+ui_orange() {
+  ui_color "38;5;208"
+}
+
+ui_banner() {
+  local brand="${1:-dev.kit}"
+  local c1 c2 c3 c4 r d left right
+  c1="$(ui_cyan)"
+  c2="$(ui_magenta)"
+  c3="$(ui_orange)"
+  c4="$(ui_emerald)"
+  r="$(ui_reset)"
+  d="$(ui_dim)"
+
+  if [[ "$brand" == *.* ]]; then
+    left="${brand%%.*}"
+    right=".${brand#*.}"
+  else
+    left="$brand"
+    right=""
+  fi
+
+  printf "\n"
+  printf "%s%s%s%s%s\n" "$c1" "$left" "$c2" "$right" "$r"
+  printf "%s%s%s\n" "$d" "ready to run" "$r"
+  printf "%s%s%s\n" "$c3" "  run:" "$r"
+  printf "    %sdev.kit exec \"...\"%s\n" "$c4" "$r"
+  printf "%s%s%s\n" "$c3" "  config:" "$r"
+  printf "    %sdev.kit config show%s\n" "$c4" "$r"
 }
 
 ui_header() {
@@ -85,22 +114,4 @@ ui_warn() {
   if [ -n "$detail" ]; then
     printf "   %s\n" "$detail"
   fi
-}
-
-ui_info() {
-  local msg="$*"
-  if command -v log_info >/dev/null 2>&1; then
-    log_info "$msg"
-    return
-  fi
-  printf "INFO %s\n" "$msg"
-}
-
-ui_error() {
-  local msg="$*"
-  if command -v log_error >/dev/null 2>&1; then
-    log_error "$msg"
-    return
-  fi
-  printf "ERROR %s\n" "$msg"
 }

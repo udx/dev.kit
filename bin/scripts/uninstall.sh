@@ -10,7 +10,9 @@ fi
 
 BIN_DIR="${HOME}/.local/bin"
 TARGET="${BIN_DIR}/dev.kit"
-ENGINE_DIR="${HOME}/.udx/dev.kit"
+DEV_KIT_OWNER="${DEV_KIT_OWNER:-udx}"
+DEV_KIT_REPO="${DEV_KIT_REPO:-dev.kit}"
+ENGINE_DIR="${HOME}/.${DEV_KIT_OWNER}/${DEV_KIT_REPO}"
 
 if [ -L "$TARGET" ] || [ -f "$TARGET" ]; then
   rm -f "$TARGET"
