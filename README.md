@@ -35,3 +35,29 @@ Core code lives in `bin/`, `lib/`, `src/`, and `config/`. Workflows and prompts 
 Keep changes small and reversible. Prefer explicit CLI behavior over hidden side effects.
 If unsure, ask before introducing new abstractions or reworking execution flow.
 ```
+
+Flow Mermaid:
+
+```mermaid
+flowchart TD
+  A[Input<br/>image, text, command] --> B[dev.kit]
+
+  B --> C{Route}
+  C -->|direct command| D[CLI execution]
+  C -->|codex exec| E[Prompt-as-workflow]
+
+  E --> F[Workflow response]
+  F --> G{Next action}
+  G -->|workflow command| H[Workflow step state<br/>planned, in_progress, done, blocked]
+  G -->|shell command| I[Shell command]
+
+  subgraph Sources
+    S1[Repo]
+    S2[CLI]
+    S3[Docs]
+    S4[Manifest]
+    S5[VDX / Knowledge base]
+  end
+
+  Sources --> B
+```
