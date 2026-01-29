@@ -18,3 +18,7 @@ This directory captures working patterns and reusable templates based on recent 
 
 - Added a GitHub Pages-friendly research index approach using a static JSON file consumed by the homepage.
 - Kept the research index generation local (Node script) instead of CI due to Actions billing limits.
+
+## 2026-01-29
+
+No new notes.

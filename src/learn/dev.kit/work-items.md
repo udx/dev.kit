@@ -12,3 +12,7 @@
 - Added a local Node script to generate `research/index.json` from `research/**/index.html`.
 - Wired homepage to fetch `research/index.json` and render a Research section.
 - Dropped the CI workflow when Actions were blocked, keeping generation local.
+
+## 2026-01-29
+
+No new notes.

@@ -10,3 +10,7 @@
 
 - For GitHub Pages "dynamic" sections, use a static JSON index and client-side fetch.
 - Generate the index from `research/**/index.html` so pages self-describe via `<title>` or `<h1>`.
+
+## 2026-01-29
+
+No new notes.
