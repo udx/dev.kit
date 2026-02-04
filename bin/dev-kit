@@ -127,26 +127,71 @@ config_value_scoped() {
   config_value "$CONFIG_FILE" "$key" "$default"
 }
 
-capture_enabled() {
+capture_mode() {
+  local mode=""
+  mode="$(config_value_scoped capture.mode "")"
+  if [ -n "$mode" ]; then
+    echo "$mode"
+    return
+  fi
   local enabled=""
-  enabled="$(config_value_scoped capture.enabled "false")"
-  [ "$enabled" = "true" ]
-}
-
-capture_base_dir() {
-  local root
-  root="$(get_repo_root)"
-  if [ -n "$root" ]; then
-    echo "$root"
+  enabled="$(config_value_scoped capture.enabled "true")"
+  if [ "$enabled" = "true" ]; then
+    echo "global"
   else
-    echo "$PWD"
+    echo "off"
   fi
 }
 
+capture_repo_id() {
+  local root=""
+  root="$(get_repo_root || true)"
+  if [ -z "$root" ]; then
+    root="$PWD"
+  fi
+  if command -v shasum >/dev/null 2>&1; then
+    printf "%s" "$root" | shasum -a 256 | awk '{print $1}'
+  else
+    printf "%s" "$root" | cksum | awk '{print $1}'
+  fi
+}
+
+capture_dir() {
+  local mode base repo_id
+  mode="$(capture_mode)"
+  case "$mode" in
+    off) return 1 ;;
+    repo)
+      base="$(get_repo_root || true)"
+      if [ -z "$base" ]; then
+        base="$PWD"
+      fi
+      echo "$base/.udx/dev.kit/capture"
+      ;;
+    global|*)
+      base="$(config_value_scoped capture.dir "")"
+      if [ -z "$base" ]; then
+        base="$DEV_KIT_HOME/capture"
+      elif [[ "$base" == "~/"* ]]; then
+        base="$HOME/${base:2}"
+      elif [[ "$base" != /* ]]; then
+        base="$DEV_KIT_HOME/$base"
+      fi
+      repo_id="$(capture_repo_id)"
+      echo "$base/$repo_id"
+      ;;
+  esac
+}
+
+capture_enabled() {
+  local mode=""
+  mode="$(capture_mode)"
+  [ "$mode" != "off" ]
+}
+
 capture_prepare() {
-  local base dir input_path output_path
-  base="$(capture_base_dir)"
-  dir="$base/.udx/dev.kit/capture"
+  local dir input_path output_path
+  dir="$(capture_dir)" || return 1
   input_path="$dir/last-input.log"
   output_path="$dir/last-output.log"
   mkdir -p "$dir"
@@ -206,6 +251,10 @@ if ! command -v "$fn" >/dev/null 2>&1; then
 fi
 
 ensure_dev_kit_home
+if [ "$cmd" = "capture" ]; then
+  "$fn" "$@"
+  exit $?
+fi
 if capture_enabled; then
   full_cmd="dev.kit ${orig_args[*]}"
   output_path="$(capture_prepare "$full_cmd")"

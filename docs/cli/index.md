@@ -6,6 +6,18 @@ This section documents the dev.kit CLI surface and how the repository is wired.
 ## Structure
 - `bin/dev-kit`: High-level entrypoint. Loads core helpers and dispatches subcommands dynamically from `lib/commands`.
 - `bin/env/dev-kit.sh`: Shell init (banner, capture hook, completions).
+Capture storage (config):
+- `capture.mode = global|repo|off` (default: `global`)
+- `capture.dir = <path>` (optional override for global)
+Relative `capture.dir` paths resolve under `DEV_KIT_HOME`.
+Capture commands:
+- `dev.kit capture path` (print capture directory)
+- `dev.kit capture show` (print capture paths + last input/output)
+Capture commands do not update capture logs (so you can inspect the last run).
+Codex integration commands:
+- `dev.kit codex status` (show managed paths and last backup)
+- `dev.kit codex apply` (backup and apply templates to `~/.codex`)
+- `dev.kit codex restore` (restore the latest backup)
 - `bin/completions/*`: Shell completions (bash + zsh).
 - `bin/scripts/install.sh`: Install symlink + env + completions.
 - `bin/scripts/uninstall.sh`: Remove symlink; `--purge` removes engine dir.

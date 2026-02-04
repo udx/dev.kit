@@ -84,29 +84,74 @@ dev_kit_capture_repo_root() {
   fi
 }
 
-dev_kit_capture_base_dir() {
-  local root
-  root="$(dev_kit_capture_repo_root)"
-  if [ -n "$root" ]; then
-    echo "$root"
+dev_kit_capture_mode() {
+  local mode=""
+  mode="$(dev_kit_config_value capture.mode "")"
+  if [ -n "$mode" ]; then
+    echo "$mode"
+    return
+  fi
+  local enabled
+  enabled="$(dev_kit_config_bool capture.enabled true)"
+  if [ "$enabled" = "true" ]; then
+    echo "global"
   else
-    echo "$PWD"
+    echo "off"
   fi
 }
 
+dev_kit_capture_repo_id() {
+  local root=""
+  root="$(dev_kit_capture_repo_root)"
+  if [ -z "$root" ]; then
+    root="$PWD"
+  fi
+  if command -v shasum >/dev/null 2>&1; then
+    printf "%s" "$root" | shasum -a 256 | awk '{print $1}'
+  else
+    printf "%s" "$root" | cksum | awk '{print $1}'
+  fi
+}
+
+dev_kit_capture_dir() {
+  local mode base repo_id
+  mode="$(dev_kit_capture_mode)"
+  case "$mode" in
+    off) return 1 ;;
+    repo)
+      base="$(dev_kit_capture_repo_root)"
+      if [ -z "$base" ]; then
+        base="$PWD"
+      fi
+      echo "$base/.udx/dev.kit/capture"
+      ;;
+    global|*)
+      base="$(dev_kit_config_value capture.dir "")"
+      if [ -z "$base" ]; then
+        base="$DEV_KIT_HOME/capture"
+      elif [[ "$base" == "~/"* ]]; then
+        base="$HOME/${base:2}"
+      elif [[ "$base" != /* ]]; then
+        base="$DEV_KIT_HOME/$base"
+      fi
+      repo_id="$(dev_kit_capture_repo_id)"
+      echo "$base/$repo_id"
+      ;;
+  esac
+}
+
 dev_kit_capture_enabled() {
-  local enabled
-  enabled="$(dev_kit_config_bool capture.enabled false)"
-  [ "$enabled" = "true" ]
+  local mode=""
+  mode="$(dev_kit_capture_mode)"
+  [ "$mode" != "off" ]
 }
 
 dev_kit_capture_cleanup() {
   if ! dev_kit_capture_enabled; then
     return 0
   fi
-  local root dir
-  root="$(dev_kit_capture_base_dir)"
-  dir="$root/.udx/dev.kit/capture"
+  local dir
+  dir="$(dev_kit_capture_dir)" || return 0
   if [ -d "$dir" ]; then
     rm -f "$dir/last-input.log" "$dir/last-output.log" "$dir/capture.log"
     rmdir "$dir" 2>/dev/null || true
