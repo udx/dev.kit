@@ -34,7 +34,30 @@ detect_profile() {
 mkdir -p "$BIN_DIR"
 mkdir -p "$ENGINE_DIR"
 
-desired_target="${REPO_DIR}/bin/dev-kit"
+copy_dir_contents() {
+  local src="$1"
+  local dst="$2"
+  [ -d "$src" ] || return 0
+  mkdir -p "$dst"
+  cp -R "$src/." "$dst/"
+}
+
+sync_engine() {
+  copy_dir_contents "$REPO_DIR/bin" "$ENGINE_DIR/bin"
+  copy_dir_contents "$REPO_DIR/lib" "$ENGINE_DIR/lib"
+  copy_dir_contents "$REPO_DIR/templates" "$ENGINE_DIR/templates"
+  copy_dir_contents "$REPO_DIR/docs" "$ENGINE_DIR/docs"
+  copy_dir_contents "$REPO_DIR/src" "$ENGINE_DIR/src"
+  copy_dir_contents "$REPO_DIR/config" "$ENGINE_DIR/config"
+  copy_dir_contents "$REPO_DIR/scripts" "$ENGINE_DIR/scripts"
+  copy_dir_contents "$REPO_DIR/assets" "$ENGINE_DIR/assets"
+  copy_dir_contents "$REPO_DIR/schemas" "$ENGINE_DIR/schemas"
+
+  # Remove legacy command entrypoints that should no longer exist.
+  rm -f "$ENGINE_DIR/lib/commands/promt.sh"
+}
+
+desired_target="${ENGINE_DIR}/bin/dev-kit"
 if [ -f "$UI_LIB" ]; then
   # shellcheck disable=SC1090
   . "$UI_LIB"
@@ -47,6 +70,8 @@ else
   echo " dev.kit | install "
   echo "----------------"
 fi
+
+sync_engine
 
 if [ -L "$TARGET" ]; then
   current_target="$(readlink "$TARGET")"
@@ -208,6 +233,36 @@ if command -v ui_section >/dev/null 2>&1; then
 else
   echo "Next step (auto-init)"
 fi
+env_line="source \"$ENGINE_DIR/env.sh\""
+if [ -n "$PROFILE" ] && [ -t 0 ]; then
+  if [ -f "$PROFILE" ] && grep -Fqx "$env_line" "$PROFILE"; then
+    if command -v ui_ok >/dev/null 2>&1; then
+      ui_ok "Auto-init already set" "$PROFILE"
+    else
+      echo "OK  Auto-init already set"
+      echo "   $PROFILE"
+    fi
+  else
+    printf "Add dev.kit auto-init to %s? [y/N] " "$PROFILE"
+    read -r answer || true
+    case "$answer" in
+      y|Y|yes|YES)
+        printf "\n%s\n" "$env_line" >> "$PROFILE"
+        if command -v ui_ok >/dev/null 2>&1; then
+          ui_ok "Auto-init added" "$PROFILE"
+        else
+          echo "OK  Auto-init added"
+          echo "   $PROFILE"
+        fi
+        ;;
+      *) ;;
+    esac
+  fi
+else
+  echo "  $env_line"
+fi
+
+echo ""
 echo "  Reload your shell:"
 echo "    $reload_cmd"
 echo "    hash -r"
