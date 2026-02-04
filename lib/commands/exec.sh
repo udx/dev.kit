@@ -5,37 +5,52 @@ dev_kit_cmd_exec() {
   local print_only="false"
   local show_log="false"
   local stream_logs="true"
+  local skip_git_repo_check="false"
 
-  case "${1:-}" in
-    --print|--dry-run)
-      print_only="true"
-      shift
-      ;;
-    --show-log)
-      show_log="true"
-      shift
-      ;;
-    --stream)
-      stream_logs="true"
-      shift
-      ;;
-    --no-stream|--quiet)
-      stream_logs="false"
-      shift
-      ;;
-    -h|--help)
-      cat <<'EXEC_USAGE'
-Usage: dev.kit exec [--print] [--show-log] [--stream|--no-stream] "<request>"
+  while [[ $# -gt 0 ]]; do
+    case "${1:-}" in
+      --print|--dry-run)
+        print_only="true"
+        shift
+        ;;
+      --show-log)
+        show_log="true"
+        shift
+        ;;
+      --skip-git-repo-check)
+        skip_git_repo_check="true"
+        shift
+        ;;
+      --stream)
+        stream_logs="true"
+        shift
+        ;;
+      --no-stream|--quiet)
+        stream_logs="false"
+        shift
+        ;;
+      -h|--help)
+        cat <<'EXEC_USAGE'
+Usage: dev.kit exec [--print] [--show-log] [--skip-git-repo-check] [--stream|--no-stream] "<request>"
 
 Options:
   --print, --dry-run  Print the normalized prompt without running codex
   --show-log          Print full codex exec logs after completion
+  --skip-git-repo-check  Allow running Codex outside a Git repository
   --stream            Stream codex exec logs to stdout (default)
   --no-stream, --quiet  Suppress streaming logs (log file only)
 EXEC_USAGE
-      exit 0
-      ;;
-  esac
+        exit 0
+        ;;
+      --*)
+        echo "Unknown option: ${1:-}" >&2
+        exit 1
+        ;;
+      *)
+        break
+        ;;
+    esac
+  done
 
   local user_prompt=""
   if [ "$#" -gt 0 ]; then
@@ -60,28 +75,12 @@ EXEC_USAGE
     prompt_key="base"
   fi
 
-  local prompt_path=""
-  case "$prompt_key" in
-    base|default) prompt_path="$REPO_DIR/src/prompts/index.md" ;;
-    ai) prompt_path="$REPO_DIR/src/prompts/ai/index.md" ;;
-    ai.codex|codex) prompt_path="$REPO_DIR/src/prompts/ai/codex/index.md" ;;
-    ai.claude|claude) prompt_path="$REPO_DIR/src/prompts/ai/claude/index.md" ;;
-    developer|dev|dev.kit.developer) prompt_path="$REPO_DIR/src/prompts/developer/index.md" ;;
-    *)
-      if [[ "$prompt_key" == *"/"* ]] || [[ "$prompt_key" == *.md ]] || [[ "$prompt_key" == "~/"* ]]; then
-        prompt_path="$(expand_path "$prompt_key")"
-      fi
-      ;;
-  esac
-
-  if [ -z "$prompt_path" ] || [ ! -f "$prompt_path" ]; then
-    prompt_path="$REPO_DIR/src/prompts/index.md"
-  fi
+  dev_kit_prompt_build "$prompt_key" "$user_prompt"
 
   local prompt_body=""
-  if [ -f "$prompt_path" ]; then
-    prompt_body="$(cat "$prompt_path")"
-  fi
+  prompt_body="$DEV_KIT_PROMPT_BODY"
+  local prompt_paths=()
+  prompt_paths=("${DEV_KIT_PROMPT_PATHS[@]}")
 
   local cfg_exec_prompt=""
   local cfg_ai_enabled=""
@@ -117,17 +116,7 @@ EXEC_USAGE
   }
 
   local normalized_prompt=""
-  normalized_prompt="$(cat <<EOF
-$prompt_body
-
----
-
-This will generate a response based on the prompt above. Like advanced filtering
-
-User request:
-$user_prompt
-EOF
-)"
+  normalized_prompt="$prompt_body"
 
   if [ "$print_only" = "true" ]; then
     printf "%s\n" "$normalized_prompt"
@@ -156,13 +145,26 @@ EOF
     local log_path="$log_dir/exec-$(date +%Y%m%d%H%M%S).log"
     local result_path
     result_path="$(mktemp)"
+    local prompt_paths_display="(none)"
+    if [ "${#prompt_paths[@]}" -gt 0 ]; then
+      prompt_paths_display="${prompt_paths[0]}"
+      local idx=1
+      while [ "$idx" -lt "${#prompt_paths[@]}" ]; do
+        prompt_paths_display="${prompt_paths_display}, ${prompt_paths[$idx]}"
+        idx=$((idx + 1))
+      done
+    fi
 
     print_section "dev.kit exec"
-    print_check "prompt" "[ok]" "normalized ($prompt_path)"
+    print_check "prompt" "[ok]" "normalized ($prompt_paths_display)"
     print_check "codex" "[ok]" "running"
 
+    local codex_skip_arg=""
+    if [ "$skip_git_repo_check" = "true" ]; then
+      codex_skip_arg="--skip-git-repo-check"
+    fi
     if [ "$stream_logs" = "true" ]; then
-      if codex exec --output-last-message "$result_path" "$normalized_prompt" 2>&1 | tee "$log_path"; then
+      if codex exec ${codex_skip_arg:+"$codex_skip_arg"} --output-last-message "$result_path" "$normalized_prompt" 2>&1 | tee "$log_path"; then
         print_check "codex" "[ok]" "log: $log_path"
       else
         local status=$?
@@ -175,7 +177,7 @@ EOF
         rm -f "$result_path"
         exit "$status"
       fi
-    elif codex exec --output-last-message "$result_path" "$normalized_prompt" >"$log_path" 2>&1; then
+    elif codex exec ${codex_skip_arg:+"$codex_skip_arg"} --output-last-message "$result_path" "$normalized_prompt" >"$log_path" 2>&1; then
       print_check "codex" "[ok]" "log: $log_path"
     else
       local status=$?

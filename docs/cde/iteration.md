@@ -20,3 +20,4 @@ input
 
 - Iterations are bounded and normalized.
 - Output of iteration N becomes input to N+1.
+- Execution determinism is enforced at the execution boundary and artifact interfaces.

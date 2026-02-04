@@ -9,6 +9,7 @@ Use dev.kit as the execution wrapper and reasoning systems for planning.
 ## Interfaces
 
 - dev.kit exec (prompt normalization and execution wrapper)
+- dev.kit prompt (generates the normalized prompt artifact used by dev.kit exec)
 - Planning mechanisms (planning only)
 
 ## Documents

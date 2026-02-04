@@ -19,7 +19,7 @@ workflow:
         - docs/execution/iteration-loop.md
         - docs/cde/output-contracts.md
         - docs/execution/workflow-io-schema.md
-        - src/prompts/ai/claude/index.md
+        - templates/prompts/ai/claude/index.md
       actions:
         - Read the listed docs and prompt to align with Claude output needs.
       outputs:

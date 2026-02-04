@@ -19,7 +19,7 @@ workflow:
         - docs/execution/iteration-loop.md
         - docs/cde/output-contracts.md
         - docs/execution/workflow-io-schema.md
-        - src/prompts/ai/codex/index.md
+        - templates/prompts/ai/codex/index.md
       actions:
         - Read the listed docs and prompt to align with Codex exec usage.
       outputs:

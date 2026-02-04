@@ -31,7 +31,7 @@ The purpose of this document is architectural control, not narrative.
 - docs/
 - src/skills/
 - scripts/
-- src/prompts/
+- templates/prompts/
 - tasks/
 - src/workflows/
 - schemas/

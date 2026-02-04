@@ -19,7 +19,7 @@ workflow:
         - docs/execution/iteration-loop.md
         - docs/cde/output-contracts.md
         - docs/execution/workflow-io-schema.md
-        - src/prompts/ai/index.md
+        - templates/prompts/ai/index.md
       actions:
         - Read the listed docs and prompt to align output type and bounds.
       outputs:

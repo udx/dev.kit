@@ -15,6 +15,8 @@ Outputs must declare a single `output_type`:
 Rules:
 - Do not mix prompt and markdown in the same artifact.
 - If a prompt needs explanation, create a separate markdown artifact.
+- Prompt outputs are first-class CDE artifacts and must be explicit, versioned, and validated.
+- Prompt artifacts expose a stable signature with provider/model adapters.
 
 ## Bounded Work Policy
 

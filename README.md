@@ -2,7 +2,7 @@
 
 # dev.kit
 
-Deterministic developer workflow kit for humans + AI. One CLI entrypoint, shared workflows/prompts under src/, and a stable contract for iteration.
+Deterministic developer workflow kit for humans + AI. One CLI entrypoint, shared workflows/prompts under src/ and templates/, and a stable contract for iteration.
 
 Quick start:
 ```
@@ -23,7 +23,7 @@ Repo map (core):
 - `config/` runtime configuration
 - `docs/` specs and contracts
 - `src/workflows/` workflow artifacts
-- `src/prompts/` iteration prompts
+- `templates/prompts/` iteration prompts
 - `schemas/` workflow I/O schemas
 - `scripts/` helpers
 
@@ -31,7 +31,7 @@ Prompt for teammate AI:
 ```
 You are my teammate working on dev.kit. Goal: keep the workflow engine deterministic, predictable, and easy to run locally.
 Start by reading `docs/index.md` and `docs/execution/iteration-loop.md`.
-Core code lives in `bin/`, `lib/`, `src/`, and `config/`. Workflows and prompts live in `src/workflows/` and `src/prompts/`.
+Core code lives in `bin/`, `lib/`, `src/`, and `config/`. Workflows and prompts live in `src/workflows/` and `templates/prompts/`.
 Keep changes small and reversible. Prefer explicit CLI behavior over hidden side effects.
 If unsure, ask before introducing new abstractions or reworking execution flow.
 ```

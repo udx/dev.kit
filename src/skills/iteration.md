@@ -24,6 +24,34 @@ Purpose: Define and enforce the repo-native iteration contract for agents.
 - Mark review items resolved by updating the resolution log in `docs/_feedback.md`.
 - Mark subtask items resolved in `tasks/<task-id>/feedback.md`.
 
+## Workflow Schema Requirements
+- `workflow.output_type` must be `prompt` or `markdown`.
+- `workflow.bounded_work` must include:
+  - max_steps_per_iteration
+  - max_files_per_step
+  - max_new_files_per_iteration
+  - max_move_operations_per_step
+  - extract_child_workflow_if_any_exceeded
+- Step `status` must be one of: planned, in_progress, done, blocked.
+- Step `actions` must use CLI primitives: read, write, validate, report, execute, capture.
+
+## Single-exec Bounds (defaults)
+- max_steps_per_iteration: 6
+- max_files_per_step: 8
+- max_new_files_per_iteration: 3
+- max_move_operations_per_step: 0
+- extract_child_workflow_if_any_exceeded: true
+
+## Extraction Gate (2+ YES => child workflow)
+1) Any step exceeds bounded-work limits.
+2) Task has distinct deliverables that can be independently reviewed.
+3) Task spans multiple domains likely to exceed one-exec scope.
+4) Task needs commands outside the allowed command surface or extra validation.
+
+## Allowed Command Surface
+- Allowed: dev.kit ai skills; dev.kit config show/global/repo; dev.kit remote push.
+- Forbidden: dev.kit exec (no execution authority).
+
 ## How to Consume `docs/_feedback.md`
 - Identify unresolved items by task ID (e.g., DOC-002, MF-001).
 - Preserve original task language; only add structured workflow steps.

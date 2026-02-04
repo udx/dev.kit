@@ -17,7 +17,7 @@ workflow:
         - docs/index.md
         - docs/execution/iteration-loop.md
         - docs/execution/cli-primitives.md
-        - src/prompts/index.md
+        - templates/prompts/index.md
       actions:
         - Read the listed docs and prompt to align local-only guidance.
       outputs:
