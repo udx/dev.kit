@@ -345,7 +345,11 @@ PY
         value="${3:-}"
       fi
       if [ -n "$key" ] && [ "${2:-}" = "--key" ] && [ -n "${3:-}" ]; then
-        value="${4:-}"
+        if [ "${4:-}" = "--value" ] && [ -n "${5:-}" ]; then
+          value="${5:-}"
+        else
+          value="${4:-}"
+        fi
       fi
       if [ -z "$key" ]; then
         if [ -t 0 ] && [ "$force" != "true" ]; then
@@ -382,6 +386,7 @@ Commands:
 
 Options:
   --key <key>    Target a specific config key
+  --value <val>  Set a config value when using --key
   --force        Skip confirmation prompts
   --developer    Enable developer mode (sets exec.prompt + developer.enabled)
 CONFIG_USAGE
