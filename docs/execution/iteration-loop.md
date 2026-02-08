@@ -24,13 +24,13 @@ review
 - Workflow (reference): `src/`
 - Helper scripts: `scripts/apply-task.sh`
 - Subtask loop: `docs/execution/subtask-loop.md` (task-specific prompt/feedback)
-- Skill contract: `src/ai/codex/skills/iteration/SKILL.md`
+- Skill contract: `src/ai/integrations/codex/skills/iteration/SKILL.md`
 
 ## See Also
 
 - Spec kernel entrypoint: `docs/index.md`
 - Repo overview: `README.md`
-- Iteration skill contract: `src/ai/codex/skills/iteration/SKILL.md`
+- Iteration skill contract: `src/ai/integrations/codex/skills/iteration/SKILL.md`
 
 ## Boundaries
 

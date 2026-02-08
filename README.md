@@ -55,7 +55,8 @@ Prompts and templates:
 - `src/` runtime source + templates
 - `config/` runtime configuration
 - `docs/` specs and contracts
-- `src/ai/` AI integration templates
+- `src/ai/` shared AI integration assets
+- `src/ai/integrations/` integration-specific assets (codex, claude, gemini)
 - `src/prompts/` iteration prompts
 - `src/mermaid/` mermaid templates
 - `src/docker/` docker assets
@@ -65,7 +66,7 @@ Prompts and templates:
 ```
 You are my teammate working on dev.kit. Goal: keep the workflow engine deterministic, predictable, and easy to run locally.
 Start by reading `docs/index.md` and `docs/execution/iteration-loop.md`.
-Core code lives in `bin/`, `lib/`, `src/`, and `config/`. Prompts and AI templates live in `src/prompts/` and `src/ai/`.
+Core code lives in `bin/`, `lib/`, `src/`, and `config/`. Prompts live in `src/prompts/`. AI integration assets live in `src/ai/`.
 Keep changes small and reversible. Prefer explicit CLI behavior over hidden side effects.
 If unsure, ask before introducing new abstractions or reworking execution flow.
 ```
