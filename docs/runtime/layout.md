@@ -16,7 +16,12 @@ keep cleanup and upgrades predictable.
     codex/
       workflows/<repo-id>/...
       tasks/<repo-id>/...
-      logs/
+      logs/<repo-id>/
+        exec-<timestamp>.log
+        exec-<timestamp>.prompt.md
+        exec-<timestamp>.request.txt
+        exec-<timestamp>.result.md
+        exec-<timestamp>.meta
     capture/<repo-id>/...
     cache/
 ```

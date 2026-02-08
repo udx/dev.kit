@@ -131,18 +131,20 @@ EXEC_USAGE
 
   if command -v codex >/dev/null 2>&1; then
     ensure_dev_kit_home
-    local developer_enabled=""
-    developer_enabled="$(config_value_scoped developer.enabled "false")"
-    local log_dir="$DEV_KIT_STATE/exec"
-    if [ "$developer_enabled" = "true" ] || [ "$prompt_key" = "developer" ] || [ "$prompt_key" = "dev" ]; then
-      if [ -n "$repo_root" ]; then
-        log_dir="$repo_root/.udx/dev.kit/logs"
-      else
-        log_dir="$DEV_KIT_STATE/logs"
-      fi
+    local repo_id=""
+    repo_id="$(capture_repo_id || true)"
+    local log_dir="$DEV_KIT_STATE/codex/logs"
+    if [ -n "$repo_id" ]; then
+      log_dir="$log_dir/$repo_id"
     fi
     mkdir -p "$log_dir"
-    local log_path="$log_dir/exec-$(date +%Y%m%d%H%M%S).log"
+    local run_id=""
+    run_id="$(date +%Y%m%d%H%M%S)-$$"
+    local log_path="$log_dir/exec-$run_id.log"
+    local prompt_path="$log_dir/exec-$run_id.prompt.md"
+    local request_path="$log_dir/exec-$run_id.request.txt"
+    local result_out_path="$log_dir/exec-$run_id.result.md"
+    local meta_path="$log_dir/exec-$run_id.meta"
     local result_path
     result_path="$(mktemp)"
     local prompt_paths_display="(none)"
@@ -163,12 +165,37 @@ EXEC_USAGE
     if [ "$skip_git_repo_check" = "true" ]; then
       codex_skip_arg="--skip-git-repo-check"
     fi
+
+    printf "%s\n" "$user_prompt" > "$request_path"
+    printf "%s\n" "$normalized_prompt" > "$prompt_path"
+
+    write_exec_meta() {
+      local status="$1"
+      local exit_code="$2"
+      cat > "$meta_path" <<EOF
+timestamp: $(date -Iseconds)
+repo_root: ${repo_root:-}
+repo_id: ${repo_id:-}
+request_path: $request_path
+prompt_key: $prompt_key
+prompt_paths: $prompt_paths_display
+prompt_path: $prompt_path
+result_path: $result_out_path
+raw_log_path: $log_path
+status: $status
+exit_code: $exit_code
+EOF
+    }
+    write_exec_meta "running" "0"
+
     if [ "$stream_logs" = "true" ]; then
       if codex exec ${codex_skip_arg:+"$codex_skip_arg"} --output-last-message "$result_path" "$normalized_prompt" 2>&1 | tee "$log_path"; then
         print_check "codex" "[ok]" "log: $log_path"
+        write_exec_meta "ok" "0"
       else
         local status=$?
         print_check "codex" "[warn]" "exit: $status (log: $log_path)"
+        write_exec_meta "warn" "$status"
         if [ "$show_log" = "true" ] && [ "$stream_logs" != "true" ]; then
           cat "$log_path"
         else
@@ -179,9 +206,11 @@ EXEC_USAGE
       fi
     elif codex exec ${codex_skip_arg:+"$codex_skip_arg"} --output-last-message "$result_path" "$normalized_prompt" >"$log_path" 2>&1; then
       print_check "codex" "[ok]" "log: $log_path"
+      write_exec_meta "ok" "0"
     else
       local status=$?
       print_check "codex" "[warn]" "exit: $status (log: $log_path)"
+      write_exec_meta "warn" "$status"
       if [ "$show_log" = "true" ]; then
         cat "$log_path"
       else
@@ -195,6 +224,7 @@ EXEC_USAGE
     echo "Result:"
     if [ -s "$result_path" ]; then
       cat "$result_path"
+      cp "$result_path" "$result_out_path"
     else
       echo "(no final response captured; see log: $log_path)"
     fi
