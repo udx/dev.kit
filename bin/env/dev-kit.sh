@@ -6,8 +6,43 @@ if [ -n "${DEV_KIT_DISABLE:-}" ]; then
 fi
 
 export DEV_KIT_HOME="${DEV_KIT_HOME:-$HOME/.udx/dev.kit}"
+
+dev_kit_bootstrap_state_path() {
+  local path=""
+  if [ -f "$DEV_KIT_HOME/config.env" ]; then
+    path="$(awk -F= '
+      $1 ~ "^[[:space:]]*state_path[[:space:]]*$" {
+        gsub(/[[:space:]]/,"",$2);
+        print $2;
+        exit
+      }
+    ' "$DEV_KIT_HOME/config.env")"
+  fi
+  printf "%s" "$path"
+}
+
+dev_kit_expand_path() {
+  local val="$1"
+  if [[ "$val" == "~/"* ]]; then
+    echo "$HOME/${val:2}"
+    return
+  fi
+  if [[ "$val" == /* ]]; then
+    echo "$val"
+    return
+  fi
+  if [ -n "$val" ]; then
+    echo "$DEV_KIT_HOME/$val"
+    return
+  fi
+  echo ""
+}
+
+bootstrap_state_path="$(dev_kit_bootstrap_state_path)"
+bootstrap_state_path="$(dev_kit_expand_path "$bootstrap_state_path")"
+
+export DEV_KIT_STATE="${DEV_KIT_STATE:-${bootstrap_state_path:-$DEV_KIT_HOME/state}}"
 export DEV_KIT_SOURCE="${DEV_KIT_SOURCE:-$DEV_KIT_HOME/source}"
-export DEV_KIT_STATE="${DEV_KIT_STATE:-$DEV_KIT_HOME/state}"
 if [ ! -d "$DEV_KIT_SOURCE" ]; then
   DEV_KIT_SOURCE="$DEV_KIT_HOME"
 fi

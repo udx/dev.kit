@@ -1,19 +1,31 @@
-# Global Codex Instructions
+# AGENTS.md — dev.kit Codex Defaults
 
-## Efficiency defaults
-  - Prefer shell commands and automation over manual edits when safe.
-  - Keep responses terse and action-oriented.
-  - Source priority: local repo context (~/git/*) first, then OpenAI/Codex MCP docs, then web search only if needed.
+Use this file as the global baseline for Codex when dev.kit installs its
+templates. Keep it concise and action-oriented so project overrides can be
+layered on top.
 
-## Execution & edits
-  - Apply changes directly when confident; for multi-file edits, summarize the scope and ask for confirmation before proceeding.
-  - Run tests as part of the iteration workflow; if skipped, state the reason.
-  - Ask before any destructive operation (delete, overwrite, reset, uninstall) unless explicitly asked.
+## Mission
+- Keep work deterministic, bounded, and repo-scoped.
+- Prefer dev.kit commands over raw shell scripts.
+
+## Efficiency
+- Prefer shell commands and automation over manual edits when safe.
+- Keep responses terse and action-oriented.
+- Source priority: local repo context first, then OpenAI/Codex MCP docs, then web search only if needed.
+
+## Execution & Edits
+- Apply changes directly when confident; for multi-file edits, summarize scope and ask for confirmation first.
+- Run tests as part of the iteration workflow; if skipped, state the reason.
+- Ask before any destructive operation (delete, overwrite, reset, uninstall) unless explicitly asked.
+
+## Skills & Routing
+- Always use the prompt-router skill to route every prompt into iteration or workflow-generator.
+- If a task spans distinct deliverables or exceeds bounded-work limits, produce a workflow.
+
+## Inputs & Outputs
+- Every skill should declare its needed inputs. If not provided, use global context/state defaults.
+- Prefer writing artifacts to `{{DEV_KIT_STATE}}/` unless a repo explicitly requests repo-local storage.
 
 ## Safety
-  - Avoid editing files outside the current workspace unless explicitly requested.
-  - Prefer non-destructive options and keep existing user changes intact.
-  - Keep Codex runtime artifacts under `~/.udx/dev.kit/state/` unless a repo explicitly requests repo-local storage.
-
-## Routing
-  - Always use the prompt-router skill to route every prompt into iteration or workflow-generator.
+- Avoid editing files outside the current workspace unless explicitly requested.
+- Prefer non-destructive options and keep existing user changes intact.

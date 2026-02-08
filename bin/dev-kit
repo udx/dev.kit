@@ -14,14 +14,26 @@ USAGE
 }
 
 resolve_self() {
-  if command -v python3 >/dev/null 2>&1; then
-    python3 - <<'PY' "$0"
-import os,sys
-print(os.path.realpath(sys.argv[1]))
-PY
+  local target="$0"
+  if command -v realpath >/dev/null 2>&1; then
+    realpath "$target"
     return
   fi
-  echo "$0"
+  if command -v readlink >/dev/null 2>&1; then
+    while [ -L "$target" ]; do
+      local link
+      link="$(readlink "$target")"
+      case "$link" in
+        /*) target="$link" ;;
+        *) target="$(cd "$(dirname "$target")" && cd "$(dirname "$link")" && pwd)/$(basename "$link")" ;;
+      esac
+    done
+    local dir
+    dir="$(cd "$(dirname "$target")" && pwd -P)"
+    echo "$dir/$(basename "$target")"
+    return
+  fi
+  echo "$target"
 }
 
 SCRIPT_PATH="$(resolve_self)"
@@ -206,8 +218,41 @@ capture_prepare() {
 DEV_KIT_OWNER="${DEV_KIT_OWNER:-udx}"
 DEV_KIT_REPO="${DEV_KIT_REPO:-dev.kit}"
 DEV_KIT_HOME="${DEV_KIT_HOME:-$HOME/.${DEV_KIT_OWNER}/${DEV_KIT_REPO}}"
+
+bootstrap_state_path() {
+  local path=""
+  if [ -f "$DEV_KIT_HOME/config.env" ]; then
+    path="$(awk -F= '
+      $1 ~ "^[[:space:]]*state_path[[:space:]]*$" {
+        gsub(/[[:space:]]/,"",$2);
+        print $2;
+        exit
+      }
+    ' "$DEV_KIT_HOME/config.env")"
+  fi
+  printf "%s" "$path"
+}
+
+bootstrap_expand_path() {
+  local val="$1"
+  if [[ "$val" == "~/"* ]]; then
+    echo "$HOME/${val:2}"
+    return
+  fi
+  if [[ "$val" == /* ]]; then
+    echo "$val"
+    return
+  fi
+  if [ -n "$val" ]; then
+    echo "$DEV_KIT_HOME/$val"
+    return
+  fi
+  echo ""
+}
+
+BOOTSTRAP_STATE_PATH="$(bootstrap_expand_path "$(bootstrap_state_path)")"
+DEV_KIT_STATE="${DEV_KIT_STATE:-${BOOTSTRAP_STATE_PATH:-$DEV_KIT_HOME/state}}"
 DEV_KIT_SOURCE="${DEV_KIT_SOURCE:-$DEV_KIT_HOME/source}"
-DEV_KIT_STATE="${DEV_KIT_STATE:-$DEV_KIT_HOME/state}"
 if [ ! -d "$DEV_KIT_SOURCE" ]; then
   DEV_KIT_SOURCE="$DEV_KIT_HOME"
 fi

@@ -36,9 +36,25 @@ dev_kit_codex_replace_path() {
   fi
   if [ -d "$src" ]; then
     cp -R "$src" "$dst"
-  else
-    cp "$src" "$dst"
+    return
   fi
+  local home_val="${HOME:-}"
+  local dev_home_val="${DEV_KIT_HOME:-}"
+  local dev_source_val="${DEV_KIT_SOURCE:-}"
+  local dev_state_val="${DEV_KIT_STATE:-}"
+  mkdir -p "$(dirname "$dst")"
+  awk -v home="$home_val" \
+      -v dev_home="$dev_home_val" \
+      -v dev_source="$dev_source_val" \
+      -v dev_state="$dev_state_val" '
+    {
+      gsub("{{HOME}}", home)
+      gsub("{{DEV_KIT_HOME}}", dev_home)
+      gsub("{{DEV_KIT_SOURCE}}", dev_source)
+      gsub("{{DEV_KIT_STATE}}", dev_state)
+      print
+    }
+  ' "$src" > "$dst"
 }
 
 dev_kit_cmd_codex() {

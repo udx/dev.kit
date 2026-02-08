@@ -74,6 +74,9 @@ migrate_legacy_install() {
     if [ -f "$ENGINE_DIR/config.env" ]; then
       mv "$ENGINE_DIR/config.env" "$STATE_DIR/config.env"
     fi
+    if [ -f "$STATE_DIR/config.env" ] && [ ! -f "$ENGINE_DIR/config.env" ]; then
+      cp "$STATE_DIR/config.env" "$ENGINE_DIR/config.env"
+    fi
     for item in capture exec logs; do
       if [ -d "$ENGINE_DIR/$item" ]; then
         mv "$ENGINE_DIR/$item" "$STATE_DIR/$item"
@@ -85,7 +88,7 @@ migrate_legacy_install() {
 
 cleanup_legacy_paths() {
   local item=""
-  for item in bin lib templates docs src config scripts assets schemas completions env.sh config.env capture exec logs; do
+  for item in bin lib templates docs src config scripts assets schemas completions env.sh capture exec logs; do
     if [ -e "$ENGINE_DIR/$item" ]; then
       rm -rf "$ENGINE_DIR/$item"
     fi
@@ -190,6 +193,10 @@ if [ -f "$CONFIG_SRC" ] && [ ! -f "$CONFIG_DST" ]; then
     echo "OK  Config installed"
     echo "   $CONFIG_DST"
   fi
+fi
+
+if [ -f "$CONFIG_DST" ] && [ ! -f "$ENGINE_DIR/config.env" ]; then
+  cp "$CONFIG_DST" "$ENGINE_DIR/config.env"
 fi
 
 if [ ! -w "$ENGINE_DIR" ] || [ ! -w "$SOURCE_DIR" ] || [ ! -w "$STATE_DIR" ]; then

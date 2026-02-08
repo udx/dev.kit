@@ -40,3 +40,8 @@ explicitly opts in:
 
 If `source/` or `state/` is missing, dev.kit falls back to legacy paths under
 `DEV_KIT_HOME`.
+
+## Config key
+
+- `state_path` overrides the runtime state directory.
+  Example: `dev.kit config set --key state_path --value "~/.udx/dev.kit/.state"`

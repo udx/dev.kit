@@ -4,16 +4,15 @@ web_search = "live"
 web_search_request = true
 personality = "pragmatic"
 
-# Replace <HOME> with your absolute home path (e.g., /Users/alex or /home/alex).
 project_root_markers = [".codex_root"]
 
-[projects."<HOME>/git"]
+[projects."{{HOME}}/git"]
 trust_level = "trusted"
 
-[projects."<HOME>/.codex"]
+[projects."{{HOME}}/.codex"]
 trust_level = "trusted"
 
-[projects."<HOME>/.udx"]
+[projects."{{HOME}}/.udx"]
 trust_level = "trusted"
 
 [mcp_servers.Context7]
@@ -28,7 +27,7 @@ hide_rate_limit_model_nudge = true
 
 [sandbox_workspace_write]
 network_access = true
-writable_roots = ["<HOME>/git", "<HOME>/.udx/dev.kit"]
+writable_roots = ["{{HOME}}/git", "{{DEV_KIT_HOME}}"]
 
 [shell_environment_policy]
 inherit = "core"
