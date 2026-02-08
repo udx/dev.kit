@@ -20,7 +20,11 @@ dev_kit_cmd_config() {
     local base=""
     case "$scope" in
       global)
-        base="$DEV_KIT_HOME"
+        if [ -n "${DEV_KIT_STATE:-}" ] && [ -d "$DEV_KIT_STATE" ]; then
+          base="$DEV_KIT_STATE"
+        else
+          base="$DEV_KIT_HOME"
+        fi
         ;;
       repo)
         if command -v git >/dev/null 2>&1; then

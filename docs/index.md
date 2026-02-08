@@ -22,10 +22,11 @@ The purpose of this document is architectural control, not narrative.
 - Prompts reference: `docs/prompts.md`
 - Iteration skill contract: `src/skills/iteration.md`
 - Runtime boundary: `docs/runtime/index.md`
+- Runtime layout: `docs/runtime/layout.md`
 
 ## Docs Map (Classic)
 
-- CLI runtime: `docs/cli.md`, `docs/runtime/index.md`, `docs/execution/index.md`
+- CLI runtime: `docs/cli.md`, `docs/runtime/index.md`, `docs/runtime/layout.md`, `docs/execution/index.md`
 - Configuration: `docs/config/index.md`
 - Contracts and specs: `docs/cde/index.md`, `docs/specs.md`
 - Mapping and adaptation: `docs/mapping/index.md`, `docs/adaptation.md`
@@ -55,7 +56,7 @@ Install with:
 `curl -fsSL https://raw.githubusercontent.com/udx/dev.kit/main/bin/scripts/install.sh | bash`
 
 Then source the shell init (if the installer didn’t prompt to update your profile):
-`source "$HOME/.udx/dev.kit/env.sh"`
+`source "$HOME/.udx/dev.kit/source/env.sh"`
 
 ## 1. Why dev.kit Exists
 

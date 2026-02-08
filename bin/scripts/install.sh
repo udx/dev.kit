@@ -8,14 +8,16 @@ TARGET="${BIN_DIR}/dev.kit"
 DEV_KIT_OWNER="${DEV_KIT_OWNER:-udx}"
 DEV_KIT_REPO="${DEV_KIT_REPO:-dev.kit}"
 ENGINE_DIR="${HOME}/.${DEV_KIT_OWNER}/${DEV_KIT_REPO}"
+SOURCE_DIR="${ENGINE_DIR}/source"
+STATE_DIR="${ENGINE_DIR}/state"
 ENV_SRC="${REPO_DIR}/bin/env/dev-kit.sh"
-ENV_DST="${ENGINE_DIR}/env.sh"
+ENV_DST="${SOURCE_DIR}/env.sh"
 COMP_SRC_DIR="${REPO_DIR}/bin/completions"
-COMP_DST_DIR="${ENGINE_DIR}/completions"
+COMP_DST_DIR="${SOURCE_DIR}/completions"
 CONFIG_SRC="${REPO_DIR}/config/default.env"
-CONFIG_DST="${ENGINE_DIR}/config.env"
+CONFIG_DST="${STATE_DIR}/config.env"
 LIB_SRC_DIR="${REPO_DIR}/lib"
-LIB_DST_DIR="${ENGINE_DIR}/lib"
+LIB_DST_DIR="${SOURCE_DIR}/lib"
 PROFILE=""
 
 detect_profile() {
@@ -43,25 +45,62 @@ copy_dir_contents() {
 }
 
 sync_engine() {
-  copy_dir_contents "$REPO_DIR/bin" "$ENGINE_DIR/bin"
-  copy_dir_contents "$REPO_DIR/lib" "$ENGINE_DIR/lib"
-  copy_dir_contents "$REPO_DIR/templates" "$ENGINE_DIR/templates"
-  copy_dir_contents "$REPO_DIR/docs" "$ENGINE_DIR/docs"
-  copy_dir_contents "$REPO_DIR/src" "$ENGINE_DIR/src"
-  copy_dir_contents "$REPO_DIR/config" "$ENGINE_DIR/config"
-  copy_dir_contents "$REPO_DIR/scripts" "$ENGINE_DIR/scripts"
-  copy_dir_contents "$REPO_DIR/assets" "$ENGINE_DIR/assets"
-  copy_dir_contents "$REPO_DIR/schemas" "$ENGINE_DIR/schemas"
+  copy_dir_contents "$REPO_DIR/bin" "$SOURCE_DIR/bin"
+  copy_dir_contents "$REPO_DIR/lib" "$SOURCE_DIR/lib"
+  copy_dir_contents "$REPO_DIR/templates" "$SOURCE_DIR/templates"
+  copy_dir_contents "$REPO_DIR/docs" "$SOURCE_DIR/docs"
+  copy_dir_contents "$REPO_DIR/src" "$SOURCE_DIR/src"
+  copy_dir_contents "$REPO_DIR/config" "$SOURCE_DIR/config"
+  copy_dir_contents "$REPO_DIR/scripts" "$SOURCE_DIR/scripts"
+  copy_dir_contents "$REPO_DIR/assets" "$SOURCE_DIR/assets"
+  copy_dir_contents "$REPO_DIR/schemas" "$SOURCE_DIR/schemas"
 
   # Remove legacy command entrypoints that should no longer exist.
-  rm -f "$ENGINE_DIR/lib/commands/promt.sh"
+  rm -f "$SOURCE_DIR/lib/commands/promt.sh"
 }
 
-desired_target="${ENGINE_DIR}/bin/dev-kit"
+migrate_legacy_install() {
+  if [ -d "$ENGINE_DIR" ] && [ ! -d "$SOURCE_DIR" ] && [ -d "$ENGINE_DIR/bin" ]; then
+    mkdir -p "$SOURCE_DIR" "$STATE_DIR"
+    local item=""
+    for item in bin lib templates docs src config scripts assets schemas completions; do
+      if [ -d "$ENGINE_DIR/$item" ]; then
+        mv "$ENGINE_DIR/$item" "$SOURCE_DIR/$item"
+      fi
+    done
+    if [ -f "$ENGINE_DIR/env.sh" ]; then
+      mv "$ENGINE_DIR/env.sh" "$SOURCE_DIR/env.sh"
+    fi
+    if [ -f "$ENGINE_DIR/config.env" ]; then
+      mv "$ENGINE_DIR/config.env" "$STATE_DIR/config.env"
+    fi
+    for item in capture exec logs; do
+      if [ -d "$ENGINE_DIR/$item" ]; then
+        mv "$ENGINE_DIR/$item" "$STATE_DIR/$item"
+      fi
+    done
+    find "$ENGINE_DIR" -mindepth 1 -maxdepth 1 ! -name "source" ! -name "state" -exec rm -rf {} +
+  fi
+}
+
+cleanup_legacy_paths() {
+  local item=""
+  for item in bin lib templates docs src config scripts assets schemas completions env.sh config.env capture exec logs; do
+    if [ -e "$ENGINE_DIR/$item" ]; then
+      rm -rf "$ENGINE_DIR/$item"
+    fi
+  done
+}
+
+desired_target="${SOURCE_DIR}/bin/dev-kit"
 if [ -f "$UI_LIB" ]; then
   # shellcheck disable=SC1090
   . "$UI_LIB"
 fi
+
+migrate_legacy_install
+mkdir -p "$SOURCE_DIR"
+mkdir -p "$STATE_DIR"
 
 if command -v ui_header >/dev/null 2>&1; then
   ui_header "dev.kit | install"
@@ -72,6 +111,7 @@ else
 fi
 
 sync_engine
+cleanup_legacy_paths
 
 if [ -L "$TARGET" ]; then
   current_target="$(readlink "$TARGET")"
@@ -152,7 +192,7 @@ if [ -f "$CONFIG_SRC" ] && [ ! -f "$CONFIG_DST" ]; then
   fi
 fi
 
-if [ ! -w "$ENGINE_DIR" ]; then
+if [ ! -w "$ENGINE_DIR" ] || [ ! -w "$SOURCE_DIR" ] || [ ! -w "$STATE_DIR" ]; then
   if command -v ui_warn >/dev/null 2>&1; then
     ui_warn "Config unavailable" "$ENGINE_DIR is not writable"
   else
@@ -233,7 +273,7 @@ if command -v ui_section >/dev/null 2>&1; then
 else
   echo "Next step (auto-init)"
 fi
-env_line="source \"$ENGINE_DIR/env.sh\""
+env_line="source \"$SOURCE_DIR/env.sh\""
 if [ -n "$PROFILE" ] && [ -t 0 ]; then
   if [ -f "$PROFILE" ] && grep -Fqx "$env_line" "$PROFILE"; then
     if command -v ui_ok >/dev/null 2>&1; then

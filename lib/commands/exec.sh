@@ -133,12 +133,12 @@ EXEC_USAGE
     ensure_dev_kit_home
     local developer_enabled=""
     developer_enabled="$(config_value_scoped developer.enabled "false")"
-    local log_dir="$DEV_KIT_HOME/exec"
+    local log_dir="$DEV_KIT_STATE/exec"
     if [ "$developer_enabled" = "true" ] || [ "$prompt_key" = "developer" ] || [ "$prompt_key" = "dev" ]; then
       if [ -n "$repo_root" ]; then
         log_dir="$repo_root/.udx/dev.kit/logs"
       else
-        log_dir="$DEV_KIT_HOME/logs"
+        log_dir="$DEV_KIT_STATE/logs"
       fi
     fi
     mkdir -p "$log_dir"

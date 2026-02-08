@@ -10,6 +10,7 @@ Canonical documentation lives in `docs/`.
 
 - `docs/cli.md`
 - `docs/runtime/index.md`
+- `docs/runtime/layout.md`
 - `docs/runtime/lifecycle.md`
 - `docs/runtime/capability-detect.md`
 - `docs/execution/index.md`

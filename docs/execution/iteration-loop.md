@@ -20,7 +20,7 @@ review
 
 - Review input: `docs/_tree.txt` (generated, optional)
 - Review output: `docs/_feedback.md`
-- Workflow (active): `.udx/dev.kit/workflows/<task-id>/workflow.md`
+- Workflow (active): `~/.udx/dev.kit/state/codex/workflows/<repo-id>/<task-id>/workflow.md`
 - Workflow (reference): `src/workflows/`
 - Helper scripts: `scripts/apply-task.sh`
 - Subtask loop: `docs/execution/subtask-loop.md` (task-specific prompt/feedback)

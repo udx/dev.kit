@@ -5,28 +5,34 @@ description: Convert Mermaid .mmd diagrams to .svg files, especially for article
 
 # Mermaid Export
 
-Use this skill when the user asks to convert Mermaid `.mmd` files to `.svg` or to create/update Mermaid assets for articles.
+Use this skill when the user asks to convert Mermaid `.mmd` files to `.svg` or to
+create/update Mermaid assets for articles.
 
-## Quick start
+## Config
 
-- Single file:
-  - `mmdc -i <input.mmd> -o <output.svg>`
-- Directory (all .mmd files):
-  - `scripts/convert-all.sh <input-dir> <output-dir>`
+Inputs are derived from the repo and environment when not provided explicitly.
 
-## Workflow
+- `mermaid.input` (required: .mmd file or directory)
+- `mermaid.output` (optional: output file or directory)
+- `mermaid.cli` (default: `mmdc`)
 
-1) Locate `.mmd` files (often under `src/articles/<article>/`).
-2) Convert to `.svg` with `mmdc`.
-3) Keep filenames stable and place SVGs next to the `.mmd` files unless the user requests a separate output directory.
+## Logic
 
-## Style guidance
+- Locate `.mmd` inputs.
+- Convert to `.svg` using `mmdc`.
+- Keep filenames stable and place SVGs next to inputs unless requested otherwise.
+- Use `dev.kit` command wrappers where available (preferred over raw shell scripts).
 
-- Match repo examples in `README.md` (Mermaid flowchart style).
-- Prefer `flowchart TD` and `<br/>` line breaks for multi-line labels.
-- Keep labels short and concrete; avoid styling directives unless already used in repo examples.
+## Schema
 
-## Notes
+Inputs:
+- `.mmd` file(s)
 
-- `mmdc` comes from `@mermaid-js/mermaid-cli`.
-- If the CLI is missing, ask before installing and prefer the user's package manager.
+Outputs:
+- `.svg` file(s) placed next to input or in the requested output directory
+
+## Docs
+
+Quick start:
+- Single file: `mmdc -i <input.mmd> -o <output.svg>`
+- Directory: prefer a dev.kit wrapper if present; otherwise run `mmdc` in a loop.

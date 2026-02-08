@@ -6,10 +6,21 @@ if [ -n "${DEV_KIT_DISABLE:-}" ]; then
 fi
 
 export DEV_KIT_HOME="${DEV_KIT_HOME:-$HOME/.udx/dev.kit}"
-export DEV_KIT_CONFIG="$DEV_KIT_HOME/config.env"
+export DEV_KIT_SOURCE="${DEV_KIT_SOURCE:-$DEV_KIT_HOME/source}"
+export DEV_KIT_STATE="${DEV_KIT_STATE:-$DEV_KIT_HOME/state}"
+if [ ! -d "$DEV_KIT_SOURCE" ]; then
+  DEV_KIT_SOURCE="$DEV_KIT_HOME"
+fi
+if [ ! -d "$DEV_KIT_STATE" ]; then
+  DEV_KIT_STATE="$DEV_KIT_HOME"
+fi
+export DEV_KIT_CONFIG="${DEV_KIT_CONFIG:-$DEV_KIT_STATE/config.env}"
+if [ ! -f "$DEV_KIT_CONFIG" ] && [ -f "$DEV_KIT_HOME/config.env" ]; then
+  export DEV_KIT_CONFIG="$DEV_KIT_HOME/config.env"
+fi
 
 DEV_KIT_ENV_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DEV_KIT_UI_LIB="${DEV_KIT_UI_LIB:-$DEV_KIT_HOME/lib/ui.sh}"
+DEV_KIT_UI_LIB="${DEV_KIT_UI_LIB:-$DEV_KIT_SOURCE/lib/ui.sh}"
 if [ ! -f "$DEV_KIT_UI_LIB" ]; then
   DEV_KIT_UI_LIB="$DEV_KIT_ENV_DIR/../../lib/ui.sh"
 fi
@@ -128,11 +139,11 @@ dev_kit_capture_dir() {
     global|*)
       base="$(dev_kit_config_value capture.dir "")"
       if [ -z "$base" ]; then
-        base="$DEV_KIT_HOME/capture"
+        base="$DEV_KIT_STATE/capture"
       elif [[ "$base" == "~/"* ]]; then
         base="$HOME/${base:2}"
       elif [[ "$base" != /* ]]; then
-        base="$DEV_KIT_HOME/$base"
+        base="$DEV_KIT_STATE/$base"
       fi
       repo_id="$(dev_kit_capture_repo_id)"
       echo "$base/$repo_id"
@@ -176,12 +187,12 @@ if [ -z "${DEV_KIT_BANNER_SHOWN_LOCAL:-}" ]; then
   DEV_KIT_BANNER_PENDING=1
 fi
 
-if [ -n "${BASH_VERSION:-}" ] && [ -f "$DEV_KIT_HOME/completions/dev.kit.bash" ]; then
+if [ -n "${BASH_VERSION:-}" ] && [ -f "$DEV_KIT_SOURCE/completions/dev.kit.bash" ]; then
   # shellcheck disable=SC1090
-  . "$DEV_KIT_HOME/completions/dev.kit.bash"
-elif [ -n "${ZSH_VERSION:-}" ] && [ -f "$DEV_KIT_HOME/completions/_dev.kit" ]; then
+  . "$DEV_KIT_SOURCE/completions/dev.kit.bash"
+elif [ -n "${ZSH_VERSION:-}" ] && [ -f "$DEV_KIT_SOURCE/completions/_dev.kit" ]; then
   # shellcheck disable=SC1090
-  . "$DEV_KIT_HOME/completions/_dev.kit"
+  . "$DEV_KIT_SOURCE/completions/_dev.kit"
 fi
 
 if [ -n "${DEV_KIT_CAPTURE_HOOKED:-}" ]; then

@@ -11,7 +11,7 @@ Quick start (one-liner):
 curl -fsSL https://raw.githubusercontent.com/udx/dev.kit/main/bin/scripts/install.sh | bash
 
 # If the installer doesn't prompt for shell updates:
-source "$HOME/.udx/dev.kit/env.sh"
+source "$HOME/.udx/dev.kit/source/env.sh"
 ```
 
 ## Use
@@ -29,6 +29,7 @@ Start here:
 CLI and runtime:
 - `docs/cli.md`
 - `docs/runtime/index.md`
+- `docs/runtime/layout.md`
 - `docs/runtime/lifecycle.md`
 
 Execution and iteration:

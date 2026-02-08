@@ -64,12 +64,14 @@ print_check() {
 
 ensure_dev_kit_home() {
   mkdir -p "$DEV_KIT_HOME"
-  if [ ! -w "$DEV_KIT_HOME" ]; then
-    echo "dev.kit: config path not writable: $DEV_KIT_HOME" >&2
-    echo "dev.kit: fix permissions or choose a different DEV_KIT_HOME" >&2
+  mkdir -p "$DEV_KIT_STATE"
+  if [ ! -w "$DEV_KIT_STATE" ]; then
+    echo "dev.kit: config path not writable: $DEV_KIT_STATE" >&2
+    echo "dev.kit: fix permissions or choose a different DEV_KIT_STATE" >&2
     exit 1
   fi
   if [ ! -f "$CONFIG_FILE" ] && [ -f "$REPO_DIR/config/default.env" ]; then
+    mkdir -p "$(dirname "$CONFIG_FILE")"
     cp "$REPO_DIR/config/default.env" "$CONFIG_FILE"
   fi
 }
@@ -171,11 +173,11 @@ capture_dir() {
     global|*)
       base="$(config_value_scoped capture.dir "")"
       if [ -z "$base" ]; then
-        base="$DEV_KIT_HOME/capture"
+        base="$DEV_KIT_STATE/capture"
       elif [[ "$base" == "~/"* ]]; then
         base="$HOME/${base:2}"
       elif [[ "$base" != /* ]]; then
-        base="$DEV_KIT_HOME/$base"
+        base="$DEV_KIT_STATE/$base"
       fi
       repo_id="$(capture_repo_id)"
       echo "$base/$repo_id"
@@ -204,7 +206,18 @@ capture_prepare() {
 DEV_KIT_OWNER="${DEV_KIT_OWNER:-udx}"
 DEV_KIT_REPO="${DEV_KIT_REPO:-dev.kit}"
 DEV_KIT_HOME="${DEV_KIT_HOME:-$HOME/.${DEV_KIT_OWNER}/${DEV_KIT_REPO}}"
-CONFIG_FILE="$DEV_KIT_HOME/config.env"
+DEV_KIT_SOURCE="${DEV_KIT_SOURCE:-$DEV_KIT_HOME/source}"
+DEV_KIT_STATE="${DEV_KIT_STATE:-$DEV_KIT_HOME/state}"
+if [ ! -d "$DEV_KIT_SOURCE" ]; then
+  DEV_KIT_SOURCE="$DEV_KIT_HOME"
+fi
+if [ ! -d "$DEV_KIT_STATE" ]; then
+  DEV_KIT_STATE="$DEV_KIT_HOME"
+fi
+CONFIG_FILE="${DEV_KIT_CONFIG:-$DEV_KIT_STATE/config.env}"
+if [ ! -f "$CONFIG_FILE" ] && [ -f "$DEV_KIT_HOME/config.env" ]; then
+  CONFIG_FILE="$DEV_KIT_HOME/config.env"
+fi
 
 expand_path() {
   local val="$1"

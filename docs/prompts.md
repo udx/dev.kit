@@ -12,7 +12,7 @@ Template:
 
 Prompt selection:
 - Local config: `.udx/dev.kit/config.env` (created on demand)
-- Global config: `~/.udx/dev.kit/config.env` (created by installer)
+- Global config: `~/.udx/dev.kit/state/config.env` (created by installer)
 - Precedence: local overrides global.
 
 Keys:

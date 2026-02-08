@@ -14,6 +14,12 @@ Define dev.kit as the execution surface that enforces CDE constraints.
 - Execute workflows safely.
 - Capture state and outputs.
 
+## Docs
+
+- Runtime layout: `docs/runtime/layout.md`
+- Lifecycle: `docs/runtime/lifecycle.md`
+- Capability detection: `docs/runtime/capability-detect.md`
+
 ## Authority Model
 
 - Reasoning systems: analyze, propose, explain.

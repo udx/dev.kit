@@ -13,6 +13,7 @@
 ## Safety
   - Avoid editing files outside the current workspace unless explicitly requested.
   - Prefer non-destructive options and keep existing user changes intact.
+  - Keep Codex runtime artifacts under `~/.udx/dev.kit/state/` unless a repo explicitly requests repo-local storage.
 
 ## Routing
   - Always use the prompt-router skill to route every prompt into iteration or workflow-generator.
