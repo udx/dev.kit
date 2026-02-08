@@ -58,6 +58,8 @@
         "  - Use prompt-as-workflow for multi-step or cross-file tasks.",
         "  - Enforce work limits from DOC-002 and DOC-003.",
         "  - Apply available skills and rules.",
+        "  - Carry forward the latest workflow state and step statuses when continuing a task.",
+        "  - When resuming, restate the active workflow path and current step ID.",
         "  - Determine request scope (repo-scoped, general, mixed) and pick sources accordingly:",
         "    - Local repo context first when repo-scoped.",
         "    - MCP/docs when needed for authoritative guidance.",
