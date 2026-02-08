@@ -16,9 +16,9 @@ Define dev.kit as the execution surface that enforces CDE constraints.
 
 ## Docs
 
-- Runtime layout: `docs/runtime/layout.md`
-- Lifecycle: `docs/runtime/lifecycle.md`
-- Capability detection: `docs/runtime/capability-detect.md`
+- Runtime layout: `docs/cli/runtime/layout.md`
+- Lifecycle: `docs/cli/runtime/lifecycle.md`
+- Capability detection: `docs/cli/runtime/capability-detect.md`
 - AI integration experience: `docs/ai/experience.md`
 
 ## Authority Model

@@ -11,11 +11,7 @@ The purpose of this document is architectural control, not narrative.
 
 - Repo overview: `README.md`
 - Docs navigation: `docs/README.md`
-- Runtime boundary: `docs/runtime/README.md`
-- Execution model: `docs/execution/README.md`
-- CLI primitives: `docs/execution/cli-primitives.md`
-- Workflow IO schema (step state): `docs/execution/workflow-io-schema.md`
-- Prompt-as-workflow: `docs/execution/prompt-as-workflow.md`
+- CLI overview: `docs/cli/README.md`
 - AI integration: `docs/ai/README.md`
 - Concepts: `docs/concepts/README.md`
 - References: `docs/reference/README.md`
@@ -23,10 +19,10 @@ The purpose of this document is architectural control, not narrative.
 
 ## Docs Map (Classic)
 
-- Runtime and execution: `docs/runtime/README.md`, `docs/execution/README.md`
-- Configuration: `docs/config/README.md`
-- Concepts and specs: `docs/concepts/README.md`, `docs/specs.md`
+- CLI and execution: `docs/cli/README.md`
 - AI integration: `docs/ai/README.md`
+- Concepts and specs: `docs/concepts/README.md`, `docs/specs.md`
+- References: `docs/reference/README.md`
 - Knowledgebase: `docs/knowledge.md`
 
 ## Core Engine Layout (Target)
@@ -42,8 +38,6 @@ The purpose of this document is architectural control, not narrative.
 - src/ai/data/prompts.json (prompt templates)
 - src/mermaid/ (mermaid templates)
 - src/docker/ (docker assets)
-- src/ai/integrations/codex/schemas/ (Codex schema)
-- src/ai/integrations/codex/templates/ (Codex render templates)
 - scripts/
 - tasks/ (optional)
 - schemas/ (optional)

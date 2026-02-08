@@ -3,10 +3,10 @@
 Scope: runtime layout, lifecycle, capability detection, and AI runtime behavior.
 
 Docs:
-- `docs/runtime/index.md`
-- `docs/runtime/layout.md`
-- `docs/runtime/lifecycle.md`
-- `docs/runtime/capability-detect.md`
+- `docs/cli/runtime/index.md`
+- `docs/cli/runtime/layout.md`
+- `docs/cli/runtime/lifecycle.md`
+- `docs/cli/runtime/capability-detect.md`
 
 AI integration:
 - `docs/ai/experience.md`

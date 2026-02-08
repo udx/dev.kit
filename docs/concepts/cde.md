@@ -14,8 +14,8 @@ CDE describes how dev.kit turns repository intent into executable context. It is
 
 - Prompt templates: `src/ai/data/prompts.json`
 - Skills and schemas: `src/ai/data/skills/`
-- Workflow schema: `docs/execution/workflow-io-schema.md`
-- CLI primitives: `docs/execution/cli-primitives.md`
+- Workflow schema: `docs/cli/execution/workflow-io-schema.md`
+- CLI primitives: `docs/cli/execution/cli-primitives.md`
 
 ## Contract Boundaries
 
@@ -49,5 +49,5 @@ Workflow outputs also encode bounded limits:
 
 ## References
 
-- Prompt-as-workflow: `docs/execution/prompt-as-workflow.md`
+- Prompt-as-workflow: `docs/cli/execution/prompt-as-workflow.md`
 - Concepts: `docs/concepts/index.md`
