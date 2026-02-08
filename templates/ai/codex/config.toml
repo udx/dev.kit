@@ -1,0 +1,36 @@
+approval_policy = "never"
+sandbox_mode = "workspace-write"
+web_search = "live"
+web_search_request = true
+personality = "pragmatic"
+
+# Replace <HOME> with your absolute home path (e.g., /Users/alex or /home/alex).
+project_root_markers = [".codex_root"]
+
+[projects."<HOME>/git"]
+trust_level = "trusted"
+
+[projects."<HOME>/.codex"]
+trust_level = "trusted"
+
+[projects."<HOME>/.udx"]
+trust_level = "trusted"
+
+[mcp_servers.Context7]
+command = "npx"
+args = ["-y", "@upstash/context7-mcp@latest"]
+
+[mcp_servers.openaiDeveloperDocs]
+url = "https://developers.openai.com/mcp"
+
+[notice]
+hide_rate_limit_model_nudge = true
+
+[sandbox_workspace_write]
+network_access = true
+writable_roots = ["<HOME>/git", "<HOME>/.udx/dev.kit"]
+
+[shell_environment_policy]
+inherit = "core"
+set = { PATH = "/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/opt/homebrew/bin" }
+include_only = ["PATH", "HOME"]

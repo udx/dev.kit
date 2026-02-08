@@ -1,2 +1,7 @@
 .udx/
 .dev.kit/
+
+.codex/
+_research/docs/_tree.txt
+_research/fixtures/
+_legacy/tmp/

@@ -6,15 +6,27 @@ if [ -n "${DEV_KIT_DISABLE:-}" ]; then
 fi
 
 export DEV_KIT_HOME="${DEV_KIT_HOME:-$HOME/.udx/dev.kit}"
-export DEV_KIT_CONFIG="$DEV_KIT_HOME/config.env"
-export DEV_KIT_CAPTURE_ENV="$DEV_KIT_HOME/capture.env"
-export DEV_KIT_CAPTURE_STATE="$DEV_KIT_HOME/capture.state"
-export DEV_KIT_CAPTURE_LOG="$DEV_KIT_HOME/capture.log"
+export DEV_KIT_SOURCE="${DEV_KIT_SOURCE:-$DEV_KIT_HOME/source}"
+export DEV_KIT_STATE="${DEV_KIT_STATE:-$DEV_KIT_HOME/state}"
+if [ ! -d "$DEV_KIT_SOURCE" ]; then
+  DEV_KIT_SOURCE="$DEV_KIT_HOME"
+fi
+if [ ! -d "$DEV_KIT_STATE" ]; then
+  DEV_KIT_STATE="$DEV_KIT_HOME"
+fi
+export DEV_KIT_CONFIG="${DEV_KIT_CONFIG:-$DEV_KIT_STATE/config.env}"
+if [ ! -f "$DEV_KIT_CONFIG" ] && [ -f "$DEV_KIT_HOME/config.env" ]; then
+  export DEV_KIT_CONFIG="$DEV_KIT_HOME/config.env"
+fi
 
-DEV_KIT_CONTEXT_LIB="${DEV_KIT_CONTEXT_LIB:-$DEV_KIT_HOME/lib/context.sh}"
-if [ -f "$DEV_KIT_CONTEXT_LIB" ]; then
+DEV_KIT_ENV_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DEV_KIT_UI_LIB="${DEV_KIT_UI_LIB:-$DEV_KIT_SOURCE/lib/ui.sh}"
+if [ ! -f "$DEV_KIT_UI_LIB" ]; then
+  DEV_KIT_UI_LIB="$DEV_KIT_ENV_DIR/../../lib/ui.sh"
+fi
+if [ -f "$DEV_KIT_UI_LIB" ]; then
   # shellcheck disable=SC1090
-  . "$DEV_KIT_CONTEXT_LIB"
+  . "$DEV_KIT_UI_LIB"
 fi
 
 dev_kit_config_value() {
@@ -49,130 +61,111 @@ dev_kit_config_bool() {
   esac
 }
 
+dev_kit_banner() {
+  local quiet
+  quiet="$(dev_kit_config_bool quiet false)"
+  case "$-" in
+    *i*) ;;
+    *) return 0 ;;
+  esac
+  if [ "$quiet" != "true" ] && [ -z "${DEV_KIT_BANNER_SHOWN_LOCAL:-}" ]; then
+    DEV_KIT_BANNER_SHOWN_LOCAL=1
+    if command -v ui_banner >/dev/null 2>&1; then
+      ui_banner "dev.kit"
+    else
+      echo ""
+      echo "dev.kit: ready"
+      echo "  run: dev.kit exec \"...\""
+      echo "  config: dev.kit config show"
+    fi
+  fi
+}
+
+dev_kit_banner_prompt() {
+  if [ -z "${DEV_KIT_BANNER_PENDING:-}" ]; then
+    return 0
+  fi
+  DEV_KIT_BANNER_PENDING=""
+  dev_kit_banner
+}
+
 dev_kit_capture_repo_root() {
   if command -v git >/dev/null 2>&1; then
     git rev-parse --show-toplevel 2>/dev/null || true
   fi
 }
 
-dev_kit_capture_repo_env() {
-  local root
-  root="$(dev_kit_capture_repo_root)"
-  if [ -n "$root" ]; then
-    echo "$root/.udx/dev.kit/capture/capture.env"
+dev_kit_capture_mode() {
+  local mode=""
+  mode="$(dev_kit_config_value capture.mode "")"
+  if [ -n "$mode" ]; then
+    echo "$mode"
+    return
+  fi
+  local enabled
+  enabled="$(dev_kit_config_bool capture.enabled true)"
+  if [ "$enabled" = "true" ]; then
+    echo "global"
+  else
+    echo "off"
   fi
 }
 
-dev_kit_capture_repo_state() {
-  local root
+dev_kit_capture_repo_id() {
+  local root=""
   root="$(dev_kit_capture_repo_root)"
-  if [ -n "$root" ]; then
-    echo "$root/.udx/dev.kit/capture/capture.state"
+  if [ -z "$root" ]; then
+    root="$PWD"
+  fi
+  if command -v shasum >/dev/null 2>&1; then
+    printf "%s" "$root" | shasum -a 256 | awk '{print $1}'
+  else
+    printf "%s" "$root" | cksum | awk '{print $1}'
   fi
 }
 
-dev_kit_capture_repo_log() {
-  local root
-  root="$(dev_kit_capture_repo_root)"
-  if [ -n "$root" ]; then
-    echo "$root/.udx/dev.kit/capture/capture.log"
-  fi
+dev_kit_capture_dir() {
+  local mode base repo_id
+  mode="$(dev_kit_capture_mode)"
+  case "$mode" in
+    off) return 1 ;;
+    repo)
+      base="$(dev_kit_capture_repo_root)"
+      if [ -z "$base" ]; then
+        base="$PWD"
+      fi
+      echo "$base/.udx/dev.kit/capture"
+      ;;
+    global|*)
+      base="$(dev_kit_config_value capture.dir "")"
+      if [ -z "$base" ]; then
+        base="$DEV_KIT_STATE/capture"
+      elif [[ "$base" == "~/"* ]]; then
+        base="$HOME/${base:2}"
+      elif [[ "$base" != /* ]]; then
+        base="$DEV_KIT_STATE/$base"
+      fi
+      repo_id="$(dev_kit_capture_repo_id)"
+      echo "$base/$repo_id"
+      ;;
+  esac
 }
 
 dev_kit_capture_enabled() {
-  local enabled
-  enabled="$(dev_kit_config_bool capture.enabled false)"
-  local repo_env
-  repo_env="$(dev_kit_capture_repo_env)"
-  if [ -n "$repo_env" ] && [ -f "$repo_env" ]; then
-    # shellcheck disable=SC1090
-    . "$repo_env"
-  elif [ -f "$DEV_KIT_CAPTURE_ENV" ]; then
-    # shellcheck disable=SC1090
-    . "$DEV_KIT_CAPTURE_ENV"
-  fi
-  if [ -n "${DEV_KIT_CAPTURE:-}" ]; then
-    [ "${DEV_KIT_CAPTURE}" = "1" ] && return 0 || return 1
-  fi
-  [ "$enabled" = "true" ]
+  local mode=""
+  mode="$(dev_kit_capture_mode)"
+  [ "$mode" != "off" ]
 }
 
-dev_kit_state_get() {
-  local key="$1"
-  local default="${2:-}"
-  local val=""
-  local state_file repo_state
-  repo_state="$(dev_kit_capture_repo_state)"
-  if [ -n "$repo_state" ] && [ -f "$repo_state" ]; then
-    state_file="$repo_state"
-  else
-    state_file="$DEV_KIT_CAPTURE_STATE"
-  fi
-  if [ -f "$state_file" ]; then
-    val="$(awk -F= -v k="$key" '
-      $1 == k { print $2; exit }
-    ' "$state_file")"
-  fi
-  if [ -n "$val" ]; then
-    echo "$val"
-  else
-    echo "$default"
-  fi
-}
-
-dev_kit_state_set() {
-  local key="$1"
-  local value="$2"
-  local tmp
-  local state_file repo_state
-  repo_state="$(dev_kit_capture_repo_state)"
-  if [ -n "$repo_state" ]; then
-    state_file="$repo_state"
-  else
-    state_file="$DEV_KIT_CAPTURE_STATE"
-  fi
-  tmp="$(mktemp)"
-  if [ -f "$state_file" ]; then
-    awk -F= -v k="$key" '
-      $1 != k { print $0 }
-    ' "$state_file" > "$tmp"
-  fi
-  printf "%s=%s\n" "$key" "$value" >> "$tmp"
-  mkdir -p "$(dirname "$state_file")"
-  mv "$tmp" "$state_file"
-}
-
-dev_kit_capture_prune() {
-  local file="$1"
-  local days="$2"
-  if [ -z "$days" ] || [ "$days" = "0" ] || [ ! -f "$file" ]; then
+dev_kit_capture_cleanup() {
+  if ! dev_kit_capture_enabled; then
     return 0
   fi
-  if command -v python3 >/dev/null 2>&1; then
-    python3 - "$file" "$days" <<'PY'
-import datetime,sys
-
-path = sys.argv[1]
-days = int(sys.argv[2])
-cutoff = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=days)
-
-def parse_ts(line):
-  try:
-    ts = line.split(" | ", 1)[0]
-    return datetime.datetime.fromisoformat(ts)
-  except Exception:
-    return None
-
-out = []
-with open(path, "r", encoding="utf-8") as f:
-  for line in f:
-    ts = parse_ts(line)
-    if ts is None or ts >= cutoff:
-      out.append(line)
-
-with open(path, "w", encoding="utf-8") as f:
-  f.writelines(out)
-PY
+  local dir
+  dir="$(dev_kit_capture_dir)" || return 0
+  if [ -d "$dir" ]; then
+    rm -f "$dir/last-input.log" "$dir/last-output.log" "$dir/capture.log"
+    rmdir "$dir" 2>/dev/null || true
   fi
 }
 
@@ -180,64 +173,26 @@ dev_kit_capture_log() {
   if ! dev_kit_capture_enabled; then
     return 0
   fi
-  local auto_clean auto_clean_iteration cleaned header_written ttl_days
-  auto_clean="$(dev_kit_config_bool capture.auto_clean false)"
-  auto_clean_iteration="$(dev_kit_config_bool capture.auto_clean_iteration false)"
-  local root cmd line file
-  root="$(dev_kit_capture_repo_root)"
-  if [ -n "$root" ]; then
-    file="${DEV_KIT_CAPTURE_FILE:-$root/.udx/dev.kit/capture/capture.log}"
-    ttl_days="$(dev_kit_config_value capture.ttl_days_repo 3)"
-  else
-    file="${DEV_KIT_CAPTURE_FILE:-$DEV_KIT_CAPTURE_LOG}"
-    ttl_days="$(dev_kit_config_value capture.ttl_days_global 3)"
-  fi
-  mkdir -p "$(dirname "$file")"
+  local cmd line
   line="$(history 1 | sed -E 's/^[[:space:]]*[0-9]+[[:space:]]+//')"
   line="$(printf "%s" "$line" | sed -E 's/^[0-9]{4}-[0-9]{2}-[0-9]{2}[[:space:]]+[0-9]{2}:[0-9]{2}:[0-9]{2}[[:space:]]+//')"
   cmd="${line# }"
   if [[ "$cmd" != dev.kit\ * && "$cmd" != dev.kit ]]; then
+    dev_kit_capture_cleanup
     return 0
-  fi
-  if [ -z "$cmd" ]; then
-    return 0
-  fi
-  if [ "${DEV_KIT_CAPTURE_LAST:-}" = "$cmd" ]; then
-    return 0
-  fi
-  DEV_KIT_CAPTURE_LAST="$cmd"
-  dev_kit_capture_prune "$file" "$ttl_days"
-  cleaned="$(dev_kit_state_get cleaned 0)"
-  header_written="$(dev_kit_state_get header_written 0)"
-  if [ "$auto_clean_iteration" = "true" ]; then
-    : > "$file"
-    dev_kit_state_set cleaned 1
-    header_written="0"
-  elif [ "$auto_clean" = "true" ] && [ "$cleaned" != "1" ]; then
-    : > "$file"
-    dev_kit_state_set cleaned 1
-    header_written="0"
-  fi
-  if [ "$header_written" != "1" ]; then
-    printf '%s\n' "---- dev.kit capture ${DEV_KIT_CAPTURE_SESSION:-session} (${DEV_KIT_CAPTURE_STARTED_AT:-$(date -Iseconds)}) ----" >> "$file"
-    dev_kit_state_set header_written 1
-  fi
-  printf "%s | %s | %s\n" "$(date -Iseconds)" "$PWD" "$cmd" >> "$file"
-  if command -v context_register >/dev/null 2>&1; then
-    context_register "capture" >/dev/null 2>&1 || true
   fi
 }
 
-if command -v dev.kit >/dev/null 2>&1; then
-  dev.kit init >/dev/null 2>&1 || true
+if [ -z "${DEV_KIT_BANNER_SHOWN_LOCAL:-}" ]; then
+  DEV_KIT_BANNER_PENDING=1
 fi
 
-if [ -n "${BASH_VERSION:-}" ] && [ -f "$DEV_KIT_HOME/completions/dev.kit.bash" ]; then
+if [ -n "${BASH_VERSION:-}" ] && [ -f "$DEV_KIT_SOURCE/completions/dev.kit.bash" ]; then
   # shellcheck disable=SC1090
-  . "$DEV_KIT_HOME/completions/dev.kit.bash"
-elif [ -n "${ZSH_VERSION:-}" ] && [ -f "$DEV_KIT_HOME/completions/_dev.kit" ]; then
+  . "$DEV_KIT_SOURCE/completions/dev.kit.bash"
+elif [ -n "${ZSH_VERSION:-}" ] && [ -f "$DEV_KIT_SOURCE/completions/_dev.kit" ]; then
   # shellcheck disable=SC1090
-  . "$DEV_KIT_HOME/completions/_dev.kit"
+  . "$DEV_KIT_SOURCE/completions/_dev.kit"
 fi
 
 if [ -n "${DEV_KIT_CAPTURE_HOOKED:-}" ]; then
@@ -246,7 +201,7 @@ fi
 
 DEV_KIT_CAPTURE_HOOKED=1
 if [ -n "${PROMPT_COMMAND:-}" ]; then
-  PROMPT_COMMAND="dev_kit_capture_log; ${PROMPT_COMMAND}"
+  PROMPT_COMMAND="dev_kit_banner_prompt; dev_kit_capture_log; ${PROMPT_COMMAND}"
 else
-  PROMPT_COMMAND="dev_kit_capture_log"
+  PROMPT_COMMAND="dev_kit_banner_prompt; dev_kit_capture_log"
 fi
