@@ -8,9 +8,9 @@ Define the lifecycle phases that support local usage.
 
 ## Interfaces
 
-- dev.kit install
-- dev.kit enable
-- dev.kit uninstall
+- bin/scripts/install.sh
+- bin/env/dev-kit.sh (shell init)
+- bin/scripts/uninstall.sh
 
 ## Behavior
 

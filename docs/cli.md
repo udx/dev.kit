@@ -20,6 +20,7 @@ Codex integration commands:
 - `dev.kit codex restore` (restore the latest backup)
 - `bin/completions/*`: Shell completions (bash + zsh).
 - `bin/scripts/install.sh`: Install symlink + env + completions.
+- `bin/env/dev-kit.sh`: Shell init (manual `source` or profile).
 - `bin/scripts/uninstall.sh`: Remove symlink; `--purge` removes engine dir.
 - `lib/commands/*.sh`: Subcommand implementations (dynamic dispatch).
 - `lib/ui.sh`: Shared UI helpers for bin + scripts.

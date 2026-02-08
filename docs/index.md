@@ -10,10 +10,11 @@ The purpose of this document is architectural control, not narrative.
 ## Entry Points
 
 - Repo overview: `README.md`
+- Docs navigation: `docs/README.md`
 - Iteration loop: `docs/execution/iteration-loop.md`
 - Subtask loop: `docs/execution/subtask-loop.md`
 - CLI primitives: `docs/execution/cli-primitives.md`
-- CLI structure: `docs/cli/index.md`
+- CLI structure: `docs/cli.md`
 - Workflow IO schema (step state): `docs/execution/workflow-io-schema.md`
 - Output contracts: `docs/cde/output-contracts.md`
 - CDE contracts: `docs/cde/contracts.md`
@@ -21,6 +22,15 @@ The purpose of this document is architectural control, not narrative.
 - Prompts reference: `docs/prompts.md`
 - Iteration skill contract: `src/skills/iteration.md`
 - Runtime boundary: `docs/runtime/index.md`
+
+## Docs Map (Classic)
+
+- CLI runtime: `docs/cli.md`, `docs/runtime/index.md`, `docs/execution/index.md`
+- Configuration: `docs/config/index.md`
+- Contracts and specs: `docs/cde/index.md`, `docs/specs.md`
+- Mapping and adaptation: `docs/mapping/index.md`, `docs/adaptation.md`
+- Prompts: `docs/prompts.md`
+- Knowledgebase: `docs/knowledge.md`
 
 ## Core Engine Layout (Target)
 
@@ -32,12 +42,20 @@ The purpose of this document is architectural control, not narrative.
 - src/skills/
 - scripts/
 - templates/prompts/
-- tasks/
+- tasks/ (optional)
 - src/workflows/
-- schemas/
+- schemas/ (optional)
 - templates/
 - assets/
 - extensions/
+
+## Install & Shell Init
+
+Install with:
+`curl -fsSL https://raw.githubusercontent.com/udx/dev.kit/main/bin/scripts/install.sh | bash`
+
+Then source the shell init (if the installer didn’t prompt to update your profile):
+`source "$HOME/.udx/dev.kit/env.sh"`
 
 ## 1. Why dev.kit Exists
 

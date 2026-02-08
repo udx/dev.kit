@@ -9,7 +9,7 @@ This loop is tool-neutral and produces no runtime side effects.
 
 ## Task Directory Layout
 
-Each task lives under `tasks/<task-id>/` with the following files:
+Each task lives under `tasks/<task-id>/` (created by `scripts/new-task.sh`) with the following files:
 
 - `tasks/<task-id>/prompt.md`
 - `tasks/<task-id>/feedback.md`
