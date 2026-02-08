@@ -26,7 +26,7 @@ The purpose of this document is architectural control, not narrative.
 
 ## Docs Map (Classic)
 
-- CLI runtime: `docs/cli.md`, `docs/runtime/index.md`, `docs/runtime/layout.md`, `docs/execution/index.md`
+- CLI runtime: `docs/cli.md`, `docs/runtime/index.md`, `docs/runtime/layout.md`, `docs/runtime/ai-experience.md`, `docs/execution/index.md`
 - Configuration: `docs/config/index.md`
 - Contracts and specs: `docs/cde/index.md`, `docs/specs.md`
 - Mapping and adaptation: `docs/mapping/index.md`, `docs/adaptation.md`
