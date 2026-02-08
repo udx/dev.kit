@@ -16,8 +16,8 @@ Capture commands:
 Capture commands do not update capture logs (so you can inspect the last run).
 Codex integration commands:
 - `dev.kit codex status` (show managed paths and last backup)
-- `dev.kit codex apply` (backup and apply shared `src/ai` + `src/ai/integrations/codex` to `~/.codex`)
-- `dev.kit codex config --plan --path=<path>` (render planned config/skills from src/ai + src/ai/integrations/codex)
+- `dev.kit codex apply` (backup and apply shared `src/ai/data` + `src/ai/integrations/codex` to `~/.codex`)
+- `dev.kit codex config --plan --path=<path>` (render planned config/skills from src/ai/data + src/ai/integrations/codex)
 - `dev.kit codex compare --path=<path>` (compare planned output vs `~/.codex/<path>`)
 - `dev.kit codex restore` (restore the latest backup)
 - `bin/completions/*`: Shell completions (bash + zsh).

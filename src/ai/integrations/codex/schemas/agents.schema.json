@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["title", "intro", "sections"],
+  "properties": {
+    "title": { "type": "string" },
+    "intro": { "type": "array", "items": { "type": "string" } },
+    "sections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["title", "bullets"],
+        "properties": {
+          "title": { "type": "string" },
+          "bullets": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
+  }
+}

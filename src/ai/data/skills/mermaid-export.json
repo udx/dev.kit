@@ -1,0 +1,21 @@
+{
+  "name": "mermaid-export",
+  "description": "Convert Mermaid .mmd diagrams to .svg files, especially for article assets.",
+  "sections": [
+    { "title": "Mermaid Export", "lines": ["Purpose: Convert Mermaid diagrams to SVG assets using the project tooling."] },
+    { "title": "Config", "bullets": [
+      "Inputs: source `.mmd` files and optional output directory.",
+      "Outputs: `.svg` files alongside or under assets directory."
+    ]},
+    { "title": "Logic", "bullets": [
+      "Identify `.mmd` files to convert.",
+      "Run the mermaid export command.",
+      "Report generated files."
+    ]},
+    { "title": "Schema", "bullets": [
+      "Inputs: file paths",
+      "Outputs: svg files",
+      "Format: file artifacts"
+    ]}
+  ]
+}

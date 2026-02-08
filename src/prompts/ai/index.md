@@ -13,7 +13,8 @@
   - Repository inventories:
     - `src/`
     - `src/prompts/`
-    - `src/ai/integrations/codex/skills/`
+    - `src/ai/data/skills/`
+    - `src/ai/integrations/codex/schemas/`
   - Dynamic context (if available):
     - `dev.kit ai skills`
     - `dev.kit config show`

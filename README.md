@@ -56,7 +56,8 @@ Prompts and templates:
 - `config/` runtime configuration
 - `docs/` specs and contracts
 - `src/ai/` shared AI integration assets
-- `src/ai/integrations/` integration-specific assets (codex, claude, gemini)
+- `src/ai/data/` shared AI data (JSON)
+- `src/ai/integrations/` integration-specific schemas/templates (codex, claude, gemini)
 - `src/prompts/` iteration prompts
 - `src/mermaid/` mermaid templates
 - `src/docker/` docker assets
