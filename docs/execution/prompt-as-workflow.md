@@ -35,6 +35,7 @@ Logic/Tooling:
 - Child workflows should be nested under the parent workflow directory.
 - Reference the child workflow from the parent step.
 - Keep steps deterministic, plan-first, and repo-scoped.
+- When resuming, update step status and restate the active step ID.
 
 Output/Result:
 - A single Markdown workflow file with ordered steps and status per step.

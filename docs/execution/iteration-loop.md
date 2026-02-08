@@ -21,16 +21,32 @@ review
 - Review input: `docs/_tree.txt` (generated, optional)
 - Review output: `docs/_feedback.md`
 - Workflow (active): `~/.udx/dev.kit/state/codex/workflows/<repo-id>/<task-id>/workflow.md`
-- Workflow (reference): `src/workflows/`
+- Workflow (reference): `src/`
 - Helper scripts: `scripts/apply-task.sh`
 - Subtask loop: `docs/execution/subtask-loop.md` (task-specific prompt/feedback)
-- Skill contract: `src/skills/iteration.md`
+- Skill contract: `src/ai/data/skills/iteration.json`
+
+## Session Continuity
+
+Keep workflow state continuous across turns (interactive Codex or `codex exec`).
+
+Required continuity signals:
+- Carry forward the latest workflow file content and step `status` values.
+- Include the active workflow path in each response when work continues.
+- If a response pauses for user input, list the open questions explicitly.
+- When resuming, restate the active step ID and update its status.
+
+Recommended continuation packet:
+- Workflow path (`~/.udx/dev.kit/state/codex/workflows/<repo-id>/<task-id>/workflow.md`)
+- Current step ID + status
+- Open questions or missing inputs
+- Next action (requested from user or to be executed by CLI)
 
 ## See Also
 
 - Spec kernel entrypoint: `docs/index.md`
 - Repo overview: `README.md`
-- Iteration skill contract: `src/skills/iteration.md`
+- Iteration skill contract: `src/ai/data/skills/iteration.json`
 
 ## Boundaries
 

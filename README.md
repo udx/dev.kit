@@ -2,7 +2,7 @@
 
 # dev.kit
 
-Deterministic developer workflow kit for humans + AI. One CLI entrypoint, shared workflows/prompts under `src/` and `templates/`, and a stable contract for iteration.
+Deterministic developer workflow kit for humans + AI. One CLI entrypoint, shared prompts/templates under `src/`, and a stable contract for iteration.
 
 ## Install
 
@@ -52,18 +52,22 @@ Prompts and templates:
 
 - `bin/` CLI entrypoints
 - `lib/` runtime library code
-- `src/` runtime source
+- `src/` runtime source + templates
 - `config/` runtime configuration
 - `docs/` specs and contracts
-- `src/workflows/` workflow artifacts
-- `templates/prompts/` iteration prompts
+- `src/ai/` shared AI integration assets
+- `src/ai/data/` shared AI data (JSON)
+- `src/ai/integrations/` integration-specific schemas/templates (codex, claude, gemini)
+- `src/ai/data/prompts.json` iteration prompts
+- `src/mermaid/` mermaid templates
+- `src/docker/` docker assets
 - `scripts/` helpers
 
 ## Prompt For Teammate AI
 ```
 You are my teammate working on dev.kit. Goal: keep the workflow engine deterministic, predictable, and easy to run locally.
 Start by reading `docs/index.md` and `docs/execution/iteration-loop.md`.
-Core code lives in `bin/`, `lib/`, `src/`, and `config/`. Workflows and prompts live in `src/workflows/` and `templates/prompts/`.
+Core code lives in `bin/`, `lib/`, `src/`, and `config/`. Prompts live in `src/ai/data/prompts.json`. AI integration assets live in `src/ai/`.
 Keep changes small and reversible. Prefer explicit CLI behavior over hidden side effects.
 If unsure, ask before introducing new abstractions or reworking execution flow.
 ```

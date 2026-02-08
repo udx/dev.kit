@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["approval_policy", "sandbox_mode", "web_search", "web_search_request", "personality"],
+  "properties": {
+    "approval_policy": { "type": "string" },
+    "sandbox_mode": { "type": "string" },
+    "web_search": { "type": "string" },
+    "web_search_request": { "type": "boolean" },
+    "personality": { "type": "string" },
+    "project_root_markers": { "type": "array", "items": { "type": "string" } },
+    "projects": { "type": "object" },
+    "mcp_servers": { "type": "object" },
+    "notice": { "type": "object" },
+    "sandbox_workspace_write": { "type": "object" },
+    "shell_environment_policy": { "type": "object" }
+  }
+}

@@ -16,7 +16,12 @@ keep cleanup and upgrades predictable.
     codex/
       workflows/<repo-id>/...
       tasks/<repo-id>/...
-      logs/
+      logs/<repo-id>/
+        exec-<timestamp>.log
+        exec-<timestamp>.prompt.md
+        exec-<timestamp>.request.txt
+        exec-<timestamp>.result.md
+        exec-<timestamp>.meta
     capture/<repo-id>/...
     cache/
 ```
@@ -40,3 +45,8 @@ explicitly opts in:
 
 If `source/` or `state/` is missing, dev.kit falls back to legacy paths under
 `DEV_KIT_HOME`.
+
+## Config key
+
+- `state_path` overrides the runtime state directory.
+  Example: `dev.kit config set --key state_path --value "~/.udx/dev.kit/.state"`

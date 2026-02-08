@@ -228,4 +228,4 @@ This workflow is complete when:
 ## Resolution Log
 
 - DOC-001: created `docs/execution/cli-primitives.md` and marked as stable interface.
-- REVIEW-2026-02-04: fixed prompt template inheritance parsing and removed stray files (`templates/prompts/ai/index.md`, `templates/prompts/ai/codex/index.md`, `_prompt.md`, `tmp.prompt`, `.DS_Store`, `src/_research/workflows/infra-configs-production-release.md`).
+- REVIEW-2026-02-04: fixed prompt template inheritance parsing and removed stray files (`src/prompts/ai/index.md`, `src/prompts/ai/codex/index.md`, `_prompt.md`, `tmp.prompt`, `.DS_Store`, `src/_research/workflows/infra-configs-production-release.md`).

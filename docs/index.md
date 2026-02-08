@@ -20,13 +20,13 @@ The purpose of this document is architectural control, not narrative.
 - CDE contracts: `docs/cde/contracts.md`
 - Prompt-as-workflow: `docs/execution/prompt-as-workflow.md`
 - Prompts reference: `docs/prompts.md`
-- Iteration skill contract: `src/skills/iteration.md`
+- Iteration skill contract: `src/ai/data/skills/iteration.json`
 - Runtime boundary: `docs/runtime/index.md`
 - Runtime layout: `docs/runtime/layout.md`
 
 ## Docs Map (Classic)
 
-- CLI runtime: `docs/cli.md`, `docs/runtime/index.md`, `docs/runtime/layout.md`, `docs/execution/index.md`
+- CLI runtime: `docs/cli.md`, `docs/runtime/index.md`, `docs/runtime/layout.md`, `docs/runtime/ai-experience.md`, `docs/execution/index.md`
 - Configuration: `docs/config/index.md`
 - Contracts and specs: `docs/cde/index.md`, `docs/specs.md`
 - Mapping and adaptation: `docs/mapping/index.md`, `docs/adaptation.md`
@@ -40,13 +40,17 @@ The purpose of this document is architectural control, not narrative.
 - src/
 - config/
 - docs/
-- src/skills/
+- src/ai/ (shared AI integration assets)
+- src/ai/data/ (shared AI data)
+- src/ai/integrations/ (integration-specific schemas/templates)
+- src/ai/data/prompts.json (prompt templates)
+- src/mermaid/ (mermaid templates)
+- src/docker/ (docker assets)
+- src/ai/integrations/codex/schemas/ (Codex schema)
+- src/ai/integrations/codex/templates/ (Codex render templates)
 - scripts/
-- templates/prompts/
 - tasks/ (optional)
-- src/workflows/
 - schemas/ (optional)
-- templates/
 - assets/
 - extensions/
 

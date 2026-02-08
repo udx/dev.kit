@@ -114,32 +114,45 @@ dev_kit_cmd_config() {
     printf "%s" "$developer"
   }
 
-  write_config_value() {
+  update_config_value() {
     local key="$1"
     local value="$2"
-    python3 - "$CONFIG_FILE" "$key" "$value" <<'PY'
-import os,sys
-
-path, key, value = sys.argv[1:]
-lines = []
-found = False
-
-if os.path.exists(path):
-    with open(path, "r", encoding="utf-8") as f:
-        for line in f:
-            if line.strip().startswith(f"{key}"):
-                lines.append(f"{key} = {value}\n")
-                found = True
-            else:
-                lines.append(line)
-if not found:
-    lines.append(f"{key} = {value}\n")
-
-os.makedirs(os.path.dirname(path), exist_ok=True)
-with open(path, "w", encoding="utf-8") as f:
-    f.writelines(lines)
-print(f"Set: {key} = {value}")
-PY
+    local path="${3:-$CONFIG_FILE}"
+    local mode="${4:-set}"
+    local tmp=""
+    tmp="$(mktemp)"
+    if [ -f "$path" ]; then
+      awk -v k="$key" -v v="$value" -v mode="$mode" '
+        BEGIN { found=0 }
+        {
+          if ($0 ~ "^[[:space:]]*"k"[[:space:]]*=") {
+            found=1
+            if (mode=="reset" && v=="") { next }
+            print k" = "v
+            next
+          }
+          print
+        }
+        END {
+          if (!found && v!="") {
+            print k" = "v
+          }
+        }
+      ' "$path" > "$tmp"
+    else
+      if [ -n "$value" ]; then
+        printf "%s = %s\n" "$key" "$value" > "$tmp"
+      else
+        : > "$tmp"
+      fi
+    fi
+    mkdir -p "$(dirname "$path")"
+    mv "$tmp" "$path"
+    if [ -n "$value" ]; then
+      echo "Set: $key = $value"
+    else
+      echo "Reset: $key"
+    fi
   }
 
   confirm_action() {
@@ -200,43 +213,43 @@ PY
           echo "Config schema not found: $schema_artifact or $schema_source" >&2
           exit 1
         fi
+        if ! command -v jq >/dev/null 2>&1; then
+          echo "jq is required for --custom config generation." >&2
+          exit 1
+        fi
         mkdir -p "$(dirname "$path")"
-        python3 - "$schema_path" "$path" <<'PY'
-import json
-import os
-import sys
-
-schema_path, out_path = sys.argv[1], sys.argv[2]
-with open(schema_path, "r", encoding="utf-8") as f:
-    schema = json.load(f)
-
-fields = schema.get("fields", [])
-lines = []
-
-def prompt(text):
-    sys.stdout.write(text)
-    sys.stdout.flush()
-    return sys.stdin.readline().strip()
-
-for field in fields:
-    key = field.get("key")
-    default = field.get("default", "")
-    options = field.get("options") or []
-    desc = field.get("description", "")
-    if desc:
-        sys.stdout.write(f"\n{desc}\n")
-    if options:
-        sys.stdout.write(f"options: {', '.join(options)}\n")
-    value = prompt(f"{key} [{default}]: ")
-    if not value:
-        value = default
-    lines.append(f"{key} = {value}\n")
-
-with open(out_path, "w", encoding="utf-8") as f:
-    f.writelines(lines)
-
-print(f"Saved: {out_path}")
-PY
+        : > "$path"
+        while IFS= read -r field; do
+          local field_json=""
+          local key=""
+          local default=""
+          local desc=""
+          local options=""
+          field_json="$(printf "%s" "$field" | base64 --decode)"
+          key="$(printf "%s" "$field_json" | jq -r '.key // empty')"
+          default="$(printf "%s" "$field_json" | jq -r '.default // ""')"
+          desc="$(printf "%s" "$field_json" | jq -r '.description // ""')"
+          options="$(printf "%s" "$field_json" | jq -r '.options // [] | join(\", \")')"
+          if [ -n "$desc" ]; then
+            echo ""
+            echo "$desc"
+          fi
+          if [ -n "$options" ]; then
+            echo "options: $options"
+          fi
+          local value=""
+          if [ -t 0 ]; then
+            printf "%s [%s]: " "$key" "$default"
+            read -r value || true
+          fi
+          if [ -z "$value" ]; then
+            value="$default"
+          fi
+          if [ -n "$key" ]; then
+            printf "%s = %s\n" "$key" "$value" >> "$path"
+          fi
+        done < <(jq -r '.fields[] | @base64' "$schema_path")
+        echo "Saved: $path"
         exit 0
       fi
       if [ -f "$path" ]; then
@@ -293,30 +306,7 @@ PY
         fi
         local default_val=""
         default_val="$(config_value "$REPO_DIR/config/default.env" "$key" "")"
-        python3 - "$CONFIG_FILE" "$key" "$default_val" <<'PY'
-import os,sys
-
-path, key, value = sys.argv[1:]
-lines = []
-found = False
-
-if os.path.exists(path):
-    with open(path, "r", encoding="utf-8") as f:
-        for line in f:
-            if line.strip().startswith(f"{key}"):
-                if value:
-                    lines.append(f"{key} = {value}\n")
-                found = True
-            else:
-                lines.append(line)
-if not found and value:
-    lines.append(f"{key} = {value}\n")
-
-os.makedirs(os.path.dirname(path), exist_ok=True)
-with open(path, "w", encoding="utf-8") as f:
-    f.writelines(lines)
-print(f"Reset: {key}")
-PY
+        update_config_value "$key" "$default_val" "$CONFIG_FILE" "reset"
         exit 0
       fi
       if [ ! -f "$REPO_DIR/config/default.env" ]; then
@@ -327,9 +317,10 @@ PY
         confirm_action "Reset config to defaults?"
       fi
       cp "$REPO_DIR/config/default.env" "$CONFIG_FILE"
+      cp "$REPO_DIR/config/default.env" "$DEV_KIT_HOME/config.env"
       echo "Reset: $CONFIG_FILE"
       ;;
-    set)
+  set)
       local force="false"
       force="$(parse_force_flag "$@")"
       local developer="false"
@@ -338,8 +329,8 @@ PY
       local value=""
       key="$(parse_key_flag "$@")"
       if [ "$developer" = "true" ]; then
-        write_config_value "exec.prompt" "developer"
-        write_config_value "developer.enabled" "true"
+        update_config_value "exec.prompt" "developer" "$CONFIG_FILE" "set"
+        update_config_value "developer.enabled" "true" "$CONFIG_FILE" "set"
         exit 0
       fi
       if [ -n "$key" ]; then
@@ -375,7 +366,10 @@ PY
         echo "Usage: dev.kit config set --key <key> <value>" >&2
         exit 1
       fi
-      write_config_value "$key" "$value"
+      update_config_value "$key" "$value" "$CONFIG_FILE" "set"
+      if [ "$key" = "state_path" ]; then
+        update_config_value "$key" "$value" "$DEV_KIT_HOME/config.env" "set"
+      fi
       ;;
     -h|--help)
       cat <<'CONFIG_USAGE'

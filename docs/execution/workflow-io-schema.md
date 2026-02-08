@@ -35,3 +35,11 @@ workflow:
 - Workflow steps must be executable without optional extensions.
 - If bounds are exceeded, extract a child workflow before continuing.
 - Step `status` is required and must be one of: planned, in_progress, done, blocked.
+
+## Continuation Guidance (Recommended)
+
+For multi-turn work (interactive sessions or repeated `codex exec`):
+- Persist step `status` changes in the workflow file.
+- On every response, reference the active workflow path and current step ID.
+- If blocked, record the missing inputs and keep the step status as `blocked`.
+- For large tasks, use child workflows and reference them from the parent step.

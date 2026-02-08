@@ -23,6 +23,7 @@ Use dev.kit as the execution wrapper and reasoning systems for planning.
 - Reasoning systems propose steps; dev.kit runs them.
 - Each step maps to a single command or explicit short sequence.
 - Nested steps are allowed when a step is too complex.
+- For multi-turn work, always carry forward the latest workflow state and step status.
 
 ## Boundary
 

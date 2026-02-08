@@ -13,6 +13,7 @@ Canonical documentation lives in `docs/`.
 - `docs/runtime/layout.md`
 - `docs/runtime/lifecycle.md`
 - `docs/runtime/capability-detect.md`
+- `docs/runtime/ai-experience.md`
 - `docs/execution/index.md`
 - `docs/execution/iteration-loop.md`
 - `docs/execution/subtask-loop.md`
