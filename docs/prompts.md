@@ -10,6 +10,7 @@ Template:
 
 Codex tips:
 - The Codex overlay includes interactive tips and shortcuts such as `!` for running local shell commands, `@` for fuzzy file search, and `/review` or `/fork` slash commands for specialized workflows.
+- Use `!` only in interactive Codex sessions. For `codex exec`, include the command output in the prompt ahead of time.
 
 Prompt selection:
 - Local config: `.udx/dev.kit/config.env` (created on demand)
