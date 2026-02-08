@@ -25,6 +25,18 @@ Use dev.kit as the execution wrapper and reasoning systems for planning.
 - Nested steps are allowed when a step is too complex.
 - For multi-turn work, always carry forward the latest workflow state and step status.
 
+## Extraction Gate
+
+If a step is too large, extract a child workflow. Use this gate:
+
+If two or more answers are yes, extract the step.
+
+1. The step requires multiple sub-steps with different inputs or tools.
+2. The step is reusable across workflows or projects.
+3. The step changes multiple files or touches multiple domains.
+4. The step needs a plan, verification, or fallback logic of its own.
+5. The step depends on external state (network, system config, environment).
+
 ## Boundary
 
 - Execution defines decomposition and workflow semantics.

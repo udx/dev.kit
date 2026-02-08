@@ -7,46 +7,62 @@ Deterministic developer workflow kit for humans + AI. One CLI entrypoint, shared
 ## Install
 
 Quick start (one-liner):
-```
+```bash
 curl -fsSL https://raw.githubusercontent.com/udx/dev.kit/main/bin/scripts/install.sh | bash
 
 # If the installer doesn't prompt for shell updates:
 source "$HOME/.udx/dev.kit/source/env.sh"
 ```
 
-## Use
+## Configure
 
-- View commands: `dev.kit help`
-- Show config: `dev.kit config show`
-- Generate a prompt: `dev.kit prompt --request "..." --template ai.codex`
-- Run exec (requires `ai.enabled = true`): `dev.kit exec "..."` or `dev.kit exec --print "..."` for dry-run.
+Common:
+```bash
+dev.kit config show
+dev.kit config set --key ai.enabled --value true
+```
+
+Optional: custom state path
+```bash
+dev.kit config set --key state_path --value "~/.udx/dev.kit/.state"
+```
+
+## Use (User Flow)
+
+Pick a mode:
+
+1. **Prompt-only (no AI installed)**  
+Generate a deterministic prompt and run it in any tool:
+```bash
+dev.kit prompt --request "Summarize repo structure"
+```
+
+2. **AI-enabled (Codex installed)**  
+Apply the Codex config once, then run `dev.kit exec`:
+```bash
+dev.kit codex apply
+dev.kit exec "Summarize repo structure"
+```
+
+3. **Dry-run (print only)**  
+Generate the prompt without running an AI tool:
+```bash
+dev.kit exec --print "Summarize repo structure"
+```
+
+Tips:
+- `dev.kit exec` always uses the same prompt generator as `dev.kit prompt`.
+- If AI is disabled, `dev.kit exec` prints the prompt.
 
 ## Docs
 
-Start here:
-- `docs/index.md` (root contract)
+Start here: `docs/index.md`
 
-CLI and runtime:
-- `docs/cli.md`
-- `docs/runtime/index.md`
-- `docs/runtime/layout.md`
-- `docs/runtime/lifecycle.md`
-
-Execution and iteration:
-- `docs/execution/iteration-loop.md`
-- `docs/execution/cli-primitives.md`
-- `docs/execution/prompt-as-workflow.md`
-
-Configuration:
-- `docs/config/index.md`
-- `docs/config/integrations.md`
-
-Contracts and mappings:
-- `docs/cde/index.md`
-- `docs/mapping/index.md`
-
-Prompts and templates:
-- `docs/prompts.md`
+Doc map (by topic):
+- CLI and execution model: `docs/cli/overview.md`, `docs/cli/execution/index.md`
+- AI integration: `docs/ai/README.md`
+- Concepts and contracts: `docs/concepts/index.md`, `docs/concepts/specs.md`
+- References and standards: `docs/reference/udx-reference-index.md`
 
 ## Repo Map (Core)
 
@@ -62,38 +78,3 @@ Prompts and templates:
 - `src/mermaid/` mermaid templates
 - `src/docker/` docker assets
 - `scripts/` helpers
-
-## Prompt For Teammate AI
-```
-You are my teammate working on dev.kit. Goal: keep the workflow engine deterministic, predictable, and easy to run locally.
-Start by reading `docs/index.md` and `docs/execution/iteration-loop.md`.
-Core code lives in `bin/`, `lib/`, `src/`, and `config/`. Prompts live in `src/ai/data/prompts.json`. AI integration assets live in `src/ai/`.
-Keep changes small and reversible. Prefer explicit CLI behavior over hidden side effects.
-If unsure, ask before introducing new abstractions or reworking execution flow.
-```
-
-## Flow Mermaid
-
-```mermaid
-flowchart TD
-  A[Input<br/>image, text, command] --> B[dev.kit]
-
-  B --> C{Route}
-  C -->|direct command| D[CLI execution]
-  C -->|codex exec| E[Prompt-as-workflow]
-
-  E --> F[Workflow response]
-  F --> G{Next action}
-  G -->|workflow command| H[Workflow step state<br/>planned, in_progress, done, blocked]
-  G -->|shell command| I[Shell command]
-
-  subgraph Sources
-    S1[Repo]
-    S2[CLI]
-    S3[Docs]
-    S4[Manifest]
-    S5[VDX / Knowledge base]
-  end
-
-  Sources --> B
-```

@@ -18,6 +18,12 @@ Provide minimal, safe defaults that are easy to understand and reverse.
 - Integrations are opt-in.
 - Each option is explained.
 
+## Reset and Safety
+
+- Provide reset to known safe defaults.
+- Allow users to inspect current config.
+- Avoid destructive changes without confirmation.
+
 ## State Path
 
 - `state_path` controls the runtime state directory.

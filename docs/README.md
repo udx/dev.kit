@@ -3,9 +3,11 @@
 Start here: `docs/index.md`.
 
 Top-level groups:
-- CLI: `docs/cli/README.md`
-- AI Integration: `docs/ai/README.md`
-- Concepts: `docs/concepts/README.md`
-- References: `docs/reference/README.md`
-- Knowledgebase: `docs/knowledge.md`
-- Specs: `docs/specs.md`
+- CLI overview: `docs/cli/overview.md`
+- CLI runtime: `docs/cli/runtime/index.md`
+- CLI execution: `docs/cli/execution/index.md`
+- AI integration: `docs/ai/README.md`
+- Concepts: `docs/concepts/index.md`
+- References: `docs/reference/udx-reference-index.md`
+- Knowledgebase: `docs/reference/knowledge.md`
+- Specs: `docs/concepts/specs.md`

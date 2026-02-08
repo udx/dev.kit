@@ -9,3 +9,4 @@ Concepts explain how dev.kit works. They are descriptive guides, not strict cont
 - Context Driven Engineering (CDE): `docs/concepts/cde.md`
 - Mapping: `docs/concepts/mapping.md`
 - Adaptation: `docs/concepts/adaptation.md`
+- Specs: `docs/concepts/specs.md`

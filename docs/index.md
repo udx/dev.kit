@@ -11,19 +11,19 @@ The purpose of this document is architectural control, not narrative.
 
 - Repo overview: `README.md`
 - Docs navigation: `docs/README.md`
-- CLI overview: `docs/cli/README.md`
+- CLI overview: `docs/cli/overview.md`
 - AI integration: `docs/ai/README.md`
-- Concepts: `docs/concepts/README.md`
-- References: `docs/reference/README.md`
+- Concepts: `docs/concepts/index.md`
+- References: `docs/reference/udx-reference-index.md`
 - Iteration skill contract: `src/ai/data/skills/dev-kit-iteration.json`
 
 ## Docs Map (Classic)
 
-- CLI and execution: `docs/cli/README.md`
+- CLI and execution: `docs/cli/overview.md`, `docs/cli/execution/index.md`
 - AI integration: `docs/ai/README.md`
-- Concepts and specs: `docs/concepts/README.md`, `docs/specs.md`
-- References: `docs/reference/README.md`
-- Knowledgebase: `docs/knowledge.md`
+- Concepts and specs: `docs/concepts/index.md`, `docs/concepts/specs.md`
+- References: `docs/reference/udx-reference-index.md`
+- Knowledgebase: `docs/reference/knowledge.md`
 
 ## Core Engine Layout (Target)
 
