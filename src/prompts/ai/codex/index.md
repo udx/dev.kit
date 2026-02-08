@@ -1,6 +1,6 @@
 # dev.kit AI Middleware Overrides (Codex)
 
-- Inherits: `templates/prompts/index.md`, `templates/prompts/ai/index.md`
+- Inherits: `src/prompts/index.md`, `src/prompts/ai/index.md`
 - **Role**: Generate concise, tool-oriented Codex prompt artifacts for prompt-as-workflow scenarios.
 - **Context Inputs**:
   - Base AI prompt inputs

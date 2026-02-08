@@ -1,6 +1,6 @@
 # dev.kit AI Middleware Overrides (Claude)
 
-- Inherits: `templates/prompts/index.md`, `templates/prompts/ai/index.md`
+- Inherits: `src/prompts/index.md`, `src/prompts/ai/index.md`
 - Role: produce deterministic, structured prompt artifacts aligned with prompt-as-workflow.
 - Context inputs:
   - Base AI prompt inputs

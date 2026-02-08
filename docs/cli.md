@@ -16,7 +16,7 @@ Capture commands:
 Capture commands do not update capture logs (so you can inspect the last run).
 Codex integration commands:
 - `dev.kit codex status` (show managed paths and last backup)
-- `dev.kit codex apply` (backup and apply templates to `~/.codex`)
+- `dev.kit codex apply` (backup and apply `src/ai/codex` to `~/.codex`)
 - `dev.kit codex restore` (restore the latest backup)
 - `bin/completions/*`: Shell completions (bash + zsh).
 - `bin/scripts/install.sh`: Install symlink + env + completions.

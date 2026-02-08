@@ -15,12 +15,11 @@ Inputs are derived from the repo and environment when not provided explicitly.
 - `knowledge.session` (default: true when user requests learnings)
 - `knowledge.best_practices_dir` (default: `best_practices/`)
 - `knowledge.knowledge_file` (default: `docs/knowledge.md` if present)
-- `knowledge.legacy_learn_dir` (default: `src/learn/<repo>/` if required)
 
 ## Logic
 
 1) Analyze
-- Confirm repo root and scan evidence sources (README, docs/, workflows, configs).
+- Confirm repo root and scan evidence sources (README, docs/, prompts, configs).
 - Build an evidence map (file list + what they show).
 
 2) Plan
@@ -30,7 +29,6 @@ Inputs are derived from the repo and environment when not provided explicitly.
 3) Apply
 - Snapshot mode: overwrite `best_practices/*.md` using assets.
 - Session mode: append a dated section to `docs/knowledge.md`.
-- Legacy fallback: append to `src/learn/<repo>/` only when required.
 
 4) Report
 - Summarize changes and list affected files.
@@ -45,7 +43,6 @@ Inputs:
 Outputs (based on mode):
 - `best_practices/*.md` (snapshot, overwrite)
 - `docs/knowledge.md` (append dated section)
-- `src/learn/<repo>/...` (legacy fallback, append dated section)
 
 Format:
 - Markdown
@@ -54,5 +51,4 @@ Format:
 ## Docs
 
 Assets:
-- `templates/ai/codex/skills/best-practices-consumer/docs/assets/*`
-- `templates/ai/codex/skills/dev-learn-summary/docs/assets/*`
+- (none; use repo-local guidance when present)

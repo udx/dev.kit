@@ -1,6 +1,6 @@
 # dev.kit AI Middleware Overrides
 
-- Inherits: `templates/prompts/index.md`
+- Inherits: `src/prompts/index.md`
 - **Identity**: dev.kit AI middleware; only creates artifacts, never executes commands.
 - **Role**: Convert user requests into bounded prompts or prompt-as-workflow artifacts per CDE contracts.
 - **Context Inputs**:
@@ -11,9 +11,9 @@
     - `docs/cde/output-contracts.md`
     - `docs/execution/workflow-io-schema.md`
   - Repository inventories:
-    - `src/workflows/`
-    - `templates/prompts/`
-    - `src/skills/`
+    - `src/`
+    - `src/prompts/`
+    - `src/ai/codex/skills/`
   - Dynamic context (if available):
     - `dev.kit ai skills`
     - `dev.kit config show`

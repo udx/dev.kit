@@ -20,7 +20,7 @@ The purpose of this document is architectural control, not narrative.
 - CDE contracts: `docs/cde/contracts.md`
 - Prompt-as-workflow: `docs/execution/prompt-as-workflow.md`
 - Prompts reference: `docs/prompts.md`
-- Iteration skill contract: `src/skills/iteration.md`
+- Iteration skill contract: `src/ai/codex/skills/iteration/SKILL.md`
 - Runtime boundary: `docs/runtime/index.md`
 - Runtime layout: `docs/runtime/layout.md`
 
@@ -40,13 +40,14 @@ The purpose of this document is architectural control, not narrative.
 - src/
 - config/
 - docs/
-- src/skills/
+- src/ai/ (AI integration templates)
+- src/prompts/ (prompt templates)
+- src/mermaid/ (mermaid templates)
+- src/docker/ (docker assets)
+- src/ai/codex/skills/ (Codex skills)
 - scripts/
-- templates/prompts/
 - tasks/ (optional)
-- src/workflows/
 - schemas/ (optional)
-- templates/
 - assets/
 - extensions/
 
