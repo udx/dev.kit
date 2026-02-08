@@ -31,7 +31,7 @@ Task: Establish execution contract and guardrails for this workflow.
 Input: Repository root.
 Logic/Tooling:
 - Identify repo root and allowed directories.
-- Define allowed CLI tools (ls, rg, cat, jq/python json, git).
+- Define allowed CLI tools (ls, rg, cat, jq, git).
 - Define forbidden actions (network, deletes, recursive AI calls).
 Expected output/result:
 - Clear understanding of scope, safety rules, and allowed operations.
