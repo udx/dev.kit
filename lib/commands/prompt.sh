@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # prompt.sh
-# Generates a prompt artifact from templates/prompts.
+# Generates a prompt artifact from src/prompts.
 #
 # Usage:
 #   dev.kit prompt --request "Update docs" --template ai.codex --out prompt.md
@@ -18,7 +18,7 @@ set -euo pipefail
 DEFAULT_TEMPLATE="${PROMPT_TEMPLATE:-${PROMPT_DEFAULT_TEMPLATE:-base}}"
 DEFAULT_OUT="${PROMPT_OUT:-${PROMPT_DEFAULT_OUT:-}}"
 
-TEMPLATE_ROOT="${REPO_DIR}/templates/prompts"
+TEMPLATE_ROOT="${REPO_DIR}/src/prompts"
 
 dev_kit_prompt_list_templates() {
   while IFS= read -r name; do

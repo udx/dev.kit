@@ -1,7 +1,7 @@
 #!/bin/bash
 
 dev_kit_codex_src_dir() {
-  echo "$REPO_DIR/templates/ai/codex"
+  echo "$REPO_DIR/src/ai/codex"
 }
 
 dev_kit_codex_dst_dir() {
@@ -154,7 +154,7 @@ Usage: dev.kit codex <command>
 
 Commands:
   status   Show Codex integration status (default)
-  apply    Backup and apply templates/ai/codex -> ~/.codex
+  apply    Backup and apply src/ai/codex -> ~/.codex
   restore  Restore the latest backup to ~/.codex
 CODEX_USAGE
       ;;
