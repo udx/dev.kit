@@ -1,16 +1,8 @@
 # AI Integration
 
-Scope: AI-related prompts, skills, integrations, and runtime behavior.
+Start with:
+- User experience: `docs/ai/experience.md`
+- Prompt system: `docs/ai/prompts.md`
+- Integration config: `docs/ai/integrations.md`
 
-Docs:
-- `docs/ai/experience.md`
-- `docs/ai/prompts.md`
-- `docs/ai/integrations.md`
-
-Skills (source of truth: `src/ai/data/skills/`):
-- `dev-kit-iteration`: enforce the iteration contract and bounded work.
-- `dev-kit-knowledge-curator`: organize and normalize knowledgebase docs.
-- `dev-kit-mermaid-export`: convert Mermaid sources into SVG assets.
-- `dev-kit-prompt`: generate prompts with the dev.kit context contract.
-- `dev-kit-prompt-router`: route prompts into iteration vs workflow.
-- `dev-kit-workflow-generator`: generate prompt-as-workflow artifacts.
+Skills live in `src/ai/data/skills/` and define routing, iteration, and workflow behavior.
