@@ -1,12 +1,12 @@
 # Prompts
 
 Structure (under `src/ai/`):
-- `src/ai/data/prompts.json`: common prompt definitions (base + AI middleware)
+- `src/ai/data/prompts.json`: common AI prompt definitions
 - `src/ai/integrations/codex/prompts.json`: Codex-specific prompt overlay
 - `src/ai/integrations/codex/schemas/prompts.schema.json`: JSON schema shared by prompt data files
 
 Template:
-- Prompts are intentionally minimal; overlays inherit base prompts using `inherits`.
+- Prompts are intentionally minimal; integration overlays inherit the common AI prompt using `inherits`.
 
 Codex tips:
 - The Codex overlay includes interactive tips and shortcuts such as `!` for running local shell commands, `@` for fuzzy file search, and `/review` or `/fork` slash commands for specialized workflows.
@@ -16,9 +16,10 @@ Prompt selection:
 - Local config: `.udx/dev.kit/config.env` (created on demand)
 - Global config: `~/.udx/dev.kit/config.env` (created by installer)
 - Precedence: local overrides global.
+- Default template: `ai`
 
 Keys:
-- `exec.prompt`: `base|ai|ai.codex`
+- `exec.prompt`: `ai|ai.codex`
 
 CLI:
 - `dev.kit prompt` generates the normalized prompt artifact (stdout or `--out`).

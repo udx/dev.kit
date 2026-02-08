@@ -8,7 +8,7 @@ set -euo pipefail
 #   dev.kit prompt --request "Update docs" --template ai.codex --out prompt.md
 #
 # Defaults:
-# - template: base
+# - template: ai
 # - if request is empty -> default request: "Do you need help with anything?"
 #
 # Config via env:
@@ -20,7 +20,7 @@ if [ -n "${REPO_DIR:-}" ] && [ -f "$REPO_DIR/lib/utils.sh" ]; then
   . "$REPO_DIR/lib/utils.sh"
 fi
 
-DEFAULT_TEMPLATE="${PROMPT_TEMPLATE:-${PROMPT_DEFAULT_TEMPLATE:-base}}"
+DEFAULT_TEMPLATE="${PROMPT_TEMPLATE:-${PROMPT_DEFAULT_TEMPLATE:-ai}}"
 DEFAULT_OUT="${PROMPT_OUT:-${PROMPT_DEFAULT_OUT:-}}"
 
 PROMPT_DATA_DIR="${REPO_DIR}/src/ai/data"

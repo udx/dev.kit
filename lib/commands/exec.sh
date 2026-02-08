@@ -72,7 +72,7 @@ EXEC_USAGE
   prompt_key="$(config_value_scoped exec.prompt "")"
 
   if [ -z "$prompt_key" ]; then
-    prompt_key="base"
+    prompt_key="ai"
   fi
 
   dev_kit_prompt_build "$prompt_key" "$user_prompt"
@@ -88,7 +88,7 @@ EXEC_USAGE
   local cfg_quiet=""
   local cfg_capture_enabled=""
   local cfg_install_path_prompt=""
-  cfg_exec_prompt="$(config_value_scoped exec.prompt "base")"
+  cfg_exec_prompt="$(config_value_scoped exec.prompt "ai")"
   cfg_ai_enabled="$(config_value_scoped ai.enabled "false")"
   cfg_developer_enabled="$(config_value_scoped developer.enabled "false")"
   cfg_quiet="$(config_value_scoped quiet "false")"
@@ -124,9 +124,10 @@ EXEC_USAGE
   fi
 
   if [ "$cfg_ai_enabled" != "true" ]; then
+    printf "%s\n" "$normalized_prompt"
     echo "AI integration disabled. Enable with: dev.kit config set --key ai.enabled true" >&2
-    echo "Tip: use --print to view the normalized prompt without running codex." >&2
-    exit 1
+    echo "Prompt printed for manual use (Codex session, codex exec, or other AI/API/MCP)." >&2
+    exit 0
   fi
 
   if command -v codex >/dev/null 2>&1; then
