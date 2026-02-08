@@ -48,6 +48,12 @@
         "Avoid editing files outside the current workspace unless explicitly requested.",
         "Prefer non-destructive options and keep existing user changes intact."
       ]
+    },
+    {
+      "title": "Codex Setup",
+      "bullets": [
+        "If Codex cannot access `~/.codex/sessions`, fix ownership: `sudo chown -R $(whoami) ~/.codex`."
+      ]
     }
   ]
 }
