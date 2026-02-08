@@ -1,13 +1,12 @@
 # Prompts
 
-Structure (under `src/prompts/`):
-- `index.md`: base prompt (default context rules)
-- `src/prompts/ai/index.md`: AI middleware overrides (applied with base)
-- `src/prompts/ai/codex/index.md`: Codex overrides (applied with base + AI)
-- `src/prompts/ai/claude/index.md`: Claude overrides (applied with base + AI)
+Structure (under `src/ai/`):
+- `src/ai/data/prompts.json`: common prompt definitions (base + AI middleware)
+- `src/ai/integrations/codex/prompts.json`: Codex-specific prompt overlay
+- `src/ai/integrations/codex/schemas/prompts.schema.json`: JSON schema shared by prompt data files
 
 Template:
-- Prompts are intentionally minimal; the base prompt is inherited by default and overrides add role-specific rules.
+- Prompts are intentionally minimal; overlays inherit base prompts using `inherits`.
 
 Prompt selection:
 - Local config: `.udx/dev.kit/config.env` (created on demand)
@@ -15,7 +14,7 @@ Prompt selection:
 - Precedence: local overrides global.
 
 Keys:
-- `exec.prompt`: `base|ai|ai.codex|ai.claude|<path>`
+- `exec.prompt`: `base|ai|ai.codex`
 
 CLI:
 - `dev.kit prompt` generates the normalized prompt artifact (stdout or `--out`).

@@ -43,7 +43,7 @@ The purpose of this document is architectural control, not narrative.
 - src/ai/ (shared AI integration assets)
 - src/ai/data/ (shared AI data)
 - src/ai/integrations/ (integration-specific schemas/templates)
-- src/prompts/ (prompt templates)
+- src/ai/data/prompts.json (prompt templates)
 - src/mermaid/ (mermaid templates)
 - src/docker/ (docker assets)
 - src/ai/integrations/codex/schemas/ (Codex schema)

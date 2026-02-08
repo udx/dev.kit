@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # prompt.sh
-# Generates a prompt artifact from src/prompts.
+# Generates a prompt artifact from src/ai data.
 #
 # Usage:
 #   dev.kit prompt --request "Update docs" --template ai.codex --out prompt.md
@@ -15,21 +15,91 @@ set -euo pipefail
 #   PROMPT_TEMPLATE (fallback: PROMPT_DEFAULT_TEMPLATE)
 #   PROMPT_OUT (fallback: PROMPT_DEFAULT_OUT)
 
+if [ -n "${REPO_DIR:-}" ] && [ -f "$REPO_DIR/lib/utils.sh" ]; then
+  # shellcheck source=/dev/null
+  . "$REPO_DIR/lib/utils.sh"
+fi
+
 DEFAULT_TEMPLATE="${PROMPT_TEMPLATE:-${PROMPT_DEFAULT_TEMPLATE:-base}}"
 DEFAULT_OUT="${PROMPT_OUT:-${PROMPT_DEFAULT_OUT:-}}"
 
-TEMPLATE_ROOT="${REPO_DIR}/src/prompts"
+PROMPT_DATA_DIR="${REPO_DIR}/src/ai/data"
+PROMPT_INTEGRATION_DIR="${REPO_DIR}/src/ai/integrations/codex"
+PROMPT_SCHEMA="${PROMPT_INTEGRATION_DIR}/schemas/prompts.schema.json"
+PROMPT_INDEX_JSON=""
+PROMPT_INDEX_LOADED="0"
+
+dev_kit_prompt_require_jq() {
+  if ! dev_kit_require_cmd "jq" "dev.kit prompt rendering"; then
+    exit 1
+  fi
+}
+
+dev_kit_prompt_validate_required() {
+  local schema="$1"
+  local data="$2"
+  local req=""
+  req="$(jq -r '.required[]?' "$schema")"
+  local field=""
+  for field in $req; do
+    if ! jq -e --arg f "$field" 'has($f) and .[$f] != null' "$data" >/dev/null; then
+      echo "Missing required field '$field' in $data" >&2
+      exit 1
+    fi
+  done
+}
+
+dev_kit_prompt_data_files() {
+  local files=()
+  if [ -f "$PROMPT_DATA_DIR/prompts.json" ]; then
+    files+=("$PROMPT_DATA_DIR/prompts.json")
+  fi
+  if [ -f "$PROMPT_INTEGRATION_DIR/prompts.json" ]; then
+    files+=("$PROMPT_INTEGRATION_DIR/prompts.json")
+  fi
+  printf "%s\n" "${files[@]}"
+}
+
+dev_kit_prompt_load_index() {
+  if [ "$PROMPT_INDEX_LOADED" = "1" ]; then
+    return 0
+  fi
+
+  dev_kit_prompt_require_jq
+
+  local files=()
+  local file=""
+  while IFS= read -r file; do
+    [ -z "$file" ] && continue
+    files+=("$file")
+  done < <(dev_kit_prompt_data_files)
+
+  if [ "${#files[@]}" -eq 0 ]; then
+    echo "Missing prompt data in ${PROMPT_DATA_DIR}." >&2
+    exit 1
+  fi
+
+  if [ -f "$PROMPT_SCHEMA" ]; then
+    for file in "${files[@]}"; do
+      dev_kit_prompt_validate_required "$PROMPT_SCHEMA" "$file"
+    done
+  fi
+
+  PROMPT_INDEX_JSON="$(jq -s '{prompts: [.[].prompts[]?] }' "${files[@]}")"
+  PROMPT_INDEX_LOADED="1"
+
+  local dup=""
+  dup="$(printf "%s" "$PROMPT_INDEX_JSON" | jq -r '.prompts[].key' | sort | uniq -d || true)"
+  if [ -n "$dup" ]; then
+    echo "Duplicate prompt key(s):" >&2
+    printf "%s\n" "$dup" >&2
+    exit 1
+  fi
+}
 
 dev_kit_prompt_list_templates() {
-  while IFS= read -r name; do
-    printf "%s\n" "$name"
-  done < <(find "$TEMPLATE_ROOT" -type f -name 'index.md' -print \
-    | sed "s#^${TEMPLATE_ROOT}/##" \
-    | sed 's#/index\.md$##' \
-    | sed 's#^index\.md$#base#' \
-    | sed 's#^$#base#' \
-    | sed 's#/#.#g' \
-    | sort)
+  dev_kit_prompt_load_index
+  printf "%s" "$PROMPT_INDEX_JSON" | jq -r '.prompts[].key' | sort
 }
 
 prompt_value() {
@@ -58,61 +128,22 @@ prompt_value() {
   fi
 }
 
-normalize_template() {
-  local value="$1"
-  value="${value//\//.}"
-  printf "%s" "$value"
+dev_kit_prompt_entry() {
+  local key="$1"
+  dev_kit_prompt_load_index
+  printf "%s" "$PROMPT_INDEX_JSON" | jq -c --arg key "$key" '.prompts[] | select(.key == $key)'
 }
 
-resolve_template_files() {
-  local selection="$1"
-  local normalized=""
-  local base="${TEMPLATE_ROOT}/index.md"
-  local dotted=""
-
-  if [ -z "$selection" ]; then
-    selection="$DEFAULT_TEMPLATE"
-  fi
-
-  if [ -d "$selection" ]; then
-    if [ -f "$selection/index.md" ]; then
-      printf "%s\n" "$selection/index.md"
-      return 0
-    fi
-  fi
-
-  if [ -f "$selection" ]; then
-    printf "%s\n" "$selection"
-    return 0
-  fi
-
-  if [ -f "${TEMPLATE_ROOT}/${selection}" ]; then
-    printf "%s\n" "${TEMPLATE_ROOT}/${selection}"
-    return 0
-  fi
-
-  normalized="$(normalize_template "$selection")"
-  if [ "$normalized" = "base" ]; then
-    printf "%s\n" "$base"
-    return 0
-  fi
-
-  dotted="${normalized//./\/}"
-  if [ -f "${TEMPLATE_ROOT}/${dotted}/index.md" ]; then
-    printf "%s\n" "${TEMPLATE_ROOT}/${dotted}/index.md"
-    return 0
-  fi
-  if [ -f "${TEMPLATE_ROOT}/${dotted}" ]; then
-    printf "%s\n" "${TEMPLATE_ROOT}/${dotted}"
-    return 0
-  fi
-
-  echo "Unknown template: ${selection}" >&2
-  echo "Run --list to see available templates." >&2
-  exit 1
+dev_kit_prompt_inherits() {
+  local entry="$1"
+  printf "%s" "$entry" | jq -r '.inherits[]?'
 }
 
-set_remove() {
+PROMPT_KEYS=()
+PROMPT_KEYS_SET=$'\n'
+PROMPT_KEYS_VISITING=$'\n'
+
+prompt_set_remove() {
   local set_name="$1"
   local value="$2"
   local current="${!set_name}"
@@ -126,134 +157,66 @@ set_remove() {
   printf -v "$set_name" "%s" "$updated"
 }
 
-resolve_inherit_path() {
-  local item="$1"
-  local from_file="$2"
-  local from_dir
-  from_dir="$(dirname "$from_file")"
-  local candidate=""
-
-  if [[ "$item" == /* ]]; then
-    if [ -f "$item" ]; then
-      printf "%s\n" "$item"
-      return 0
-    fi
-    if [ -d "$item" ] && [ -f "$item/index.md" ]; then
-      printf "%s\n" "$item/index.md"
-      return 0
-    fi
-  fi
-
-  candidate="${from_dir}/${item}"
-  if [ -f "$candidate" ]; then
-    printf "%s\n" "$candidate"
+prompt_add_key() {
+  local key="$1"
+  if [[ "$PROMPT_KEYS_SET" == *$'\n'"$key"$'\n'* ]]; then
     return 0
   fi
-  if [ -d "$candidate" ] && [ -f "$candidate/index.md" ]; then
-    printf "%s\n" "$candidate/index.md"
-    return 0
-  fi
-
-  if [ -f "$item" ]; then
-    printf "%s\n" "$item"
-    return 0
-  fi
-  if [ -d "$item" ] && [ -f "$item/index.md" ]; then
-    printf "%s\n" "$item/index.md"
-    return 0
-  fi
-
-  if [ -f "${TEMPLATE_ROOT}/${item}" ]; then
-    printf "%s\n" "${TEMPLATE_ROOT}/${item}"
-    return 0
-  fi
-  if [ -d "${TEMPLATE_ROOT}/${item}" ] && [ -f "${TEMPLATE_ROOT}/${item}/index.md" ]; then
-    printf "%s\n" "${TEMPLATE_ROOT}/${item}/index.md"
-    return 0
-  fi
-
-  if [ "$item" = "base" ]; then
-    printf "%s\n" "${TEMPLATE_ROOT}/index.md"
-    return 0
-  fi
-
-  local dotted="${item//./\/}"
-  if [ -f "${TEMPLATE_ROOT}/${dotted}/index.md" ]; then
-    printf "%s\n" "${TEMPLATE_ROOT}/${dotted}/index.md"
-    return 0
-  fi
-  if [ -f "${TEMPLATE_ROOT}/${dotted}" ]; then
-    printf "%s\n" "${TEMPLATE_ROOT}/${dotted}"
-    return 0
-  fi
-
-  echo "Unknown inherited template: ${item} (from ${from_file})" >&2
-  exit 1
+  PROMPT_KEYS+=("$key")
+  PROMPT_KEYS_SET+="$key"$'\n'
 }
 
-parse_inherits() {
-  local file="$1"
-  local line=""
-  while IFS= read -r line; do
-    if [[ "$line" =~ ^[[:space:]]*-[[:space:]]*Inherits:[[:space:]]*(.*)$ ]]; then
-      local inherits="${BASH_REMATCH[1]}"
-      inherits="${inherits//\`/}"
-      printf "%s\n" "$inherits" | tr ',' '\n' | while IFS= read -r raw; do
-        local item=""
-        item="$(printf "%s" "$raw" | xargs)"
-        [ -z "$item" ] && continue
-        resolve_inherit_path "$item" "$file"
-      done
-      return 0
-    fi
-  done < "$file"
-}
-
-TEMPLATE_FILES=()
-TEMPLATE_FILES_SET=$'\n'
-TEMPLATE_FILES_VISITING=$'\n'
-
-add_template_file() {
-  local file="$1"
-  if [[ "$TEMPLATE_FILES_SET" == *$'\n'"$file"$'\n'* ]]; then
+prompt_add_with_inherits() {
+  local key="$1"
+  if [[ "$PROMPT_KEYS_SET" == *$'\n'"$key"$'\n'* ]]; then
     return 0
   fi
-  TEMPLATE_FILES+=("$file")
-  TEMPLATE_FILES_SET+="$file"$'\n'
-}
-
-add_with_inherits() {
-  local file="$1"
-  if [[ "$TEMPLATE_FILES_SET" == *$'\n'"$file"$'\n'* ]]; then
-    return 0
-  fi
-  if [[ "$TEMPLATE_FILES_VISITING" == *$'\n'"$file"$'\n'* ]]; then
-    echo "Cyclic template inheritance detected at: ${file}" >&2
+  if [[ "$PROMPT_KEYS_VISITING" == *$'\n'"$key"$'\n'* ]]; then
+    echo "Cyclic prompt inheritance detected at: ${key}" >&2
     exit 1
   fi
-  TEMPLATE_FILES_VISITING+="$file"$'\n'
+  local entry=""
+  entry="$(dev_kit_prompt_entry "$key")"
+  if [ -z "$entry" ]; then
+    echo "Unknown prompt: ${key}" >&2
+    echo "Run --list to see available templates." >&2
+    exit 1
+  fi
+  PROMPT_KEYS_VISITING+="$key"$'\n'
   while IFS= read -r inherit; do
     [ -z "$inherit" ] && continue
-    add_with_inherits "$inherit"
-  done < <(parse_inherits "$file")
-  set_remove TEMPLATE_FILES_VISITING "$file"
-  add_template_file "$file"
+    prompt_add_with_inherits "$inherit"
+  done < <(dev_kit_prompt_inherits "$entry")
+  prompt_set_remove PROMPT_KEYS_VISITING "$key"
+  prompt_add_key "$key"
 }
 
-collect_template_files() {
+dev_kit_prompt_collect_keys() {
   local selection="$1"
-  local initial=""
-  initial="$(resolve_template_files "$selection")"
+  if [ -z "$selection" ]; then
+    selection="$DEFAULT_TEMPLATE"
+  fi
+  PROMPT_KEYS=()
+  PROMPT_KEYS_SET=$'\n'
+  PROMPT_KEYS_VISITING=$'\n'
+  prompt_add_with_inherits "$selection"
+}
 
-  TEMPLATE_FILES=()
-  TEMPLATE_FILES_SET=$'\n'
-  TEMPLATE_FILES_VISITING=$'\n'
-
-  local file=""
-  while IFS= read -r file; do
-    [ -z "$file" ] && continue
-    add_with_inherits "$file"
-  done <<< "$initial"
+dev_kit_prompt_render_entry() {
+  local entry="$1"
+  local title=""
+  local body=""
+  title="$(printf "%s" "$entry" | jq -r '.title // ""')"
+  body="$(printf "%s" "$entry" | jq -r '.body[]?')"
+  if [ -n "$title" ]; then
+    if [ -n "$body" ]; then
+      printf "# %s\n\n%s" "$title" "$body"
+    else
+      printf "# %s" "$title"
+    fi
+  else
+    printf "%s" "$body"
+  fi
 }
 
 DEV_KIT_PROMPT_BODY=""
@@ -269,25 +232,23 @@ dev_kit_prompt_build() {
     request="Do you need help with anything?"
   fi
 
-  collect_template_files "$template"
+  dev_kit_prompt_collect_keys "$template"
 
   local prompt=""
-  local file=""
-  for file in "${TEMPLATE_FILES[@]}"; do
-    if [ ! -f "$file" ]; then
-      echo "Template not found: $file" >&2
-      exit 1
-    fi
+  local key=""
+  for key in "${PROMPT_KEYS[@]}"; do
+    local entry=""
+    entry="$(dev_kit_prompt_entry "$key")"
     if [ -n "$prompt" ]; then
       prompt+=$'\n\n---\n\n'
     fi
-    prompt+=$(cat "$file")
+    prompt+=$(dev_kit_prompt_render_entry "$entry")
   done
 
   prompt+=$'\n\n## User Request\n'"${request}"
 
   DEV_KIT_PROMPT_BODY="$prompt"
-  DEV_KIT_PROMPT_PATHS=("${TEMPLATE_FILES[@]}")
+  DEV_KIT_PROMPT_PATHS=("${PROMPT_KEYS[@]}")
 }
 
 dev_kit_cmd_prompt() {
