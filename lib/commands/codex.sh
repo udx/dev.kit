@@ -1,6 +1,11 @@
 #!/bin/bash
 
-dev_kit_codex_src_dir() {
+if [ -n "${REPO_DIR:-}" ] && [ -f "$REPO_DIR/lib/utils.sh" ]; then
+  # shellcheck source=/dev/null
+  . "$REPO_DIR/lib/utils.sh"
+fi
+
+dev_kit_codex_integration_dir() {
   echo "$REPO_DIR/src/ai/integrations/codex"
 }
 
@@ -39,8 +44,7 @@ dev_kit_codex_latest_backup() {
 }
 
 dev_kit_codex_require_jq() {
-  if ! command -v jq >/dev/null 2>&1; then
-    echo "jq is required for dev.kit codex rendering" >&2
+  if ! dev_kit_require_cmd "jq" "dev.kit codex rendering"; then
     exit 1
   fi
 }
@@ -317,14 +321,14 @@ dev_kit_codex_print_plan() {
 dev_kit_cmd_codex() {
   shift || true
   local sub="${1:-}"
-  local src=""
+  local integration=""
   local dst=""
-  src="$(dev_kit_codex_src_dir)"
+  integration="$(dev_kit_codex_integration_dir)"
   dst="$(dev_kit_codex_dst_dir)"
 
   case "$sub" in
     status|"")
-      echo "source: $src"
+      echo "integration: $integration"
       echo "data: $(dev_kit_codex_data_dir)"
       echo "schemas: $(dev_kit_codex_schemas_dir)"
       echo "templates: $(dev_kit_codex_templates_dir)"
@@ -344,13 +348,7 @@ dev_kit_cmd_codex() {
       local item=""
       while IFS= read -r item; do
         [ -z "$item" ] && continue
-        local src_item="$src/$item"
         local dst_item="$dst/$item"
-        if [ -e "$src_item" ]; then
-          printf "source/%s: present\n" "$item"
-        else
-          printf "source/%s: missing\n" "$item"
-        fi
         if [ -e "$dst_item" ]; then
           printf "target/%s: present\n" "$item"
         else
@@ -359,12 +357,16 @@ dev_kit_cmd_codex() {
       done < <(dev_kit_codex_managed_items)
       ;;
     apply)
-      if [ ! -d "$src" ]; then
-        echo "Missing source directory: $src" >&2
-        exit 1
-      fi
       if [ ! -d "$(dev_kit_codex_data_dir)" ]; then
         echo "Missing data directory: $(dev_kit_codex_data_dir)" >&2
+        exit 1
+      fi
+      if [ ! -d "$(dev_kit_codex_schemas_dir)" ]; then
+        echo "Missing schemas directory: $(dev_kit_codex_schemas_dir)" >&2
+        exit 1
+      fi
+      if [ ! -d "$(dev_kit_codex_templates_dir)" ]; then
+        echo "Missing templates directory: $(dev_kit_codex_templates_dir)" >&2
         exit 1
       fi
       mkdir -p "$dst"
@@ -469,7 +471,8 @@ dev_kit_cmd_codex() {
         local src_item="$backup_dir/$item"
         local dst_item="$dst/$item"
         if [ -e "$src_item" ]; then
-          dev_kit_codex_replace_path "$src_item" "$dst_item"
+          dev_kit_codex_clear_path "$dst_item"
+          cp -R "$src_item" "$dst_item"
           echo "Restored: $item"
         fi
       done < <(dev_kit_codex_managed_items)
@@ -481,8 +484,8 @@ Usage: dev.kit codex <command>
 
 Commands:
   status   Show Codex integration status (default)
-  apply    Backup and apply src/ai/integrations/codex -> ~/.codex
-  config   Render a planned file/dir from src/ai + src/ai/integrations/codex
+  apply    Render src/ai/data with Codex schemas/templates -> ~/.codex
+  config   Render a planned file/dir from src/ai/data + src/ai/integrations/codex
   compare  Compare planned output vs ~/.codex
   restore  Restore the latest backup to ~/.codex
 
