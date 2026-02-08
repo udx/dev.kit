@@ -44,7 +44,7 @@ Recommended continuation packet:
 
 ## See Also
 
-- Spec kernel entrypoint: `docs/index.md`
+- Spec kernel entrypoint: `docs/README.md`
 - Repo overview: `README.md`
 - Iteration skill contract: `src/ai/data/skills/dev-kit-iteration.json`
 

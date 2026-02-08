@@ -1,6 +1,6 @@
 # Docs
 
-Start here: `docs/index.md`.
+Start here: `docs/README.md`.
 
 Top-level groups:
 - CLI overview: `docs/cli/overview.md`

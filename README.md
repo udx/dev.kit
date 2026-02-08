@@ -56,7 +56,7 @@ Tips:
 
 ## Docs
 
-Start here: `docs/index.md`
+Start here: `docs/README.md`
 
 Doc map (by topic):
 - CLI and execution model: `docs/cli/overview.md`, `docs/cli/execution/index.md`
