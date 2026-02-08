@@ -20,7 +20,7 @@ The purpose of this document is architectural control, not narrative.
 - CDE contracts: `docs/cde/contracts.md`
 - Prompt-as-workflow: `docs/execution/prompt-as-workflow.md`
 - Prompts reference: `docs/prompts.md`
-- Iteration skill contract: `src/ai/data/skills/iteration.json`
+- Iteration skill contract: `src/ai/data/skills/dev-kit-iteration.json`
 - Runtime boundary: `docs/runtime/index.md`
 - Runtime layout: `docs/runtime/layout.md`
 

@@ -39,7 +39,7 @@
         "    - `dev.kit exec --print`",
         "  - User request: `<request>`",
         "- **Behavior**:",
-        "  - First run `$prompt-router` to decide iteration vs workflow.",
+        "  - First run `$dev-kit-prompt-router` to decide iteration vs workflow.",
         "  - Use prompt-as-workflow for multi-step or cross-file tasks.",
         "  - Enforce work limits from DOC-002 and DOC-003.",
         "  - Apply available skills and rules.",

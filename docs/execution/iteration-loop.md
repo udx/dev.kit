@@ -24,7 +24,7 @@ review
 - Workflow (reference): `src/`
 - Helper scripts: `scripts/apply-task.sh`
 - Subtask loop: `docs/execution/subtask-loop.md` (task-specific prompt/feedback)
-- Skill contract: `src/ai/data/skills/iteration.json`
+- Skill contract: `src/ai/data/skills/dev-kit-iteration.json`
 
 ## Session Continuity
 
@@ -46,7 +46,7 @@ Recommended continuation packet:
 
 - Spec kernel entrypoint: `docs/index.md`
 - Repo overview: `README.md`
-- Iteration skill contract: `src/ai/data/skills/iteration.json`
+- Iteration skill contract: `src/ai/data/skills/dev-kit-iteration.json`
 
 ## Boundaries
 

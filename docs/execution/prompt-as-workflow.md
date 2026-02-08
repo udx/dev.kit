@@ -30,7 +30,7 @@ Logic/Tooling:
 - Each step must include: Task, Input, Logic/Tooling, Expected output/result.
 - Use CLI execution primitives for each step (even when only reading files).
 - Mark each step with status: planned.
-- Follow the workflow-generator skill if available.
+- Follow the dev-kit-workflow-generator skill if available.
 - Apply the Extraction Gate; if 2+ answers are yes, extract a child workflow.
 - Child workflows should be nested under the parent workflow directory.
 - Reference the child workflow from the parent step.

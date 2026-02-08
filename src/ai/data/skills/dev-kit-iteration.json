@@ -1,5 +1,5 @@
 {
-  "name": "iteration",
+  "name": "dev-kit-iteration",
   "description": "Define and enforce the repo-native iteration contract for agents.",
   "sections": [
     { "title": "Skill — Iteration Contract Builder", "lines": ["Purpose: Define and enforce the repo-native iteration contract for agents."] },

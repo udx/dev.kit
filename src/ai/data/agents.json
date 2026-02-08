@@ -31,7 +31,7 @@
     {
       "title": "Skills & Routing",
       "bullets": [
-        "Always use the prompt-router skill to route every prompt into iteration or workflow-generator.",
+        "Always use the dev-kit-prompt-router skill to route every prompt into iteration or dev-kit-workflow-generator.",
         "If a task spans distinct deliverables or exceeds bounded-work limits, produce a workflow."
       ]
     },

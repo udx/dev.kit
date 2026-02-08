@@ -1,5 +1,5 @@
 {
-  "name": "knowledge-curator",
+  "name": "dev-kit-knowledge-curator",
   "description": "Capture repo best practices (snapshot) and/or session learnings into a knowledgebase. Use when the user asks for best practices, learn summaries, or knowledgebase updates.",
   "sections": [
     { "title": "Knowledge Curator", "lines": ["Purpose: Produce a reusable best-practices snapshot and/or capture session learnings in a knowledgebase."] },

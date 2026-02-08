@@ -10,7 +10,7 @@ Define the user experience for dev.kit with and without AI integrations.
 
 - `dev.kit prompt` generates the normalized prompt artifact.
 - `dev.kit exec` wraps prompt generation and runs Codex when enabled.
-- Prompts always include `$prompt-router` and workflow/continuity rules.
+- Prompts always include `$dev-kit-prompt-router` and workflow/continuity rules.
 
 Flow diagram:
 

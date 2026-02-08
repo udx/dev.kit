@@ -1,5 +1,5 @@
 {
-  "name": "prompt-router",
+  "name": "dev-kit-prompt-router",
   "description": "Route user prompts into iteration vs workflow generation. Use when the user requests iteration, or when a prompt likely exceeds bounded work and needs prompt-as-workflow conversion.",
   "sections": [
     { "title": "Prompt Router", "lines": ["Purpose: Decide whether to run the iteration stages or generate a workflow."] },
