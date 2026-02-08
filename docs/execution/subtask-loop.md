@@ -36,11 +36,10 @@ Recommended completion marker:
 
 - `status: complete`
 
-## Relationship to `docs/_feedback.md`
+## Review Notes
 
-- `docs/_feedback.md` remains the review-log artifact for the doc review loop.
-- Subtask outputs belong in `tasks/<task-id>/feedback.md` and should not be appended to `docs/_feedback.md`.
-- If a subtask resolves an item from `docs/_feedback.md`, add a short resolution entry there that points to the task directory.
+- Subtask outputs belong in `tasks/<task-id>/feedback.md`.
+- If a subtask resolves a higher-level review item, record it in the task feedback.
 
 ## Minimal Command Loop
 

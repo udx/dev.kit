@@ -1,6 +1,6 @@
 # AI Integration Experience
 
-Domain: Runtime
+Domain: AI Integration
 
 ## Purpose
 

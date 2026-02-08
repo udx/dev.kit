@@ -1,6 +1,6 @@
 # Integration Configuration
 
-Domain: Configuration
+Domain: AI Integration
 
 ## Purpose
 

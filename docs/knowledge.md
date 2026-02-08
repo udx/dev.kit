@@ -1,5 +1,7 @@
 # Knowledgebase: Patterns and Templates
 
+Scope: reusable documentation and scripting patterns. Optional references, not contracts.
+
 Purpose: capture reusable documentation and scripting patterns derived from
 past work. These are optional references, not execution contracts.
 

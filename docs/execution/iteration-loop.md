@@ -19,7 +19,7 @@ review
 ## Artifacts
 
 - Review input: `docs/_tree.txt` (generated, optional)
-- Review output: `docs/_feedback.md`
+- Review output: `tasks/<task-id>/feedback.md`
 - Workflow (active): `~/.udx/dev.kit/state/codex/workflows/<repo-id>/<task-id>/workflow.md`
 - Workflow (reference): `src/`
 - Helper scripts: `scripts/apply-task.sh`
@@ -57,8 +57,8 @@ Recommended continuation packet:
 
 ## Resolution Rules
 
-- A review task is resolved when workflow steps are complete and the resolution log
-  in `docs/_feedback.md` is updated.
+- A review task is resolved when workflow steps are complete and the task feedback
+  in `tasks/<task-id>/feedback.md` is updated.
 - A subtask is resolved when `tasks/<task-id>/feedback.md` is marked complete.
 - Resolution entries must include task ID, affected file paths, and a summary.
 

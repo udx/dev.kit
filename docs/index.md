@@ -1,7 +1,7 @@
 # dev.kit — Vision and Hierarchical Structure
 
-This is the root document for dev.kit. It defines the non-negotiable
-constraints and the hierarchy that all child documents must follow.
+This is the root document for dev.kit. It defines the hierarchy
+and the guardrails that child documents should follow.
 
 The purpose of this document is architectural control, not narrative.
 
@@ -11,26 +11,22 @@ The purpose of this document is architectural control, not narrative.
 
 - Repo overview: `README.md`
 - Docs navigation: `docs/README.md`
-- Iteration loop: `docs/execution/iteration-loop.md`
-- Subtask loop: `docs/execution/subtask-loop.md`
+- Runtime boundary: `docs/runtime/README.md`
+- Execution model: `docs/execution/README.md`
 - CLI primitives: `docs/execution/cli-primitives.md`
-- CLI structure: `docs/cli.md`
 - Workflow IO schema (step state): `docs/execution/workflow-io-schema.md`
-- Output contracts: `docs/cde/output-contracts.md`
-- CDE contracts: `docs/cde/contracts.md`
 - Prompt-as-workflow: `docs/execution/prompt-as-workflow.md`
-- Prompts reference: `docs/prompts.md`
+- AI integration: `docs/ai/README.md`
+- Concepts: `docs/concepts/README.md`
+- References: `docs/reference/README.md`
 - Iteration skill contract: `src/ai/data/skills/dev-kit-iteration.json`
-- Runtime boundary: `docs/runtime/index.md`
-- Runtime layout: `docs/runtime/layout.md`
 
 ## Docs Map (Classic)
 
-- CLI runtime: `docs/cli.md`, `docs/runtime/index.md`, `docs/runtime/layout.md`, `docs/runtime/ai-experience.md`, `docs/execution/index.md`
-- Configuration: `docs/config/index.md`
-- Contracts and specs: `docs/cde/index.md`, `docs/specs.md`
-- Mapping and adaptation: `docs/mapping/index.md`, `docs/adaptation.md`
-- Prompts: `docs/prompts.md`
+- Runtime and execution: `docs/runtime/README.md`, `docs/execution/README.md`
+- Configuration: `docs/config/README.md`
+- Concepts and specs: `docs/concepts/README.md`, `docs/specs.md`
+- AI integration: `docs/ai/README.md`
 - Knowledgebase: `docs/knowledge.md`
 
 ## Core Engine Layout (Target)
@@ -89,14 +85,14 @@ interfaces and constraints are missing, not because capability is missing.
 
 ---
 
-## 2. Core Principle: Context-Driven Engineering (CDE)
+## 2. Working Principle: Context-Driven Engineering (CDE)
 
-CDE is a universal repository discipline that makes systems:
+CDE is a working model that helps make systems:
 - Understandable to humans
 - Executable by programs
 - Consumable by reasoning systems
 
-Context is not documentation. Context is a constraint layer.
+Context is more than documentation. It is a constraint layer.
 There is no separate AI layer.
 
 ---
@@ -118,110 +114,14 @@ Reasoning systems consume the system through these layers.
 - Written for compilers and interpreters.
 - Readable for humans and tools, not for reasoning systems.
 
-### 4.2 Repository
-- Deterministic, structured, contractual.
-- Consumed through defined interfaces, not raw inspection.
+### 4.2 Documentation
+- Canonical intent and stable interface declarations.
+- Human-readable first, then machine-normalized.
 
-### 4.3 Context Artifacts
-- Markdown, schemas, and manifests are the adaptation surface.
-- Human-readable and machine-derivable.
+### 4.3 Artifacts
+- Machine-readable representations of intent.
+- Prompt artifacts, schemas, and manifests.
 
 ### 4.4 CLI Runtime
-- Primary execution interface.
-- Enforces constraints and normalizes I/O.
-
-### 4.5 Reasoning Systems
-- Analyze, propose, explain.
-- Do not execute or persist state.
-
----
-
-## 5. System Layers
-
-### 5.1 Software Design Constraints
-- Components are decomposable.
-- Each unit has clear inputs and deterministic outputs.
-
-### 5.2 Repository as Contract (12-Factor++)
-- Declares intent, rules, interfaces, and state.
-- Assets are single-purpose and bounded.
-
-### 5.3 CDE Artifacts
-- Command schemas
-- Input/output manifests
-- Validation rules
-- Context resolvers
-
-### 5.4 CLI Runtime (dev.kit)
-- Discovers repo-defined capabilities.
-- Exposes stable, versioned commands.
-- Executes workflows safely.
-- Captures state and outputs.
-
----
-
-## 6. Engineering Iteration Model
-
-One iteration is a bounded pipeline:
-
-input
-→ analyze
-→ configure
-→ execute
-→ post-validate
-→ report
-→ notify
-
-Rules:
-- Iterations are bounded and normalized.
-- Output of iteration N becomes input to N+1.
-- Pipelines must resolve to a single iteration boundary.
-
----
-
-## 7. Domain Map (Child Documents)
-
-1. Runtime
-- CLI responsibilities and lifecycle
-- Install/enable/uninstall
-- Capability detection
-
-2. Configuration
-- Minimal defaults
-- Opt-in integrations
-- Reset and safety
-
-3. Execution
-- dev.kit exec as runtime wrapper
-- Planning mechanisms are used for planning only
-- Workflow boundaries
-- Iteration loop and artifact cycle
-
-4. CDE
-- Artifact types and contracts
-- Iteration as a contract surface
-
-5. Context Adaptation
-- Projections and filters
-- Reasoning-system consumption contracts
-
-6. Mapping
-- Source → mapper → artifact
-- Explicit sync and validation
-
----
-
-## 7. Contract References
-
-- Canonical intent sources are defined in the CDE contracts document.
-- Stable interface scope is defined in the CDE contracts document.
-
-## 8. Outcome
-
-dev.kit enables:
-- CDE-aligned repositories
-- Standardized tooling interfaces
-- Predictable iteration
-- Safe reasoning-system usage
-
-This is an engineering discipline, not an AI framework.
+- Execution boundary and validation gate.
+- Enforces determinism and safety.

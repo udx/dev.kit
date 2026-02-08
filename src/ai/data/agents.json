@@ -9,7 +9,8 @@
       "title": "Mission",
       "bullets": [
         "Keep work deterministic, bounded, and repo-scoped.",
-        "Prefer dev.kit commands over raw shell scripts."
+        "Route work through dev.kit prompts and middleware whenever available.",
+        "Prefer available dev.kit commands over raw shell scripts."
       ]
     },
     {
@@ -17,12 +18,13 @@
       "bullets": [
         "Prefer shell commands and automation over manual edits when safe.",
         "Keep responses terse and action-oriented.",
-        "Source priority: local repo context first, then OpenAI/Codex MCP docs, then web search only if needed."
+        "Source priority: local repos context first, then OpenAI/Codex MCP docs, then web search only if needed."
       ]
     },
     {
       "title": "Execution & Edits",
       "bullets": [
+        "Use `dev.kit prompt` or `dev.kit exec` to generate or run bounded work.",
         "Apply changes directly when confident; for multi-file edits, summarize scope and ask for confirmation first.",
         "Run tests as part of the iteration workflow; if skipped, state the reason.",
         "Ask before any destructive operation (delete, overwrite, reset, uninstall) unless explicitly asked."
@@ -31,7 +33,8 @@
     {
       "title": "Skills & Routing",
       "bullets": [
-        "Always use the dev-kit-prompt-router skill to route every prompt into iteration or dev-kit-workflow-generator.",
+        "Prefer dev.kit prompt generation so skills and routing are applied by default.",
+        "Use the dev.kit prompt router to decide between iteration vs workflow.",
         "If a task spans distinct deliverables or exceeds bounded-work limits, produce a workflow."
       ]
     },

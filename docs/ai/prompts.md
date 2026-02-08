@@ -1,5 +1,7 @@
 # Prompts
 
+Scope: prompt sources, overlays, selection rules, and CLI usage.
+
 Structure (under `src/ai/`):
 - `src/ai/data/prompts.json`: common AI prompt definitions
 - `src/ai/integrations/codex/prompts.json`: Codex-specific prompt overlay

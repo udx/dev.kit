@@ -39,7 +39,7 @@ Identify all implicit execution actions currently described across docs.
 Input:
 - docs/execution/index.md
 - docs/runtime/index.md
-- docs/cde/iteration.md
+- docs/concepts/cde.md
 
 Logic/Tooling:
 - repo.read(paths=[...])
@@ -104,7 +104,7 @@ Define versioning, stability guarantees, and breaking-change rules for CLI primi
 
 Input:
 - Primitive definitions from Step 3.
-- Interface stability rules from cde/contracts.md.
+- Interface stability rules from docs/concepts/cde.md
 
 Logic/Tooling:
 - Add a “Stability & Versioning” section:
@@ -175,7 +175,7 @@ Validate the new doc against existing contracts.
 
 Input:
 - docs/execution/cli-primitives.md
-- docs/cde/contracts.md
+- docs/concepts/cde.md
 
 Logic/Tooling:
 - Manual checklist:
