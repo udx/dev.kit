@@ -15,6 +15,16 @@ curl -fsSL https://raw.githubusercontent.com/udx/dev.kit/main/bin/scripts/instal
 source "$HOME/.udx/dev.kit/source/env.sh"
 ```
 
+```mermaid
+flowchart TD
+  A["Start"] --> B["Run installer"]
+  B --> C{"Shell update prompt?"}
+  C -->|"Yes"| D["Shell updates applied"]
+  C -->|"No"| E["Source env.sh"]
+  D --> F["Installed"]
+  E --> F
+```
+
 ## Configure (First Run)
 
 See current config:
@@ -43,6 +53,16 @@ dev.kit config set --key ai.enabled --value true
 dev.kit codex apply
 ```
 
+```mermaid
+flowchart TD
+  A["Config show"] --> B{"Enable AI?"}
+  B -->|"Yes"| C["Set ai.enabled=true"]
+  C --> D["dev.kit codex apply"]
+  B -->|"No"| E["Keep AI disabled"]
+  D --> F["Configured"]
+  E --> F
+```
+
 ## Use (Incremental)
 
 1. **Prompt-only (no AI installed)**  
@@ -67,50 +87,32 @@ If Codex is not installed, `dev.kit exec` prints the prompt so you can run it ma
 dev.kit exec --print "Summarize repo structure"
 ```
 
+```mermaid
+flowchart TD
+  A["Pick mode"] --> B["Prompt-only: dev.kit prompt"]
+  A --> C["AI-enabled: dev.kit exec"]
+  A --> D["Dry-run: dev.kit exec --print"]
+  B --> E["Run prompt manually"]
+  C --> F["Run via Codex"]
+  D --> E
+```
+
 ## Auto-Detection + Suggestions
 
 - `dev.kit exec` uses the same prompt generator as `dev.kit prompt`.
 - If AI is disabled or Codex is missing, `dev.kit exec` prints the prompt and exits.
 - Context history is automatically included (repo-scoped).
 
-## Diagrams
-
-Install + configure + use flow:
-
 ```mermaid
 flowchart TD
-  A[Start] --> B[Install dev.kit]
-  B --> C{Installer prompts?}
-  C -- Yes --> D[Shell updates applied]
-  C -- No --> E[source env.sh]
-  D --> F[Configure]
-  E --> F
-  F --> G{Enable AI?}
-  G -- Yes --> H[Set ai.enabled=true]
-  H --> I[Run dev.kit codex apply]
-  G -- No --> J[Skip AI]
-  I --> K[Use dev.kit]
-  J --> K
-  K --> L[Prompt-only: dev.kit prompt]
-  K --> M[AI-enabled: dev.kit exec]
-  K --> N[Dry-run: dev.kit exec --print]
-  L --> O[Finish]
-  M --> O
-  N --> O
-```
-
-`dev.kit exec` runtime flow:
-
-```mermaid
-flowchart TD
-  A[dev.kit exec] --> B{AI enabled?}
-  B -- No --> C[Print prompt and exit]
-  B -- Yes --> D{Codex installed?}
-  D -- No --> C
-  D -- Yes --> E[Include repo context history]
-  E --> F[Generate prompt from templates]
-  F --> G[Execute via Codex]
-  G --> H[Output result]
+  A["dev.kit exec"] --> B{"AI enabled?"}
+  B -->|"No"| C["Print prompt and exit"]
+  B -->|"Yes"| D{"Codex installed?"}
+  D -->|"No"| C
+  D -->|"Yes"| E["Include repo context history"]
+  E --> F["Generate prompt from templates"]
+  F --> G["Execute via Codex"]
+  G --> H["Output result"]
 ```
 
 ## What You Can Do (Core)
