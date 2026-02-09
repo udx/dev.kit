@@ -2,7 +2,8 @@
   "name": "dev-kit-workflow-generator",
   "description": "Generate or refactor workflow documents with codex exec steps, including extraction gates and child workflows. Use when the user asks to create a workflow, update a workflow, or split steps into child workflows.",
   "sections": [
-    { "title": "Workflow Generator", "lines": ["Purpose: Create or refactor workflow documents based on a prompt-as-workflow spec."] },
+    { "title": "Purpose", "lines": ["Create or refactor workflow documents based on a prompt-as-workflow spec."] },
+    { "title": "Required Inputs", "bullets": ["User request (verbatim from `## User Request`)."] },
     { "title": "Config", "bullets": [
       "Inputs come from the user request and repo context.",
       "`workflow.workflow_dir` (default: `~/.udx/dev.kit/state/codex/workflows/<repo-id>`)",
@@ -19,6 +20,7 @@
       "Outputs: workflow markdown",
       "Format: markdown file with step metadata"
     ]},
+    { "title": "Output Rules", "bullets": ["Return the workflow path and a brief summary."] },
     { "title": "Docs", "bullets": [
       "`docs/execution/prompt-as-workflow.md`",
       "`docs/execution/extraction-gate.md`"

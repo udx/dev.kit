@@ -2,17 +2,13 @@
   "name": "dev-kit-iteration",
   "description": "Define and enforce the repo-native iteration contract for agents.",
   "sections": [
-    { "title": "Skill — Iteration Contract Builder", "lines": ["Purpose: Define and enforce the repo-native iteration contract for agents."] },
-    { "title": "See Also", "bullets": [
-      "Spec kernel entrypoint: `docs/index.md`",
-      "Iteration loop: `docs/execution/iteration-loop.md`",
-      "Subtask loop: `docs/execution/subtask-loop.md`",
-      "Repo overview: `README.md`",
-      "Iteration stages: `references/iteration-stages.md`",
-      "Iteration manifest: `manifests/iteration-manifest.md`"
+    { "title": "Purpose", "lines": ["Define and enforce the repo-native iteration contract for agents."] },
+    { "title": "Required Inputs", "bullets": ["User request (verbatim from `## User Request`)."] },
+    { "title": "Config", "bullets": [
+      "`iteration.output_type` (default: `markdown`)",
+      "`iteration.workflow_dir` (default: `.udx/dev.kit/workflows/<task-id>/workflow.md`)"
     ]},
-    { "title": "Allowed Outputs", "bullets": ["request", "command", "artifact", "workflow"] },
-    { "title": "Rules", "bullets": [
+    { "title": "Logic", "bullets": [
       "Execution is allowed when required by an iteration stage or explicitly requested.",
       "Ask for confirmation before destructive actions (delete, overwrite, reset, uninstall).",
       "Read `docs/_feedback.md` as the source of review tasks.",
@@ -23,13 +19,17 @@
       "Mark subtask items resolved in `tasks/<task-id>/feedback.md`.",
       "When generating a root workflow, pause and present a preview for user approval before any child workflow work."
     ]},
-    { "title": "Workflow Schema Requirements", "bullets": [
+    { "title": "Schema", "bullets": [
       "`workflow.output_type` must be `prompt` or `markdown`.",
       "`workflow.bounded_work` must include: max_steps_per_iteration, max_files_per_step, max_new_files_per_iteration, max_move_operations_per_step, extract_child_workflow_if_any_exceeded.",
       "Step `status` must be one of: planned, in_progress, done, blocked.",
       "Step `actions` must use CLI primitives: read, write, validate, report, execute, capture."
     ]},
-    { "title": "Single-exec Bounds (defaults)", "bullets": [
+    { "title": "Output Rules", "bullets": [
+      "Allowed outputs: request, command, artifact, workflow.",
+      "Use iteration stages as the structure for any plan output."
+    ]},
+    { "title": "Bounds (defaults)", "bullets": [
       "max_steps_per_iteration: 6",
       "max_files_per_step: 8",
       "max_new_files_per_iteration: 3",
@@ -76,6 +76,14 @@
       "Step metadata including `done: false|true`"
     ]},
     { "title": "Resolution Log Update", "bullets": ["Append a resolution entry with task ID, file path(s), and summary.", "Do not remove prior entries."] },
-    { "title": "Done Criteria", "bullets": ["All workflow steps marked done.", "Resolution log updated.", "No outstanding questions for the task."] }
+    { "title": "Done Criteria", "bullets": ["All workflow steps marked done.", "Resolution log updated.", "No outstanding questions for the task."] },
+    { "title": "Docs", "bullets": [
+      "`docs/index.md`",
+      "`docs/execution/iteration-loop.md`",
+      "`docs/execution/subtask-loop.md`",
+      "`README.md`",
+      "`references/iteration-stages.md`",
+      "`manifests/iteration-manifest.md`"
+    ]}
   ]
 }

@@ -2,7 +2,8 @@
   "name": "dev-kit-prompt",
   "description": "Generate an advanced dev.kit prompt artifact for AI integration using dev.kit prompt.",
   "sections": [
-    { "title": "dev-kit-prompt", "lines": ["Purpose: Produce a high-quality, repo-scoped prompt artifact by invoking `dev.kit prompt`."] },
+    { "title": "Purpose", "lines": ["Produce a high-quality, repo-scoped prompt artifact by invoking `dev.kit prompt`."] },
+    { "title": "Required Inputs", "bullets": ["`dev_prompt.request` (non-empty)."] },
     { "title": "Config", "bullets": [
       "Inputs (use defaults when missing):",
       "`dev_prompt.request` (required)",
@@ -22,6 +23,7 @@
       "Outputs: prompt_path (path), summary (string)",
       "Format: Markdown prompt file"
     ]},
+    { "title": "Output Rules", "bullets": ["Return the output path and a one-line summary."] },
     { "title": "Docs", "bullets": ["`docs/prompts.md`", "`docs/execution/iteration-loop.md`"] }
   ]
 }

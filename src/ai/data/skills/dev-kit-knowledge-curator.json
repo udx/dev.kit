@@ -2,7 +2,8 @@
   "name": "dev-kit-knowledge-curator",
   "description": "Capture repo best practices (snapshot) and/or session learnings into a knowledgebase. Use when the user asks for best practices, learn summaries, or knowledgebase updates.",
   "sections": [
-    { "title": "Knowledge Curator", "lines": ["Purpose: Produce a reusable best-practices snapshot and/or capture session learnings in a knowledgebase."] },
+    { "title": "Purpose", "lines": ["Produce a reusable best-practices snapshot and/or capture session learnings in a knowledgebase."] },
+    { "title": "Required Inputs", "bullets": ["User request (verbatim from `## User Request`)."] },
     { "title": "Config", "bullets": [
       "Inputs are derived from the repo and environment when not provided explicitly.",
       "`knowledge.snapshot` (default: false)",
@@ -21,6 +22,7 @@
       "Outputs: `best_practices/*.md` and/or `docs/knowledge.md`",
       "Format: Markdown with dated section headers `## YYYY-MM-DD`"
     ]},
+    { "title": "Output Rules", "bullets": ["Keep summaries short and actionable."] },
     { "title": "Docs", "bullets": ["Assets: (none; use repo-local guidance when present)"] }
   ]
 }
