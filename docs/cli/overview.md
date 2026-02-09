@@ -31,6 +31,20 @@ Commands:
 - `dev.kit capture path` (print capture directory)
 - `dev.kit capture show` (print capture paths + last input/output)
 
+## Context Commands
+
+Config:
+- `context.enabled = true|false` (default: `true`)
+- `context.dir = <path>` (optional override)
+- `context.max_bytes = 12000` (default)
+
+Commands:
+- `dev.kit context path` (print context file path)
+- `dev.kit context show` (print context file contents)
+- `dev.kit context reset` (clear context)
+- `dev.kit context compact` (trim context to max bytes)
+- `dev.kit exec --no-context` (run without reading/writing context)
+
 ## Codex Commands
 
 - `dev.kit codex status` (show managed paths and last backup)

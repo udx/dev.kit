@@ -16,6 +16,7 @@ keep cleanup and upgrades predictable.
     codex/
       workflows/<repo-id>/...
       tasks/<repo-id>/...
+      context/<repo-id>/context.md
       logs/<repo-id>/
         exec-<timestamp>.log
         exec-<timestamp>.prompt.md
@@ -43,7 +44,7 @@ explicitly opts in:
 - `DEV_KIT_STATE` (default: `~/.udx/dev.kit/state`)
 - `DEV_KIT_CONFIG` (default: `$DEV_KIT_STATE/config.env`)
 
-If `source/` or `state/` is missing, dev.kit falls back to legacy paths under
+If `source/` or `state/` is missing, dev.kit falls back to paths under
 `DEV_KIT_HOME`.
 
 ## Config key

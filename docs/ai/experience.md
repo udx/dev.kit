@@ -39,12 +39,32 @@ Behavior:
 
 Config:
 - `ai.enabled = true`
-- `exec.prompt = ai.codex`
+- `exec.prompt = ai.codex.min` (default)
+- `exec.stream = false` (default)
 
 Behavior:
 - `dev.kit exec` runs `codex exec` using the normalized prompt.
 - dev.kit stores prompt/request/result logs under `{{DEV_KIT_STATE}}/codex/logs/<repo-id>/`.
 - Codex stores its own sessions under `~/.codex/sessions`.
+
+## Context Persistence
+
+When enabled, dev.kit appends the latest request/response to a repo-scoped
+context file and includes it in subsequent prompts.
+
+Config:
+- `context.enabled = true` (default)
+- `context.dir = <path>` (optional override)
+- `context.max_bytes = 4000` (default)
+
+Behavior:
+- When a `## Context` section is present, treat it as repo-scoped persistent memory.
+
+Commands:
+- `dev.kit context show`
+- `dev.kit context reset`
+- `dev.kit context compact`
+- `dev.kit exec --no-context`
 
 ## Mode C — AI Enabled but Codex Missing
 
