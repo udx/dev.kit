@@ -11,7 +11,10 @@
     "{{HOME}}/.udx": { "trust_level": "trusted" }
   },
   "mcp_servers": {
-    "Context7": { "command": "npx", "args": ["-y", "@upstash/context7-mcp@latest"] },
+    "Context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp@latest"]
+    },
     "openaiDeveloperDocs": { "url": "https://developers.openai.com/mcp" }
   },
   "notice": { "hide_rate_limit_model_nudge": true },
@@ -21,7 +24,9 @@
   },
   "shell_environment_policy": {
     "inherit": "core",
-    "set": { "PATH": "/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/opt/homebrew/bin" },
+    "set": {
+      "PATH": "/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/opt/homebrew/bin"
+    },
     "include_only": ["PATH", "HOME"]
   }
 }
