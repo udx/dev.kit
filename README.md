@@ -73,6 +73,46 @@ dev.kit exec --print "Summarize repo structure"
 - If AI is disabled or Codex is missing, `dev.kit exec` prints the prompt and exits.
 - Context history is automatically included (repo-scoped).
 
+## Diagrams
+
+Install + configure + use flow:
+
+```mermaid
+flowchart TD
+  A[Start] --> B[Install dev.kit]
+  B --> C{Installer prompts?}
+  C -- Yes --> D[Shell updates applied]
+  C -- No --> E[source env.sh]
+  D --> F[Configure]
+  E --> F
+  F --> G{Enable AI?}
+  G -- Yes --> H[Set ai.enabled=true]
+  H --> I[Run dev.kit codex apply]
+  G -- No --> J[Skip AI]
+  I --> K[Use dev.kit]
+  J --> K
+  K --> L[Prompt-only: dev.kit prompt]
+  K --> M[AI-enabled: dev.kit exec]
+  K --> N[Dry-run: dev.kit exec --print]
+  L --> O[Finish]
+  M --> O
+  N --> O
+```
+
+`dev.kit exec` runtime flow:
+
+```mermaid
+flowchart TD
+  A[dev.kit exec] --> B{AI enabled?}
+  B -- No --> C[Print prompt and exit]
+  B -- Yes --> D{Codex installed?}
+  D -- No --> C
+  D -- Yes --> E[Include repo context history]
+  E --> F[Generate prompt from templates]
+  F --> G[Execute via Codex]
+  G --> H[Output result]
+```
+
 ## What You Can Do (Core)
 
 ```bash

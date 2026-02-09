@@ -1,0 +1,45 @@
+{
+  "name": "dev-kit-diagram-generator",
+  "description": "Generate Mermaid diagrams from flow descriptions or source files using repo templates.",
+  "sections": [
+    { "title": "Purpose", "lines": ["Turn a flow description or source file into a Mermaid diagram using templates under src/mermaid."] },
+    { "title": "Required Inputs", "bullets": [
+      "One input: a plain-text flow description or a file path containing the flow.",
+      "Optional: desired output path for the .mmd file (default to state)."
+    ]},
+    { "title": "Config", "bullets": [
+      "Templates directory: src/mermaid",
+      "Templates: src/mermaid/default.mmd, src/mermaid/github-workflow.mmd, src/mermaid/docker-image.mmd, src/mermaid/npm-cli.mmd, src/mermaid/nodejs-server.mmd, src/mermaid/worker-site copy.mmd, src/mermaid/rabbit-wordpress.mmd",
+      "Default output: /Users/jonyfq/.udx/dev.kit/state/mermaid/<slug>.mmd"
+    ]},
+    { "title": "Logic", "bullets": [
+      "If input is a file path, read the file contents as the flow description (or README section).",
+      "If the input looks like a README/guide section, extract headings and ordered steps into nodes and edges.",
+      "Prefer the default template and adapt it to the number of steps (expand nodes as needed).",
+      "Map the flow steps into the Mermaid flowchart structure (Start -> Step 1 -> Step 2 ... -> Finish).",
+      "Default behavior: output the Mermaid diagram text to the user (no file writes).",
+      "Only write a .mmd file when output_path is explicitly provided or the user asks to save.",
+      "If the user asks for SVG, hand off to export tooling after generating the .mmd."
+    ]},
+    { "title": "Schema", "bullets": [
+      "Inputs: { flow: string | file_path, output_path?: string }",
+      "Outputs: { mermaid: string, template: string, mmd_path?: string }",
+      "Format: markdown or file artifact (.mmd when requested)"
+    ]},
+    { "title": "Output Rules", "bullets": [
+      "Return the Mermaid diagram text and the template used.",
+      "Include mmd_path only when a file was written."
+    ]},
+    { "title": "Docs", "bullets": ["templates live in src/mermaid"] },
+    { "title": "Template", "lines": [
+      "src/mermaid/default.mmd:",
+      "```mermaid",
+      "flowchart TD",
+      "  A[Start] --> B[Step 1]",
+      "  B --> C[Step 2]",
+      "  C --> D[Step 3]",
+      "  D --> E[Finish]",
+      "```"
+    ]}
+  ]
+}
