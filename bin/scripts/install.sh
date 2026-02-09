@@ -54,45 +54,6 @@ sync_engine() {
   copy_dir_contents "$REPO_DIR/scripts" "$SOURCE_DIR/scripts"
   copy_dir_contents "$REPO_DIR/assets" "$SOURCE_DIR/assets"
   copy_dir_contents "$REPO_DIR/schemas" "$SOURCE_DIR/schemas"
-
-  # Remove legacy command entrypoints that should no longer exist.
-  rm -f "$SOURCE_DIR/lib/commands/promt.sh"
-}
-
-migrate_legacy_install() {
-  if [ -d "$ENGINE_DIR" ] && [ ! -d "$SOURCE_DIR" ] && [ -d "$ENGINE_DIR/bin" ]; then
-    mkdir -p "$SOURCE_DIR" "$STATE_DIR"
-    local item=""
-    for item in bin lib templates docs src config scripts assets schemas completions; do
-      if [ -d "$ENGINE_DIR/$item" ]; then
-        mv "$ENGINE_DIR/$item" "$SOURCE_DIR/$item"
-      fi
-    done
-    if [ -f "$ENGINE_DIR/env.sh" ]; then
-      mv "$ENGINE_DIR/env.sh" "$SOURCE_DIR/env.sh"
-    fi
-    if [ -f "$ENGINE_DIR/config.env" ]; then
-      mv "$ENGINE_DIR/config.env" "$STATE_DIR/config.env"
-    fi
-    if [ -f "$STATE_DIR/config.env" ] && [ ! -f "$ENGINE_DIR/config.env" ]; then
-      cp "$STATE_DIR/config.env" "$ENGINE_DIR/config.env"
-    fi
-    for item in capture exec logs; do
-      if [ -d "$ENGINE_DIR/$item" ]; then
-        mv "$ENGINE_DIR/$item" "$STATE_DIR/$item"
-      fi
-    done
-    find "$ENGINE_DIR" -mindepth 1 -maxdepth 1 ! -name "source" ! -name "state" -exec rm -rf {} +
-  fi
-}
-
-cleanup_legacy_paths() {
-  local item=""
-  for item in bin lib templates docs src config scripts assets schemas completions env.sh capture exec logs; do
-    if [ -e "$ENGINE_DIR/$item" ]; then
-      rm -rf "$ENGINE_DIR/$item"
-    fi
-  done
 }
 
 desired_target="${SOURCE_DIR}/bin/dev-kit"
@@ -101,7 +62,6 @@ if [ -f "$UI_LIB" ]; then
   . "$UI_LIB"
 fi
 
-migrate_legacy_install
 mkdir -p "$SOURCE_DIR"
 mkdir -p "$STATE_DIR"
 
@@ -114,7 +74,6 @@ else
 fi
 
 sync_engine
-cleanup_legacy_paths
 
 if [ -L "$TARGET" ]; then
   current_target="$(readlink "$TARGET")"
@@ -159,6 +118,17 @@ if [ -f "$ENV_SRC" ]; then
     echo "OK  Env installed"
     echo "   $ENV_DST"
   fi
+fi
+
+# Compatibility shim for legacy shell profiles that source $ENGINE_DIR/env.sh
+if [ ! -f "$ENGINE_DIR/env.sh" ]; then
+  cat <<'EOF' > "$ENGINE_DIR/env.sh"
+#!/bin/bash
+DEV_KIT_ENV_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck disable=SC1090
+. "$DEV_KIT_ENV_DIR/source/env.sh"
+EOF
+  chmod +x "$ENGINE_DIR/env.sh" 2>/dev/null || true
 fi
 
 if [ -d "$LIB_SRC_DIR" ]; then

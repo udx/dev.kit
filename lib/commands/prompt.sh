@@ -245,6 +245,11 @@ dev_kit_prompt_build() {
     prompt+=$(dev_kit_prompt_render_entry "$entry")
   done
 
+  local context="${DEV_KIT_PROMPT_CONTEXT:-}"
+  if [ -n "$context" ]; then
+    prompt+=$'\n\n## Context\n'"${context}"
+  fi
+
   prompt+=$'\n\n## User Request\n'"${request}"
 
   DEV_KIT_PROMPT_BODY="$prompt"

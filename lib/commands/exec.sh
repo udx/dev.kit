@@ -4,8 +4,12 @@ dev_kit_cmd_exec() {
   shift || true
   local print_only="false"
   local show_log="false"
-  local stream_logs="true"
+  local stream_logs="false"
+  local stream_logs_set="false"
   local skip_git_repo_check="false"
+  local reset_context="false"
+  local compact_context="false"
+  local no_context="false"
 
   while [[ $# -gt 0 ]]; do
     case "${1:-}" in
@@ -23,22 +27,47 @@ dev_kit_cmd_exec() {
         ;;
       --stream)
         stream_logs="true"
+        stream_logs_set="true"
         shift
         ;;
       --no-stream|--quiet)
         stream_logs="false"
+        stream_logs_set="true"
+        shift
+        ;;
+      --reset-context)
+        reset_context="true"
+        shift
+        ;;
+      --reset)
+        reset_context="true"
+        shift
+        ;;
+      --compact-context)
+        compact_context="true"
+        shift
+        ;;
+      --compact)
+        compact_context="true"
+        shift
+        ;;
+      --no-context)
+        no_context="true"
         shift
         ;;
       -h|--help)
         cat <<'EXEC_USAGE'
-Usage: dev.kit exec [--print] [--show-log] [--skip-git-repo-check] [--stream|--no-stream] "<request>"
+Usage: dev.kit exec [--print] [--show-log] [--skip-git-repo-check] [--stream|--no-stream] [--reset|--reset-context] [--compact|--compact-context] [--no-context] "<request>"
 
 Options:
   --print, --dry-run  Print the normalized prompt without running codex
   --show-log          Print full codex exec logs after completion
   --skip-git-repo-check  Allow running Codex outside a Git repository
-  --stream            Stream codex exec logs to stdout (default)
+  --stream            Stream codex exec logs to stdout
   --no-stream, --quiet  Suppress streaming logs (log file only)
+  --reset, --reset-context     Clear stored context before running
+  --compact, --compact-context Compact stored context before running
+  --no-context         Run without reading or writing stored context
 EXEC_USAGE
         exit 0
         ;;
@@ -75,6 +104,32 @@ EXEC_USAGE
     prompt_key="ai"
   fi
 
+  local context_path=""
+  local context_text=""
+  if [ "$no_context" != "true" ] && context_enabled; then
+    context_path="$(context_file || true)"
+    if [ -n "$context_path" ]; then
+      mkdir -p "$(dirname "$context_path")"
+      context_compact_file "$context_path" || true
+      if [ "$reset_context" = "true" ]; then
+        : > "$context_path"
+      fi
+      if [ "$compact_context" = "true" ]; then
+        context_compact_file "$context_path" || true
+      fi
+      if [ -f "$context_path" ] && [ -s "$context_path" ]; then
+        local max_bytes=""
+        max_bytes="$(context_max_bytes)"
+        if [ -n "$max_bytes" ]; then
+          context_text="$(tail -c "$max_bytes" "$context_path")"
+        else
+          context_text="$(cat "$context_path")"
+        fi
+      fi
+    fi
+  fi
+
+  DEV_KIT_PROMPT_CONTEXT="$context_text"
   dev_kit_prompt_build "$prompt_key" "$user_prompt"
 
   local prompt_body=""
@@ -88,12 +143,22 @@ EXEC_USAGE
   local cfg_quiet=""
   local cfg_capture_enabled=""
   local cfg_install_path_prompt=""
+  local cfg_exec_stream=""
   cfg_exec_prompt="$(config_value_scoped exec.prompt "ai")"
   cfg_ai_enabled="$(config_value_scoped ai.enabled "false")"
   cfg_developer_enabled="$(config_value_scoped developer.enabled "false")"
   cfg_quiet="$(config_value_scoped quiet "false")"
   cfg_capture_enabled="$(config_value_scoped capture.enabled "false")"
   cfg_install_path_prompt="$(config_value_scoped install.path_prompt "true")"
+  cfg_exec_stream="$(config_value_scoped exec.stream "false")"
+
+  if [ "$stream_logs_set" = "false" ]; then
+    if [ "$cfg_exec_stream" = "true" ]; then
+      stream_logs="true"
+    else
+      stream_logs="false"
+    fi
+  fi
 
   local config_local_contents="(none)"
   if [ -n "$local_config" ] && [ -f "$local_config" ]; then
@@ -158,9 +223,11 @@ EXEC_USAGE
       done
     fi
 
-    print_section "dev.kit exec"
-    print_check "prompt" "[ok]" "normalized ($prompt_paths_display)"
-    print_check "codex" "[ok]" "running"
+    if [ "$cfg_quiet" != "true" ] && [ "$stream_logs" = "true" ]; then
+      print_section "dev.kit exec"
+      print_check "prompt" "[ok]" "normalized ($prompt_paths_display)"
+      print_check "codex" "[ok]" "running"
+    fi
 
     local codex_skip_arg=""
     if [ "$skip_git_repo_check" = "true" ]; then
@@ -191,11 +258,15 @@ EOF
 
     if [ "$stream_logs" = "true" ]; then
       if codex exec ${codex_skip_arg:+"$codex_skip_arg"} --output-last-message "$result_path" "$normalized_prompt" 2>&1 | tee "$log_path"; then
-        print_check "codex" "[ok]" "log: $log_path"
+        if [ "$cfg_quiet" != "true" ] && [ "$stream_logs" = "true" ]; then
+          print_check "codex" "[ok]" "log: $log_path"
+        fi
         write_exec_meta "ok" "0"
       else
         local status=$?
-        print_check "codex" "[warn]" "exit: $status (log: $log_path)"
+        if [ "$cfg_quiet" != "true" ] && [ "$stream_logs" = "true" ]; then
+          print_check "codex" "[warn]" "exit: $status (log: $log_path)"
+        fi
         write_exec_meta "warn" "$status"
         if [ "$show_log" = "true" ] && [ "$stream_logs" != "true" ]; then
           cat "$log_path"
@@ -206,11 +277,15 @@ EOF
         exit "$status"
       fi
     elif codex exec ${codex_skip_arg:+"$codex_skip_arg"} --output-last-message "$result_path" "$normalized_prompt" >"$log_path" 2>&1; then
-      print_check "codex" "[ok]" "log: $log_path"
+      if [ "$cfg_quiet" != "true" ] && [ "$stream_logs" = "true" ]; then
+        print_check "codex" "[ok]" "log: $log_path"
+      fi
       write_exec_meta "ok" "0"
     else
       local status=$?
-      print_check "codex" "[warn]" "exit: $status (log: $log_path)"
+      if [ "$cfg_quiet" != "true" ] && [ "$stream_logs" = "true" ]; then
+        print_check "codex" "[warn]" "exit: $status (log: $log_path)"
+      fi
       write_exec_meta "warn" "$status"
       if [ "$show_log" = "true" ]; then
         cat "$log_path"
@@ -221,16 +296,32 @@ EOF
       exit "$status"
     fi
 
-    echo ""
-    echo "Result:"
+    if [ "$cfg_quiet" != "true" ] && [ "$stream_logs" = "true" ]; then
+      echo ""
+      echo "Result:"
+    fi
     if [ -s "$result_path" ]; then
       cat "$result_path"
       cp "$result_path" "$result_out_path"
+      if [ "$no_context" != "true" ] && context_enabled && [ -n "$context_path" ]; then
+        mkdir -p "$(dirname "$context_path")"
+        {
+          echo ""
+          echo "-----"
+          echo "timestamp: $(date -Iseconds)"
+          echo "request:"
+          printf "%s\n" "$user_prompt"
+          echo "response:"
+          cat "$result_path"
+        } >> "$context_path"
+        context_compact_file "$context_path" || true
+      fi
     else
       echo "(no final response captured; see log: $log_path)"
     fi
-    echo ""
-    echo "Next: review the workflow output; refine the request and re-run if needed."
+    if [ "$cfg_quiet" != "true" ] && [ "$stream_logs" = "true" ]; then
+      echo ""
+    fi
     rm -f "$result_path"
     if [ "$show_log" = "true" ] && [ "$stream_logs" != "true" ]; then
       echo ""

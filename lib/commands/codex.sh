@@ -490,8 +490,8 @@ Commands:
   restore  Restore the latest backup to ~/.codex
 
 Examples:
-  dev.kit codex config --plan --path=skills/dev-prompt
-  dev.kit codex compare --path=skills/dev-prompt
+  dev.kit codex config --plan --path=skills/dev-kit-prompt
+  dev.kit codex compare --path=skills/dev-kit-prompt
 CODEX_USAGE
       ;;
     *)

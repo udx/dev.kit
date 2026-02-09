@@ -203,6 +203,59 @@ capture_enabled() {
   [ "$mode" != "off" ]
 }
 
+context_enabled() {
+  local enabled=""
+  enabled="$(config_value_scoped context.enabled "true")"
+  [ "$enabled" = "true" ]
+}
+
+context_dir() {
+  if ! context_enabled; then
+    return 1
+  fi
+  local base repo_id
+  base="$(config_value_scoped context.dir "")"
+  if [ -z "$base" ]; then
+    base="$DEV_KIT_STATE/codex/context"
+  elif [[ "$base" == "~/"* ]]; then
+    base="$HOME/${base:2}"
+  elif [[ "$base" != /* ]]; then
+    base="$DEV_KIT_STATE/$base"
+  fi
+  repo_id="$(capture_repo_id)"
+  echo "$base/$repo_id"
+}
+
+context_file() {
+  local dir=""
+  dir="$(context_dir)" || return 1
+  echo "$dir/context.md"
+}
+
+context_max_bytes() {
+  config_value_scoped context.max_bytes "12000"
+}
+
+context_compact_file() {
+  local path="$1"
+  local max_bytes=""
+  max_bytes="$(context_max_bytes)"
+  if [ -z "$max_bytes" ] || [ ! -f "$path" ]; then
+    return 0
+  fi
+  local size=""
+  size="$(wc -c < "$path" | tr -d ' ')"
+  if [ -z "$size" ] || [ "$size" -le "$max_bytes" ]; then
+    return 0
+  fi
+  local tmp="${path}.tmp.$$"
+  if tail -c "$max_bytes" "$path" > "$tmp"; then
+    mv "$tmp" "$path"
+  else
+    rm -f "$tmp"
+  fi
+}
+
 capture_prepare() {
   local dir input_path output_path
   dir="$(capture_dir)" || return 1
