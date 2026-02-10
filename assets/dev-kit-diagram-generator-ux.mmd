@@ -1,0 +1,9 @@
+flowchart TD
+  A[User submits source] --> B[Validate input and apply defaults]
+  B --> C{Source usable?}
+  C -->|No| D[Return correction prompt]
+  C -->|Yes| E[Generate Mermaid diagram]
+  E --> F{Output mode}
+  F -->|chat| G[Return Mermaid in chat]
+  F -->|file export| H[Write files and attempt SVG export]
+  H --> I[Return paths or recovery hint]

@@ -1,0 +1,18 @@
+{
+  "name": "dev-kit-mermaid-export",
+  "description": "Convert Mermaid .mmd diagrams to .svg files, especially for article assets.",
+  "pack_dir": "skill-packs/dev-kit-mermaid-export",
+  "sections": [
+    {
+      "title": "Purpose",
+      "lines": ["Convert Mermaid diagrams to SVG assets using project tooling."]
+    },
+    {
+      "title": "Source Of Truth",
+      "bullets": [
+        "Skill body and behavior live in src/ai/data/skill-packs/dev-kit-mermaid-export/SKILL.md.",
+        "Pack assets/scripts are copied from src/ai/data/skill-packs/dev-kit-mermaid-export/ during dev.kit codex apply."
+      ]
+    }
+  ]
+}

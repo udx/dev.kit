@@ -47,10 +47,12 @@ Commands:
 
 ## Codex Commands
 
-- `dev.kit codex status` (show managed paths and last backup)
-- `dev.kit codex apply` (backup and apply shared AI data to `~/.codex`)
-- `dev.kit codex config --plan --path=<path>` (render planned config/skills)
-- `dev.kit codex compare --path=<path>` (compare planned output vs `~/.codex/<path>`)
+- `dev.kit codex` (show integration state/settings; same as `status`)
+- `dev.kit codex config <agents|config|rules|skills|all> --plan` (render planned output)
+- `dev.kit codex config <agents|config|rules|skills|all> --apply` (apply managed output to `~/.codex`)
+- `dev.kit codex <agents|rules|skills|all> --plan|--apply` (shorthand form)
+- `dev.kit codex apply` (legacy alias for `dev.kit codex config all --apply`)
+- `dev.kit codex compare --path=<path>` (compare planned output vs `~/.codex/<path>`; `--path=skills` compares managed `dev-kit-*` skills only)
 - `dev.kit codex restore` (restore the latest backup)
 
 ## Constraints

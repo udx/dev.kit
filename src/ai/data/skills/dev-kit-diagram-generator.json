@@ -1,65 +1,27 @@
 {
   "name": "dev-kit-diagram-generator",
-  "description": "Generate Mermaid diagrams from flow descriptions or source files using repo templates.",
+  "description": "Generate deterministic Mermaid diagrams from text or files, with optional SVG export and graceful fallback.",
+  "pack_dir": "skill-packs/dev-kit-diagram-generator",
   "sections": [
     {
       "title": "Purpose",
       "lines": [
-        "Turn a flow description or source file into a Mermaid diagram using templates under src/mermaid."
+        "Generate deterministic Mermaid output with a success-first UX contract."
       ]
     },
     {
-      "title": "Required Inputs",
+      "title": "Source Of Truth",
       "bullets": [
-        "One input: a plain-text flow description or a file path containing the flow.",
-        "Optional: desired output path for the .mmd file (default to state)."
+        "Skill body and behavior live in src/ai/data/skill-packs/dev-kit-diagram-generator/SKILL.md.",
+        "Pack assets/scripts are copied from src/ai/data/skill-packs/dev-kit-diagram-generator/ during dev.kit codex apply."
       ]
     },
     {
-      "title": "Config",
+      "title": "Contract Summary",
       "bullets": [
-        "Templates directory: src/mermaid",
-        "Templates: src/mermaid/default.mmd, src/mermaid/github-workflow.mmd, src/mermaid/docker-image.mmd, src/mermaid/npm-cli.mmd, src/mermaid/nodejs-server.mmd, src/mermaid/worker-site copy.mmd, src/mermaid/rabbit-wordpress.mmd",
-        "Default output: /Users/jonyfq/.udx/dev.kit/state/mermaid/<slug>.mmd"
-      ]
-    },
-    {
-      "title": "Logic",
-      "bullets": [
-        "If input is a file path, read the file contents as the flow description (or README section).",
-        "If the input looks like a README/guide section, extract headings and ordered steps into nodes and edges.",
-        "Prefer the default template and adapt it to the number of steps (expand nodes as needed).",
-        "Map the flow steps into the Mermaid flowchart structure (Start -> Step 1 -> Step 2 ... -> Finish).",
-        "Write the resulting Mermaid diagram to the output .mmd path.",
-        "If the user asks for SVG, hand off to export tooling after generating the .mmd."
-      ]
-    },
-    {
-      "title": "Schema",
-      "bullets": [
-        "Inputs: { flow: string | file_path, output_path?: string }",
-        "Outputs: { mmd_path: string, template: string }",
-        "Format: file artifact (.mmd)"
-      ]
-    },
-    {
-      "title": "Output Rules",
-      "bullets": [
-        "Return the generated .mmd path and the template used.",
-        "Keep output concise unless the user requests the full diagram text."
-      ]
-    },
-    { "title": "Docs", "bullets": ["templates live in src/mermaid"] },
-    {
-      "title": "Template",
-      "lines": [
-        "```mermaid",
-        "flowchart TD",
-        "  A[Start] --> B[Step 1]",
-        "  B --> C[Step 2]",
-        "  C --> D[Step 3]",
-        "  D --> E[Finish]",
-        "```"
+        "Require source only; default output=chat.",
+        "When export fails, still return Mermaid and recovery guidance.",
+        "Support chat, mmd, svg, and both output modes."
       ]
     }
   ]

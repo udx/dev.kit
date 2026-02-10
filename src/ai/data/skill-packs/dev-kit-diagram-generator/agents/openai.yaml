@@ -1,0 +1,4 @@
+interface:
+  display_name: "Dev Kit Diagram Generator"
+  short_description: "Generate Mermaid diagrams and optional SVG"
+  default_prompt: "Use $dev-kit-diagram-generator; require source, default output=chat, emit chat output as fenced Mermaid with real newlines (never JSON-escaped), and return Mermaid even when SVG export fails."

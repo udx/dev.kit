@@ -26,13 +26,110 @@ dev_kit_codex_dst_dir() {
 }
 
 dev_kit_codex_managed_items() {
-  printf "%s\n" "AGENTS.md" "config.toml" "rules" "skills"
+  printf "%s\n" "AGENTS.md" "config.toml" "rules"
+}
+
+dev_kit_codex_managed_skill_prefix() {
+  printf "%s" "dev-kit-"
+}
+
+dev_kit_codex_list_managed_skill_names() {
+  local root_dir="$1"
+  local skills_dir="$root_dir/skills"
+  local prefix=""
+  prefix="$(dev_kit_codex_managed_skill_prefix)"
+  [ -d "$skills_dir" ] || return 0
+
+  find "$skills_dir" -mindepth 1 -maxdepth 1 -name "${prefix}*" -exec basename {} \; | sort
+}
+
+dev_kit_codex_backup_managed_skills() {
+  local dst_root="$1"
+  local backup_dir="$2"
+  local name=""
+  while IFS= read -r name; do
+    [ -z "$name" ] && continue
+    mkdir -p "$backup_dir/skills"
+    cp -R "$dst_root/skills/$name" "$backup_dir/skills/$name"
+  done < <(dev_kit_codex_list_managed_skill_names "$dst_root")
+}
+
+dev_kit_codex_apply_managed_skills() {
+  local rendered_root="$1"
+  local dst_root="$2"
+  local name=""
+
+  mkdir -p "$dst_root/skills"
+
+  while IFS= read -r name; do
+    [ -z "$name" ] && continue
+    dev_kit_codex_clear_path "$dst_root/skills/$name"
+  done < <(dev_kit_codex_list_managed_skill_names "$dst_root")
+
+  while IFS= read -r name; do
+    [ -z "$name" ] && continue
+    cp -R "$rendered_root/skills/$name" "$dst_root/skills/$name"
+    echo "Applied: skills/$name"
+  done < <(dev_kit_codex_list_managed_skill_names "$rendered_root")
+}
+
+dev_kit_codex_restore_managed_skills() {
+  local backup_root="$1"
+  local dst_root="$2"
+  local name=""
+
+  mkdir -p "$dst_root/skills"
+
+  while IFS= read -r name; do
+    [ -z "$name" ] && continue
+    dev_kit_codex_clear_path "$dst_root/skills/$name"
+  done < <(dev_kit_codex_list_managed_skill_names "$dst_root")
+
+  while IFS= read -r name; do
+    [ -z "$name" ] && continue
+    cp -R "$backup_root/skills/$name" "$dst_root/skills/$name"
+    echo "Restored: skills/$name"
+  done < <(dev_kit_codex_list_managed_skill_names "$backup_root")
+}
+
+dev_kit_codex_copy_managed_skills_view() {
+  local src_root="$1"
+  local out_dir="$2"
+  local name=""
+  mkdir -p "$out_dir"
+  while IFS= read -r name; do
+    [ -z "$name" ] && continue
+    if [ -d "$src_root/skills/$name" ]; then
+      cp -R "$src_root/skills/$name" "$out_dir/$name"
+    fi
+  done < <(dev_kit_codex_list_managed_skill_names "$src_root")
 }
 
 dev_kit_codex_backup_dir() {
   local base=""
   base="$(dev_kit_codex_dst_dir)"
   echo "$base/.backup/dev.kit"
+}
+
+dev_kit_codex_new_backup_dir() {
+  local base=""
+  local stamp=""
+  local candidate=""
+  local i=0
+  base="$(dev_kit_codex_backup_dir)"
+  stamp="$(date +%Y%m%d%H%M%S)"
+  while :; do
+    if [ "$i" -eq 0 ]; then
+      candidate="$base/$stamp"
+    else
+      candidate="$base/${stamp}-${i}"
+    fi
+    if mkdir "$candidate" 2>/dev/null; then
+      printf "%s" "$candidate"
+      return 0
+    fi
+    i=$((i + 1))
+  done
 }
 
 dev_kit_codex_latest_backup() {
@@ -235,13 +332,28 @@ dev_kit_codex_render_skill() {
   local out_dir="$2"
   local templ_dir=""
   local schema_dir=""
+  local data_dir=""
   templ_dir="$(dev_kit_codex_templates_dir)"
   schema_dir="$(dev_kit_codex_schemas_dir)"
+  data_dir="$(dev_kit_codex_data_dir)"
 
   dev_kit_codex_validate_required "$schema_dir/skill.schema.json" "$data"
-  local name desc body
+  local name desc body pack_rel pack_dir
   name="$(jq -r '.name' "$data")"
   desc="$(jq -r '.description' "$data")"
+  pack_rel="$(jq -r '.pack_dir // empty' "$data")"
+  pack_dir=""
+
+  if [ -n "$pack_rel" ]; then
+    if [[ "$pack_rel" = /* ]]; then
+      pack_dir="$pack_rel"
+    else
+      pack_dir="$data_dir/$pack_rel"
+    fi
+  elif [ -d "$data_dir/skill-packs/$name" ]; then
+    pack_dir="$data_dir/skill-packs/$name"
+  fi
+
   body="$(jq -r '
     .sections[] |
     ("## " + .title + "\n")
@@ -251,10 +363,21 @@ dev_kit_codex_render_skill() {
   ' "$data")"
 
   mkdir -p "$out_dir/skills/$name"
-  dev_kit_codex_render_template "$templ_dir/skill.md.tmpl" "$out_dir/skills/$name/SKILL.md" \
-    SKILL_NAME "$name" \
-    SKILL_DESCRIPTION "$desc" \
-    SKILL_BODY "$body"
+
+  if [ -n "$pack_dir" ]; then
+    if [ ! -d "$pack_dir" ]; then
+      echo "Missing pack_dir for skill '$name': $pack_dir" >&2
+      exit 1
+    fi
+    cp -R "$pack_dir/." "$out_dir/skills/$name"
+  fi
+
+  if [ ! -f "$out_dir/skills/$name/SKILL.md" ]; then
+    dev_kit_codex_render_template "$templ_dir/skill.md.tmpl" "$out_dir/skills/$name/SKILL.md" \
+      SKILL_NAME "$name" \
+      SKILL_DESCRIPTION "$desc" \
+      SKILL_BODY "$body"
+  fi
 }
 
 dev_kit_codex_render_skills() {
@@ -318,6 +441,132 @@ dev_kit_codex_print_plan() {
   rm -rf "$(dirname "$out_path")"
 }
 
+dev_kit_codex_target_to_path() {
+  local target="$1"
+  case "$target" in
+    agents) printf "%s" "AGENTS.md" ;;
+    config) printf "%s" "config.toml" ;;
+    rules) printf "%s" "rules" ;;
+    skills) printf "%s" "skills" ;;
+    all) printf "%s" "__all__" ;;
+    *)
+      echo "Unsupported codex target: $target. Allowed: agents, config, rules, skills, all." >&2
+      return 1
+      ;;
+  esac
+}
+
+dev_kit_codex_backup_item() {
+  local dst_root="$1"
+  local backup_dir="$2"
+  local rel_path="$3"
+  local dst_item="$dst_root/$rel_path"
+  if [ -e "$dst_item" ]; then
+    mkdir -p "$backup_dir/$(dirname "$rel_path")"
+    cp -R "$dst_item" "$backup_dir/$rel_path"
+  fi
+}
+
+dev_kit_codex_apply_item() {
+  local rendered_root="$1"
+  local dst_root="$2"
+  local rel_path="$3"
+  local src_item="$rendered_root/$rel_path"
+  local dst_item="$dst_root/$rel_path"
+  if [ ! -e "$src_item" ]; then
+    echo "Missing rendered path: $rel_path" >&2
+    return 1
+  fi
+  dev_kit_codex_clear_path "$dst_item"
+  cp -R "$src_item" "$dst_item"
+  echo "Applied: $rel_path"
+}
+
+dev_kit_codex_plan_target() {
+  local target="$1"
+  local path=""
+  path="$(dev_kit_codex_target_to_path "$target")"
+
+  if [ "$path" = "__all__" ]; then
+    dev_kit_codex_print_plan "AGENTS.md"
+    printf "\n"
+    dev_kit_codex_print_plan "config.toml"
+    printf "\n"
+    dev_kit_codex_print_plan "rules"
+    printf "\n"
+    dev_kit_codex_print_plan "skills"
+    return 0
+  fi
+
+  dev_kit_codex_print_plan "$path"
+}
+
+dev_kit_codex_apply_target() {
+  local target="$1"
+  local dst=""
+  local path=""
+  local rendered=""
+  local backup_base=""
+  local backup_dir=""
+
+  dst="$(dev_kit_codex_dst_dir)"
+  path="$(dev_kit_codex_target_to_path "$target")" || return 1
+
+  if [ ! -d "$(dev_kit_codex_data_dir)" ]; then
+    echo "Missing data directory: $(dev_kit_codex_data_dir)" >&2
+    return 1
+  fi
+  if [ ! -d "$(dev_kit_codex_schemas_dir)" ]; then
+    echo "Missing schemas directory: $(dev_kit_codex_schemas_dir)" >&2
+    return 1
+  fi
+  if [ ! -d "$(dev_kit_codex_templates_dir)" ]; then
+    echo "Missing templates directory: $(dev_kit_codex_templates_dir)" >&2
+    return 1
+  fi
+
+  mkdir -p "$dst"
+  rendered="$(mktemp -d)"
+  dev_kit_codex_render_all "$rendered"
+
+  backup_base="$(dev_kit_codex_backup_dir)"
+  mkdir -p "$backup_base"
+  backup_dir="$(dev_kit_codex_new_backup_dir)"
+
+  if [ "$path" = "__all__" ]; then
+    dev_kit_codex_backup_item "$dst" "$backup_dir" "AGENTS.md"
+    dev_kit_codex_backup_item "$dst" "$backup_dir" "config.toml"
+    dev_kit_codex_backup_item "$dst" "$backup_dir" "rules"
+    dev_kit_codex_backup_managed_skills "$dst" "$backup_dir"
+
+    dev_kit_codex_apply_item "$rendered" "$dst" "AGENTS.md" || {
+      rm -rf "$rendered"
+      return 1
+    }
+    dev_kit_codex_apply_item "$rendered" "$dst" "config.toml" || {
+      rm -rf "$rendered"
+      return 1
+    }
+    dev_kit_codex_apply_item "$rendered" "$dst" "rules" || {
+      rm -rf "$rendered"
+      return 1
+    }
+    dev_kit_codex_apply_managed_skills "$rendered" "$dst"
+  elif [ "$path" = "skills" ]; then
+    dev_kit_codex_backup_managed_skills "$dst" "$backup_dir"
+    dev_kit_codex_apply_managed_skills "$rendered" "$dst"
+  else
+    dev_kit_codex_backup_item "$dst" "$backup_dir" "$path"
+    dev_kit_codex_apply_item "$rendered" "$dst" "$path" || {
+      rm -rf "$rendered"
+      return 1
+    }
+  fi
+
+  rm -rf "$rendered"
+  echo "Backup: $backup_dir"
+}
+
 dev_kit_cmd_codex() {
   shift || true
   local sub="${1:-}"
@@ -333,6 +582,8 @@ dev_kit_cmd_codex() {
       echo "schemas: $(dev_kit_codex_schemas_dir)"
       echo "templates: $(dev_kit_codex_templates_dir)"
       echo "target: $dst"
+      echo "managed_skill_prefix: $(dev_kit_codex_managed_skill_prefix)"
+      echo "targets: agents, config, rules, skills, all"
       if command -v codex >/dev/null 2>&1; then
         echo "codex: installed"
       else
@@ -355,58 +606,65 @@ dev_kit_cmd_codex() {
           printf "target/%s: missing\n" "$item"
         fi
       done < <(dev_kit_codex_managed_items)
+      local managed_skills=""
+      managed_skills="$(dev_kit_codex_list_managed_skill_names "$dst" | tr '\n' ' ' | sed 's/[[:space:]]*$//')"
+      if [ -n "$managed_skills" ]; then
+        echo "target/skills (managed): $managed_skills"
+      else
+        echo "target/skills (managed): none"
+      fi
       ;;
     apply)
-      if [ ! -d "$(dev_kit_codex_data_dir)" ]; then
-        echo "Missing data directory: $(dev_kit_codex_data_dir)" >&2
-        exit 1
-      fi
-      if [ ! -d "$(dev_kit_codex_schemas_dir)" ]; then
-        echo "Missing schemas directory: $(dev_kit_codex_schemas_dir)" >&2
-        exit 1
-      fi
-      if [ ! -d "$(dev_kit_codex_templates_dir)" ]; then
-        echo "Missing templates directory: $(dev_kit_codex_templates_dir)" >&2
-        exit 1
-      fi
-      mkdir -p "$dst"
-      local rendered=""
-      rendered="$(mktemp -d)"
-      dev_kit_codex_render_all "$rendered"
-      local backup_base=""
-      backup_base="$(dev_kit_codex_backup_dir)"
-      local backup_dir="$backup_base/$(date +%Y%m%d%H%M%S)"
-      mkdir -p "$backup_dir"
-      local item=""
-      while IFS= read -r item; do
-        [ -z "$item" ] && continue
-        local dst_item="$dst/$item"
-        if [ -e "$dst_item" ]; then
-          mkdir -p "$backup_dir/$(dirname "$item")"
-          cp -R "$dst_item" "$backup_dir/$item"
-        fi
-      done < <(dev_kit_codex_managed_items)
-      while IFS= read -r item; do
-        [ -z "$item" ] && continue
-        local src_item="$rendered/$item"
-        local dst_item="$dst/$item"
-        if [ -e "$src_item" ]; then
-          dev_kit_codex_clear_path "$dst_item"
-          cp -R "$src_item" "$dst_item"
-          echo "Applied: $item"
-        fi
-      done < <(dev_kit_codex_managed_items)
-      rm -rf "$rendered"
-      echo "Backup: $backup_dir"
+      dev_kit_codex_apply_target "all"
       ;;
-    config)
-      local plan="false"
-      local path="config.toml"
+    agents|rules|skills|all|toml|config-file)
+      local target="$sub"
+      local mode=""
       shift || true
       while [ $# -gt 0 ]; do
         case "$1" in
           --plan)
-            plan="true"
+            mode="plan"
+            ;;
+          --apply)
+            mode="apply"
+            ;;
+          *)
+            echo "Unknown codex $sub option: $1" >&2
+            exit 1
+            ;;
+        esac
+        shift || true
+      done
+      if [ -z "$mode" ]; then
+        echo "codex $sub requires --plan or --apply" >&2
+        exit 1
+      fi
+      case "$target" in
+        toml|config-file) target="config" ;;
+      esac
+      if [ "$mode" = "plan" ]; then
+        dev_kit_codex_plan_target "$target"
+      else
+        dev_kit_codex_apply_target "$target"
+      fi
+      ;;
+    config)
+      local target=""
+      local mode=""
+      local path=""
+      shift || true
+      if [ $# -gt 0 ] && [[ "${1:-}" != --* ]]; then
+        target="$1"
+        shift || true
+      fi
+      while [ $# -gt 0 ]; do
+        case "$1" in
+          --plan)
+            mode="plan"
+            ;;
+          --apply)
+            mode="apply"
             ;;
           --path=*)
             path="${1#--path=}"
@@ -422,11 +680,33 @@ dev_kit_cmd_codex() {
         esac
         shift || true
       done
-      if [ "$plan" != "true" ]; then
-        echo "codex config requires --plan" >&2
+      if [ -z "$mode" ]; then
+        echo "codex config requires --plan or --apply" >&2
         exit 1
       fi
-      dev_kit_codex_print_plan "$path"
+      if [ -n "$path" ] && [ "$mode" = "apply" ]; then
+        echo "codex config --apply does not support --path; use a target (agents|config|rules|skills|all)." >&2
+        exit 1
+      fi
+
+      if [ -n "$path" ]; then
+        dev_kit_codex_print_plan "$path"
+        return 0
+      fi
+
+      if [ -z "$target" ]; then
+        if [ "$mode" = "apply" ]; then
+          target="all"
+        else
+          target="config"
+        fi
+      fi
+
+      if [ "$mode" = "plan" ]; then
+        dev_kit_codex_plan_target "$target"
+      else
+        dev_kit_codex_apply_target "$target"
+      fi
       ;;
     compare)
       local path="config.toml"
@@ -450,7 +730,16 @@ dev_kit_cmd_codex() {
       local out_path=""
       out_path="$(dev_kit_codex_plan_item "$path")"
       local dst_path="$dst/$path"
-      if [ -d "$out_path" ] || [ -d "$dst_path" ]; then
+      if [ "$path" = "skills" ]; then
+        local managed_out=""
+        local managed_dst=""
+        managed_out="$(mktemp -d)"
+        managed_dst="$(mktemp -d)"
+        dev_kit_codex_copy_managed_skills_view "$(dirname "$out_path")" "$managed_out"
+        dev_kit_codex_copy_managed_skills_view "$dst" "$managed_dst"
+        diff -ru "$managed_out" "$managed_dst" || true
+        rm -rf "$managed_out" "$managed_dst"
+      elif [ -d "$out_path" ] || [ -d "$dst_path" ]; then
         diff -ru "$out_path" "$dst_path" || true
       else
         diff -u "$out_path" "$dst_path" || true
@@ -476,6 +765,7 @@ dev_kit_cmd_codex() {
           echo "Restored: $item"
         fi
       done < <(dev_kit_codex_managed_items)
+      dev_kit_codex_restore_managed_skills "$backup_dir" "$dst"
       echo "Restored from: $backup_dir"
       ;;
     help|-h|--help)
@@ -483,15 +773,24 @@ dev_kit_cmd_codex() {
 Usage: dev.kit codex <command>
 
 Commands:
-  status   Show Codex integration status (default)
-  apply    Render src/ai/data with Codex schemas/templates -> ~/.codex
-  config   Render a planned file/dir from src/ai/data + src/ai/integrations/codex
+  status   Show Codex integration state/settings (default)
+  apply    Apply all managed codex artifacts (legacy alias of: codex config all --apply)
+  config   Plan/apply a target: agents|config|rules|skills|all
+  agents   Shorthand: codex config agents --plan|--apply
+  rules    Shorthand: codex config rules --plan|--apply
+  skills   Shorthand: codex config skills --plan|--apply
+  all      Shorthand: codex config all --plan|--apply
+  toml     Shorthand: codex config config --plan|--apply
   compare  Compare planned output vs ~/.codex
   restore  Restore the latest backup to ~/.codex
 
 Examples:
-  dev.kit codex config --plan --path=skills/dev-kit-prompt
-  dev.kit codex compare --path=skills/dev-kit-prompt
+  dev.kit codex
+  dev.kit codex skills --plan
+  dev.kit codex config rules --plan
+  dev.kit codex config skills --apply
+  dev.kit codex config all --apply
+  dev.kit codex config --plan --path=skills/dev-kit-prompt/SKILL.md
 CODEX_USAGE
       ;;
     *)

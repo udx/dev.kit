@@ -136,7 +136,8 @@ dev.kit context show
 Apply repo skills to Codex:
 
 ```bash
-dev.kit codex apply
+dev.kit codex
+dev.kit codex config all --apply
 dev.kit ai skills
 ```
 
@@ -144,6 +145,7 @@ Tips:
 
 - Streaming logs are off by default; pass `--stream` for full runner output.
 - Simple requests answer directly; complex requests route to workflow.
+- `dev.kit codex apply` manages `dev-kit-*` skills from `src/ai/data` and preserves non-dev-kit skills already installed in `~/.codex/skills`.
 
 ## Docs
 
@@ -165,6 +167,7 @@ Doc map (by topic):
 - `docs/` specs and contracts
 - `src/ai/` shared AI integration assets
 - `src/ai/data/` shared AI data (JSON)
+- `src/ai/data/skill-packs/` source-of-truth skill bodies/assets/scripts copied into `~/.codex/skills/`
 - `src/ai/integrations/` integration-specific schemas/templates (codex, claude, gemini)
 - `src/ai/data/prompts.json` iteration prompts
 - `src/mermaid/` mermaid templates

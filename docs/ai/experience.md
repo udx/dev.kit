@@ -77,8 +77,11 @@ Behavior:
 
 ## Codex Config Apply
 
-- `dev.kit codex apply` renders `src/ai/data` using Codex schemas/templates into `~/.codex/`.
-- This installs `AGENTS.md`, `config.toml`, `rules/default.rules`, and `skills/`.
+- `dev.kit codex config all --apply` renders `src/ai/data` using Codex schemas/templates into `~/.codex/`.
+- `dev.kit codex apply` remains as a legacy alias for full apply.
+- This installs `AGENTS.md`, `config.toml`, `rules/default.rules`, and managed `dev-kit-*` skills.
+- Non-`dev-kit-*` skills already present in `~/.codex/skills` are preserved.
+- Skills may be rendered from JSON sections or copied from `src/ai/data/skill-packs/<skill-name>/` when present.
 - The prompt + skills remain the primary integration point; Codex config provides baseline behavior.
 
 ## Continuity Across Turns
