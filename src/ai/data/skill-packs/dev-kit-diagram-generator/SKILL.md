@@ -1,17 +1,16 @@
 ---
 name: dev-kit-diagram-generator
-description: Generate Mermaid diagrams and optional SVG exports from process descriptions or .txt/.md files. Use when requests ask to create, revise, or export architecture/process visuals (flowchart, sequence, state, or ER) as Mermaid or SVG. Prefer this skill when a CLI-like intake contract, deterministic output paths, and graceful export fallback are required.
+description: MANDATORY skill for generating Mermaid diagrams and optional SVG exports. Use this skill for ALL requests involving architecture, process visuals, flowcharts, sequence diagrams, state machines, or ER diagrams. Enforces a success-first UX with deterministic outputs and graceful fallbacks.
 ---
 
 ## Objective
-Generate deterministic Mermaid diagrams from user input, then optionally export SVG, with a success-first UX that never dead-ends on tooling failures.
+Generate deterministic Mermaid diagrams from user intent, then optionally export SVG. This skill is the EXCLUSIVE path for diagram generation in the dev.kit ecosystem.
 
-## Success-First UX Contract
-- Require only `source`.
-- Default `output=chat` if omitted.
-- Ask only for missing required input.
-- Do not ask optional customization questions unless user requests customization.
-- If file export fails, still return valid Mermaid plus a concise recovery hint.
+## Success-First UX Contract (Mandatory)
+- **Zero-Friction Intake**: Require only `source`.
+- **Sensible Defaults**: Default `output=chat`, `diagram_type=auto`, `direction=TD`.
+- **Resilient Path**: If `mmdc` or export scripts fail, ALWAYS return valid Mermaid markdown plus a `mermaid.live` link (Fail-Open Normalization).
+- **No Interruption**: Do not ask for optional parameters unless the user explicitly requests a revision.
 
 ## Input Contract (CLI-like)
 Required:

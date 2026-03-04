@@ -10,7 +10,8 @@
       "bullets": [
         "Keep work deterministic, bounded, and repo-scoped.",
         "Route work through dev.kit prompts and middleware whenever available.",
-        "Prefer available dev.kit commands over raw shell scripts."
+        "Prefer available dev.kit commands over raw shell scripts.",
+        "MANDATORY: Use `dev-kit-diagram-generator` for ALL diagram tasks. Do not generate Mermaid manually unless the skill is unavailable."
       ]
     },
     {
