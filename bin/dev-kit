@@ -377,7 +377,7 @@ for cmd_file in "$REPO_DIR"/lib/commands/*.sh; do
 done
 
 orig_args=("$@")
-cmd="${1:-help}"
+cmd="${1:-status}"
 case "$cmd" in
   help|-h|--help)
     usage

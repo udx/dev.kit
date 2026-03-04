@@ -20,17 +20,13 @@ LIB_SRC_DIR="${REPO_DIR}/lib"
 LIB_DST_DIR="${SOURCE_DIR}/lib"
 PROFILE=""
 
-detect_profile() {
-  case "${SHELL:-}" in
-    */zsh) PROFILE="$HOME/.zshrc" ;;
-    */bash) PROFILE="$HOME/.bash_profile" ;;
-    *) PROFILE="$HOME/.bash_profile" ;;
-  esac
-  if [ ! -f "$PROFILE" ]; then
-    if [ -f "$HOME/.profile" ]; then
-      PROFILE="$HOME/.profile"
-    fi
-  fi
+detect_profiles() {
+  local found=""
+  if [ -f "$HOME/.zshrc" ]; then found="$found $HOME/.zshrc"; fi
+  if [ -f "$HOME/.bash_profile" ]; then found="$found $HOME/.bash_profile"; fi
+  if [ -f "$HOME/.bashrc" ]; then found="$found $HOME/.bashrc"; fi
+  if [ -f "$HOME/.profile" ]; then found="$found $HOME/.profile"; fi
+  PROFILE=$(echo "$found" | tr ' ' '\n' | sort -u | tr '\n' ' ')
 }
 
 mkdir -p "$BIN_DIR"
@@ -82,31 +78,27 @@ if [ -L "$TARGET" ]; then
     if command -v ui_ok >/dev/null 2>&1; then
       ui_ok "Symlink updated" "$TARGET -> $desired_target"
     else
-      echo "OK  Symlink updated"
-      echo "   $TARGET -> $desired_target"
+      echo "OK  Symlink updated ($TARGET -> $desired_target)"
     fi
   else
     if command -v ui_ok >/dev/null 2>&1; then
       ui_ok "Already installed" "$TARGET"
     else
-      echo "OK  Already installed"
-      echo "   $TARGET"
+      echo "OK  Already installed ($TARGET)"
     fi
   fi
 elif [ -e "$TARGET" ]; then
   if command -v ui_warn >/dev/null 2>&1; then
     ui_warn "Install skipped" "$TARGET exists and is not a symlink"
   else
-    echo "WARN Install skipped"
-    echo "   $TARGET exists and is not a symlink"
+    echo "WARN Install skipped ($TARGET exists and is not a symlink)"
   fi
 else
   ln -s "$desired_target" "$TARGET"
   if command -v ui_ok >/dev/null 2>&1; then
     ui_ok "Installed" "$TARGET"
   else
-    echo "OK  Installed"
-    echo "   $TARGET"
+    echo "OK  Installed ($TARGET)"
   fi
 fi
 
@@ -115,12 +107,10 @@ if [ -f "$ENV_SRC" ]; then
   if command -v ui_ok >/dev/null 2>&1; then
     ui_ok "Env installed" "$ENV_DST"
   else
-    echo "OK  Env installed"
-    echo "   $ENV_DST"
+    echo "OK  Env installed ($ENV_DST)"
   fi
 fi
 
-# Compatibility shim for legacy shell profiles that source $ENGINE_DIR/env.sh
 if [ ! -f "$ENGINE_DIR/env.sh" ]; then
   cat <<'EOF' > "$ENGINE_DIR/env.sh"
 #!/bin/bash
@@ -134,25 +124,11 @@ fi
 if [ -d "$LIB_SRC_DIR" ]; then
   mkdir -p "$LIB_DST_DIR"
   cp "$LIB_SRC_DIR/ui.sh" "$LIB_DST_DIR/ui.sh" 2>/dev/null || true
-  if [ -f "$LIB_DST_DIR/ui.sh" ]; then
-    if command -v ui_ok >/dev/null 2>&1; then
-      ui_ok "UI installed" "$LIB_DST_DIR/ui.sh"
-    else
-      echo "OK  UI installed"
-      echo "   $LIB_DST_DIR/ui.sh"
-    fi
-  fi
 fi
 
 if [ -d "$COMP_SRC_DIR" ]; then
   mkdir -p "$COMP_DST_DIR"
   cp "$COMP_SRC_DIR/"* "$COMP_DST_DIR/" 2>/dev/null || true
-  if command -v ui_ok >/dev/null 2>&1; then
-    ui_ok "Completions installed" "$COMP_DST_DIR"
-  else
-    echo "OK  Completions installed"
-    echo "   $COMP_DST_DIR"
-  fi
 fi
 
 if [ -f "$CONFIG_SRC" ] && [ ! -f "$CONFIG_DST" ]; then
@@ -160,8 +136,7 @@ if [ -f "$CONFIG_SRC" ] && [ ! -f "$CONFIG_DST" ]; then
   if command -v ui_ok >/dev/null 2>&1; then
     ui_ok "Config installed" "$CONFIG_DST"
   else
-    echo "OK  Config installed"
-    echo "   $CONFIG_DST"
+    echo "OK  Config installed ($CONFIG_DST)"
   fi
 fi
 
@@ -169,121 +144,64 @@ if [ -f "$CONFIG_DST" ] && [ ! -f "$ENGINE_DIR/config.env" ]; then
   cp "$CONFIG_DST" "$ENGINE_DIR/config.env"
 fi
 
-if [ ! -w "$ENGINE_DIR" ] || [ ! -w "$SOURCE_DIR" ] || [ ! -w "$STATE_DIR" ]; then
-  if command -v ui_warn >/dev/null 2>&1; then
-    ui_warn "Config unavailable" "$ENGINE_DIR is not writable"
-  else
-    echo "WARN Config unavailable"
-    echo "   $ENGINE_DIR is not writable"
-  fi
-  exit 1
-fi
-
-detect_profile
-reload_cmd="source \"$PROFILE\""
-case "$PROFILE" in
-  "$HOME/.profile") reload_cmd="source \"$HOME/.profile\"" ;;
-  "$HOME/.zshrc") reload_cmd="source \"$HOME/.zshrc\"" ;;
-  "$HOME/.bash_profile") reload_cmd="source \"$HOME/.bash_profile\"" ;;
-esac
-path_line="export PATH=\"$BIN_DIR:\$PATH\""
-path_prompt="true"
-if [ -f "$CONFIG_DST" ]; then
-  path_prompt="$(awk -F= '
-    $1 ~ "^[[:space:]]*install.path_prompt[[:space:]]*$" {
-      gsub(/[[:space:]]/,"",$2);
-      print tolower($2);
-      exit
-    }
-  ' "$CONFIG_DST")"
-fi
-if ! command -v dev.kit >/dev/null 2>&1; then
-  if [ -n "$PROFILE" ] && [ -t 0 ] && [ "$path_prompt" != "false" ]; then
-    if [ -f "$PROFILE" ] && grep -Fqx "$path_line" "$PROFILE"; then
-      if command -v ui_ok >/dev/null 2>&1; then
-        ui_ok "PATH already set" "$PROFILE"
-      else
-        echo "OK  PATH already set"
-        echo "   $PROFILE"
-      fi
-    else
-      printf "Add dev.kit to PATH in %s? [y/N] " "$PROFILE"
-      read -r answer || true
-      case "$answer" in
-        y|Y|yes|YES)
-          printf "\n%s\n" "$path_line" >> "$PROFILE"
-          if command -v ui_ok >/dev/null 2>&1; then
-            ui_ok "PATH updated" "$PROFILE"
-            echo "   Reload your shell to use dev.kit"
-          else
-            echo "OK  PATH updated"
-            echo "   $PROFILE"
-            echo "   Reload your shell to use dev.kit"
-          fi
-          ;;
-        *) ;;
-      esac
-    fi
-    if command -v ui_section >/dev/null 2>&1; then
-      ui_section "Next steps"
-    else
-      echo ""
-      echo "Next steps"
-    fi
-    echo "  $reload_cmd"
-    echo "  hash -r"
-    exit 0
-  else
-    if command -v ui_section >/dev/null 2>&1; then
-      ui_section "Next step (PATH)"
-    else
-      echo ""
-      echo "Next step (PATH)"
-    fi
-    echo "  $path_line"
-  fi
-fi
-
-echo ""
-if command -v ui_section >/dev/null 2>&1; then
-  ui_section "Next step (auto-init)"
-else
-  echo "Next step (auto-init)"
-fi
+detect_profiles
 env_line="source \"$SOURCE_DIR/env.sh\""
-if [ -n "$PROFILE" ] && [ -t 0 ]; then
-  if [ -f "$PROFILE" ] && grep -Fqx "$env_line" "$PROFILE"; then
-    if command -v ui_ok >/dev/null 2>&1; then
-      ui_ok "Auto-init already set" "$PROFILE"
-    else
-      echo "OK  Auto-init already set"
-      echo "   $PROFILE"
+path_line="export PATH=\"$BIN_DIR:\$PATH\""
+
+if [ -t 0 ] && [ -n "$PROFILE" ]; then
+  for p in $PROFILE; do
+    echo ""
+    if grep -Fqx "$env_line" "$p" && grep -Fqx "$path_line" "$p"; then
+      if command -v ui_ok >/dev/null 2>&1; then
+        ui_ok "Shell already configured" "$p"
+      else
+        echo "OK  Shell already configured ($p)"
+      fi
+      continue
     fi
-  else
-    printf "Add dev.kit auto-init to %s? [y/N] " "$PROFILE"
+
+    printf "Configure dev.kit in %s? [y/N] " "$p"
     read -r answer || true
     case "$answer" in
       y|Y|yes|YES)
-        printf "\n%s\n" "$env_line" >> "$PROFILE"
+        if ! grep -Fqx "$path_line" "$p"; then
+          printf "\n# dev.kit bin\n%s\n" "$path_line" >> "$p"
+        fi
+        if ! grep -Fqx "$env_line" "$p"; then
+          printf "# dev.kit environment\n%s\n" "$env_line" >> "$p"
+        fi
         if command -v ui_ok >/dev/null 2>&1; then
-          ui_ok "Auto-init added" "$PROFILE"
+          ui_ok "Shell configured" "$p"
         else
-          echo "OK  Auto-init added"
-          echo "   $PROFILE"
+          echo "OK  Shell configured ($p)"
         fi
         ;;
-      *) ;;
+      *)
+        if command -v ui_warn >/dev/null 2>&1; then
+          ui_warn "Skipped configuration" "$p"
+        else
+          echo "WARN Skipped configuration ($p)"
+        fi
+        ;;
     esac
-  fi
+  done
 else
+  if command -v ui_section >/dev/null 2>&1; then
+    ui_section "Manual Configuration"
+  else
+    echo "Manual Configuration:"
+  fi
+  echo "Add the following to your shell profile:"
+  echo "  $path_line"
   echo "  $env_line"
 fi
 
 echo ""
-echo "  Reload your shell:"
-echo "    $reload_cmd"
-echo "    hash -r"
-echo ""
-echo "  Then run:"
-echo "    dev.kit exec \"...\""
+if command -v ui_section >/dev/null 2>&1; then
+  ui_section "Ready to go"
+else
+  echo "Ready to go:"
+fi
+echo "1. Reload your shell (e.g. 'source ~/.zshrc' or 'source ~/.bash_profile')"
+echo "2. Run 'dev.kit' to see the engineering brief."
 echo ""
