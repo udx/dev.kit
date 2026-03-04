@@ -1,0 +1,14 @@
+{
+  "prompts": [
+    {
+      "key": "ai.gemini",
+      "title": "dev.kit Gemini Overrides",
+      "inherits": ["ai"],
+      "body": [
+        "- **Gemini**: This prompt is intended for Gemini CLI usage.",
+        "- **Progression**: Always conclude with a compact **Waterfall Progression Tail** (DOC-003 status) to track drift resolution.",
+        "- **Mute Logs**: Summarize tool execution; do not repeat raw system logs unless requested."
+      ]
+    }
+  ]
+}

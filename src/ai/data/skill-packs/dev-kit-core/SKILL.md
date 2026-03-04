@@ -11,11 +11,12 @@ The core capability of `dev.kit` is to establish and maintain a high-fidelity, d
 - **Interface Translation**: Mapping repository-scoped skills (`src/*`), rules, and context into a unified interface for humans and AI agents.
 
 ## Core Interface (CLI Primitives)
+- `dev.kit status`: High-fidelity engineering brief (Default).
+- `dev.kit agent`: Manage and synchronize AI agent environments (Gemini, Codex).
+- `dev.kit task`: Manage deterministic task iteration and workflows.
+- `dev.kit exec`: Execute standardized prompts with full repo context.
 - `dev.kit config`: Show or set global/repo configurations.
 - `dev.kit doctor`: Verify environment health and security.
-- `dev.kit task`: Manage deterministic task iteration and workflows.
-- `dev.kit codex`: Map repository skills to the global AI agent.
-- `dev.kit exec`: Execute standardized prompts with full repo context.
 
 ## Deterministic Mapping Logic
 - **Priority 1**: `environment.yaml` (Orchestrator)
