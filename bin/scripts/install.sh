@@ -50,6 +50,7 @@ sync_engine() {
   copy_dir_contents "$REPO_DIR/scripts" "$SOURCE_DIR/scripts"
   copy_dir_contents "$REPO_DIR/assets" "$SOURCE_DIR/assets"
   copy_dir_contents "$REPO_DIR/schemas" "$SOURCE_DIR/schemas"
+  [ -f "$REPO_DIR/environment.yaml" ] && cp "$REPO_DIR/environment.yaml" "$SOURCE_DIR/environment.yaml"
 }
 
 desired_target="${SOURCE_DIR}/bin/dev-kit"

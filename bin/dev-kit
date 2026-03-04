@@ -52,7 +52,21 @@ if [ -f "$UI_LIB" ]; then
 fi
 
 # Orchestrator
-ENVIRONMENT_YAML="$REPO_DIR/environment.yaml"
+get_environment_yaml() {
+  local repo_root
+  repo_root="$(get_repo_root || true)"
+  # 1. Project Root (Priority)
+  if [ -n "$repo_root" ] && [ -f "$repo_root/environment.yaml" ]; then
+    echo "$repo_root/environment.yaml"
+  # 2. Global Home
+  elif [ -f "$DEV_KIT_HOME/environment.yaml" ]; then
+    echo "$DEV_KIT_HOME/environment.yaml"
+  # 3. Engine Source (Defaults)
+  elif [ -f "$REPO_DIR/environment.yaml" ]; then
+    echo "$REPO_DIR/environment.yaml"
+  fi
+}
+ENVIRONMENT_YAML="$(get_environment_yaml)"
 
 print_section() {
   local title="$1"
