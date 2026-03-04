@@ -1,8 +1,18 @@
 # Context Adaptation: Resilient Projections
 
+Domain: Concepts
+
 ## Summary
 
-Adaptation describes how dev.kit projects shared repository sources into tool-specific formats without losing the canonical intent. It is the technical bridge for **Resilient Normalization**.
+**Adaptation** describes how dev.kit projects shared repository sources into tool-specific formats without losing the canonical intent. It is the technical bridge for **Resilient Normalization**.
+
+```mermaid
+flowchart LR
+    Source[Canonical Source] --> Project[Adaptation / Projection]
+    Project --> ToolA[Tool A Format]
+    Project --> ToolB[Tool B Format]
+    Project --> Fallback[Fail-Open Fallback]
+```
 
 ## The Purpose of Adaptation
 
@@ -22,8 +32,5 @@ Adaptation describes how dev.kit projects shared repository sources into tool-sp
 - **SVG Export**: Projecting `.mmd` files into `.svg` (or falling back to the raw source when `mmdc` is missing).
 - **Environment Mapping**: Translating `environment.yaml` into host-specific environment variables and shell aliases.
 
-## References
-
-- Task Normalization: `README.md`
-- Methodology (CWA): `docs/concepts/methodology.md`
-- Fail-Open Logic: `src/ai/data/skill-packs/dev-kit-diagram-generator/scripts/export_svg.sh`
+---
+_UDX DevSecOps Team_

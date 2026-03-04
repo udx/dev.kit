@@ -1,91 +1,59 @@
-# AI Integration Experience
+# AI Integration Experience: High-Fidelity Prompting
 
-Domain: AI Integration
+Domain: AI
 
 ## Purpose
 
-Define the user experience for dev.kit with and without AI integrations.
+The AI Integration Experience ensures that both humans and agents have a consistent, deterministic way to interact with the repository's skills. It supports multiple execution modes depending on tool availability.
 
-## Common Flow (Prompt First)
+## The Execution Flow
 
-- `dev.kit prompt` generates the normalized prompt artifact.
-- `dev.kit exec` wraps prompt generation and runs Codex when enabled.
-- Prompts always include `$dev-kit-prompt-router` and workflow/continuity rules.
-
-Flow diagram:
-
-```
-User input
-  -> dev.kit exec "..."
-     -> dev.kit prompt (ai / ai.codex)
-     -> codex exec "<normalized prompt>"
-
-Manual path
-  -> dev.kit prompt --request "..." --template ai.codex
-     -> codex exec "<normalized prompt>"
+```mermaid
+flowchart TD
+    User[User Input / Drift] --> Exec[dev.kit exec]
+    Exec --> Prompt[Generate Normalized Prompt]
+    Prompt --> Mode{AI Enabled?}
+    
+    Mode -- Yes --> Codex[Run AI Engine]
+    Mode -- No --> Print[Print Prompt to Stdout]
+    
+    Codex --> Result[Capture Result & Context]
+    Print --> Manual[Manual Application]
 ```
 
-## Mode A — AI Disabled (default)
+## Operating Modes
 
-Config:
-- `ai.enabled = false`
-- `exec.prompt = ai` (default)
+### Mode A: AI-Powered (Smart Translator)
+**Requirements**: `ai.enabled = true`, supported CLI (e.g., `codex`, `gemini`) installed.
+- **Behavior**: `dev.kit exec` automatically generates the prompt and runs the AI engine.
+- **Persistence**: Results and context are automatically captured in the repository-scoped context.
 
-Behavior:
-- `dev.kit exec` prints the normalized prompt and exits.
-- Use the output with Codex sessions, `codex exec`, Context7 MCP, or a REST client.
+### Mode B: Personal Helper (Interface Translator)
+**Requirements**: `ai.enabled = false` (Default).
+- **Behavior**: `dev.kit exec` generates and prints the normalized prompt to the terminal.
+- **Usage**: Copy the output into a web UI (ChatGPT, Claude), local LLM, or a manual session.
 
-## Mode B — AI Enabled + Codex CLI
+## Context & Persistence
 
-Config:
-- `ai.enabled = true`
-- `exec.prompt = ai.codex.min` (default)
-- `exec.stream = false` (default)
+**dev.kit** maintains a repository-scoped memory to ensure continuity across multiple turns.
+- **Config**: `context.enabled = true`, `context.max_bytes = 4000`.
+- **Commands**:
+    - `dev.kit context show`: Inspect the current memory.
+    - `dev.kit context reset`: Clear the memory.
+    - `dev.kit exec --no-context`: Run a one-off command without context.
 
-Behavior:
-- `dev.kit exec` runs `codex exec` using the normalized prompt.
-- dev.kit stores prompt/request/result logs under `{{DEV_KIT_STATE}}/codex/logs/<repo-id>/`.
-- Codex stores its own sessions under `~/.codex/sessions`.
+## Skill Adaptation
 
-## Context Persistence
+To ensure AI agents can use repository skills, `dev.kit` projects internal skill definitions into tool-specific manifests (Stage 1 AI Orchestration).
+- **Command**: `dev.kit codex config all --apply` - Syncs local skills to the agent's environment.
+- **Managed Skills**: These appear as `dev-kit-*` skills in the agent's toolbelt.
 
-When enabled, dev.kit appends the latest request/response to a repo-scoped
-context file and includes it in subsequent prompts.
+## Continuity Signals
 
-Config:
-- `context.enabled = true` (default)
-- `context.dir = <path>` (optional override)
-- `context.max_bytes = 4000` (default)
+For multi-turn tasks, dev.kit injects **Continuity Signals** into every prompt:
+- **Active Workflow Path**: The path to the current `workflow.md`.
+- **Current Step ID**: The specific task the agent is working on.
+- **Resumption Context**: Any missing inputs or blocked statuses from the previous turn.
 
-Behavior:
-- When a `## Context` section is present, treat it as repo-scoped persistent memory.
-
-Commands:
-- `dev.kit context show`
-- `dev.kit context reset`
-- `dev.kit context compact`
-- `dev.kit exec --no-context`
-
-## Mode C — AI Enabled but Codex Missing
-
-Config:
-- `ai.enabled = true`
-
-Behavior:
-- `dev.kit exec` reports that `codex` is missing.
-- Use `dev.kit exec --print` or `dev.kit prompt` to obtain the prompt manually.
-
-## Codex Config Apply
-
-- `dev.kit codex config all --apply` renders `src/ai/data` using Codex schemas/templates into `~/.codex/`.
-- `dev.kit codex apply` remains as a legacy alias for full apply.
-- This installs `AGENTS.md`, `config.toml`, `rules/default.rules`, and managed `dev-kit-*` skills.
-- Non-`dev-kit-*` skills already present in `~/.codex/skills` are preserved.
-- Skills may be rendered from JSON sections or copied from `src/ai/data/skill-packs/<skill-name>/` when present.
-- The prompt + skills remain the primary integration point; Codex config provides baseline behavior.
-
-## Continuity Across Turns
-
-- Use the workflow file path and current step ID from the last response when continuing.
-- For non-interactive runs, use `codex exec --resume` to continue the most recent session.
-- For interactive sessions, use `codex resume` to reopen a prior thread.
+---
+_UDX DevSecOps Team_

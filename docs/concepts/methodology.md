@@ -1,11 +1,23 @@
 # The UDX Methodology: CLI-Wrapped Automation (CWA)
 
-`dev.kit` uses **CLI-Wrapped Automation (CWA)** to normalize development processes.
+Domain: Concepts
+
+## Summary
+
+The **UDX Methodology** centers on **CLI-Wrapped Automation (CWA)**. It is the practice of wrapping all repository automation in a validated CLI boundary to provide a high-fidelity interface for both humans and AI agents.
 
 ## Core Concepts
 
 1.  **Repo-as-a-Skill**: Every repository exposes its logic through standardized scripts and CLI commands. Engineering experience is captured and packaged as portable automation.
-2.  **Smart Helper**: `dev.kit` resolves **Drift** (intent divergence) by translating repository logic into a high-fidelity interface for humans and AI.
+2.  **Smart Helper**: **dev.kit** resolves **Drift** (intent divergence) by translating repository logic into a high-fidelity interface.
+
+```mermaid
+flowchart LR
+    Chaos[Chaotic Scripts] --> CWA[CLI-Wrapped Automation]
+    CWA --> Skill[Portable Skill]
+    Skill --> Agent[AI Agent Integration]
+    Agent --> Resolution[Drift Resolution]
+```
 
 ## The Principles
 
@@ -26,7 +38,6 @@ Logic is encapsulated in modular scripts (`scripts/`, `lib/`) and wrapped by the
 
 ### 4. AI-First Orchestration
 `dev.kit` provides a stable interface for AI agents across two distinct stages:
-
 *   **Stage 1: AI Integration & Environment Config**: Agents configure the environment with `dev.kit` and use its enforcement logic to maintain standards and rules.
 *   **Stage 2: Agent Power via Task Normalization**: Agents leverage the `dev.kit` task normalization engine (Drift -> Normalize -> Iterate) to execute complex tasks reliably.
 
@@ -42,4 +53,5 @@ Logic is encapsulated in modular scripts (`scripts/`, `lib/`) and wrapped by the
 *   **Maintainability**: UI (CLI) is decoupled from Logic (Scripts).
 *   **Scalability**: Rapidly add and expose new "Skills."
 
+---
 _UDX DevSecOps Team_

@@ -1,48 +1,34 @@
-# Abstract Layers
+# Engineering Layers: The dev.kit Hierarchy
+
+Domain: Reference
 
 ## Summary
 
-These layers help categorize standards and decisions in dev.kit. They clarify whether a rule applies to build-time code, deployment-time behavior, or active context handling.
+The Engineering Layers provide a structural model for categorizing repository "Skills," rules, and automation logic. Each layer builds upon the next to resolve drift and maintain a high-fidelity environment.
 
-## Layer 1: Software Source Standards (Build)
+```mermaid
+flowchart TD
+    Build[Layer 1: Source & Build] --> Deploy[Layer 2: Deployment & Runtime]
+    Deploy --> Context[Layer 3: Active Context & Orchestration]
+```
 
-Scope: how source code is structured, built, and validated.
+## Layer 1: Source & Build (The Foundation)
+**Scope**: How source code is structured, built, and validated.
+- **Goal**: Establish a deterministic codebase.
+- **Skills**: Linting, testing, dependency management, and build scripts.
+- **Key Docs**: `docs/reference/yaml-standards.md`, `docs/reference/principles.md`.
 
-Use when:
-- defining build scripts
-- adding linting and tests
-- describing code ownership and module boundaries
+## Layer 2: Deployment & Runtime (The Workflow)
+**Scope**: Configuration, environment parity, process models, and logging.
+- **Goal**: Maintain 12-Factor parity across all environments.
+- **Skills**: Deployment pipelines, runtime layout, and configuration orchestration (`environment.yaml`).
+- **Key Docs**: `docs/reference/12-factor.md`, `docs/reference/lifecycle-cheatsheet.md`.
 
-Related docs:
-- `docs/reference/yaml-standards.md`
-- `docs/reference/principles.md`
+## Layer 3: Active Context & Orchestration (The Resolution)
+**Scope**: AI integration, task normalization, bounded workflows, and drift resolution.
+- **Goal**: Resolve the drift between intent and current state.
+- **Skills**: Task Normalization, Resilient Fallback (Fail-Open), and Sub-Agent Orchestration.
+- **Key Docs**: `docs/concepts/cde.md`, `docs/cli/execution/iteration-loop.md`.
 
-## Layer 2: 12-Factor Standards (Deployment)
-
-Scope: runtime behavior, configuration, environment parity, logging, and process model.
-
-Notes:
-- Treated as the deployment standard for repo-hosted services.
-
-Use when:
-- defining runtime layout and config strategy
-- designing release pipelines
-- setting operational expectations
-
-Related docs:
-- `docs/reference/12-factor.md`
-- `docs/reference/lifecycle-cheatsheet.md`
-
-## Layer 3: Context Driven Engineering (Active Context)
-
-Scope: how context is captured, bounded, and used during iteration and automation.
-
-Use when:
-- designing prompts and workflows
-- defining artifact and contract boundaries
-- controlling AI execution behavior
-
-Related docs:
-- `docs/concepts/cde.md`
-- `docs/concepts/cde.md`
-- `docs/cli/execution/prompt-as-workflow.md`
+---
+_UDX DevSecOps Team_

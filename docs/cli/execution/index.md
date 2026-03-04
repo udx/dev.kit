@@ -1,53 +1,48 @@
-# Execution and Workflows
+# The Execution Flow: From Drift to Resolution
 
 Domain: Execution
 
 ## Purpose
 
-Use dev.kit as the execution wrapper and reasoning systems for planning.
+The Execution Flow is the core process dev.kit uses to resolve **Drift** (intent divergence) through **Task Normalization**. It uses the CLI as an execution wrapper and reasoning systems for deterministic planning.
 
-## Interfaces
+## The Normalization Gate
 
-- dev.kit exec (prompt normalization and execution wrapper)
-- dev.kit prompt (generates the normalized prompt artifact used by dev.kit exec)
-- Planning mechanisms (planning only)
+To ensure consistent results, every chaotic input must pass through the **Normalization Gate**.
 
-## Documents
+```mermaid
+flowchart LR
+    Chaos[Chaotic Input] --> Gate{Normalization Gate}
+    Gate --> Artifacts[Normalized Artifacts]
+    Artifacts --> Execution[CLI Execution]
+    Execution --> Result[Engineering Result]
+```
 
-- iteration-loop.md (review → workflow → apply → validate → log)
-- cli-primitives.md (stable execution vocabulary)
-- prompt-as-workflow.md (workflow framing)
+1.  **Input**: The raw human or agent request.
+2.  **Normalize**: Transform request into a `workflow.md` (DOC-003).
+3.  **Execute**: Run the bounded steps through the CLI boundary.
+4.  **Result**: Achieve the desired high-fidelity state.
 
-## Behavior
+## Core Documents
 
-- Reasoning systems propose steps; dev.kit runs them.
-- Each step maps to a single command or explicit short sequence.
-- Nested steps are allowed when a step is too complex.
-- For multi-turn work, always carry forward the latest workflow state and step status.
+- **Iteration Loop**: `docs/cli/execution/iteration-loop.md` - The planning/execution cycle.
+- **Workflow Schema (DOC-003)**: `docs/cli/execution/workflow-io-schema.md` - The bounded work contract.
+- **Prompt-as-Workflow**: `docs/cli/execution/prompt-as-workflow.md` - Turning intent into a sequence of steps.
 
-## Extraction Gate
+## The Extraction Gate
 
-If a step is too large, extract a child workflow. Use this gate:
+When a step becomes too complex, it must be extracted into a **Child Workflow**. Use the following criteria (if 2+ are yes, extract):
+1.  Requires multiple sub-steps or tools.
+2.  Is reusable across projects or domains.
+3.  Changes multiple files or crosses domain boundaries.
+4.  Requires its own plan, verification, or fallback logic.
+5.  Depends on external state (network, system config).
 
-If two or more answers are yes, extract the step.
+## Execution Boundaries
 
-1. The step requires multiple sub-steps with different inputs or tools.
-2. The step is reusable across workflows or projects.
-3. The step changes multiple files or touches multiple domains.
-4. The step needs a plan, verification, or fallback logic of its own.
-5. The step depends on external state (network, system config, environment).
+- **Reasoning vs. Runtime**: Reasoning systems (Agents) propose steps; the `dev.kit` runtime executes them.
+- **Fail-Open Normalization**: Environment failures trigger a fallback to **Standard Data**, ensuring the sequence is never blocked.
+- **Bounded Safety**: Every step is independently bounded to prevent runaway execution.
 
-## Boundary
-
-- Execution defines decomposition and workflow semantics.
-- Runtime defines lifecycle, hooks, and state capture.
-
-## Normalization Rule
-
-Freeform input MUST be normalized into contracts and artifacts before it
-can influence execution.
-
-## Constraints
-
-- Avoid recursive invocation (planning mechanisms should not call dev.kit exec).
-- Execution authority stays with dev.kit.
+---
+_UDX DevSecOps Team_
