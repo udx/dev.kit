@@ -188,12 +188,40 @@ dev_kit_cmd_agent() {
       echo "Integrations found in manifest:"
       jq -r '.integrations[].key' "$(dev_kit_agent_manifest)" | sed 's/^/- /'
       ;;
+    skills)
+      local key="${2:-}"
+      if [ -z "$key" ]; then
+        echo "Usage: dev.kit agent skills <integration_key>" >&2
+        exit 1
+      fi
+      local manifest
+      manifest="$(dev_kit_agent_manifest)"
+      local integration_json
+      integration_json="$(jq -r ".integrations[] | select(.key == \"$key\")" "$manifest")"
+      if [ -z "$integration_json" ]; then
+        echo "Error: Integration '$key' not found." >&2
+        exit 1
+      fi
+      local target_dir
+      target_dir="$(dev_kit_agent_expand_path "$(echo "$integration_json" | jq -r '.target_dir')")"
+      local skills_dir_rel
+      skills_dir_rel="$(echo "$integration_json" | jq -r '.skills_dir')"
+      local skills_dst_dir="$target_dir/$skills_dir_rel"
+      
+      echo "Managed Skills for '$key' ($skills_dst_dir):"
+      if [ -d "$skills_dst_dir" ]; then
+        ls "$skills_dst_dir" | sed 's/^/- /'
+      else
+        echo "(none installed)"
+      fi
+      ;;
     help|-h|--help)
       cat <<'AGENT_USAGE'
-Usage: dev.kit agent <integration_key> [--plan]
+Usage: dev.kit agent <command>
 
 Commands:
   status         Show status of all AI agent integrations
+  skills <key>   List managed skills for a specific agent
   <key> [--plan] Apply configuration for specific agent (e.g., gemini, codex)
   all   [--plan] Apply all supported agent configurations
 

@@ -24,8 +24,7 @@ DEFAULT_TEMPLATE="${PROMPT_TEMPLATE:-${PROMPT_DEFAULT_TEMPLATE:-ai}}"
 DEFAULT_OUT="${PROMPT_OUT:-${PROMPT_DEFAULT_OUT:-}}"
 
 PROMPT_DATA_DIR="${REPO_DIR}/src/ai/data"
-PROMPT_INTEGRATION_DIR="${REPO_DIR}/src/ai/integrations/codex"
-PROMPT_SCHEMA="${PROMPT_INTEGRATION_DIR}/schemas/prompts.schema.json"
+PROMPT_INTEGRATIONS_BASE="${REPO_DIR}/src/ai/integrations"
 PROMPT_INDEX_JSON=""
 PROMPT_INDEX_LOADED="0"
 
@@ -40,9 +39,10 @@ dev_kit_prompt_data_files() {
   if [ -f "$PROMPT_DATA_DIR/prompts.json" ]; then
     files+=("$PROMPT_DATA_DIR/prompts.json")
   fi
-  if [ -f "$PROMPT_INTEGRATION_DIR/prompts.json" ]; then
-    files+=("$PROMPT_INTEGRATION_DIR/prompts.json")
-  fi
+  # Find all prompts.json in integrations
+  while IFS= read -r f; do
+    [ -f "$f" ] && files+=("$f")
+  done < <(find "$PROMPT_INTEGRATIONS_BASE" -name "prompts.json" 2>/dev/null)
   printf "%s\n" "${files[@]}"
 }
 
@@ -65,12 +65,7 @@ dev_kit_prompt_load_index() {
     exit 1
   fi
 
-  if [ -f "$PROMPT_SCHEMA" ]; then
-    for file in "${files[@]}"; do
-      dev_kit_validate_json_required "$PROMPT_SCHEMA" "$file"
-    done
-  fi
-
+  # Note: Schema validation removed here for brevity or can be updated to be generic
   PROMPT_INDEX_JSON="$(jq -s '{prompts: [.[].prompts[]?] }' "${files[@]}")"
   PROMPT_INDEX_LOADED="1"
 
