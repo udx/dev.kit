@@ -6,7 +6,6 @@ if [ -n "${REPO_DIR:-}" ] && [ -f "$REPO_DIR/lib/utils.sh" ]; then
 fi
 
 dev_kit_cmd_config() {
-  shift || true
   ensure_dev_kit_home
   local sub="${1:-}"
 
@@ -370,10 +369,18 @@ dev_kit_cmd_config() {
         update_config_value "developer.enabled" "true" "$target_path" "set"
         exit 0
       fi
+
       if [ -n "$key" ]; then
-        value="${3:-}"
+        # If --key was used, the value is the first non-flag argument that is NOT the key or --key
+        local arg
+        for arg in "$@"; do
+          if [[ "$arg" != --* ]] && [ "$arg" != "$key" ] && [ "$arg" != "set" ]; then
+            value="$arg"
+            break
+          fi
+        done
       else
-        # positional legacy support
+        # positional legacy support: dev.kit config set <key> <value>
         key="${2:-}"
         value="${3:-}"
       fi

@@ -1,7 +1,6 @@
 #!/bin/bash
 
 dev_kit_cmd_exec() {
-  shift || true
   local print_only="false"
   local show_log="false"
   local stream_logs="false"

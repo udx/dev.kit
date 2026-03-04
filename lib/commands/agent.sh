@@ -179,7 +179,7 @@ dev_kit_agent_apply_integration() {
 }
 
 dev_kit_cmd_agent() {
-  shift || true
+  
   local sub="${1:-status}"
   local mode="apply"
   

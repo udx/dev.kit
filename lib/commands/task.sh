@@ -10,6 +10,9 @@ print_task_usage() {
 Usage: dev.kit task <command> [TASK_ID]
 
 Commands:
+  start "<req>" Initialize a new task with a generated ID and request
+  log           Show session capture and interaction logs
+  reset         Clear repository-scoped session context
   new <id>      Initialize a new task directory with prompt/feedback templates
   run <id>      Execute a task prompt and append output to feedback
   apply <id>    Apply task feedback to create/update a workflow
@@ -17,18 +20,11 @@ TASK_USAGE
 }
 
 dev_kit_cmd_task() {
-  shift || true
   local sub="${1:-}"
-  local task_id="${2:-}"
-
+  
   if [ -z "$sub" ] || [ "$sub" = "help" ] || [ "$sub" = "-h" ]; then
     print_task_usage
     exit 0
-  fi
-
-  if [ -z "$task_id" ]; then
-    echo "Error: TASK_ID is required for 'task $sub'" >&2
-    exit 1
   fi
 
   local repo_root
@@ -37,14 +33,63 @@ dev_kit_cmd_task() {
     repo_root="$PWD"
   fi
 
-  local task_dir="$repo_root/tasks/$task_id"
-
   case "$sub" in
-    new)
-      if [ -e "$task_dir" ]; then
-        echo "Error: Task already exists: $task_dir" >&2
+    log)
+      if command -v dev_kit_cmd_capture >/dev/null 2>&1; then
+        dev_kit_cmd_capture show
+      else
+        echo "Error: Capture logic not loaded." >&2
         exit 1
       fi
+      ;;
+    reset)
+      if context_enabled; then
+        local ctx
+        ctx="$(context_file || true)"
+        if [ -f "$ctx" ]; then
+          : > "$ctx"
+          echo "Session context cleared."
+        fi
+      fi
+      ;;
+    start)
+      local request="${2:-}"
+      if [ -z "$request" ] && [ ! -t 0 ]; then
+        request="$(cat)"
+      fi
+      if [ -z "$request" ]; then
+        echo "Error: Request is required for 'task start'" >&2
+        exit 1
+      fi
+      
+      local task_id
+      task_id="TASK-$(date +%Y%m%d-%H%M)"
+      local task_dir="$repo_root/tasks/$task_id"
+      
+      mkdir -p "$task_dir"
+      cat > "$task_dir/prompt.md" <<EOF
+# Task — $task_id
+status: draft
+created: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+## Scope
+- Resolve user request
+
+## Request
+$request
+EOF
+      cat > "$task_dir/feedback.md" <<EOF
+# Feedback — $task_id
+status: pending
+EOF
+      echo "Task initialized: $task_id"
+      echo "Location: tasks/$task_id/"
+      ;;
+    new)
+      local task_id="${2:-}"
+      if [ -z "$task_id" ]; then echo "Error: TASK_ID required"; exit 1; fi
+      local task_dir="$repo_root/tasks/$task_id"
+      if [ -e "$task_dir" ]; then echo "Error: Task exists"; exit 1; fi
       mkdir -p "$task_dir"
       cat > "$task_dir/prompt.md" <<EOF
 # Task — $task_id
@@ -54,46 +99,24 @@ created: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
 ## Scope
 - <short scope statement>
 
-## Inputs
-- <paths or artifacts>
-
-## Outputs
-- <expected artifacts>
-
-## Constraints
-- deterministic
-- tool-neutral
-- no execution
-
 ## Request
 <task instructions>
 EOF
       cat > "$task_dir/feedback.md" <<EOF
 # Feedback — $task_id
 status: pending
-
-## Output
-- <request|command|artifact|workflow>
-
-## Notes
 EOF
       echo "Task initialized: $task_dir"
       ;;
     run)
+      local task_id="${2:-}"
+      if [ -z "$task_id" ]; then echo "Error: TASK_ID required"; exit 1; fi
+      local task_dir="$repo_root/tasks/$task_id"
       local prompt_file="$task_dir/prompt.md"
       local feedback_file="$task_dir/feedback.md"
-      if [ ! -f "$prompt_file" ]; then
-        echo "Error: Missing prompt: $prompt_file" >&2
-        exit 1
-      fi
-      if [ ! -f "$feedback_file" ]; then
-        echo "Error: Missing feedback: $feedback_file" >&2
-        exit 1
-      fi
-      if ! command -v codex >/dev/null 2>&1; then
-        echo "Error: codex not found. Cannot run task." >&2
-        exit 1
-      fi
+      if [ ! -f "$prompt_file" ]; then echo "Error: Missing prompt"; exit 1; fi
+      if ! command -v codex >/dev/null 2>&1; then echo "Error: codex missing"; exit 1; fi
+      
       echo "Running task: $task_id ..."
       local report
       report="$(codex exec "$(cat "$prompt_file")")"
@@ -105,61 +128,29 @@ EOF
       echo "Feedback written: $feedback_file"
       ;;
     apply)
+      local task_id="${2:-}"
+      if [ -z "$task_id" ]; then echo "Error: TASK_ID required"; exit 1; fi
+      local task_dir="$repo_root/tasks/$task_id"
       local feedback_file="$repo_root/docs/_feedback.md"
       local workflow_file="$task_dir/workflow.md"
-      # Fallback to local feedback if docs/_feedback.md missing
-      if [ ! -f "$feedback_file" ]; then
-        feedback_file="$task_dir/feedback.md"
-      fi
-      if [ ! -f "$feedback_file" ]; then
-        echo "Error: No feedback file found to apply." >&2
-        exit 1
-      fi
+      [ ! -f "$feedback_file" ] && feedback_file="$task_dir/feedback.md"
+      if [ ! -f "$feedback_file" ]; then echo "Error: No feedback"; exit 1; fi
+      
       mkdir -p "$task_dir"
       if [ ! -f "$workflow_file" ]; then
         cat > "$workflow_file" <<EOF
 # Workflow — $task_id
-
 status: planned
 source: $(basename "$feedback_file")
-scope: workspace
-
-## Purpose
-Define a bounded, deterministic workflow for $task_id.
-
-## Bounded Work (Normalization Gate)
-- max_steps_per_iteration: 5
-- extract_child_workflow_if_exceeded: true
 
 ## Steps
 ### Step 1 — Normalize Inputs
 status: planned
-Task: Verify all required artifacts and environment health.
-Logic: dev.kit doctor --json
-
-### Step 2 — Produce Artifact Plan
-status: planned
-Task: Define the minimal set of changes.
-
-### Step 3 — Execution (Resilient Path)
-status: planned
-Task: Execute core logic with fail-open fallbacks.
-
-### Step 4 — Verification
-status: planned
-Task: Validate the output against requirements.
-
-## Intended File Edits (Proposed)
-- <path>: <short intent>
 EOF
       else
-        {
-          printf "\n\n## Update Log\n"
-          printf "- %s: Workflow touched by 'task apply' for %s\n" \
-            "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" "$task_id"
-        } >> "$workflow_file"
+        printf "\n- %s: Workflow updated\n" "$(date -u)" >> "$workflow_file"
       fi
-      echo "Workflow ready (Normalized): $workflow_file"
+      echo "Workflow ready: $workflow_file"
       ;;
     *)
       echo "Unknown task command: $sub" >&2

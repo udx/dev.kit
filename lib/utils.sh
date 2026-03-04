@@ -45,6 +45,8 @@ dev_kit_yaml_value() {
           # Found it! Extract value
           val = $0;
           sub(/^[^:]*:[[:space:]]*/, "", val);
+          # Strip trailing comments
+          sub(/[[:space:]]*#.*$/, "", val);
           # Trim quotes
           gsub(/^["\047]|["\047]$/, "", val);
           print val;
@@ -52,7 +54,8 @@ dev_kit_yaml_value() {
           exit;
         }
         key_idx++;
-      } else if (depth <= key_idx - 1 && line_key != "") {
+      }
+ else if (depth <= key_idx - 1 && line_key != "") {
         # Reset if we move back up or across at same level
         # This is a naive reset but works for many simple YAML structures
         # key_idx = depth; # (simplified)

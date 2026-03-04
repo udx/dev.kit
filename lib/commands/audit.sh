@@ -6,7 +6,7 @@ if [ -n "${REPO_DIR:-}" ] && [ -f "$REPO_DIR/lib/utils.sh" ]; then
 fi
 
 dev_kit_cmd_audit() {
-  shift || true
+  
   ensure_dev_kit_home
 
   print_section "dev.kit | audit (Repo-as-a-Skill Compliance)"

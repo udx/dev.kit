@@ -1,7 +1,7 @@
 #!/bin/bash
 
 dev_kit_cmd_capture() {
-  shift || true
+  
   local sub="${1:-}"
 
   case "$sub" in

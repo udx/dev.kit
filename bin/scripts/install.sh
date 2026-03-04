@@ -41,16 +41,25 @@ copy_dir_contents() {
 }
 
 sync_engine() {
-  copy_dir_contents "$REPO_DIR/bin" "$SOURCE_DIR/bin"
-  copy_dir_contents "$REPO_DIR/lib" "$SOURCE_DIR/lib"
-  copy_dir_contents "$REPO_DIR/templates" "$SOURCE_DIR/templates"
-  copy_dir_contents "$REPO_DIR/docs" "$SOURCE_DIR/docs"
-  copy_dir_contents "$REPO_DIR/src" "$SOURCE_DIR/src"
-  copy_dir_contents "$REPO_DIR/config" "$SOURCE_DIR/config"
-  copy_dir_contents "$REPO_DIR/scripts" "$SOURCE_DIR/scripts"
-  copy_dir_contents "$REPO_DIR/assets" "$SOURCE_DIR/assets"
-  copy_dir_contents "$REPO_DIR/schemas" "$SOURCE_DIR/schemas"
-  [ -f "$REPO_DIR/environment.yaml" ] && cp "$REPO_DIR/environment.yaml" "$SOURCE_DIR/environment.yaml"
+  # Use a temporary staging area for the source copy
+  local stage
+  stage="$(mktemp -d)"
+  
+  # Copy everything from REPO_DIR, excluding patterns that cause recursion
+  # We use rsync if available for easier exclusion, otherwise fallback
+  if command -v rsync >/dev/null 2>&1; then
+    rsync -a --exclude 'tests/.tmp' --exclude '.git' "$REPO_DIR/" "$stage/"
+  else
+    # Fallback: copy specific top-level directories
+    for d in bin lib templates docs src config scripts assets schemas tests; do
+      [ -d "$REPO_DIR/$d" ] && copy_dir_contents "$REPO_DIR/$d" "$stage/$d"
+    done
+    [ -f "$REPO_DIR/environment.yaml" ] && cp "$REPO_DIR/environment.yaml" "$stage/environment.yaml"
+  fi
+
+  # Now sync from stage to SOURCE_DIR
+  copy_dir_contents "$stage" "$SOURCE_DIR"
+  rm -rf "$stage"
 }
 
 desired_target="${SOURCE_DIR}/bin/dev-kit"
@@ -149,6 +158,8 @@ detect_profiles
 env_line="source \"$SOURCE_DIR/env.sh\""
 path_line="export PATH=\"$BIN_DIR:\$PATH\""
 
+MODIFIED_PROFILES=""
+
 if [ -t 0 ] && [ -n "$PROFILE" ]; then
   for p in $PROFILE; do
     echo ""
@@ -158,6 +169,7 @@ if [ -t 0 ] && [ -n "$PROFILE" ]; then
       else
         echo "OK  Shell already configured ($p)"
       fi
+      MODIFIED_PROFILES="$MODIFIED_PROFILES $p"
       continue
     fi
 
@@ -176,6 +188,7 @@ if [ -t 0 ] && [ -n "$PROFILE" ]; then
         else
           echo "OK  Shell configured ($p)"
         fi
+        MODIFIED_PROFILES="$MODIFIED_PROFILES $p"
         ;;
       *)
         if command -v ui_warn >/dev/null 2>&1; then
@@ -203,6 +216,48 @@ if command -v ui_section >/dev/null 2>&1; then
 else
   echo "Ready to go:"
 fi
-echo "1. Reload your shell (e.g. 'source ~/.zshrc' or 'source ~/.bash_profile')"
-echo "2. Run 'dev.kit' to see the engineering brief."
+
+# Determine if the current shell's profile was modified
+CURRENT_SHELL_PROFILE=""
+case "$SHELL" in
+  */zsh) CURRENT_SHELL_PROFILE="$HOME/.zshrc" ;;
+  */bash) 
+    [ -f "$HOME/.bash_profile" ] && CURRENT_SHELL_PROFILE="$HOME/.bash_profile" || CURRENT_SHELL_PROFILE="$HOME/.bashrc"
+    ;;
+esac
+
+if [[ "$MODIFIED_PROFILES" == *"$CURRENT_SHELL_PROFILE"* ]]; then
+  echo "1. Reload:         source $CURRENT_SHELL_PROFILE"
+  echo "2. Brief:          dev.kit"
+  echo ""
+  if [ -t 0 ]; then
+    printf "Reload current session now? [y/N] "
+    read -r reload_now || true
+    case "$reload_now" in
+      y|Y|yes|YES)
+        echo "Sourcing $CURRENT_SHELL_PROFILE..."
+        # Note: We can source env.sh directly for immediate effect in this subshell
+        # but the instructions tell the user how to fix their parent shell.
+        source "$SOURCE_DIR/env.sh"
+        dev.kit status
+        ;;
+    esac
+  fi
+else
+  echo "1. Source Now:     source \"$SOURCE_DIR/env.sh\""
+  echo "2. Brief:          dev.kit"
+  echo ""
+  echo "NOTE: Your current shell ($SHELL) was not permanently configured."
+  if [ -t 0 ]; then
+    printf "Source environment now? [y/N] "
+    read -r source_now || true
+    case "$source_now" in
+      y|Y|yes|YES)
+        echo "Sourcing..."
+        source "$SOURCE_DIR/env.sh"
+        dev.kit status
+        ;;
+    esac
+  fi
+fi
 echo ""

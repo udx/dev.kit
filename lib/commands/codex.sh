@@ -554,7 +554,6 @@ dev_kit_codex_apply_target() {
 }
 
 dev_kit_cmd_codex() {
-  shift || true
   local sub="${1:-}"
   local integration=""
   local dst=""

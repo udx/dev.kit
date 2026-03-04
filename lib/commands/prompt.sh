@@ -238,7 +238,7 @@ dev_kit_prompt_build() {
 }
 
 dev_kit_cmd_prompt() {
-  shift || true
+  
 
   local request=""
   local template="$DEFAULT_TEMPLATE"

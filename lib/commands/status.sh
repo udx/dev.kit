@@ -62,27 +62,54 @@ dev_kit_cmd_status() {
   repo_root="$(get_repo_root || true)"
   if [ -n "$repo_root" ]; then
     print_check "Workspace" "[ok]" "$repo_root"
-    local task_id="none"
-    # Try to find active workflow/task
+    
+    # Check for active workflow.md in tasks/
+    local active_workflow=""
     if [ -d "$repo_root/tasks" ]; then
-       # (Simplified: just check if tasks exist)
-       task_id="available in $repo_root/tasks/"
+      active_workflow="$(find "$repo_root/tasks" -name "workflow.md" -exec grep -l "status: planned\|status: active" {} + | head -n 1 || true)"
+      if [ -n "$active_workflow" ]; then
+        local task_id
+        task_id="$(basename "$(dirname "$active_workflow")")"
+        echo ""
+        echo "Waterfall Progression: [$task_id]"
+        # Pull first 5 steps from workflow.md
+        grep -A 2 "^### Step" "$active_workflow" | awk '
+          /^### Step/ {
+            step = $0;
+            sub(/^### /, "", step);
+            printf "- " step;
+          }
+          /^status:/ {
+            status = $2;
+            if (status == "completed" || status == "done") printf " (Done)\n";
+            else if (status == "active" || status == "running") printf " (Active)\n";
+            else printf " (Planned)\n";
+          }
+        '
+      else
+        print_check "Active Task" "[ok]" "available in $repo_root/tasks/"
+      fi
     fi
-    print_check "Active Task" "[ok]" "$task_id"
   else
     print_check "Workspace" "[warn]" "not in a git repository"
   fi
 
-  # 5. Advisory & Next Steps
+  # 5. AI Advisory
   echo ""
-  echo "Engineering Advisory:"
+  if command -v dev_kit_cmd_ai >/dev/null 2>&1; then
+    dev_kit_cmd_ai advisory
+  fi
+
+  # 6. Engineering Advisory (Local Actions)
+  echo ""
+  echo "System Advisory (Actionable):"
   if [ "$shell_status" = "missing" ]; then
     echo "- [action] Run: dev.kit doctor --shell-integrate"
   fi
   if [ "$ai_enabled" = "false" ]; then
     echo "- [info] AI features are disabled. Use 'dev.kit config set --key ai.enabled true' to enable."
   fi
-  echo "- [tip] Use 'dev.kit help' to list all commands."
+  echo "- [tip] Run 'dev.kit ai skills' to list managed repository powers."
   echo "- [tip] Run 'dev.kit doctor' for deep system analysis."
   echo ""
 }
