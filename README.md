@@ -20,6 +20,7 @@ flowchart LR
     Drift[Drift] --> Norm[Normalize]
     Norm --> Iter[Iterate]
     Iter --> Result[Result]
+    Iter --> Capture[Capture Experience]
 ```
 
 ## Resilient Waterfall (Fail-Open)
@@ -40,7 +41,7 @@ flowchart TD
 Divergence between intent and reality (**Drift**) is normalized into a deterministic `workflow.md`. Every task has a clear **Input, Logic, and Output**.
 
 ### 2. Repository-as-a-Skill
-Every repository is a standalone **Skill**. `dev.kit` maps capabilities to a unified CLI interface for humans and AI.
+Every repository is a standalone **Skill**. `dev.kit` maps capabilities to a unified CLI interface, transforming engineering experience into portable automation.
 
 ### 3. Resilient Waterfall
 momentum is maintained via a **Step-based Lifecycle**. Tool failures trigger standard data fallbacks, ensuring the waterfall never stalls.
@@ -52,24 +53,27 @@ momentum is maintained via a **Step-based Lifecycle**. Tool failures trigger sta
 
 ```mermaid
 flowchart LR
-    Intent[User Intent] --> Cmd[dev.kit Command]
-    Cmd --> Lib[lib/commands]
-    Lib --> Result[Consistent Result]
+    Prompt[User Prompt] --> Workflow[Agent Workflow]
+    Workflow --> Iterate[Iterate & Resolve]
+    Iterate --> Result[Consistent Result]
 ```
 
 ### 2. AI-Orchestrated
 **Advanced automation across two stages.**
 
+1.  **Stage 1: AI Integration**: Agents are safely bootstrapped and configured.
+2.  **Stage 2: Task Execution**: Daily development tasks are executed via `dev.kit` normalization.
+
 ```mermaid
 flowchart TD
     subgraph Stage 1: AI Integration
-    Config[Agent & Env Config] --> Enforce[dev.kit Rule Enforcement]
+    Config[Agent & Env Config] --> Enforce[Rule Enforcement]
     end
-    
+
     subgraph Stage 2: Task Execution
-    Normal[Task Normalization] --> Resolution[Drift Resolution]
+    Normal[Normalization] --> Resolution[Drift Resolution]
     end
-    
+
     Enforce --> Normal
 ```
 

@@ -4,7 +4,7 @@
 
 ## Core Concepts
 
-1.  **Repo-as-a-Skill**: Every repository exposes its logic through standardized scripts and CLI commands.
+1.  **Repo-as-a-Skill**: Every repository exposes its logic through standardized scripts and CLI commands. Engineering experience is captured and packaged as portable automation.
 2.  **Smart Helper**: `dev.kit` resolves **Drift** (intent divergence) by translating repository logic into a high-fidelity interface for humans and AI.
 
 ## The Principles
