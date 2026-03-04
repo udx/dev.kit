@@ -22,7 +22,7 @@ review
 - Review output: `tasks/<task-id>/feedback.md`
 - Workflow (active): `~/.udx/dev.kit/state/codex/workflows/<repo-id>/<task-id>/workflow.md`
 - Workflow (reference): `src/`
-- Helper scripts: `scripts/apply-task.sh`
+- Helper command: `dev.kit task apply <task-id>`
 - Subtask loop: `docs/cli/execution/subtask-loop.md` (task-specific prompt/feedback)
 - Skill contract: `src/ai/data/skills/dev-kit-iteration.json`
 

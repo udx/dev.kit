@@ -9,7 +9,7 @@ This loop is tool-neutral and produces no runtime side effects.
 
 ## Task Directory Layout
 
-Each task lives under `tasks/<task-id>/` (created by `scripts/new-task.sh`) with the following files:
+Each task lives under `tasks/<task-id>/` (created by `dev.kit task new <id>`) with the following files:
 
 - `tasks/<task-id>/prompt.md`
 - `tasks/<task-id>/feedback.md`
@@ -45,8 +45,8 @@ Recommended completion marker:
 
 Create a task:
 
-- `scripts/new-task.sh <task-id>`
+- `dev.kit task new <task-id>`
 
 Run a task (write feedback only):
 
-- `scripts/run-task.sh <task-id>`
+- `dev.kit task run <task-id>`
