@@ -399,7 +399,7 @@ if [ "$cmd" = "capture" ]; then
   exit $?
 fi
 if capture_enabled; then
-  full_cmd="dev.kit ${orig_args[*]}"
+  full_cmd="dev.kit ${orig_args[*]:-}"
   output_path="$(capture_prepare "$full_cmd")"
   "$fn" "$@" 2>&1 | tee "$output_path"
   exit $?
