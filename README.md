@@ -10,30 +10,35 @@
 
 ## The Vision: Repo is a Skill
 
-`dev.kit` stands between the messy reality of host environments and the need for deterministic execution. It maps your repository capabilities (`src/*`) and configurations (`environment.yaml`) into a stable CLI interface.
+`dev.kit` translates the messy reality of host environments into high-fidelity engineering workflows.
 
 ```mermaid
 flowchart LR
-    subgraph "Host Environment"
-        A[Shell/OS]
-        B[Docker/NPM]
+    subgraph Localhost ["1. Localhost"]
+        direction TB
+        OS[OS / Shell] --> TOOLS[Git / NPM / Docker]
     end
-    
-    subgraph "dev.kit (Translator)"
-        C{Orchestrator}
-        D[Interface Mapping]
+
+    subgraph Translator ["2. dev.kit Translator"]
+        direction TB
+        YML[environment.yaml] --> CLI[bin/dev-kit CLI]
     end
-    
-    subgraph "Repo-as-a-Skill"
-        E[Scripts]
-        F[Rules]
-        G[AI Skills]
+
+    subgraph Repo ["3. Repository (Skill)"]
+        direction TB
+        LIB[lib/commands]
+        SRC[src/ai Manifests]
+        DOC[docs/ Context]
     end
-    
-    A & B --> C
-    C --> D
-    D --> E & F & G
-    E & F & G --> H[Deterministic Result]
+
+    subgraph Workflows ["4. Workflows"]
+        direction TB
+        TASK[Task Iteration] --> FLOW[Experienced Dev Flow]
+    end
+
+    Localhost --> Translator
+    Translator --> Repo
+    Repo --> Workflows
 ```
 
 ---
@@ -42,32 +47,37 @@ flowchart LR
 
 Choose your level of power. `dev.kit` works as a standalone helper or a fully integrated AI orchestrator.
 
+### 1. Personal Helper Mode
+**Consistent local automation without AI.**
+
 ```mermaid
-graph TD
-    Start[dev.kit] --> Personal[Personal Helper Mode]
-    Start --> AI[AI-Powered Mode]
-    
-    subgraph "Local Consistency"
-        Personal --> P1[Local Script Mapping]
-        Personal --> P2[Env/Context Mapping]
-        Personal --> P3[Manual Prompting]
-    end
-    
-    subgraph "Ecosystem Power"
-        AI --> A1[Automated Exec]
-        AI --> A2[MCP Server Fetching]
-        AI --> A3[Context7 Integration]
-    end
+flowchart LR
+    User[Human Intent] --> CLI[dev.kit CLI]
+    CLI --> MAP[environment.yaml]
+    MAP --> CMD[lib/commands]
+    CMD --> RES[Consistent Result]
+```
+
+### 2. AI-Powered Mode
+**Deep automation with ecosystem and AI awareness.**
+
+```mermaid
+flowchart LR
+    User[Human Intent] --> TR[dev.kit Translator]
+    TR --> YML[environment.yaml]
+    YML --> ECO[MCP / Context7]
+    ECO --> MAN[src/ai Manifests]
+    MAN --> AUTO[Automated Engineering]
 ```
 
 ---
 
 ## Core Toolset
 
-*   **`dev.kit doctor`**: Autodetects engineering software (Shell, Docker, NPM, Gemini) and gives effectivity advice.
-*   **`dev.kit audit`**: Validates repository compliance (TDD, 12-Factor, Active Context) for the **Repo-as-a-Skill** approach.
-*   **`dev.kit task`**: Manages the iterative engineering loop from prompt to workflow.
-*   **`dev.kit config`**: Orchestrates configurations across hosts using `environment.yaml`.
+- **`dev.kit doctor`**: Autodetects engineering software (Shell, Docker, NPM, Gemini) and gives effectivity advice.
+- **`dev.kit audit`**: Validates repository compliance (TDD, 12-Factor, Active Context) for the **Repo-as-a-Skill** approach.
+- **`dev.kit task`**: Manages the iterative engineering loop from prompt to workflow.
+- **`dev.kit config`**: Orchestrates configurations across hosts using `environment.yaml`.
 
 ## Install
 
@@ -88,4 +98,5 @@ Detailed guides and methodology are available in the `docs/` directory:
 - **Reference**: `docs/reference/udx-reference-index.md`
 
 ---
-*UDX DevSecOps Team*
+
+_UDX DevSecOps Team_
