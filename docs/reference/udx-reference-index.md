@@ -8,28 +8,31 @@ The Reference Index maps engineering standards, compliance guardrails, and opera
 
 ## Topic Map: Resolving Common Drift
 
-### 1. Configuration & State Drift
-- "How should we handle configuration?" -> `docs/reference/12-factor.md`, `docs/reference/yaml-standards.md`.
-- "How do we maintain environment parity?" -> `docs/reference/principles.md`.
+### 1. Foundations (The Core)
+Understand the engineering principles and layers that govern the system.
+- **Principles**: `docs/reference/foundations/principles.md` - Core engineering values.
+- **Layers**: `docs/reference/foundations/layers.md` - Structural hierarchy.
+- **Knowledgebase**: `docs/reference/foundations/knowledge.md` - Reusable patterns.
 
-### 2. Operational & Delivery Drift
-- "How do we scale engineering delivery?" -> `docs/reference/devops-littles-law.md`.
-- "How do we maintain the SDLC lifecycle?" -> `docs/reference/lifecycle-cheatsheet.md`.
+### 2. Standards (The Interface)
+External and internal standards for configuration, diagrams, and processes.
+- **12-Factor App**: `docs/reference/standards/12-factor.md` - Runtime behavior and config.
+- **Mermaid Standards**: `docs/reference/standards/mermaid.md` - All engineering diagrams.
+- **YAML Standards**: `docs/reference/standards/yaml-standards.md` - Config file structure.
+- **External Tools**: `docs/reference/standards/external-standards.md` - Third-party tool rules.
 
-### 3. Compliance & Security Drift
-- "How do we handle supply chain risks?" -> `docs/reference/supply-chain-security.md`.
-- "What is Continuous Authorization (cATO)?" -> `docs/reference/cato-overview.md`.
+### 3. Compliance & Security (The Shield)
+Guardrails to ensure safe and compliant engineering.
+- **Continuous Authorization**: `docs/reference/compliance/cato-overview.md` - cATO.
+- **Supply Chain Security**: `docs/reference/compliance/supply-chain-security.md` - SLSA.
+- **Guidance & Standards**: `docs/reference/compliance/aoca-guidance.md`.
 
-### 4. Logic & Standards Drift
-- "How should we define our engineering standards?" -> `docs/reference/aoca-guidance.md`, `docs/reference/devops-manual-guidance.md`.
-- "What are the core engineering layers?" -> `docs/reference/layers.md`.
-
-## Reference Groups
-
-- **Foundations**: `principles.md`, `layers.md`.
-- **Operations**: `lifecycle-cheatsheet.md`, `devops-littles-law.md`.
-- **Standards**: `12-factor.md`, `yaml-standards.md`, `external-standards.md`.
-- **Compliance**: `supply-chain-security.md`, `cato-overview.md`, `aoca-guidance.md`.
+### 4. Operations (The Workflow)
+Practical guidance for maintaining the engineering lifecycle.
+- **SDLC Lifecycle**: `docs/reference/operations/lifecycle-cheatsheet.md`.
+- **Little's Law**: `docs/reference/operations/devops-littles-law.md`.
+- **Manual Guidance**: `docs/reference/operations/devops-manual-guidance.md`.
+- **Ecosystem Refs**: `docs/reference/operations/worker-ecosystem-refs.md`.
 
 ---
 _UDX DevSecOps Team_
