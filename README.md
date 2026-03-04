@@ -38,17 +38,21 @@ flowchart TD
 ## Core Philosophy
 
 ### 1. Task Normalization: Resolve the Drift
+
 Divergence between intent and reality (**Drift**) is normalized into a deterministic `workflow.md`. Every task has a clear **Input, Logic, and Output**.
 
 ### 2. Repository-as-a-Skill
+
 Every repository is a standalone **Skill**. `dev.kit` maps capabilities to a unified CLI interface, transforming engineering experience into portable automation.
 
 ### 3. Resilient Waterfall
+
 momentum is maintained via a **Step-based Lifecycle**. Tool failures trigger standard data fallbacks, ensuring the waterfall never stalls.
 
 ## Operating Modes
 
 ### 1. Personal Helper
+
 **Consistent local automation without AI.**
 
 ```mermaid
@@ -59,23 +63,11 @@ flowchart LR
 ```
 
 ### 2. AI-Orchestrated
+
 **Advanced automation across two stages.**
 
 1.  **Stage 1: AI Integration**: Agents are safely bootstrapped and configured.
 2.  **Stage 2: Task Execution**: Daily development tasks are executed via `dev.kit` normalization.
-
-```mermaid
-flowchart TD
-    subgraph Stage 1: AI Integration
-    Config[Agent & Env Config] --> Enforce[Rule Enforcement]
-    end
-
-    subgraph Stage 2: Task Execution
-    Normal[Normalization] --> Resolution[Drift Resolution]
-    end
-
-    Enforce --> Normal
-```
 
 ## Core Toolset
 
