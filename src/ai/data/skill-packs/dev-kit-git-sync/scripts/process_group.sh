@@ -49,8 +49,16 @@ if [[ "$DRY_RUN" == "true" ]]; then
   echo "  [DRY-RUN] git add ${files[*]}"
   echo "  [DRY-RUN] git commit -m \"$commit_msg\""
 else
-  git add "${files[@]}"
-  git commit -m "$commit_msg"
-  echo "  [OK] Committed group: $GROUP_NAME"
+  if git add "${files[@]}" && git commit -m "$commit_msg"; then
+    echo "  [OK] Committed group: $GROUP_NAME"
+  else
+    echo "⚠️  [FAILOVER] Commit failed for group: $GROUP_NAME"
+    echo "Status: Resilient Normalization (Manual Path)"
+    echo "To resolve manually, run:"
+    echo "  git add ${files[*]}"
+    echo "  git commit -m \"$commit_msg\""
+    # We exit with 0 to allow the rest of the workflow steps to try their luck
+    # This is "Fail-Open" for the waterfall progression.
+  fi
 fi
 echo ""
