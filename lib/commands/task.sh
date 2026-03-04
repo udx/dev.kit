@@ -120,29 +120,34 @@ EOF
         cat > "$workflow_file" <<EOF
 # Workflow — $task_id
 
-status: draft
+status: planned
 source: $(basename "$feedback_file")
 scope: workspace
 
 ## Purpose
 Define a bounded, deterministic workflow for $task_id.
 
+## Bounded Work (Normalization Gate)
+- max_steps_per_iteration: 5
+- extract_child_workflow_if_exceeded: true
+
 ## Steps
-### Step 1 — Clarify scope
-done: false
-Task: Restate the task and identify inputs.
+### Step 1 — Normalize Inputs
+status: planned
+Task: Verify all required artifacts and environment health.
+Logic: dev.kit doctor --json
 
-### Step 2 — Produce artifact plan
-done: false
-Task: Define minimal artifacts.
+### Step 2 — Produce Artifact Plan
+status: planned
+Task: Define the minimal set of changes.
 
-### Step 3 — Draft changes
-done: false
-Task: Draft proposed content changes.
+### Step 3 — Execution (Resilient Path)
+status: planned
+Task: Execute core logic with fail-open fallbacks.
 
-### Step 4 — Validation
-done: false
-Task: Define verification steps.
+### Step 4 — Verification
+status: planned
+Task: Validate the output against requirements.
 
 ## Intended File Edits (Proposed)
 - <path>: <short intent>
@@ -154,7 +159,7 @@ EOF
             "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" "$task_id"
         } >> "$workflow_file"
       fi
-      echo "Workflow ready: $workflow_file"
+      echo "Workflow ready (Normalized): $workflow_file"
       ;;
     *)
       echo "Unknown task command: $sub" >&2

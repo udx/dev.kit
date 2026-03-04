@@ -6,19 +6,23 @@ if [ -n "${REPO_DIR:-}" ] && [ -f "$REPO_DIR/lib/utils.sh" ]; then
 fi
 
 dev_kit_cmd_doctor() {
-  shift || true
-  ensure_dev_kit_home
-
-  print_section "dev.kit | doctor"
-
-  # 1. Orchestrator Integration
-  if [ -f "${ENVIRONMENT_YAML:-}" ]; then
-    print_check "orchestrator" "[ok]" "environment.yaml found"
-  else
-    print_check "orchestrator" "[warn]" "environment.yaml missing"
+  local json_output="false"
+  if [ "${1:-}" = "--json" ]; then
+    json_output="true"
+    shift
   fi
 
-  # 2. Shell Integration
+  ensure_dev_kit_home
+
+  if [ "$json_output" = "false" ]; then
+    print_section "dev.kit | doctor"
+  fi
+
+  local status_orchestrator="missing"
+  if [ -f "${ENVIRONMENT_YAML:-}" ]; then
+    status_orchestrator="ok"
+  fi
+
   local env_line="source \"$HOME/.udx/dev.kit/source/env.sh\""
   local profile=""
   case "${SHELL:-}" in
@@ -27,37 +31,73 @@ dev_kit_cmd_doctor() {
     *) profile="$HOME/.bash_profile" ;;
   esac
 
+  local status_shell="missing"
   if [ -f "$profile" ] && grep -Fqx "$env_line" "$profile"; then
-    print_check "shell integration" "[ok]" "found in $profile"
-  else
-    print_check "shell integration" "[warn]" "missing from $profile"
+    status_shell="ok"
   fi
 
-  # 3. PATH
+  local status_path="missing"
+  local path_bin=""
   if command -v dev.kit >/dev/null 2>&1; then
-    print_check "path" "[ok]" "$(command -v dev.kit)"
-  else
-    print_check "path" "[warn]" "dev.kit not in PATH"
+    status_path="ok"
+    path_bin="$(command -v dev.kit)"
   fi
 
-  # 4. Operating Mode (AI vs Personal Helper)
   local ai_enabled
   ai_enabled="$(config_value_scoped ai.enabled "false")"
+  local operating_mode="Personal Helper"
   if [ "$ai_enabled" = "true" ]; then
-    print_check "operating mode" "[ok]" "AI-Powered (Smart Translator)"
-  else
-    print_check "operating mode" "[ok]" "Personal Helper (Interface Translator)"
+    operating_mode="AI-Powered"
   fi
 
-  # 5. Engineering Software Autodetection & Effectivity Advice
+  check_sw() {
+    if command -v "$1" >/dev/null 2>&1; then echo "ok"; else echo "missing"; fi
+  }
+
+  local sw_git; sw_git=$(check_sw "git")
+  local sw_docker; sw_docker=$(check_sw "docker")
+  local sw_npm; sw_npm=$(check_sw "npm")
+  local sw_gh; sw_gh=$(check_sw "gh")
+  local sw_codex; sw_codex=$(check_sw "codex")
+  local sw_gemini; sw_gemini=$(check_sw "gemini")
+  local sw_mmdc; sw_mmdc=$(check_sw "mmdc")
+
+  if [ "$json_output" = "true" ]; then
+    cat <<EOF
+{
+  "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+  "orchestrator": "$status_orchestrator",
+  "shell_integration": "$status_shell",
+  "path": "$status_path",
+  "operating_mode": "$operating_mode",
+  "software": {
+    "git": "$sw_git",
+    "docker": "$sw_docker",
+    "npm": "$sw_npm",
+    "gh": "$sw_gh",
+    "codex": "$sw_codex",
+    "gemini": "$sw_gemini",
+    "mmdc": "$sw_mmdc"
+  }
+}
+EOF
+    return
+  fi
+
+  # Human-readable output (original logic)
+  print_check "orchestrator" "[$status_orchestrator]" "environment.yaml"
+  print_check "shell integration" "[$status_shell]" "found in $profile"
+  print_check "path" "[$status_path]" "$path_bin"
+  print_check "operating mode" "[ok]" "$operating_mode"
+
   echo ""
   echo "Engineering Software Detection:"
-  
   check_software() {
     local name="$1"
-    local desc="$2"
-    local advice="$3"
-    if command -v "$name" >/dev/null 2>&1; then
+    local status="$2"
+    local desc="$3"
+    local advice="$4"
+    if [ "$status" = "ok" ]; then
       print_check "$name" "[ok]" "$(command -v "$name")"
     else
       print_check "$name" "[missing]" "$desc"
@@ -65,14 +105,14 @@ dev_kit_cmd_doctor() {
     fi
   }
 
-  check_software "git" "Version control" "Install git to enable repo-as-skill mapping."
-  check_software "docker" "Containerization" "Install Docker to run isolated worker environments."
-  check_software "npm" "Node package manager" "Install npm/node for frontend and tooling support."
-  check_software "gh" "GitHub CLI" "Install gh for automated repository and PR management."
-  check_software "codex" "OpenAI CLI" "Install codex to enable automated dev.kit exec."
-  check_software "gemini" "Gemini CLI" "Install gemini for native Google AI integration."
+  check_software "git" "$sw_git" "Version control" "Install git to enable repo-as-skill mapping."
+  check_software "docker" "$sw_docker" "Containerization" "Install Docker to run isolated worker environments."
+  check_software "npm" "$sw_npm" "Node package manager" "Install npm/node for frontend and tooling support."
+  check_software "gh" "$sw_gh" "GitHub CLI" "Install gh for automated repository and PR management."
+  check_software "codex" "$sw_codex" "OpenAI CLI" "Install codex to enable automated dev.kit exec."
+  check_software "gemini" "$sw_gemini" "Gemini CLI" "Install gemini for native Google AI integration."
+  check_software "mmdc" "$sw_mmdc" "Mermaid CLI" "Install with: npm install -g @mermaid-js/mermaid-cli"
 
-  # 6. Sensitive Vars Advisory
   echo ""
   echo "Advisory (Security & Secrets):"
   local repo_root
@@ -87,6 +127,5 @@ dev_kit_cmd_doctor() {
     fi
   fi
   echo "- [info] Use environment.yaml for non-sensitive orchestration."
-
   echo ""
 }

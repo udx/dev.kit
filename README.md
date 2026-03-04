@@ -1,102 +1,85 @@
 <img src="assets/logo.svg" alt="dev.kit logo" width="200">
 
-# dev.kit — Smart Engineering Interface Translator
+# dev.kit — Resolve the Development Drift
 
-**Experienced dev flow without bullshit.**
+**Experienced engineering flow with no-bullshit results.**
 
-`dev.kit` is a deterministic developer workflow kit that translates your local environment, tools, and repository skills into a single, high-fidelity engineering interface for humans and AI.
-
----
-
-## The Vision: Repo is a Skill
-
-`dev.kit` translates the messy reality of host environments into high-fidelity engineering workflows.
-
-```mermaid
-flowchart LR
-    subgraph Localhost ["1. Localhost"]
-        direction TB
-        OS[OS / Shell] --> TOOLS[Git / NPM / Docker]
-    end
-
-    subgraph Translator ["2. dev.kit Translator"]
-        direction TB
-        YML[environment.yaml] --> CLI[bin/dev-kit CLI]
-    end
-
-    subgraph Repo ["3. Repository (Skill)"]
-        direction TB
-        LIB[lib/commands]
-        SRC[src/ai Manifests]
-        DOC[docs/ Context]
-    end
-
-    subgraph Workflows ["4. Workflows"]
-        direction TB
-        TASK[Task Iteration] --> FLOW[Experienced Dev Flow]
-    end
-
-    Localhost --> Translator
-    Translator --> Repo
-    Repo --> Workflows
-```
-
----
-
-## Operating Modes
-
-Choose your level of power. `dev.kit` works as a standalone helper or a fully integrated AI orchestrator.
-
-### 1. Personal Helper Mode
-**Consistent local automation without AI.**
-
-```mermaid
-flowchart LR
-    User[Human Intent] --> CLI[dev.kit CLI]
-    CLI --> MAP[environment.yaml]
-    MAP --> CMD[lib/commands]
-    CMD --> RES[Consistent Result]
-```
-
-### 2. AI-Powered Mode
-**Deep automation with ecosystem and AI awareness.**
-
-```mermaid
-flowchart LR
-    User[Human Intent] --> TR[dev.kit Translator]
-    TR --> YML[environment.yaml]
-    YML --> ECO[MCP / Context7]
-    ECO --> MAN[src/ai Manifests]
-    MAN --> AUTO[Automated Engineering]
-```
-
----
-
-## Core Toolset
-
-- **`dev.kit doctor`**: Autodetects engineering software (Shell, Docker, NPM, Gemini) and gives effectivity advice.
-- **`dev.kit audit`**: Validates repository compliance (TDD, 12-Factor, Active Context) for the **Repo-as-a-Skill** approach.
-- **`dev.kit task`**: Manages the iterative engineering loop from prompt to workflow.
-- **`dev.kit config`**: Orchestrates configurations across hosts using `environment.yaml`.
+`dev.kit` resolves the **Drift** (intent divergence) by **Normalizing** it into a deterministic path and **Iterating** to the result.
 
 ## Install
-
-Quick start (one-liner):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/udx/dev.kit/main/bin/scripts/install.sh | bash
 source "$HOME/.udx/dev.kit/source/env.sh"
 ```
 
+## The Flow: Drift to Resolution
+
+```mermaid
+flowchart LR
+    Drift[Drift] --> Norm[Normalize]
+    Norm --> Iter[Iterate]
+    Iter --> Result[Result]
+```
+
+## Resilient Waterfall (Fail-Open)
+
+The flow never breaks. If a specialized skill fails, `dev.kit` falls back to standard data.
+
+```mermaid
+flowchart TD
+    Step[Waterfall Step] --> Skill{Specialized Skill?}
+    Skill -- Available --> High[High-Fidelity Output]
+    Skill -- Missing --> Fall[Generic Fallback]
+    High & Fall --> Next[Next Waterfall Step]
+```
+
+## Core Philosophy
+
+### 1. Task Normalization: Resolve the Drift
+Divergence between intent and reality (**Drift**) is normalized into a deterministic `workflow.md`. Every task has a clear **Input, Logic, and Output**.
+
+### 2. Repository-as-a-Skill
+Every repository is a standalone **Skill**. `dev.kit` maps capabilities to a unified CLI interface for humans and AI.
+
+### 3. Resilient Waterfall
+momentum is maintained via a **Step-based Lifecycle**. Tool failures trigger standard data fallbacks, ensuring the waterfall never stalls.
+
+## Operating Modes
+
+### 1. Personal Helper
+**Consistent local automation without AI.**
+
+```mermaid
+flowchart LR
+    Intent[User Intent] --> Cmd[dev.kit Command]
+    Cmd --> Lib[lib/commands]
+    Lib --> Result[Consistent Result]
+```
+
+### 2. AI-Orchestrated
+**Deep automation with ecosystem and AI awareness.**
+
+```mermaid
+flowchart LR
+    Intent[Human Intent] --> Exec[dev.kit exec]
+    Exec --> AI[Agent Orchestration]
+    AI --> Auto[Automated Engineering]
+```
+
+## Core Toolset
+
+- **`dev.kit task`**: Manages the loop from drift to normalized workflow.
+- **`dev.kit exec`**: Runtime normalizer with bounded safety limits.
+- **`dev.kit doctor`**: Health and tool availability detection.
+- **`dev.kit audit`**: Validates repository compliance (TDD, 12-Factor).
+- **`dev.kit config`**: Orchestrates configurations using `environment.yaml`.
+
 ## Documentation
 
-Detailed guides and methodology are available in the `docs/` directory:
-
-- **Methodology (CWA)**: `docs/concepts/methodology.md`
+- **Methodology**: `docs/concepts/methodology.md`
 - **CLI Overview**: `docs/cli/overview.md`
 - **AI Integration**: `docs/ai/README.md`
-- **Reference**: `docs/reference/udx-reference-index.md`
-
----
+- **Reference Index**: `docs/reference/udx-reference-index.md`
 
 _UDX DevSecOps Team_

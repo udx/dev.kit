@@ -6,9 +6,9 @@ usage() {
 Usage: export_svg.sh <input.mmd> <output.svg>
 
 Behavior:
-- Validates Mermaid CLI presence
-- Never overwrites existing files; appends -N suffix
-- Emits actionable sandbox/runtime hints on failure
+- Validates Mermaid CLI presence.
+- If mmdc is missing or fails, it provides a fallback (Resilient Normalization).
+- Emits actionable sandbox/runtime hints on failure.
 USAGE
 }
 
@@ -34,8 +34,30 @@ if [[ ! -f "$input_path" ]]; then
   fail "MISSING_INPUT" "Input Mermaid file not found: $input_path" 66
 fi
 
+fallback_action() {
+  local msg="$1"
+  local mmd_content
+  mmd_content="$(cat "$input_path")"
+  
+  # Base64 encode for mermaid.live (optional, but good for portability)
+  # For simplicity, we just provide the raw content and the link.
+  
+  echo "---"
+  echo "⚠️  [FALLBACK] $msg"
+  echo "Status: Resilient Normalization (Fail-Open)"
+  echo "View Online: https://mermaid.live/edit#base64:$(printf "%s" "$mmd_content" | base64 | tr -d '\n')"
+  echo ""
+  echo "Raw Mermaid Source:"
+  echo '```mermaid'
+  cat "$input_path"
+  echo '```'
+  echo "---"
+  # Exit with 0 to allow the waterfall to continue
+  exit 0
+}
+
 if ! command -v mmdc >/dev/null 2>&1; then
-  fail "MMDC_NOT_FOUND" "Mermaid CLI (mmdc) is not installed. Install with: npm install -g @mermaid-js/mermaid-cli" 69
+  fallback_action "Mermaid CLI (mmdc) is not installed."
 fi
 
 normalize_output_path() {
@@ -83,7 +105,7 @@ if ! mmdc -i "$input_path" -o "$output_path" 2>"$tmp_err"; then
     echo "Example: mmdc -p puppeteer-config.json -i $input_path -o $output_path" >&2
   fi
 
-  fail "MMDC_FAILED" "mmdc execution failed." 70
+  fallback_action "mmdc execution failed (Runtime Error)."
 fi
 
 echo "$output_path"
