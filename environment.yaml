@@ -1,0 +1,32 @@
+# dev.kit Environment Orchestrator
+# Standardize configurations across hosts and repositories.
+
+system:
+  quiet: false
+  developer: false
+  state_path: "~/.udx/dev.kit/state"
+
+exec:
+  prompt: "ai.codex.min"
+  stream: false
+
+ai:
+  enabled: false
+  provider: "codex" # Supported: codex, claude, gemini
+  mapping:
+    skills: "src/ai/data/skills"
+    rules: "src/ai/data/rules.json"
+    agents: "src/ai/data/agents.json"
+
+context:
+  enabled: true
+  max_bytes: 4000
+  storage: "repo" # repo-scoped storage for context
+
+capture:
+  enabled: true
+  mode: "global"
+  dir: "capture"
+
+install:
+  path_prompt: true

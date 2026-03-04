@@ -1,4 +1,28 @@
+# Workspace
 .udx/
 .dev.kit/
-
 .codex/
+.tmp/
+tasks/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Shell / History
+*.log
+.bash_history
+.zsh_history
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Project specific
+node_modules/
+dist/
+build/
+.venv/
+__pycache__/
