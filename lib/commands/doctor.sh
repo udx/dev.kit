@@ -45,25 +45,32 @@ dev_kit_cmd_doctor() {
   ai_enabled="$(config_value_scoped ai.enabled "false")"
   if [ "$ai_enabled" = "true" ]; then
     print_check "operating mode" "[ok]" "AI-Powered (Smart Translator)"
-    if command -v codex >/dev/null 2>&1; then
-      print_check "codex cli" "[ok]" "$(command -v codex)"
-    else
-      print_check "codex cli" "[warn]" "missing (required for automated dev.kit exec)"
-    fi
   else
     print_check "operating mode" "[ok]" "Personal Helper (Interface Translator)"
-    echo "  - [info] dev.kit exec will print prompts for manual use."
-    echo "  - [info] Enable AI-Powered mode for MCP fetching and Context7 integration."
   fi
 
-  # 5. Mapping Check
-  if [ -f "${ENVIRONMENT_YAML:-}" ]; then
-    local skills_mapping
-    skills_mapping="$(dev_kit_yaml_value "$ENVIRONMENT_YAML" "ai.mapping.skills" "")"
-    if [ -n "$skills_mapping" ]; then
-      print_check "ai mapping" "[ok]" "skills -> $skills_mapping"
+  # 5. Engineering Software Autodetection & Effectivity Advice
+  echo ""
+  echo "Engineering Software Detection:"
+  
+  check_software() {
+    local name="$1"
+    local desc="$2"
+    local advice="$3"
+    if command -v "$name" >/dev/null 2>&1; then
+      print_check "$name" "[ok]" "$(command -v "$name")"
+    else
+      print_check "$name" "[missing]" "$desc"
+      echo "  - [advice] $advice"
     fi
-  fi
+  }
+
+  check_software "git" "Version control" "Install git to enable repo-as-skill mapping."
+  check_software "docker" "Containerization" "Install Docker to run isolated worker environments."
+  check_software "npm" "Node package manager" "Install npm/node for frontend and tooling support."
+  check_software "gh" "GitHub CLI" "Install gh for automated repository and PR management."
+  check_software "codex" "OpenAI CLI" "Install codex to enable automated dev.kit exec."
+  check_software "gemini" "Gemini CLI" "Install gemini for native Google AI integration."
 
   # 6. Sensitive Vars Advisory
   echo ""
@@ -72,31 +79,14 @@ dev_kit_cmd_doctor() {
   repo_root="$(get_repo_root || true)"
   if [ -n "$repo_root" ]; then
     if [ -f "$repo_root/.env" ]; then
-      echo "- [notice] Found .env file in repo root."
       if git check-ignore "$repo_root/.env" >/dev/null 2>&1; then
-        echo "  - [ok] .env is ignored by git."
+        echo "- [ok] .env is isolated (gitignored)."
       else
-        echo "  - [alert] .env is NOT ignored by git! Add it to .gitignore."
-      fi
-    fi
-    if [ -f "$repo_root/.udx/dev.kit/config.env" ]; then
-      echo "- [notice] Found repo-scoped dev.kit config."
-      if git check-ignore "$repo_root/.udx/dev.kit/config.env" >/dev/null 2>&1; then
-        echo "  - [ok] Repo config is ignored by git."
-      else
-        echo "  - [notice] Repo config is tracked by git. Use for non-sensitive overrides only."
+        echo "- [alert] .env is NOT ignored! Add it to .gitignore immediately."
       fi
     fi
   fi
-  echo "- [info] Keep secrets in ~/.udx/dev.kit/state/config.env or use an external vault."
-
-  # 5. Env Vars Helper
-  echo ""
-  echo "Environment Variables:"
-  printf "  %-20s %s\n" "DEV_KIT_HOME" "${DEV_KIT_HOME:-}"
-  printf "  %-20s %s\n" "DEV_KIT_STATE" "${DEV_KIT_STATE:-}"
-  printf "  %-20s %s\n" "DEV_KIT_SOURCE" "${DEV_KIT_SOURCE:-}"
-  printf "  %-20s %s\n" "DEV_KIT_CONFIG" "${CONFIG_FILE:-}"
+  echo "- [info] Use environment.yaml for non-sensitive orchestration."
 
   echo ""
 }
