@@ -1,0 +1,35 @@
+{
+  "key": "dev-kit-experience-capture",
+  "title": "dev.kit Experience Capture: Incremental Learning",
+  "description": "Packages session engineering outcomes into reusable repository skills, knowledge, or agent memory.",
+  "inputs": [
+    {
+      "name": "task_id",
+      "type": "string",
+      "description": "Current task ID (e.g. UX-001)."
+    },
+    {
+      "name": "learnings",
+      "type": "string",
+      "description": "Summary of engineering takeaways."
+    },
+    {
+      "name": "target",
+      "type": "string",
+      "description": "Target tier: skill, knowledge, or memory.",
+      "default": "knowledge"
+    }
+  ],
+  "logic": [
+    "Execute workflow steps defined in src/ai/data/skill-packs/dev-kit-experience-capture/workflow.yaml",
+    "Package experience into the chosen repository location.",
+    "Synchronize the updated experience to the agent environment."
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "markdown",
+      "description": "A summary of the captured experience and its new location."
+    }
+  ]
+}

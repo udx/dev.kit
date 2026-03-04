@@ -35,7 +35,8 @@
     {
       "title": "Persistence: Experience Capture",
       "bullets": [
-        "Package successful resolutions back into repository 'Skills'.",
+        "MANDATORY: Use `dev-kit-experience-capture` at the end of every task.",
+        "Package successful resolutions back into repository 'Skills', 'Knowledge', or 'Memory'.",
         "Maintain repo-scoped memory in the `## Context` section.",
         "Reference: `docs/cli/runtime/lifecycle.md` (Capture Phase)."
       ]
