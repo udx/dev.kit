@@ -39,11 +39,20 @@ resolve_self() {
 SCRIPT_PATH="$(resolve_self)"
 REPO_DIR="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)"
 
+UTILS_LIB="$REPO_DIR/lib/utils.sh"
+if [ -f "$UTILS_LIB" ]; then
+  # shellcheck disable=SC1090
+  . "$UTILS_LIB"
+fi
+
 UI_LIB="$REPO_DIR/lib/ui.sh"
 if [ -f "$UI_LIB" ]; then
   # shellcheck disable=SC1090
   . "$UI_LIB"
 fi
+
+# Orchestrator
+ENVIRONMENT_YAML="$REPO_DIR/environment.yaml"
 
 print_section() {
   local title="$1"
@@ -127,18 +136,41 @@ local_config_path() {
 config_value_scoped() {
   local key="$1"
   local default="${2:-}"
-  local local_path=""
   local val=""
 
-  local_path="$(local_config_path || true)"
-  if [ -n "$local_path" ] && [ -f "$local_path" ]; then
-    val="$(config_value "$local_path" "$key" "")"
+  # 1. Check YAML Orchestrator (Priority)
+  if [ -f "$ENVIRONMENT_YAML" ]; then
+    local yaml_key="$key"
+    case "$key" in
+      quiet|developer|state_path) yaml_key="system.$key" ;;
+      exec.prompt|exec.stream) yaml_key="${key//./.}" ;;
+      ai.enabled|ai.provider) yaml_key="${key//./.}" ;;
+      capture.mode|capture.enabled|capture.dir) yaml_key="${key//./.}" ;;
+      context.enabled|context.max_bytes) yaml_key="${key//./.}" ;;
+      install.path_prompt) yaml_key="${key//./.}" ;;
+    esac
+    val="$(dev_kit_yaml_value "$ENVIRONMENT_YAML" "$yaml_key" "")"
   fi
+
+  # 2. Check local repo .env
+  if [ -z "$val" ]; then
+    local local_path
+    local_path="$(local_config_path || true)"
+    if [ -n "$local_path" ] && [ -f "$local_path" ]; then
+      val="$(config_value "$local_path" "$key" "")"
+    fi
+  fi
+
+  # 3. Check global .env
+  if [ -z "$val" ]; then
+    val="$(config_value "$CONFIG_FILE" "$key" "")"
+  fi
+
   if [ -n "$val" ]; then
     echo "$val"
-    return
+  else
+    echo "$default"
   fi
-  config_value "$CONFIG_FILE" "$key" "$default"
 }
 
 capture_mode() {

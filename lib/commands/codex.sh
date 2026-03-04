@@ -221,20 +221,6 @@ dev_kit_codex_render_template() {
   done
 }
 
-dev_kit_codex_validate_required() {
-  local schema="$1"
-  local data="$2"
-  local req=""
-  req="$(jq -r '.required[]?' "$schema")"
-  local field=""
-  for field in $req; do
-    if ! jq -e --arg f "$field" 'has($f) and .[$f] != null' "$data" >/dev/null; then
-      echo "Missing required field '$field' in $data" >&2
-      exit 1
-    fi
-  done
-}
-
 dev_kit_codex_render_agents() {
   local data_dir=""
   local templ_dir=""
@@ -245,7 +231,7 @@ dev_kit_codex_render_agents() {
   schema_dir="$(dev_kit_codex_schemas_dir)"
 
   local data="$data_dir/agents.json"
-  dev_kit_codex_validate_required "$schema_dir/agents.schema.json" "$data"
+  dev_kit_validate_json_required "$schema_dir/agents.schema.json" "$data"
   local title intro sections
   title="$(jq -r '.title' "$data")"
   intro="$(jq -r '.intro[]' "$data" | awk 'NR==1{print;next}{print "";print}')"
@@ -267,7 +253,7 @@ dev_kit_codex_render_config() {
   schema_dir="$(dev_kit_codex_schemas_dir)"
 
   local data="$data_dir/config.json"
-  dev_kit_codex_validate_required "$schema_dir/config.schema.json" "$data"
+  dev_kit_validate_json_required "$schema_dir/config.schema.json" "$data"
   local body
   body="$(jq -r '
     def q: @json;
@@ -314,7 +300,7 @@ dev_kit_codex_render_rules() {
   schema_dir="$(dev_kit_codex_schemas_dir)"
 
   local data="$data_dir/rules.json"
-  dev_kit_codex_validate_required "$schema_dir/rules.schema.json" "$data"
+  dev_kit_validate_json_required "$schema_dir/rules.schema.json" "$data"
   local body
   body="$(jq -r '
     (.header[]),
@@ -337,7 +323,7 @@ dev_kit_codex_render_skill() {
   schema_dir="$(dev_kit_codex_schemas_dir)"
   data_dir="$(dev_kit_codex_data_dir)"
 
-  dev_kit_codex_validate_required "$schema_dir/skill.schema.json" "$data"
+  dev_kit_validate_json_required "$schema_dir/skill.schema.json" "$data"
   local name desc body pack_rel pack_dir
   name="$(jq -r '.name' "$data")"
   desc="$(jq -r '.description' "$data")"

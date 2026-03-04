@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [ -n "${REPO_DIR:-}" ] && [ -f "$REPO_DIR/lib/utils.sh" ]; then
+  # shellcheck source=/dev/null
+  . "$REPO_DIR/lib/utils.sh"
+fi
+
 print_ai_usage() {
   cat <<'AI_USAGE'
 Usage: dev.kit ai <command>
@@ -7,30 +12,6 @@ Usage: dev.kit ai <command>
 Commands:
   skills   List available AI skills and supported AI CLIs
 AI_USAGE
-}
-
-trim_value() {
-  local val="$1"
-  val="${val#"${val%%[![:space:]]*}"}"
-  val="${val%"${val##*[![:space:]]}"}"
-  val="${val#\"}"
-  val="${val%\"}"
-  val="${val#\'}"
-  val="${val%\'}"
-  printf "%s" "$val"
-}
-
-skill_frontmatter_value() {
-  local file="$1"
-  local key="$2"
-  awk -v k="$key" '
-    $0 ~ /^---[[:space:]]*$/ { fence++; next }
-    fence == 1 {
-      if ($1 == k ":") {
-        $1=""; sub(/^[[:space:]]+/, ""); print; exit
-      }
-    }
-  ' "$file"
 }
 
 list_skill_entries() {

@@ -35,20 +35,6 @@ dev_kit_prompt_require_jq() {
   fi
 }
 
-dev_kit_prompt_validate_required() {
-  local schema="$1"
-  local data="$2"
-  local req=""
-  req="$(jq -r '.required[]?' "$schema")"
-  local field=""
-  for field in $req; do
-    if ! jq -e --arg f "$field" 'has($f) and .[$f] != null' "$data" >/dev/null; then
-      echo "Missing required field '$field' in $data" >&2
-      exit 1
-    fi
-  done
-}
-
 dev_kit_prompt_data_files() {
   local files=()
   if [ -f "$PROMPT_DATA_DIR/prompts.json" ]; then
@@ -81,7 +67,7 @@ dev_kit_prompt_load_index() {
 
   if [ -f "$PROMPT_SCHEMA" ]; then
     for file in "${files[@]}"; do
-      dev_kit_prompt_validate_required "$PROMPT_SCHEMA" "$file"
+      dev_kit_validate_json_required "$PROMPT_SCHEMA" "$file"
     done
   fi
 
