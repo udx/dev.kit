@@ -18,7 +18,9 @@ For **any** execution scope (including CLI responses and prompt handling):
 1.  **Plan:** Break down the request into its constituent requirements.
 2.  **Normalize:** Standardize the inputs and ensure the environment/context is aligned with UDX standards.
 3.  **Process:** Execute the logic using **dev.kit** skills.
-* **Multi-step Logic:** If the scope exceeds a single action, it **must** be converted into pipeline job steps and executed as modular skills.
+*   **Reference**: `docs/cli/execution/iteration-loop.md` (Resolution Cycle).
+*   **Workflow Schema**: `docs/cli/execution/workflow-io-schema.md` (DOC-003).
+*   **Multi-step Logic:** If the scope exceeds a single action, it **must** be converted into pipeline job steps and executed as modular skills.
 
 ### 3. Sub-Agent & Sub-Pipeline Orchestration
 * **Delegation:** Use **Sub-Agents** to manage the execution of specific sub-pipelines.

@@ -1,56 +1,43 @@
 {
-  "title": "AGENTS.md — dev.kit Codex Defaults",
+  "title": "AGENTS.md — dev.kit Smart Helper Defaults",
   "intro": [
-    "Use this file as the global baseline for Codex when dev.kit installs its templates.",
-    "Keep it concise and action-oriented so project overrides can be layered on top."
+    "This file defines the global baseline for dev.kit AI agents.",
+    "Logic is managed by the dev.kit CLI and sourced from canonical documentation in ~/.udx/dev.kit/source/docs/."
   ],
   "sections": [
     {
-      "title": "Mission",
+      "title": "Mission: Resolve the Drift",
       "bullets": [
-        "Keep work deterministic, bounded, and repo-scoped.",
-        "Route work through dev.kit prompts and middleware whenever available.",
-        "Prefer available dev.kit commands over raw shell scripts.",
-        "MANDATORY: Use `dev-kit-diagram-generator` for ALL diagram tasks. Do not generate Mermaid manually unless the skill is unavailable."
+        "Primary goal: Identify and resolve the gap between user intent and repository reality.",
+        "Reference: `docs/concepts/cde.md` (Context Driven Engineering).",
+        "MANDATORY: Use `dev-kit-diagram-generator` for ALL diagram tasks.",
+        "MANDATORY: Use `dev-kit-git-sync` for all commits and synchronization."
       ]
     },
     {
-      "title": "Efficiency",
+      "title": "Execution: Task Normalization",
       "bullets": [
-        "Prefer shell commands and automation over manual edits when safe.",
-        "Keep responses terse and action-oriented.",
-        "Source priority: local repos context first, then OpenAI/Codex MCP docs, then web search only if needed."
+        "Follow the Drift -> Normalize -> Iterate flow for all complex work.",
+        "Normalization: Transform chaotic prompts into deterministic `workflow.md` artifacts.",
+        "Reference: `docs/cli/execution/iteration-loop.md` (Resolution Cycle).",
+        "Contract: All workflows must follow DOC-003 (`docs/cli/execution/workflow-io-schema.md`)."
       ]
     },
     {
-      "title": "Execution & Edits",
+      "title": "Efficiency & Safety",
       "bullets": [
-        "Use `dev.kit prompt` or `dev.kit exec` to generate or run bounded work.",
-        "Apply changes directly when confident; for multi-file edits, summarize scope and ask for confirmation first.",
-        "Run tests as part of the iteration workflow; if skipped, state the reason.",
-        "Ask before any destructive operation (delete, overwrite, reset, uninstall) unless explicitly asked."
+        "Route all work through dev.kit CLI primitives to ensure deterministic, bounded results.",
+        "Fail-Open: If a specialized tool fails, fallback to standard markdown/text output.",
+        "Reference: `docs/concepts/adaptation.md` (Resilient Projections).",
+        "Ask for confirmation before any destructive operation (rm, reset, overwrite)."
       ]
     },
     {
-      "title": "Skills & Routing",
+      "title": "Persistence: Experience Capture",
       "bullets": [
-        "Prefer dev.kit prompt generation so skills and routing are applied by default.",
-        "Use the dev.kit prompt router to decide between iteration vs workflow.",
-        "If a task spans distinct deliverables or exceeds bounded-work limits, produce a workflow."
-      ]
-    },
-    {
-      "title": "Inputs & Outputs",
-      "bullets": [
-        "Every skill should declare its needed inputs. If not provided, use global context/state defaults.",
-        "Prefer writing artifacts to `{{DEV_KIT_STATE}}/` unless a repo explicitly requests repo-local storage."
-      ]
-    },
-    {
-      "title": "Safety",
-      "bullets": [
-        "Avoid editing files outside the current workspace unless explicitly requested.",
-        "Prefer non-destructive options and keep existing user changes intact."
+        "Package successful resolutions back into repository 'Skills'.",
+        "Maintain repo-scoped memory in the `## Context` section.",
+        "Reference: `docs/cli/runtime/lifecycle.md` (Capture Phase)."
       ]
     }
   ]
