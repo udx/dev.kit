@@ -1,10 +1,22 @@
 ---
 name: dev-kit-experience-capture
-description: MANDATORY skill for packaging development experience into reusable repository assets. Use this skill at the end of every task or iteration to capture learnings, patterns, and new skills.
+description: MANDATORY skill for distilling and packaging session engineering experience into reusable assets. Use this skill at the end of EVERY task to capture patterns, create new skills, or update agent memories. Ensures the repository "gets smarter" with every commit.
 ---
 
 ## Objective
-Convert ephemeral session experience into persistent "Power" for the repository and future projects.
+Convert ephemeral developer session experience into persistent "Power" for the repository and the dev.kit ecosystem.
+
+## CLI Usage Example
+```bash
+# Capture learnings from a bugfix task
+dev.kit exec "Capture experience for task FIX-123: Found race condition in sync script. Target: knowledge."
+
+# Create a new automated skill based on a manual process
+dev.kit exec "Capture skill for task FEAT-456: New validation logic. Create 'dev-kit-validate-schema' skill."
+
+# Update agent memories with a new project preference
+dev.kit exec "Capture memory for task CFG-789: Use tabs instead of spaces in this repo."
+```
 
 ## Success-First UX Contract
 - **Incremental Learning**: Automatically suggest capturing experience when a task is marked `done`.
@@ -12,7 +24,7 @@ Convert ephemeral session experience into persistent "Power" for the repository 
     1. **Knowledge**: Patterns/Docs (`docs/reference/foundations/knowledge.md`).
     2. **Skills**: Automated logic (`src/ai/data/skills/`).
     3. **Memory**: Agent-specific context (`src/ai/integrations/gemini/templates/GEMINI.md.tmpl`).
-- **Resilient Sync**: Ensure captured experience is immediately available to the agent via `dev.kit agent gemini`.
+- **Resilient Sync**: Ensure captured experience is immediately available via `dev.kit agent gemini`.
 
 ## Input Contract
 Required:

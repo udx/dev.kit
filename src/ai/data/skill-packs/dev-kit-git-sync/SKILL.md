@@ -1,10 +1,22 @@
 ---
 name: dev-kit-git-sync
-description: Logical commit and synchronization skill. Identifies repository drift and groups changes into domain-specific logical commits (docs, ai, cli, core, misc). Use this skill to resolve state divergence after completing a task or iteration.
+description: MANDATORY skill for logical repository synchronization and atomic commits. Categorizes changes into domain-specific groups (docs, ai, cli, core, misc) and generates high-fidelity commit messages. Use this skill to resolve state divergence after completing a task or iteration.
 ---
 
 ## Objective
 Normalize and resolve repository drift by performing logical, atomic commits based on local state and task context.
+
+## CLI Usage Example
+```bash
+# Sync changes for a documentation task (dry-run first)
+dev.kit exec "Sync my changes for task DOC-123 with dry_run: true"
+
+# Perform logical commits for a completed feature
+dev.kit exec "Resolve repo drift for task CLI-456"
+
+# Sync changes with a custom message prefix
+dev.kit exec "Sync task CORE-789 with message: 'Refactor: '"
+```
 
 ## Success-First UX Contract
 - **Identify Drift**: Automatically detect staged, unstaged, and untracked changes.

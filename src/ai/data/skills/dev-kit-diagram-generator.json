@@ -1,7 +1,8 @@
 {
   "name": "dev-kit-diagram-generator",
-  "description": "Generate deterministic Mermaid diagrams from text or files, with optional SVG export and graceful fallback.",
+  "description": "Generate high-fidelity Mermaid diagrams and optional SVG exports from text or files. Supports architecture, flowchart, sequence, state, and ER diagrams.",
   "pack_dir": "skill-packs/dev-kit-diagram-generator",
+  "keywords": ["architecture", "mermaid", "svg", "diagram", "flowchart", "sequence", "erDiagram"],
   "sections": [
     {
       "title": "Purpose",
@@ -10,18 +11,11 @@
       ]
     },
     {
-      "title": "Source Of Truth",
+      "title": "Typical Workflow",
       "bullets": [
-        "Skill body and behavior live in src/ai/data/skill-packs/dev-kit-diagram-generator/SKILL.md.",
-        "Pack assets/scripts are copied from src/ai/data/skill-packs/dev-kit-diagram-generator/ during dev.kit codex apply."
-      ]
-    },
-    {
-      "title": "Contract Summary",
-      "bullets": [
-        "Require source only; default output=chat.",
-        "When export fails, still return Mermaid and recovery guidance.",
-        "Support chat, mmd, svg, and both output modes."
+        "Plan: Identify diagram type and data source.",
+        "Normalize: Resolve file paths or literal text input.",
+        "Process: Scaffold from template and generate Mermaid/SVG."
       ]
     }
   ]

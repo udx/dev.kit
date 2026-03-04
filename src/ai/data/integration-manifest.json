@@ -7,7 +7,8 @@
       "skills_dir": "skills/dev.kit",
       "artifacts": [
         { "src": "GEMINI.md.tmpl", "dst": "GEMINI.md", "type": "template" },
-        { "src": "system.md.tmpl", "dst": "system.md", "type": "template" }
+        { "src": "system.md.tmpl", "dst": "system.md", "type": "template" },
+        { "src": "config.json.tmpl", "dst": "config.json", "type": "template" }
       ]
     },
     {

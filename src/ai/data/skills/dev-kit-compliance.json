@@ -1,0 +1,25 @@
+{
+  "name": "dev-kit-compliance",
+  "description": "Validate and improve repositories for the 'Repo-as-a-Skill' standard. Audits for TDD, 12-factor principles, and AI-ready context layers.",
+  "pack_dir": "skill-packs/dev-kit-compliance",
+  "keywords": ["compliance", "audit", "12-factor", "tdd", "cac", "repo-as-a-skill"],
+  "sections": [
+    {
+      "title": "Compliance Pillars",
+      "bullets": [
+        "TDD: Test suite maturity.",
+        "12-Factor & CaC: Configuration isolation.",
+        "Context Layer: Internal documentation and task history.",
+        "AI Interface: Skill mapping and MCP definitions."
+      ]
+    },
+    {
+      "title": "Typical Workflow",
+      "bullets": [
+        "Plan: Identify repository targets for compliance audit.",
+        "Normalize: Evaluate pillars against UDX engineering standards.",
+        "Process: Generate actionable resolution feedback."
+      ]
+    }
+  ]
+}

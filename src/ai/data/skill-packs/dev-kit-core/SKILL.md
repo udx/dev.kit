@@ -1,7 +1,25 @@
 ---
 name: dev-kit-core
-description: Configure, manage, and verify the developer engineering environment. Acts as the primary orchestrator and translator for all repository skills and tools.
+description: PRIMARY orchestrator for the dev.kit ecosystem. Manages the engineering environment, validates health, synchronizes AI agent interfaces, and translates repository context into actionable AI prompts.
 ---
+
+## Objective
+Establish and maintain a high-fidelity, deterministic developer environment across hosts and repositories.
+
+## CLI Usage Example
+```bash
+# Check environment health and identify missing integrations
+dev.kit doctor
+
+# Synchronize all AI skills and memories for Gemini
+dev.kit agent gemini
+
+# Start a new engineering task with context tracking
+dev.kit task start --request "Integrate new security scanner"
+
+# Execute a request with full repository context
+dev.kit exec "Audit this repo for Repo-as-a-Skill compliance"
+```
 
 ## Primary Skill: Configure Developer Environment
 The core capability of `dev.kit` is to establish and maintain a high-fidelity, deterministic developer environment. This includes:
@@ -35,3 +53,6 @@ When acting as a translator, `dev.kit` must:
 - Shell auto-init is active and completions are functional.
 - Repository skills are correctly mapped to the AI agent via `dev.kit codex apply`.
 - `dev.kit doctor` reports `[ok]` for all critical integration points.
+
+---
+_UDX DevSecOps Team_

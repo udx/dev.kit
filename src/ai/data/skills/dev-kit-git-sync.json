@@ -1,37 +1,22 @@
 {
-  "key": "dev-kit-git-sync",
-  "title": "dev.kit Git Sync: Smart Logical Commit",
-  "description": "Identifies repository drift and performs logical, grouped commits with descriptive messages. Use it to resolve state divergence after a task.",
-  "inputs": [
+  "name": "dev-kit-git-sync",
+  "description": "Smart logical repository synchronization and atomic commits. Categorizes changes into domain-specific groups and generates high-fidelity messages.",
+  "pack_dir": "skill-packs/dev-kit-git-sync",
+  "keywords": ["git", "sync", "commit", "drift", "resolve", "logical commit", "atomic"],
+  "sections": [
     {
-      "name": "dry_run",
-      "type": "boolean",
-      "description": "If true, show what would be committed without making changes.",
-      "default": false
+      "title": "Categorization",
+      "bullets": [
+        "Docs, AI, CLI, Core, and Misc groupings."
+      ]
     },
     {
-      "name": "task_id",
-      "type": "string",
-      "description": "The current task ID for context (e.g., DOC-001).",
-      "default": "resolve-drift"
-    },
-    {
-      "name": "message",
-      "type": "string",
-      "description": "Optional base commit message prefix.",
-      "default": ""
-    }
-  ],
-  "logic": [
-    "Run `src/ai/data/skill-packs/dev-kit-git-sync/scripts/git_sync.sh` with the provided inputs.",
-    "Categorize changes into logical groups: Docs, AI, CLI, Core, and Misc.",
-    "The output will list the groups, the files committed, and the resulting commit messages."
-  ],
-  "outputs": [
-    {
-      "name": "result",
-      "type": "markdown",
-      "description": "A summary report of the logical commits made."
+      "title": "Typical Workflow",
+      "bullets": [
+        "Plan: Identify repository drift and task context.",
+        "Normalize: Group changes into logical commit domains.",
+        "Process: Execute atomic commits and sync state."
+      ]
     }
   ]
 }

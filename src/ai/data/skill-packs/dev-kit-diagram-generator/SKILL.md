@@ -1,10 +1,22 @@
 ---
 name: dev-kit-diagram-generator
-description: MANDATORY skill for generating Mermaid diagrams and optional SVG exports. Use this skill for ALL requests involving architecture, process visuals, flowcharts, sequence diagrams, state machines, or ER diagrams. Enforces a success-first UX with deterministic outputs and graceful fallbacks.
+description: MANDATORY skill for generating high-fidelity Mermaid diagrams and optional SVG exports. Use this skill for ALL visual engineering requests: architecture, process flows, sequence diagrams, state machines, and ER diagrams. Enforces a success-first UX with deterministic outputs and graceful fallbacks.
 ---
 
 ## Objective
 Generate deterministic Mermaid diagrams from user intent, then optionally export SVG. This skill is the EXCLUSIVE path for diagram generation in the dev.kit ecosystem.
+
+## CLI Usage Example
+```bash
+# Generate and display a flowchart in chat
+dev.kit exec "Create a TD flowchart for the dev.kit install process"
+
+# Generate and export both .mmd and .svg files
+dev.kit exec "Generate sequence diagram for auth flow and export both"
+
+# Generate a detailed ER diagram for the database schema
+dev.kit exec "Generate erDiagram for src/database/schema.sql --detail_level=detailed"
+```
 
 ## Success-First UX Contract (Mandatory)
 - **Zero-Friction Intake**: Require only `source`.

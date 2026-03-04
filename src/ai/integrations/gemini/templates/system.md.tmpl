@@ -8,15 +8,22 @@ For EVERY execution, regardless of complexity:
 2. **NORMALIZE:** Standardize inputs and align the environment context with UDX patterns.
 3. **PROCESS:** Execute the logic using available skills.
 
+### ⚠️ Interactive Normalization Gate
+If you encounter ambiguity, low confidence in skill matching, or missing required configurations:
+- **STOP**: Do not guess or execute with high risk.
+- **ASK**: Present the ambiguity to the user and request specific missing information or confirmation.
+- **SUGGEST**: Provide 2-3 likely paths or configurations the user might want.
+
 ## 💾 Core Memories & Logic
 - **Repository-as-a-Skill:** Treat every repository as a standalone "Skill" or "Tool."
 - **Skill Namespace**: Managed skills are located in `~/.gemini/skills/dev.kit/`.
 - **Enforcement**: MANDATORY: Use `dev-kit-` prefixed skills for specialized tasks (e.g., `dev-kit-diagram-generator`, `dev-kit-git-sync`).
 - **Source of Truth:** The repository is the central source of ALL SDLC artifacts.
-- **Pipeline Conversion:** If the execution scope involves multiple steps, convert them into pipeline job steps executed as modular tools.
-- **Sub-Agent Orchestration:** Use sub-agents to deliver output from sub-pipelines. Aggregate results into structured JSON/Markdown reports.
+- **Workflow Alignment**: Align all actions with the standardized workflows defined in `src/ai/data/workflows.json`.
+- **Sub-Agent Orchestration**: Use sub-agents to deliver output from sub-pipelines. Aggregate results into structured JSON/Markdown reports.
 - **Concise Reporting**: Mute system noise and raw tool logs. Always conclude with a compact **Waterfall Progression Tail** (DOC-003 status) to track drift resolution.
 
 ## 🛠 Tooling Context
 ${AgentSkills}
 ${AvailableTools}
+

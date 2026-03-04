@@ -1,17 +1,21 @@
 {
   "name": "dev-kit-mermaid-export",
-  "description": "Convert Mermaid .mmd diagrams to .svg files, especially for article assets.",
+  "description": "Convert local Mermaid files into high-quality SVG documentation assets. Ensures consistent styling and rendering.",
   "pack_dir": "skill-packs/dev-kit-mermaid-export",
+  "keywords": ["mermaid", "svg", "export", "batch", "documentation", "mmd"],
   "sections": [
     {
-      "title": "Purpose",
-      "lines": ["Convert Mermaid diagrams to SVG assets using project tooling."]
+      "title": "Batch Processing",
+      "bullets": [
+        "Export single file, multiple files, or directory of diagrams."
+      ]
     },
     {
-      "title": "Source Of Truth",
+      "title": "Typical Workflow",
       "bullets": [
-        "Skill body and behavior live in src/ai/data/skill-packs/dev-kit-mermaid-export/SKILL.md.",
-        "Pack assets/scripts are copied from src/ai/data/skill-packs/dev-kit-mermaid-export/ during dev.kit codex apply."
+        "Plan: Identify source Mermaid files for export.",
+        "Normalize: Resolve output directory and file paths.",
+        "Process: Execute mmdc and validate SVG artifacts."
       ]
     }
   ]

@@ -1,7 +1,22 @@
 ---
 name: dev-kit-compliance
-description: Validate and improve repositories for the 'Repo-as-a-Skill' approach. Audit repositories for TDD, 12-factor principles, Config-as-Code (CaC), and active context layer compliance.
+description: MANDATORY skill for validating repository health against the 'Repo-as-a-Skill' standard. Audits for TDD maturity, 12-factor compliance, Config-as-Code (CaC), and active context layer readiness.
 ---
+
+## Objective
+Evaluate a repository's readiness for high-fidelity automation and AI interaction.
+
+## CLI Usage Example
+```bash
+# Run a full compliance audit on the current repository
+dev.kit audit
+
+# Execute audit with detailed JSON output for reporting
+dev.kit audit --json
+
+# Run audit and fix common configuration isolation issues
+dev.kit audit --fix
+```
 
 ## Primary Skill: Repo-as-a-Skill Compliance Audit
 The core capability of this skill is to evaluate a repository's readiness for high-fidelity automation and AI interaction. It ensures the repository is "compliant" with UDX engineering standards across four pillars:
@@ -41,3 +56,6 @@ When `dev.kit audit` reports a warning or alert, the user should be advised to:
 
 ## Result
 A repository that is deterministic, portable, and natively understands how to interact with an experienced developer flow.
+
+---
+_UDX DevSecOps Team_

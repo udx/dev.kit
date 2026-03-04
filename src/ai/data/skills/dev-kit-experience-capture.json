@@ -1,35 +1,24 @@
 {
-  "key": "dev-kit-experience-capture",
-  "title": "dev.kit Experience Capture: Incremental Learning",
-  "description": "Packages session engineering outcomes into reusable repository skills, knowledge, or agent memory.",
-  "inputs": [
+  "name": "dev-kit-experience-capture",
+  "description": "Distill and package developer session experience into persistent repository assets. Captures patterns, skills, and agent memories.",
+  "pack_dir": "skill-packs/dev-kit-experience-capture",
+  "keywords": ["learnings", "knowledge", "skill", "memory", "capture", "session", "experience"],
+  "sections": [
     {
-      "name": "task_id",
-      "type": "string",
-      "description": "Current task ID (e.g. UX-001)."
+      "title": "Packaging Tiers",
+      "bullets": [
+        "Knowledge: Markdown documentation in docs/.",
+        "Skills: Automated logic in src/ai/data/skills/.",
+        "Memory: Agent context in integration templates."
+      ]
     },
     {
-      "name": "learnings",
-      "type": "string",
-      "description": "Summary of engineering takeaways."
-    },
-    {
-      "name": "target",
-      "type": "string",
-      "description": "Target tier: skill, knowledge, or memory.",
-      "default": "knowledge"
-    }
-  ],
-  "logic": [
-    "Execute workflow steps defined in src/ai/data/skill-packs/dev-kit-experience-capture/workflow.yaml",
-    "Package experience into the chosen repository location.",
-    "Synchronize the updated experience to the agent environment."
-  ],
-  "outputs": [
-    {
-      "name": "result",
-      "type": "markdown",
-      "description": "A summary of the captured experience and its new location."
+      "title": "Typical Workflow",
+      "bullets": [
+        "Plan: Identify key takeaways from the engineering session.",
+        "Normalize: Select the appropriate packaging tier.",
+        "Process: Execute capture workflow and sync AI agents."
+      ]
     }
   ]
 }

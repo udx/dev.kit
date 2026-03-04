@@ -1,0 +1,25 @@
+{
+  "name": "dev-kit-core",
+  "description": "Primary orchestrator for the dev.kit environment. Manages health, AI synchronization, and context-aware request translation.",
+  "pack_dir": "skill-packs/dev-kit-core",
+  "keywords": ["orchestrator", "config", "agent", "task", "status", "doctor", "exec"],
+  "sections": [
+    {
+      "title": "Core Primitives",
+      "bullets": [
+        "dev.kit status: Engineering brief.",
+        "dev.kit agent: AI synchronization (Gemini, Codex).",
+        "dev.kit task: Task iteration and context tracking.",
+        "dev.kit doctor: Health and security audit."
+      ]
+    },
+    {
+      "title": "Typical Workflow",
+      "bullets": [
+        "Plan: Resolve context and active task state.",
+        "Normalize: Standardize inputs and resolve orchestrator configs.",
+        "Process: Translate requests into CLI commands or prompt artifacts."
+      ]
+    }
+  ]
+}

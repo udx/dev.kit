@@ -1,32 +1,33 @@
 ---
 name: dev-kit-mermaid-export
-description: Convert Mermaid .mmd diagrams to .svg files, especially for article assets.
+description: Convert Mermaid (.mmd) diagrams into high-quality SVG files for documentation and web assets. Use this skill when the 'dev-kit-diagram-generator' is not sufficient or when batch processing existing files.
 ---
 
-## Purpose
-Convert Mermaid diagrams to SVG assets using the project tooling.
+## Objective
+Convert local Mermaid files into SVG assets, ensuring consistent styling and rendering for documentation.
 
+## CLI Usage Example
+```bash
+# Export a specific Mermaid file to SVG
+dev.kit exec "Export docs/diagrams/arch.mmd to SVG"
+
+# Export multiple Mermaid files
+dev.kit exec "Convert all .mmd files in assets/ to SVG"
+
+# Batch export to a specific directory
+dev.kit exec "Export all diagrams to artifacts/output/"
+```
 
 ## Required Inputs
-- One or more `.mmd` file paths.
+- `source`: One or more `.mmd` file paths or a directory containing them.
 
-
-## Config
-- Inputs: source `.mmd` files and optional output directory.
-- Outputs: `.svg` files alongside or under assets directory.
-
+## Optional Inputs
+- `output_dir`: Target directory for SVG files (default: same as source).
 
 ## Logic
-- Identify `.mmd` files to convert.
-- Run the mermaid export command.
-- Report generated files.
-
-
-## Schema
-- Inputs: file paths
-- Outputs: svg files
-- Format: file artifacts
-
+1. Identify `.mmd` files from the provided `source`.
+2. Execute the Mermaid CLI (`mmdc`) or project-specific export scripts.
+3. Validate SVG output and report the location of generated assets.
 
 ## Output Rules
-- List generated files.
+- Provide a summary of all converted files and their final paths.

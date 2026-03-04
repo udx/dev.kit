@@ -1,0 +1,64 @@
+{
+  "commands": [
+    {
+      "key": "status",
+      "description": "High-fidelity engineering brief and system health overview.",
+      "keywords": ["health", "brief", "status", "workspace"],
+      "workflow": {
+        "plan": "Identify environment and active task context.",
+        "normalize": "Resolve identity, mode, and orchestration state.",
+        "process": "Emit engineering brief and engineering advisory."
+      }
+    },
+    {
+      "key": "agent",
+      "description": "Manage and synchronize AI agent environments (Gemini, Codex).",
+      "keywords": ["ai", "sync", "gemini", "codex", "integration"],
+      "workflow": {
+        "plan": "Identify target agent and configuration artifacts.",
+        "normalize": "Render templates with repo-local and global memories.",
+        "process": "Apply rendered artifacts and sync managed skills."
+      }
+    },
+    {
+      "key": "task",
+      "description": "Manage deterministic task iteration and workflows.",
+      "keywords": ["task", "workflow", "iteration", "drift"],
+      "workflow": {
+        "plan": "Identify task ID and required templates.",
+        "normalize": "Generate task prompts, feedback loops, and workflows.",
+        "process": "Execute task iterations and apply feedback to state."
+      }
+    },
+    {
+      "key": "exec",
+      "description": "Execute AI-powered requests with full repository context.",
+      "keywords": ["ai", "prompt", "exec", "codex", "request"],
+      "workflow": {
+        "plan": "Resolve request and context storage.",
+        "normalize": "Build high-fidelity prompt from src/ai data and local context.",
+        "process": "Execute codex session and update context history."
+      }
+    },
+    {
+      "key": "doctor",
+      "description": "Verify environment health, security, and integration state.",
+      "keywords": ["health", "security", "check", "verify", "audit"],
+      "workflow": {
+        "plan": "Identify critical system and integration requirements.",
+        "normalize": "Check versions, paths, and security variables.",
+        "process": "Emit diagnostic report with remediation steps."
+      }
+    },
+    {
+      "key": "ai",
+      "description": "Manage and inspect AI skills and integrations.",
+      "keywords": ["ai", "skills", "metadata", "advisory", "status"],
+      "workflow": {
+        "plan": "Identify requested inspection target (skills, status, advisory).",
+        "normalize": "Resolve skill metadata or fetch advisory guidance.",
+        "process": "Emit structured engineering data or guidance report."
+      }
+    }
+  ]
+}

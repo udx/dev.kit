@@ -1,0 +1,46 @@
+{
+  "workflows": [
+    {
+      "key": "feature",
+      "name": "Feature Engineering Loop",
+      "description": "Standard loop for implementing a new feature with TDD and documentation.",
+      "steps": [
+        "dev.kit task start --request \"Implement <feature>\"",
+        "dev.kit exec \"Define test cases for <feature>\"",
+        "dev.kit exec \"Implement <feature> code and tests\"",
+        "dev.kit doctor",
+        "dev.kit exec \"Resolve repo drift for <task_id>\"",
+        "dev.kit exec \"Capture experience for <task_id>\""
+      ]
+    },
+    {
+      "key": "bugfix",
+      "name": "Resilient Bugfix Loop",
+      "description": "Lifecycle for identifying, fixing, and verifying a bug.",
+      "steps": [
+        "dev.kit task start --request \"Fix <bug>\"",
+        "dev.kit exec \"Reproduce <bug> with a test case\"",
+        "dev.kit exec \"Apply fix for <bug>\"",
+        "dev.kit exec \"Verify fix with test suite\"",
+        "dev.kit exec \"Resolve repo drift for <task_id>\"",
+        "dev.kit exec \"Capture experience for <task_id>\""
+      ]
+    },
+    {
+      "key": "doc-sync",
+      "name": "Knowledge & Doc Sync",
+      "description": "Workflow for synchronizing repository documentation and AI context.",
+      "steps": [
+        "dev.kit exec \"Audit repo for documentation drift\"",
+        "dev.kit exec \"Generate Mermaid diagrams for architecture updates\"",
+        "dev.kit exec \"Update docs/reference and AI context\"",
+        "dev.kit exec \"Resolve repo drift --message 'Docs: Sync'\"",
+        "dev.kit agent gemini"
+      ]
+    }
+  ],
+  "gemini_hooks": {
+    "post_command": "if [ \"$EXIT_CODE\" -eq 0 ]; then dev.kit capture log; fi",
+    "pre_command": "dev.kit ai status --quiet"
+  }
+}
