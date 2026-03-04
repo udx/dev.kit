@@ -58,13 +58,19 @@ flowchart LR
 ```
 
 ### 2. AI-Orchestrated
-**Deep automation with ecosystem and AI awareness.**
+**Advanced automation across two stages.**
 
 ```mermaid
-flowchart LR
-    Intent[Human Intent] --> Exec[dev.kit exec]
-    Exec --> AI[Agent Orchestration]
-    AI --> Auto[Automated Engineering]
+flowchart TD
+    subgraph Stage 1: AI Integration
+    Config[Agent & Env Config] --> Enforce[dev.kit Rule Enforcement]
+    end
+    
+    subgraph Stage 2: Task Execution
+    Normal[Task Normalization] --> Resolution[Drift Resolution]
+    end
+    
+    Enforce --> Normal
 ```
 
 ## Core Toolset

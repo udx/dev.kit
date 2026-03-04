@@ -24,8 +24,11 @@ The development sequence remains unbroken through **Fail-Open Normalization**.
 ### 3. Script-First & CLI-Wrapped
 Logic is encapsulated in modular scripts (`scripts/`, `lib/`) and wrapped by the `dev.kit` CLI to ensure a consistent, deterministic environment.
 
-### 4. AI-First Execution
-By exposing repository "Skills" through a CLI, we provide a stable and high-quality interface for AI agents, reducing hallucinations and increasing accuracy.
+### 4. AI-First Orchestration
+`dev.kit` provides a stable interface for AI agents across two distinct stages:
+
+*   **Stage 1: AI Integration & Environment Config**: Agents configure the environment with `dev.kit` and use its enforcement logic to maintain standards and rules.
+*   **Stage 2: Agent Power via Task Normalization**: Agents leverage the `dev.kit` task normalization engine (Drift -> Normalize -> Iterate) to execute complex tasks reliably.
 
 ## The Execution Lifecycle
 
