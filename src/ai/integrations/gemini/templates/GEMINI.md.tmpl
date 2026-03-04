@@ -34,13 +34,28 @@ For **any** execution scope (including CLI responses and prompt handling):
 | **Workflow** | Always: **Plan -> Normalize -> Process.** |
 | **Automation** | Convert multi-step logic into Pipeline Job Steps. |
 | **Enforcement** | MANDATORY: Use `dev-kit-` prefixed skills for all specialized tasks (Diagrams, Git Sync, etc.). |
+| **Output** | Mute system noise. Do not repeat raw tool logs unless requested. |
+
+---
+
+## 🌊 Waterfall Progression Tailing (Dev-Friendly)
+
+To maintain high-fidelity momentum, end every interaction with a **Compact Status Tail** of the active `workflow.md`. Use the following format:
+
+**Progression**: `[task-id]`
+- [x] Step 1: <summary> (Done)
+- [>] Step 2: <summary> (Active)
+- [ ] Step 3: <summary> (Planned)
+
+*If no workflow is active, provide a high-level iteration status instead.*
 
 ---
 
 ## 🚀 Dynamic Workflow Pattern
 
 > **Prompt:** "Gemini, deploy the latest security patches across the `auth-service` and `gateway` repos."
-> 
+...
+
 > **Gemini Internal Logic:**
 > 1. **Plan:** Identify `auth-service` skill and `gateway` skill.
 > 2. **Normalize:** Check current versions and patch compatibility.
