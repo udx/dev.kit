@@ -48,8 +48,10 @@ dev_kit_agent_apply_gemini() {
   local templates_dir=""
   local rendered=""
   local backup_dir=""
+  local gemini_skills_dir=""
 
   dst="$(dev_kit_agent_gemini_dir)"
+  gemini_skills_dir="$dst/skills/dev.kit"
   templates_dir="$REPO_DIR/src/ai/integrations/gemini/templates"
   
   if [ ! -d "$templates_dir" ]; then
@@ -71,19 +73,40 @@ dev_kit_agent_apply_gemini() {
       -e "/{{MEMORIES}}/d" \
       "$templates_dir/GEMINI.md.tmpl" > "$rendered/GEMINI.md" <<< "$memories"
 
-  # Render system.md
-  # For now, just copy it since it has shell-like placeholders that Gemini might handle
   cp "$templates_dir/system.md.tmpl" "$rendered/system.md"
+
+  # Process Skills for Gemini
+  mkdir -p "$rendered/skills"
+  local skill_file=""
+  while IFS= read -r skill_file; do
+    [ -z "$skill_file" ] && continue
+    local skill_name
+    skill_name="$(basename "${skill_file%.json}")"
+    
+    # Render or copy SKILL.md
+    local pack_dir="$REPO_DIR/src/ai/data/skill-packs/$skill_name"
+    if [ -d "$pack_dir" ] && [ -f "$pack_dir/SKILL.md" ]; then
+      mkdir -p "$rendered/skills/$skill_name"
+      cp -R "$pack_dir/." "$rendered/skills/$skill_name/"
+    else
+      # Fallback: render basic SKILL.md from JSON (simplified)
+      mkdir -p "$rendered/skills/$skill_name"
+      echo "# Skill: $skill_name" > "$rendered/skills/$skill_name/SKILL.md"
+      jq -r '.description' "$skill_file" >> "$rendered/skills/$skill_name/SKILL.md"
+    fi
+  done < <(find "$REPO_DIR/src/ai/data/skills" -type f -name '*.json' | sort)
 
   if [ "$mode" = "plan" ]; then
     echo "--- PLAN: Gemini Integration ---"
-    echo "Target: $dst"
+    echo "Target Directory: $dst"
+    echo "Skills Directory: $gemini_skills_dir"
     echo ""
-    echo "File: GEMINI.md"
-    cat "$rendered/GEMINI.md"
+    echo "Core Artifacts:"
+    echo "- GEMINI.md"
+    echo "- system.md"
     echo ""
-    echo "File: system.md"
-    cat "$rendered/system.md"
+    echo "Managed Skills:"
+    ls "$rendered/skills" | sed 's/^/- /'
     rm -rf "$rendered"
     return 0
   fi
@@ -92,6 +115,7 @@ dev_kit_agent_apply_gemini() {
   mkdir -p "$dst"
   backup_dir="$(dev_kit_agent_new_backup_dir "gemini")"
   
+  # Backup and apply core files
   for file in "GEMINI.md" "system.md"; do
     if [ -f "$dst/$file" ]; then
       cp "$dst/$file" "$backup_dir/$file"
@@ -99,6 +123,16 @@ dev_kit_agent_apply_gemini() {
     cp "$rendered/$file" "$dst/$file"
     echo "Applied: $file"
   done
+
+  # Backup and apply skills
+  if [ -d "$gemini_skills_dir" ]; then
+    mkdir -p "$backup_dir/skills"
+    cp -R "$gemini_skills_dir" "$backup_dir/skills/"
+    rm -rf "$gemini_skills_dir"
+  fi
+  mkdir -p "$(dirname "$gemini_skills_dir")"
+  cp -R "$rendered/skills" "$gemini_skills_dir"
+  echo "Applied: skills (dev.kit namespace)"
 
   echo "Backup: $backup_dir"
   rm -rf "$rendered"
