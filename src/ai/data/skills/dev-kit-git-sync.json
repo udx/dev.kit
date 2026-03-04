@@ -1,0 +1,37 @@
+{
+  "key": "dev-kit-git-sync",
+  "title": "dev.kit Git Sync: Smart Logical Commit",
+  "description": "Identifies repository drift and performs logical, grouped commits with descriptive messages. Use it to resolve state divergence after a task.",
+  "inputs": [
+    {
+      "name": "dry_run",
+      "type": "boolean",
+      "description": "If true, show what would be committed without making changes.",
+      "default": false
+    },
+    {
+      "name": "task_id",
+      "type": "string",
+      "description": "The current task ID for context (e.g., DOC-001).",
+      "default": "resolve-drift"
+    },
+    {
+      "name": "message",
+      "type": "string",
+      "description": "Optional base commit message prefix.",
+      "default": ""
+    }
+  ],
+  "logic": [
+    "Run `src/ai/data/skill-packs/dev-kit-git-sync/scripts/git_sync.sh` with the provided inputs.",
+    "Categorize changes into logical groups: Docs, AI, CLI, Core, and Misc.",
+    "The output will list the groups, the files committed, and the resulting commit messages."
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "markdown",
+      "description": "A summary report of the logical commits made."
+    }
+  ]
+}
