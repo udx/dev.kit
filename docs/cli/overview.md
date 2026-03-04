@@ -1,62 +1,41 @@
 # CLI
 
-## Scope
-
-Documents the dev.kit CLI surface and how commands are wired.
-
 ## Entry Points
 
-- `bin/dev-kit`: high-level entrypoint. Loads helpers and dispatches subcommands from `lib/commands`.
+- `bin/dev-kit`: high-level entrypoint. Loads helpers and dispatches subcommands.
 - `bin/env/dev-kit.sh`: shell init (banner, capture hook, completions).
 - `bin/scripts/install.sh`: install symlink, env, and completions.
-- `bin/scripts/uninstall.sh`: remove symlink; `--purge` removes engine dir.
-- `bin/completions/*`: bash and zsh completions.
 
-## Command Dispatch
+## Core Commands
 
-`bin/dev-kit` loads `lib/commands/*.sh`. Add a new command by creating
-`lib/commands/<name>.sh` with a `dev_kit_cmd_<name>()` function.
+### Status & Health
+- `dev.kit status`: High-fidelity engineering brief.
+- `dev.kit doctor`: Verify environment health and software detection.
 
-## Capture Commands
+### AI & Skills
+- `dev.kit ai skills`: List managed repository powers with workflow metadata.
+- `dev.kit ai commands`: Inspect CLI command keywords and waterfall steps.
+- `dev.kit ai advisory`: Fetch engineering guidance from local documentation.
+- `dev.kit agent <gemini|codex>`: Synchronize AI integrations and memories.
 
-Config:
-- `capture.mode = global|repo|off` (default: `global`)
-- `capture.dir = <path>` (optional override for global)
+### Task & Execution
+- `dev.kit task start --request "<intent>"`: Begin a context-tracked task.
+- `dev.kit exec "<request>"`: Execute AI-powered requests with repo context.
 
-Notes:
-- Relative `capture.dir` paths resolve under `DEV_KIT_HOME`.
-- Capture commands do not update capture logs (safe to inspect last run).
+## Support Commands
 
-Commands:
-- `dev.kit capture path` (print capture directory)
-- `dev.kit capture show` (print capture paths + last input/output)
+### Capture
+- `dev.kit capture path`: Print capture directory.
+- `dev.kit capture show`: Print last input/output logs.
 
-## Context Commands
+### Context
+- `dev.kit context show`: Print context file contents.
+- `dev.kit context reset`: Clear repository-scoped context.
 
-Config:
-- `context.enabled = true|false` (default: `true`)
-- `context.dir = <path>` (optional override)
-- `context.max_bytes = 12000` (default)
+### Codex (Stage 1 Integration)
+- `dev.kit codex config all --apply`: Synchronize managed Codex artifacts.
+- `dev.kit codex compare --path=skills`: Compare local vs applied skill drift.
 
-Commands:
-- `dev.kit context path` (print context file path)
-- `dev.kit context show` (print context file contents)
-- `dev.kit context reset` (clear context)
-- `dev.kit context compact` (trim context to max bytes)
-- `dev.kit exec --no-context` (run without reading/writing context)
+## Library Dispatch
 
-## Codex Commands
-
-- `dev.kit codex` (show integration state/settings; same as `status`)
-- `dev.kit codex config <agents|config|rules|skills|all> --plan` (render planned output)
-- `dev.kit codex config <agents|config|rules|skills|all> --apply` (apply managed output to `~/.codex`)
-- `dev.kit codex <agents|rules|skills|all> --plan|--apply` (shorthand form)
-- `dev.kit codex apply` (legacy alias for `dev.kit codex config all --apply`)
-- `dev.kit codex compare --path=<path>` (compare planned output vs `~/.codex/<path>`; `--path=skills` compares managed `dev-kit-*` skills only)
-- `dev.kit codex restore` (restore the latest backup)
-
-## Constraints
-
-- Keep `bin/` minimal: entrypoints and shell wiring only.
-- Subcommands live in `lib/commands/` and are discovered dynamically.
-- Avoid hardcoded subcommand lists in bin or completions.
+`bin/dev-kit` dynamically loads `lib/commands/*.sh`. Subcommands are mapped to `dev_kit_cmd_<name>`.

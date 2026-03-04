@@ -4,7 +4,7 @@ Domain: AI
 
 ## Summary
 
-AI Orchestration in **dev.kit** is not just about "prompting." It's a two-stage process for resolving **Drift** through a high-fidelity engineering interface.
+AI Orchestration in **dev.kit** is a two-stage process for resolving **Drift** through a high-fidelity engineering interface. It transforms your repository into a standalone **Skill**.
 
 ```mermaid
 flowchart TD
@@ -21,21 +21,21 @@ flowchart TD
 
 ## The Two-Stage Process
 
-### Stage 1: AI Integration & Environment Config
-- **Agent Bootstrapping**: Configuration settings in `environment.yaml` ensure agents are safely initialized.
-- **Rule Enforcement**: `dev.kit` uses repository-scoped rules to constrain agent behavior and ensure high-fidelity results.
-- **Key Doc**: `docs/ai/integrations.md`.
+### Stage 1: AI Integration (Hydration)
+- **Agent Bootstrapping**: Sync repository memories and skills via `dev.kit agent <gemini|codex>`.
+- **Standardized Mappings**: Skills in `src/ai/data/skills/` define keywords and usage for automated agent discovery.
+- **Dynamic Hooks**: Gemini integration includes `pre_command` (health check) and `post_command` (log capture) hooks.
 
-### Stage 2: Task Execution via Normalization
-- **Task Normalization**: Chaotic prompts are transformed into deterministic `workflow.md` (DOC-003) artifacts.
-- **Agent Power**: Agents leverage `dev.kit exec` to run repository "Skills" without hallucinating logic or bypassing CLI boundaries.
-- **Key Doc**: `docs/ai/experience.md`.
+### Stage 2: Task Execution & Interactive Gates
+- **Normalization Gate**: Agents must **STOP and ASK** if intent is ambiguous or matching confidence is low.
+- **Workflow Loops**: Standardized loops (`feature`, `bugfix`, `doc-sync`) defined in `src/ai/data/workflows.json` provide a deterministic roadmap.
+- **Context Persistence**: Every session update is captured into the repository's Knowledge Layer.
 
 ## Core Components
 
-- **User Experience**: `docs/ai/experience.md` - Prompting and execution modes.
-- **Skill Packs**: `src/ai/data/skill-packs/` - The repository's "Skills" available to agents.
-- **Prompt System**: `docs/ai/prompts.md` - Templates and routing logic.
+- **Engineering Scenarios**: `docs/scenarios/README.md` - Lifecycle examples and demo flows.
+- **Skill Packs**: `src/ai/data/skill-packs/` - High-fidelity skill implementations.
+- **CLI Overview**: `docs/cli/overview.md` - Command surface and dispatch logic.
 
 ---
 _UDX DevSecOps Team_
