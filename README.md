@@ -25,6 +25,18 @@
 - **`dev.kit task`**: Manage the lifecycle of active workflows and sessions.
 - **`dev.kit config`**: Environment and repository orchestration settings.
 
+## Managed AI Skills
+
+`dev.kit` provides a suite of deterministic engineering skills that are grounded in your repository's truth:
+
+- **`visualizer`**: Generate and export high-fidelity Mermaid diagrams (SVG).
+- **`git-sync`**: Resolve repository drift with logical, atomic commits.
+- **`experience-capture`**: Distill session learnings into persistent repo power.
+- **`core`**: Maintain environment health and synchronize agent context.
+- **`compliance`**: Validate repository state against UDX engineering standards.
+
+> **Execution**: Run any skill with `dev.kit skills run <name>`.
+
 ## AI Integration
 
 `dev.kit` integrates natively with your AI agent to enforce standardization and repository truth.
