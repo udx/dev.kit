@@ -31,9 +31,7 @@
 
 - **`visualizer`**: Generate and export high-fidelity Mermaid diagrams (SVG).
 - **`git-sync`**: Resolve repository drift with logical, atomic commits.
-- **`experience-capture`**: Distill session learnings into persistent repo power.
 - **`core`**: Maintain environment health and synchronize agent context.
-- **`compliance`**: Validate repository state against UDX engineering standards.
 
 > **Execution**: Run any skill with `dev.kit skills run <name>`.
 
