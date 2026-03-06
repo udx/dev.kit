@@ -108,10 +108,52 @@ EOF
   check_software "git" "$sw_git" "Version control" "Install git to enable repo-as-skill mapping."
   check_software "docker" "$sw_docker" "Containerization" "Install Docker to run isolated worker environments."
   check_software "npm" "$sw_npm" "Node package manager" "Install npm/node for frontend and tooling support."
-  check_software "gh" "$sw_gh" "GitHub CLI" "Install gh for automated repository and PR management."
+  check_software "gh" "$sw_gh" "GitHub CLI" "Install gh for automated repository and Skill Mesh resolution."
   check_software "codex" "$sw_codex" "OpenAI CLI" "Use dev.kit ai sync to hydrate your agent with repository skills."
   check_software "gemini" "$sw_gemini" "Gemini CLI" "Install gemini for native Google AI integration."
-  check_software "mmdc" "$sw_mmdc" "Mermaid CLI" "Install with: npm install -g @mermaid-js/mermaid-cli"
+  check_software "mmdc" "$sw_mmdc" "Mermaid CLI" "Install for local SVG rendering: npm install -g @mermaid-js/mermaid-cli"
+
+  echo ""
+  echo "External Engineering Context:"
+  # GitHub Resolution
+  if command -v dev_kit_github_health >/dev/null 2>&1; then
+    dev_kit_github_health
+    local gh_status=$?
+    case $gh_status in
+      0) print_check "GitHub Resolution" "[ok]" "authenticated (gh)" ;;
+      1) print_check "GitHub Resolution" "[missing]" "CLI missing (gh)" ;;
+      2) print_check "GitHub Resolution" "[warn]" "not authenticated" ;;
+    esac
+  fi
+
+  # Context7 Resolution
+  if command -v dev_kit_context7_health >/dev/null 2>&1; then
+    dev_kit_context7_health
+    local c7_status=$?
+    case $c7_status in
+      0) print_check "Context7 Resolution" "[ok]" "ready (API/CLI)" ;;
+      1) print_check "Context7 Resolution" "[missing]" "API key or CLI missing" ;;
+      2) print_check "Context7 Resolution" "[warn]" "CLI available via npm" ;;
+    esac
+  fi
+
+  # @udx NPM Packages
+  if command -v npm >/dev/null 2>&1; then
+    local missing_pkgs=()
+    for pkg in "@udx/mcurl" "@udx/mysec" "@udx/md.view"; do
+      if ! dev_kit_npm_health "$pkg" >/dev/null 2>&1; then
+        missing_pkgs+=("$(echo "$pkg" | sed 's/.*[\/]//')")
+      fi
+    done
+    if [ ${#missing_pkgs[@]} -eq 0 ]; then
+      print_check "@udx Tools" "[ok]" "all core tools installed"
+    else
+      print_check "@udx Tools" "[warn]" "missing: ${missing_pkgs[*]}"
+      echo "  - [advice] Install for more power: npm install -g @udx/mcurl @udx/mysec @udx/md.view"
+    fi
+  else
+    print_check "@udx Tools" "[missing]" "npm runtime required"
+  fi
 
   echo ""
   echo "Managed AI Skills Health:"
@@ -127,15 +169,7 @@ EOF
       local detail="documented"
       [ ! -f "$skill/SKILL.md" ] && { status="[warn]"; detail="missing SKILL.md"; }
       
-      # Check if scripts are executable
-      if [ -d "$skill/scripts" ]; then
-        local non_exec=""
-        while IFS= read -r script; do
-           [ ! -x "$script" ] && non_exec="found"
-        done < <(find "$skill/scripts" -maxdepth 1 -type f)
-        [ -n "$non_exec" ] && { status="[warn]"; detail="${detail}, some scripts non-executable"; }
-      fi
-      
+      # Managed skills no longer require local scripts (moved to core commands)
       print_check "$name" "$status" "$detail"
     done < <(find "$skills_dir" -mindepth 1 -maxdepth 1 -name "dev-kit-*" -type d)
     

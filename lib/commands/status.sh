@@ -111,5 +111,29 @@ dev_kit_cmd_status() {
   fi
   echo "- [tip] Run 'dev.kit ai skills' to list managed repository powers."
   echo "- [tip] Run 'dev.kit doctor' for deep system analysis."
+  echo "Engineering Empowerment:"
+  if command -v dev_kit_github_health >/dev/null 2>&1 && dev_kit_github_health >/dev/null 2>&1; then
+    echo "- [ok] GitHub Mesh active"
+  else
+    echo "- [  ] GitHub Mesh (gh)"
+  fi
+  if command -v dev_kit_context7_health >/dev/null 2>&1 && dev_kit_context7_health >/dev/null 2>&1; then
+    echo "- [ok] Knowledge Mesh active"
+  else
+    echo "- [  ] Knowledge Mesh (context7)"
+  fi
+  
+  # Check udx tools via the new npm module
+  if command -v npm >/dev/null 2>&1; then
+    local installed=0
+    for pkg in "@udx/mcurl" "@udx/mysec" "@udx/md.view"; do
+      if dev_kit_npm_health "$pkg" >/dev/null 2>&1; then
+        installed=$((installed + 1))
+      fi
+    done
+    if [ $installed -gt 0 ]; then
+      echo "- [ok] @udx Tools ($installed/3)"
+    fi
+  fi
   echo ""
 }

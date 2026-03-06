@@ -54,23 +54,14 @@ dev_kit_cmd_skills() {
       ;;
     run|execute)
       local skill_name="${2:-}"
-      local script_name="${3:-}"
+      local intent="${3:-}"
       
       if [ -z "$skill_name" ]; then
-        echo "Error: Skill name required. Usage: dev.kit skills run <skill-name> [script-name] [args]" >&2
+        echo "Error: Skill name required. Usage: dev.kit skills run <skill-name> [intent]" >&2
         exit 1
       fi
       
-      # Shift arguments to pass the rest to the script
-      if [[ "$script_name" == *.sh ]] || [[ "$script_name" == *.py ]] || [[ "$script_name" == *.js ]]; then
-         shift 3 || true
-      else
-         # If script_name doesn't look like a script, maybe it's actually an argument for the default script
-         script_name=""
-         shift 2 || true
-      fi
-      
-      # Find skill path
+      # Determine skill path
       local skill_path=""
       if [ -d "$skills_dir/$skill_name" ]; then
         skill_path="$skills_dir/$skill_name"
@@ -87,51 +78,69 @@ dev_kit_cmd_skills() {
         exit 1
       fi
       
-      # Determine script
+      # Step 1: Check for legacy scripts (Fallback)
       local script_file=""
-      if [ -n "$script_name" ] && [ -f "$skill_path/scripts/$script_name" ]; then
-         script_file="$skill_path/scripts/$script_name"
-      else
-         # Try finding a "main" or the first executable script
-         if [ -d "$skill_path/scripts" ]; then
-            # Search for common entry points first
-            for entry in "main.sh" "run.sh" "$(basename "$skill_path").sh"; do
-              if [ -x "$skill_path/scripts/$entry" ]; then
-                script_file="$skill_path/scripts/$entry"
-                break
-              fi
-            done
-            # Fallback to first executable if no standard entry point found
-            if [ -z "$script_file" ]; then
-              while IFS= read -r f; do
-                if [ -x "$f" ]; then
-                  script_file="$f"
-                  break
-                fi
-              done < <(find "$skill_path/scripts" -maxdepth 1 -type f)
-            fi
-         fi
+      if [ -d "$skill_path/scripts" ]; then
+        if [ -f "$skill_path/scripts/$intent" ]; then
+          script_file="$skill_path/scripts/$intent"
+        fi
       fi
       
-      if [ -z "$script_file" ] || [ ! -f "$script_file" ]; then
-        echo "Error: No executable script found for skill '$skill_name'." >&2
+      if [ -n "$script_file" ]; then
+        [ ! -x "$script_file" ] && chmod +x "$script_file"
+        export SKILL_PATH="$skill_path"
+        export SKILL_NAME="$skill_name"
+        shift 3 || true
+        "$script_file" "$@"
+        exit $?
+      fi
+      
+      # Step 2: Dynamic Intent Normalization (The Modern Path)
+      if command -v dev_kit_context_normalize >/dev/null 2>&1; then
+        echo "--- dev.kit Intent Normalization ---"
+        echo "Skill:  $skill_name"
+        echo "Intent: $intent"
+        
+        # Resolve intent to a structured manifest
+        local manifest
+        manifest="$(dev_kit_context_normalize "$intent")"
+        
+        # Display the resolution for transparency
+        if command -v jq >/dev/null 2>&1; then
+          echo "Resolution:"
+          
+          # 1. Standard Commands/Workflows
+          echo "$manifest" | jq -r '.mappings.explicit[]? | select(.type != "mesh-packages") | "  - Command: \(.name)"'
+          echo "$manifest" | jq -r '.mappings.internal_workflows[]? | "  - Workflow: \(.name) (\(.path))"'
+          
+          # 2. NPM Packages with Health/Installation Hints
+          local pkgs
+          pkgs="$(echo "$manifest" | jq -r '.mappings.explicit[]? | select(.type == "mesh-packages") | .name')"
+          for pkg in $pkgs; do
+            if command -v dev_kit_npm_health >/dev/null 2>&1; then
+              local bin
+              bin="$(echo "$pkg" | sed 's/.*[\/]//')"
+              if ! command -v "$bin" >/dev/null 2>&1; then
+                 echo "  - Package: $pkg (Not installed)"
+                 dev_kit_npm_install_hint "$pkg" "$bin"
+              else
+                 echo "  - Package: $pkg (Ready)"
+              fi
+            else
+              echo "  - Package: $pkg"
+            fi
+          done
+        fi
+        echo "------------------------------------"
+        
+        # TODO: Implement automatic execution of the first high-priority mapping
+        # For now, we've successfully mapped the intent to the deterministic engine.
+        echo "Status: Intent Resolved (Normalization Layer)"
+        exit 0
+      else
+        echo "Error: Normalization mechanism not loaded." >&2
         exit 1
       fi
-
-      # Ensure executable
-      [ ! -x "$script_file" ] && chmod +x "$script_file"
-      
-      # Prepare environment
-      export SKILL_PATH="$skill_path"
-      export SKILL_NAME="$skill_name"
-      
-      echo "--- dev.kit Skill Execution ---"
-      echo "Skill:  $skill_name"
-      echo "Script: $(basename "$script_file")"
-      echo "Path:   $script_file"
-      echo "-------------------------------"
-      
-      "$script_file" "$@"
       ;;
     info)
       local skill_name="${2:-}"

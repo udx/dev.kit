@@ -415,7 +415,14 @@ for helper in "$REPO_DIR"/lib/internal/*.sh; do
   . "$helper"
 done
 
-# 2. Load Public Commands
+# 2. Load Modules (Shared logic for integrations)
+for module in "$REPO_DIR"/lib/modules/*.sh; do
+  [ -e "$module" ] || continue
+  # shellcheck disable=SC1090
+  . "$module"
+done
+
+# 3. Load Public Commands
 for cmd_file in "$REPO_DIR"/lib/commands/*.sh; do
   [ -e "$cmd_file" ] || continue
   # shellcheck disable=SC1090
