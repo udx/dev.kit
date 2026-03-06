@@ -1,0 +1,12 @@
+flowchart TD
+    User["User Intent / Drift"] --> Agent["AI Agent (Gemini/Antigravity)"]
+    Agent --> Skills["dev.kit skills (Grounding)"]
+    Skills --> Repo["Repository Truth"]
+    Repo --> Agent
+    Agent --> Iterate["Iterative Resolution Cycle"]
+    Iterate --> Result["Drift Resolved"]
+    
+    subgraph dev.kit Empowerment
+        Skills
+        Repo
+    end

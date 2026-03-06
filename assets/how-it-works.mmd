@@ -1,0 +1,21 @@
+---
+config:
+  theme: mc
+---
+sequenceDiagram
+    participant User
+    participant DevKit
+    participant Agent
+    participant Repo
+    participant System
+
+    User->>DevKit: Intent / Goal
+    DevKit->>Agent: Hydrate Context
+    Repo->>Agent: Provide Context
+    Agent->>DevKit: Normalized Workflow
+    DevKit->>Agent: Execute Step
+    Agent->>DevKit: Feedback / Result
+    DevKit->>System: Execution
+    System-->>DevKit: Drift Detected?
+    DevKit-->>User: Done
+    
