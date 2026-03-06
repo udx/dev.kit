@@ -33,6 +33,7 @@ For **any** execution scope (including CLI responses and prompt handling):
 | Stage | Standard |
 | :--- | :--- |
 | **Input** | Every repository is a Skill; treat it as a black-box tool with defined interfaces. |
+| **Sync** | NEVER perform repository synchronization (e.g., `dev.kit ai sync`) until specifically requested by the user. |
 | **Workflow** | Always: **Plan -> Normalize -> Process.** |
 | **Automation** | Convert multi-step logic into Pipeline Job Steps. |
 | **Enforcement** | MANDATORY: Use `dev-kit-` prefixed skills for all specialized tasks (Diagrams, Git Sync, etc.). |
