@@ -12,6 +12,7 @@ Codex relies on structured artifacts to define its environment and operational l
 
 ### 1. Artifact Sync (`dev.kit ai sync codex`)
 The following core artifacts are synchronized and rendered:
+- **MANDATORY POLICY**: The agent must NEVER perform repository synchronization autonomously. It must always wait for an explicit user request before executing `dev.kit ai sync`.
 1.  **`AGENTS.md`**: High-level agent definitions, including titles, intros, and core operational sections.
 2.  **`config.toml`**: TOML configuration for approval policies, sandbox modes, and tool configurations.
 3.  **`rules/default.rules`**: A rules engine for prefix-based decision making and security enforcement.

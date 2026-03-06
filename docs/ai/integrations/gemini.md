@@ -18,6 +18,7 @@ When you run a Gemini command, the agent loads these artifacts in order:
 
 ### 2. Synchronization (`dev.kit ai sync gemini`)
 Synchronization is the process of hydrating the Gemini environment with the repository's current state.
+- **MANDATORY POLICY**: The agent must NEVER perform repository synchronization autonomously. It must always wait for an explicit user request before executing `dev.kit ai sync`.
 - **Artifact Rendering**: Templates in `src/ai/integrations/gemini/templates/` are rendered with real-time metadata (Skill lists, tool definitions).
 - **Surgical Purge**: Stale skills are removed to ensure only valid, current engineering logic is available.
 - **Native Namespace**: Skills are prefixed with `dev-kit-` for deterministic discovery.
