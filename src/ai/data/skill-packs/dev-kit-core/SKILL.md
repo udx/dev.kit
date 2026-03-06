@@ -18,7 +18,7 @@ dev.kit agent gemini
 dev.kit task start --request "Integrate new security scanner"
 
 # Execute a request with full repository context
-dev.kit exec "Audit this repo for Repo-as-a-Skill compliance"
+dev.kit skills run "Audit this repo for Repo-as-a-Skill compliance"
 ```
 
 ## Primary Skill: Configure Developer Environment
@@ -32,7 +32,7 @@ The core capability of `dev.kit` is to establish and maintain a high-fidelity, d
 - `dev.kit status`: High-fidelity engineering brief (Default).
 - `dev.kit agent`: Manage and synchronize AI agent environments (Gemini, Codex).
 - `dev.kit task`: Manage deterministic task iteration and workflows.
-- `dev.kit exec`: Execute standardized prompts with full repo context.
+- `dev.kit skills run`: Execute standardized prompts with full repo context.
 - `dev.kit config`: Show or set global/repo configurations.
 - `dev.kit doctor`: Verify environment health and security.
 
@@ -51,7 +51,7 @@ When acting as a translator, `dev.kit` must:
 ## Success Criteria
 - Environment variables are correctly set (`DEV_KIT_HOME`, `DEV_KIT_STATE`, etc.).
 - Shell auto-init is active and completions are functional.
-- Repository skills are correctly mapped to the AI agent via `dev.kit codex apply`.
+- Repository skills are correctly mapped to the AI agent via `dev.kit ai apply`.
 - `dev.kit doctor` reports `[ok]` for all critical integration points.
 
 ---

@@ -9,13 +9,13 @@ Normalize and resolve repository drift by performing logical, atomic commits bas
 ## CLI Usage Example
 ```bash
 # Sync changes for a documentation task (dry-run first)
-dev.kit exec "Sync my changes for task DOC-123 with dry_run: true"
+dev.kit skills run "Sync my changes for task DOC-123 with dry_run: true"
 
 # Perform logical commits for a completed feature
-dev.kit exec "Resolve repo drift for task CLI-456"
+dev.kit skills run "Resolve repo drift for task CLI-456"
 
 # Sync changes with a custom message prefix
-dev.kit exec "Sync task CORE-789 with message: 'Refactor: '"
+dev.kit skills run "Sync task CORE-789 with message: 'Refactor: '"
 ```
 
 ## Success-First UX Contract

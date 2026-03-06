@@ -4,7 +4,6 @@
       "key": "gemini",
       "target_dir": "{{HOME}}/.gemini",
       "templates_dir": "src/ai/integrations/gemini/templates",
-      "skills_dir": "skills/dev.kit",
       "artifacts": [
         { "src": "GEMINI.md.tmpl", "dst": "GEMINI.md", "type": "template" },
         { "src": "system.md.tmpl", "dst": "system.md", "type": "template" },
@@ -15,7 +14,6 @@
       "key": "codex",
       "target_dir": "{{HOME}}/.codex",
       "templates_dir": "src/ai/integrations/codex/templates",
-      "skills_dir": "skills",
       "artifacts": [
         { "src": "agents.md.tmpl", "dst": "AGENTS.md", "type": "codex_agents" },
         { "src": "config.toml.tmpl", "dst": "config.toml", "type": "codex_config" },

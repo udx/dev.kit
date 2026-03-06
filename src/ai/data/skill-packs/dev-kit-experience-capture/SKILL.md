@@ -9,13 +9,13 @@ Convert ephemeral developer session experience into persistent "Power" for the r
 ## CLI Usage Example
 ```bash
 # Capture learnings from a bugfix task
-dev.kit exec "Capture experience for task FIX-123: Found race condition in sync script. Target: knowledge."
+dev.kit skills run "Capture experience for task FIX-123: Found race condition in sync script. Target: knowledge."
 
 # Create a new automated skill based on a manual process
-dev.kit exec "Capture skill for task FEAT-456: New validation logic. Create 'dev-kit-validate-schema' skill."
+dev.kit skills run "Capture skill for task FEAT-456: New validation logic. Create 'dev-kit-validate-schema' skill."
 
 # Update agent memories with a new project preference
-dev.kit exec "Capture memory for task CFG-789: Use tabs instead of spaces in this repo."
+dev.kit skills run "Capture memory for task CFG-789: Use tabs instead of spaces in this repo."
 ```
 
 ## Success-First UX Contract

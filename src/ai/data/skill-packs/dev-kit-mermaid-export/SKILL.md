@@ -9,13 +9,13 @@ Convert local Mermaid files into SVG assets, ensuring consistent styling and ren
 ## CLI Usage Example
 ```bash
 # Export a specific Mermaid file to SVG
-dev.kit exec "Export docs/diagrams/arch.mmd to SVG"
+dev.kit skills run "Export docs/diagrams/arch.mmd to SVG"
 
 # Export multiple Mermaid files
-dev.kit exec "Convert all .mmd files in assets/ to SVG"
+dev.kit skills run "Convert all .mmd files in assets/ to SVG"
 
 # Batch export to a specific directory
-dev.kit exec "Export all diagrams to artifacts/output/"
+dev.kit skills run "Export all diagrams to artifacts/output/"
 ```
 
 ## Required Inputs

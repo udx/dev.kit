@@ -11,13 +11,13 @@
       }
     },
     {
-      "key": "agent",
-      "description": "Manage and synchronize AI agent environments (Gemini, Codex).",
-      "keywords": ["ai", "sync", "gemini", "codex", "integration"],
+      "key": "skills",
+      "description": "Discover and execute repository-bound skills (Deterministic).",
+      "keywords": ["skills", "run", "execute", "proxy", "automation"],
       "workflow": {
-        "plan": "Identify target agent and configuration artifacts.",
-        "normalize": "Render templates with repo-local and global memories.",
-        "process": "Apply rendered artifacts and sync managed skills."
+        "plan": "Identify skill and script targets from native and local paths.",
+        "normalize": "Resolve executable paths and arguments.",
+        "process": "Execute skill script and report outcome."
       }
     },
     {
@@ -31,13 +31,23 @@
       }
     },
     {
-      "key": "exec",
-      "description": "Execute AI-powered requests with full repository context.",
-      "keywords": ["ai", "prompt", "exec", "codex", "request"],
+      "key": "ai",
+      "description": "Unified agent integration management (Sync, Skills, Status).",
+      "keywords": ["ai", "sync", "skills", "metadata", "advisory", "status"],
       "workflow": {
-        "plan": "Resolve request and context storage.",
-        "normalize": "Build high-fidelity prompt from src/ai data and local context.",
-        "process": "Execute codex session and update context history."
+        "plan": "Identify requested inspection target (sync, skills, status, advisory).",
+        "normalize": "Resolve skill metadata or trigger agent synchronization.",
+        "process": "Apply integration artifacts or emit structured reports."
+      }
+    },
+    {
+      "key": "config",
+      "description": "Environment and repository orchestration settings.",
+      "keywords": ["config", "environment", "settings", "orchestration"],
+      "workflow": {
+        "plan": "Identify target configuration key or environment variable.",
+        "normalize": "Resolve current value or check global/local priority.",
+        "process": "Set, get, or list environment configurations."
       }
     },
     {
@@ -48,16 +58,6 @@
         "plan": "Identify critical system and integration requirements.",
         "normalize": "Check versions, paths, and security variables.",
         "process": "Emit diagnostic report with remediation steps."
-      }
-    },
-    {
-      "key": "ai",
-      "description": "Manage and inspect AI skills and integrations.",
-      "keywords": ["ai", "skills", "metadata", "advisory", "status"],
-      "workflow": {
-        "plan": "Identify requested inspection target (skills, status, advisory).",
-        "normalize": "Resolve skill metadata or fetch advisory guidance.",
-        "process": "Emit structured engineering data or guidance report."
       }
     }
   ]
