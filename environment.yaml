@@ -23,10 +23,5 @@ context:
   max_bytes: 4000
   storage: "repo" # repo-scoped storage for context
 
-capture:
-  enabled: false
-  mode: "off"
-  dir: "capture"
-
 install:
   path_prompt: true
