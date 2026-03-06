@@ -24,8 +24,8 @@ context:
   storage: "repo" # repo-scoped storage for context
 
 capture:
-  enabled: true
-  mode: "global"
+  enabled: false
+  mode: "off"
   dir: "capture"
 
 install:
