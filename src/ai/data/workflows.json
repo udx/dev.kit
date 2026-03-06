@@ -38,9 +38,5 @@
         "dev.kit agent gemini"
       ]
     }
-  ],
-  "gemini_hooks": {
-    "post_command": "if [ \"$EXIT_CODE\" -eq 0 ]; then dev.kit capture log; fi",
-    "pre_command": "dev.kit ai status --quiet"
-  }
+  ]
 }

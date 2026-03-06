@@ -12,15 +12,9 @@ skills:
   - name: "git-sync"
     intent: ["sync", "commit", "drift", "atomic", "resolve"]
     description: "Logical, atomic commits and drift resolution."
-  - name: "experience-capture"
-    intent: ["capture", "session", "knowledge", "learnings", "distill"]
-    description: "Convert session learnings into persistent repo power."
   - name: "core"
     intent: ["health", "bootstrap", "env", "doctor", "system"]
     description: "Manage environment health and agent synchronization."
-  - name: "compliance"
-    intent: ["standards", "12-factor", "lint", "validate", "audit"]
-    description: "Validate repository state against UDX standards."
 
 # Internal Workflows (Markdown-based engineering loops)
 workflows:

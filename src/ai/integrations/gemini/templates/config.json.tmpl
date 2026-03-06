@@ -5,8 +5,7 @@
   "web_search": "live",
   "web_search_request": true,
   "hooks": {
-    "pre_command": "dev.kit ai status --quiet",
-    "post_command": "if [ \"$EXIT_CODE\" -eq 0 ]; then dev.kit capture log; fi"
+    "pre_command": "dev.kit ai status --quiet"
   },
   "workflows_dir": "{{DEV_KIT_SOURCE}}/src/ai/data/workflows.json",
   "sandbox_workspace_write": {
