@@ -12,6 +12,7 @@ Different AI providers leverage unique mechanisms to enforce repository-bound gr
 
 - **[Gemini Integration](integrations/gemini.md)**: Native grounding via `GEMINI.md` hooks and `system.md` instructions.
 - **[Codex Integration](integrations/codex.md)**: Config-driven orchestration using `config.toml` and the rules engine.
+- **[Context7 Integration](integrations/context7.md)**: Smart search for libraries and engineering context (Normalization over MCP).
 
 ## Behavior
 
