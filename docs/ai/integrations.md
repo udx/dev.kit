@@ -6,6 +6,13 @@ Domain: AI Integration
 
 Define how integrations are enabled through contract-driven wiring.
 
+## Supported AI Providers
+
+Different AI providers leverage unique mechanisms to enforce repository-bound grounding. Explore the provider-specific documentation for details:
+
+- **[Gemini Integration](integrations/gemini.md)**: Native grounding via `GEMINI.md` hooks and `system.md` instructions.
+- **[Codex Integration](integrations/codex.md)**: Config-driven orchestration using `config.toml` and the rules engine.
+
 ## Behavior
 
 - Integrations are opt-in.
