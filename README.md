@@ -44,6 +44,7 @@ curl -fsSL https://udx.dev/dev.kit/install.sh | bash
 
 ## Documentation
 
+- **Managed AI Skills**: `docs/ai/skills.md`
 - **Scenarios & Workflows**: `docs/scenarios/README.md`
 - **CLI Overview**: `docs/cli/overview.md`
 - **AI Orchestration**: `docs/ai/README.md`

@@ -24,6 +24,7 @@ The final output is a set of **Workflow Steps** (commands and options) that can 
 
 ## Core Components
 
+- **Managed AI Skills**: `docs/ai/skills.md` - Index and technical logic of repository-bound engineering.
 - **Engineering Scenarios**: `docs/scenarios/README.md` - Lifecycle examples and demo flows.
 - **Skill Packs**: `src/ai/data/skill-packs/` - High-fidelity skill implementations.
 - **Experience Layer**: `docs/ai/experience.md` - Interaction modes and persistence.

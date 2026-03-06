@@ -114,6 +114,40 @@ EOF
   check_software "mmdc" "$sw_mmdc" "Mermaid CLI" "Install with: npm install -g @mermaid-js/mermaid-cli"
 
   echo ""
+  echo "Managed AI Skills Health:"
+  local skills_dir="$HOME/.gemini/skills"
+  if [ -d "$skills_dir" ]; then
+    local count=0
+    while IFS= read -r skill; do
+      [ -z "$skill" ] && continue
+      count=$((count + 1))
+      local name
+      name="$(basename "$skill")"
+      local status="[ok]"
+      local detail="documented"
+      [ ! -f "$skill/SKILL.md" ] && { status="[warn]"; detail="missing SKILL.md"; }
+      
+      # Check if scripts are executable
+      if [ -d "$skill/scripts" ]; then
+        local non_exec=""
+        while IFS= read -r script; do
+           [ ! -x "$script" ] && non_exec="found"
+        done < <(find "$skill/scripts" -maxdepth 1 -type f)
+        [ -n "$non_exec" ] && { status="[warn]"; detail="${detail}, some scripts non-executable"; }
+      fi
+      
+      print_check "$name" "$status" "$detail"
+    done < <(find "$skills_dir" -mindepth 1 -maxdepth 1 -name "dev-kit-*" -type d)
+    
+    if [ $count -eq 0 ]; then
+      print_check "skills" "[warn]" "No managed skills found. Run: dev.kit ai sync"
+    fi
+  else
+    print_check "skills" "[missing]" "Skills directory not found: $skills_dir"
+    echo "  - [advice] Run: dev.kit ai sync to initialize AI environment."
+  fi
+
+  echo ""
   echo "Advisory (Security & Secrets):"
   local repo_root
   repo_root="$(get_repo_root || true)"

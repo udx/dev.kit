@@ -254,6 +254,9 @@ dev_kit_agent_apply_integration() {
 
   # Apply skills to root skills/ directory with prefixes
   mkdir -p "$skills_dst_dir"
+  # Surgically purge existing dev-kit-* skills to avoid stale artifacts
+  find "$skills_dst_dir" -mindepth 1 -maxdepth 1 -name "dev-kit-*" -type d -exec rm -rf {} +
+  
   cp -R "$rendered/skills_sync/." "$skills_dst_dir/"
   echo "Applied: skills (namespace: native)"
 

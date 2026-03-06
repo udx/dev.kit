@@ -26,13 +26,13 @@ resolve_self() {
   echo "$target"
 }
 
-SCRIPT_PATH="$(resolve_self)"
-REPO_DIR="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)"
+export SCRIPT_PATH="$(resolve_self)"
+export REPO_DIR="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)"
 
 # Global Pathing
-DEV_KIT_OWNER="${DEV_KIT_OWNER:-udx}"
-DEV_KIT_REPO="${DEV_KIT_REPO:-dev.kit}"
-DEV_KIT_HOME="${DEV_KIT_HOME:-$HOME/.${DEV_KIT_OWNER}/${DEV_KIT_REPO}}"
+export DEV_KIT_OWNER="${DEV_KIT_OWNER:-udx}"
+export DEV_KIT_REPO="${DEV_KIT_REPO:-dev.kit}"
+export DEV_KIT_HOME="${DEV_KIT_HOME:-$HOME/.${DEV_KIT_OWNER}/${DEV_KIT_REPO}}"
 
 get_repo_root() {
   if command -v git >/dev/null 2>&1; then
