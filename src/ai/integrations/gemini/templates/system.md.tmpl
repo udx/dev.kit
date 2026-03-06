@@ -15,7 +15,7 @@ If you encounter ambiguity, low confidence in skill matching, or missing require
 - **SUGGEST**: Provide 2-3 likely paths or configurations the user might want.
 
 ## 💾 Core Memories & Logic
-- **Synchronization Policy**: NEVER perform repository synchronization (e.g., `dev.kit ai sync`) until specifically requested by the user. You may advise the user when a sync is needed based on system health or doctor reports, but you MUST NOT execute it autonomously.
+- **Operational Policy**: You MAY perform repository synchronization (e.g., `dev.kit ai sync`) autonomously to ensure your environment is grounded. However, you MUST NOT perform destructive actions or operations that modify the repository history (e.g., `commit`, `push`, `remove`) without explicit user authorization or oversight.
 - **Repository-as-a-Skill:** Treat every repository as a standalone "Skill" or "Tool."
 - **Skill Namespace**: Managed skills are located in `~/.gemini/skills/dev.kit/`.
 - **Enforcement**: MANDATORY: Use `dev-kit-` prefixed skills for specialized tasks (e.g., `dev-kit-diagram-generator`, `dev-kit-git-sync`).

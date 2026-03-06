@@ -19,7 +19,8 @@
     {
       "title": "Apply / update operations",
       "rules": [
-        { "pattern": ["dev.kit", "ai", "sync"], "decision": "prompt" },
+        { "pattern": ["dev.kit", "sync"], "decision": "prompt" },
+        { "pattern": ["dev.kit", "ai", "sync"], "decision": "allow" },
         { "pattern": ["git", "apply"], "decision": "prompt" },
         { "pattern": ["git", "am"], "decision": "prompt" },
         { "pattern": ["terraform", "apply"], "decision": "prompt" },
