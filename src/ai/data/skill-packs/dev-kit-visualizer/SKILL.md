@@ -9,13 +9,13 @@ Enable seamless transition from "Intent" to "Visual Asset" by automating both th
 ## CLI Usage Example
 ```bash
 # Generate a new flowchart diagram
-dev.kit skills run "visualizer" "new_diagram.sh" "flowchart" "assets/arch.mmd"
+dev.kit visualizer create flowchart "assets/arch.mmd"
 
 # Export an existing Mermaid file to SVG
-dev.kit skills run "visualizer" "export_svg.sh" "assets/arch.mmd"
+dev.kit visualizer export "assets/arch.mmd"
 
-# Generate AND Export in one intent (Workflow)
-dev.kit skills run "Create a sequence diagram for 'Auth Flow' and export it to SVG in assets/"
+# Or resolve intent directly (Dynamic Normalization)
+dev.kit skills run "visualizer" "Create a sequence diagram for 'Auth Flow' and export it to SVG"
 ```
 
 ## Success-First UX Contract

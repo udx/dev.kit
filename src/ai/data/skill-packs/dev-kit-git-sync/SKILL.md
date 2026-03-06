@@ -9,13 +9,13 @@ Normalize and resolve repository drift by performing logical, atomic commits bas
 ## CLI Usage Example
 ```bash
 # Sync changes for a documentation task (dry-run first)
-dev.kit skills run "Sync my changes for task DOC-123 with dry_run: true"
+dev.kit sync --dry-run --task-id "DOC-123"
 
 # Perform logical commits for a completed feature
-dev.kit skills run "Resolve repo drift for task CLI-456"
+dev.kit sync --task-id "CLI-456"
 
-# Sync changes with a custom message prefix
-dev.kit skills run "Sync task CORE-789 with message: 'Refactor: '"
+# Or resolve intent directly (Dynamic Normalization)
+dev.kit skills run "git-sync" "Resolve repo drift for task CLI-456"
 ```
 
 ## Success-First UX Contract
@@ -33,7 +33,7 @@ Optional:
 - `message`: Optional base message prefix for commits.
 
 ## Workflow
-1. Run `src/ai/data/skill-packs/dev-kit-git-sync/scripts/git_sync.sh`.
+1. Call `dev.kit sync` with the desired options.
 2. Review the logical groupings and proposed commit messages.
 3. If `dry_run=false`, execute the commits.
 4. Return a summary report of the resolution.
