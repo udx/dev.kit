@@ -11,7 +11,6 @@ Usage: dev.kit task <command> [TASK_ID]
 
 Commands:
   start "<req>" Initialize a new task with a generated ID and request
-  log           Show session capture and interaction logs
   reset         Clear repository-scoped session context
   new <id>      Initialize a new task directory with prompt/feedback templates
   apply <id>    Apply task feedback to create/update a workflow
@@ -33,14 +32,6 @@ dev_kit_cmd_task() {
   fi
 
   case "$sub" in
-    log)
-      if command -v dev_kit_cmd_capture >/dev/null 2>&1; then
-        dev_kit_cmd_capture show
-      else
-        echo "Error: Capture logic not loaded." >&2
-        exit 1
-      fi
-      ;;
     reset)
       if context_enabled; then
         local ctx

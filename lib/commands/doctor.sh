@@ -140,7 +140,7 @@ EOF
   # @udx NPM Packages
   if command -v npm >/dev/null 2>&1; then
     local missing_pkgs=()
-    for pkg in "@udx/mcurl" "@udx/mysec" "@udx/md.view"; do
+    for pkg in "@udx/mcurl" "@udx/mysec"; do
       if ! dev_kit_npm_health "$pkg" >/dev/null 2>&1; then
         missing_pkgs+=("$(echo "$pkg" | sed 's/.*[\/]//')")
       fi
@@ -149,7 +149,7 @@ EOF
       print_check "@udx Tools" "[ok]" "all core tools installed"
     else
       print_check "@udx Tools" "[warn]" "missing: ${missing_pkgs[*]}"
-      echo "  - [advice] Install for more power: npm install -g @udx/mcurl @udx/mysec @udx/md.view"
+      echo "  - [advice] Install for more power: npm install -g @udx/mcurl @udx/mysec"
     fi
   else
     print_check "@udx Tools" "[missing]" "npm runtime required"
