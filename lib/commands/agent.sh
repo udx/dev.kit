@@ -38,26 +38,106 @@ dev_kit_agent_render_artifact() {
   
   case "$type" in
     template)
-      # Generic template rendering with basic placeholders
+      # Generic template rendering with core environment placeholders
       local memories=""
-      if [[ "$src_tmpl" == *"GEMINI"* ]]; then
-        memories="$(cat "$HOME/.udx/dev.kit/source/GEMINI.md" 2>/dev/null | grep -A 100 "Gemini Added Memories" | tail -n +2 || true)"
-        [ -z "$memories" ] && memories="- (none)"
+      local agent_skills=""
+      local available_tools=""
+      
+      if [[ "$src_tmpl" == *"GEMINI"* || "$src_tmpl" == *"system.md"* ]]; then
+        # Gather Managed Skills
+        local skill_file=""
+        while IFS= read -r skill_file; do
+          [ -z "$skill_file" ] && continue
+          local name desc usage
+          name="$(jq -r '.name' "$skill_file")"
+          desc="$(jq -r '.description' "$skill_file")"
+          agent_skills+="- **$name**: $desc\n"
+        done < <(find "$REPO_DIR/src/ai/data/skills" -type f -name '*.json' | sort)
+        
+        # Gather Available Tools (CLI Commands)
+        local cmd_file="$REPO_DIR/src/ai/data/commands.json"
+        if [ -f "$cmd_file" ]; then
+          available_tools="$(jq -r '.commands[] | "- **dev.kit \(.key)**: \(.description)"' "$cmd_file")"
+        fi
+        
+        # Gather Memories (if applicable)
+        if [[ "$src_tmpl" == *"GEMINI"* ]]; then
+          if [ -f "$HOME/.gemini/GEMINI.md" ]; then
+            memories="$(grep -A 100 "Gemini Added Memories" "$HOME/.gemini/GEMINI.md" | tail -n +2 || true)"
+          fi
+          [ -z "$memories" ] && memories="- (none)"
+        fi
       fi
       
-      sed -e "s/{{DATE}}/$(date +%Y-%m-%d)/g" \
-          -e "/{{MEMORIES}}/r /dev/stdin" \
-          -e "/{{MEMORIES}}/d" \
-          "$src_tmpl" > "$dst_path" <<< "$memories"
+      # Render using perl for robust multi-line replacement
+      # (Export variables so perl can see them)
+      export DEV_KIT_RENDER_DATE="$(date +%Y-%m-%d)"
+      export DEV_KIT_RENDER_HOME="$HOME"
+      export DEV_KIT_RENDER_DEV_KIT_HOME="$DEV_KIT_HOME"
+      export DEV_KIT_RENDER_DEV_KIT_SOURCE="$DEV_KIT_SOURCE"
+      export DEV_KIT_RENDER_DEV_KIT_STATE="$DEV_KIT_STATE"
+      export DEV_KIT_RENDER_SKILLS="$agent_skills"
+      export DEV_KIT_RENDER_TOOLS="$available_tools"
+      export DEV_KIT_RENDER_MEMORIES="$memories"
+
+      perl -pe '
+        s/\{\{DATE\}\}/$ENV{DEV_KIT_RENDER_DATE}/g;
+        s/\{\{HOME\}\}/$ENV{DEV_KIT_RENDER_HOME}/g;
+        s/\{\{DEV_KIT_HOME\}\}/$ENV{DEV_KIT_RENDER_DEV_KIT_HOME}/g;
+        s/\{\{DEV_KIT_SOURCE\}\}/$ENV{DEV_KIT_RENDER_DEV_KIT_SOURCE}/g;
+        s/\{\{DEV_KIT_STATE\}\}/$ENV{DEV_KIT_RENDER_DEV_KIT_STATE}/g;
+        s/\$\{AgentSkills\}/$ENV{DEV_KIT_RENDER_SKILLS}/g;
+        s/\$\{AvailableTools\}/$ENV{DEV_KIT_RENDER_TOOLS}/g;
+        s/\{\{MEMORIES\}\}/$ENV{DEV_KIT_RENDER_MEMORIES}/g;
+      ' "$src_tmpl" > "$dst_path"
       ;;
     codex_agents)
-      dev_kit_codex_render_agents "$base_rendered"
+      # Minimal Codex Agents rendering
+      local data="$REPO_DIR/src/ai/data/agents.json"
+      export DEV_KIT_RENDER_TITLE="$(jq -r '.title' "$data")"
+      export DEV_KIT_RENDER_INTRO="$(jq -r '.intro[]' "$data" | awk 'NR==1{print;next}{print "";print}')"
+      export DEV_KIT_RENDER_SECTIONS="$(jq -r '.sections[] | "## " + .title + "\n" + (.bullets|map("- " + .)|join("\n"))' "$data" | awk 'NR==1{print;next}{print "";print}')"
+      
+      perl -pe '
+        s/\{\{TITLE\}\}/$ENV{DEV_KIT_RENDER_TITLE}/g;
+        s/\{\{INTRO\}\}/$ENV{DEV_KIT_RENDER_INTRO}/g;
+        s/\{\{SECTIONS\}\}/$ENV{DEV_KIT_RENDER_SECTIONS}/g;
+      ' "$src_tmpl" > "$dst_path"
       ;;
     codex_config)
-      dev_kit_codex_render_config "$base_rendered"
+      # Minimal Codex Config rendering
+      local data="$REPO_DIR/src/ai/data/config.json"
+      local body
+      body="$(jq -r '
+        def q: @json;
+        "approval_policy = " + (.approval_policy|q),
+        "sandbox_mode = " + (.sandbox_mode|q),
+        "web_search = " + (.web_search|q),
+        "personality = " + (.personality|q),
+        "",
+        "project_root_markers = " + (.project_root_markers|@json),
+        "",
+        (.mcp_servers|to_entries[]? | "[mcp_servers." + .key + "]\n"
+          + (if .value.command then "command = " + (.value.command|q) + "\n" else "" end)
+          + (if .value.args then "args = " + (.value.args|@json) + "\n" else "" end)
+          + (if .value.url then "url = " + (.value.url|q) + "\n" else "" end)
+        )
+      ' "$data")"
+      export DEV_KIT_RENDER_CONFIG_BODY="$body"
+      perl -pe 's/\{\{CONFIG_BODY\}\}/$ENV{DEV_KIT_RENDER_CONFIG_BODY}/g' "$src_tmpl" > "$dst_path"
       ;;
     codex_rules)
-      dev_kit_codex_render_rules "$base_rendered"
+      # Minimal Codex Rules rendering
+      local data="$REPO_DIR/src/ai/data/rules.json"
+      local body
+      body="$(jq -r '
+        (.header[]),
+        "",
+        (.groups[] | "# " + .title),
+        (.groups[] | .rules[] | "prefix_rule(pattern=" + (.pattern|@json) + ", decision=\"" + .decision + "\")")
+      ' "$data")"
+      export DEV_KIT_RENDER_RULES_BODY="$body"
+      perl -pe 's/\{\{RULES_BODY\}\}/$ENV{DEV_KIT_RENDER_RULES_BODY}/g' "$src_tmpl" > "$dst_path"
       ;;
     *)
       cp "$src_tmpl" "$dst_path"
@@ -88,9 +168,9 @@ dev_kit_agent_apply_integration() {
   target_dir="$(dev_kit_agent_expand_path "$(echo "$integration_json" | jq -r '.target_dir')")"
   local templates_dir
   templates_dir="$REPO_DIR/$(echo "$integration_json" | jq -r '.templates_dir')"
-  local skills_rel_dir
-  skills_dir_rel="$(echo "$integration_json" | jq -r '.skills_dir')"
-  local skills_dst_dir="$target_dir/$skills_dir_rel"
+  
+  # Set skills destination
+  local skills_dst_dir="$target_dir/skills"
 
   local rendered
   rendered="$(mktemp -d)"
@@ -113,15 +193,23 @@ dev_kit_agent_apply_integration() {
     i=$((i + 1))
   done
 
-  # Process Skills
+  # Process Skills: Prefix with dev-kit- for native discovery
   mkdir -p "$rendered/skills_sync"
   local skill_file=""
   while IFS= read -r skill_file; do
     [ -z "$skill_file" ] && continue
     local skill_name
     skill_name="$(basename "${skill_file%.json}")"
-    local pack_dir="$REPO_DIR/src/ai/data/skill-packs/$skill_name"
+    # Ensure skill_name has dev-kit- prefix
+    [[ "$skill_name" != dev-kit-* ]] && skill_name="dev-kit-$skill_name"
     
+    local pack_dir="$REPO_DIR/src/ai/data/skill-packs/${skill_name}"
+    # Fallback to unprefixed pack dir if prefixed doesn't exist
+    if [ ! -d "$pack_dir" ]; then
+       local unprefixed="${skill_name#dev-kit-}"
+       pack_dir="$REPO_DIR/src/ai/data/skill-packs/$unprefixed"
+    fi
+
     if [ -d "$pack_dir" ] && [ -f "$pack_dir/SKILL.md" ]; then
       mkdir -p "$rendered/skills_sync/$skill_name"
       cp -R "$pack_dir/." "$rendered/skills_sync/$skill_name/"
@@ -140,7 +228,7 @@ dev_kit_agent_apply_integration() {
     echo "Artifacts to apply:"
     find "$rendered" -type f ! -path "*/skills_sync/*" | sed "s|^$rendered/||" | sed 's/^/- /'
     echo ""
-    echo "Managed Skills (dev.kit namespace):"
+    echo "Managed Skills (native skills/ directory):"
     ls "$rendered/skills_sync" | sed 's/^/- /'
     rm -rf "$rendered"
     return 0
@@ -164,15 +252,10 @@ dev_kit_agent_apply_integration() {
     echo "Applied: $rel_path"
   done
 
-  # Backup and apply skills
-  if [ -d "$skills_dst_dir" ]; then
-    mkdir -p "$backup_dir/$skills_dir_rel"
-    cp -R "$skills_dst_dir/." "$backup_dir/$skills_dir_rel/"
-    rm -rf "$skills_dst_dir"
-  fi
+  # Apply skills to root skills/ directory with prefixes
   mkdir -p "$skills_dst_dir"
   cp -R "$rendered/skills_sync/." "$skills_dst_dir/"
-  echo "Applied: skills (namespace: $skills_dir_rel)"
+  echo "Applied: skills (namespace: native)"
 
   echo "Backup: $backup_dir"
   rm -rf "$rendered"

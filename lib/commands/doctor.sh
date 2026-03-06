@@ -109,7 +109,7 @@ EOF
   check_software "docker" "$sw_docker" "Containerization" "Install Docker to run isolated worker environments."
   check_software "npm" "$sw_npm" "Node package manager" "Install npm/node for frontend and tooling support."
   check_software "gh" "$sw_gh" "GitHub CLI" "Install gh for automated repository and PR management."
-  check_software "codex" "$sw_codex" "OpenAI CLI" "Install codex to enable automated dev.kit exec."
+  check_software "codex" "$sw_codex" "OpenAI CLI" "Use dev.kit ai sync to hydrate your agent with repository skills."
   check_software "gemini" "$sw_gemini" "Gemini CLI" "Install gemini for native Google AI integration."
   check_software "mmdc" "$sw_mmdc" "Mermaid CLI" "Install with: npm install -g @mermaid-js/mermaid-cli"
 

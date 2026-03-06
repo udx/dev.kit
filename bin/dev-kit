@@ -234,9 +234,9 @@ list_commands() {
     [ -e "$file" ] || continue
     local name
     name="$(basename "${file%.sh}")"
-    # Filter legacy/internal commands from main view
+    # Filter legacy/internal commands or secondary commands from main list if needed
     case "$name" in
-      capture|context|codex|agent|prompt|audit|github|exec) continue ;;
+      audit|github|agent) continue ;;
     esac
     echo "$name"
   done | LC_ALL=C sort
@@ -244,19 +244,24 @@ list_commands() {
 
 usage() {
   cat <<'USAGE'
-Usage: dev.kit <intent>
-   or: dev.kit <command>
+Usage: dev.kit <command> [options]
 
-The "Big 4" Core Commands:
-  ai       AI Integration, Skills, & Synchronization
-  config   Environment Orchestration & Settings
-  status   Engineering Brief & Diagnostic (Default)
-  task     Workflow Lifecycle & Session History
+Core Commands:
+  status   Engineering brief and system diagnostic (Default)
+  skills   Discover and execute repository-bound skills (Deterministic)
+  ai       Unified agent integration management (Sync, Skills, Status)
+  task     Manage the lifecycle of active workflows and sessions
+  config   Environment and repository orchestration settings
 
-Examples:
-  dev.kit "Implement user auth"      (Implicit Intent)
-  dev.kit task start "New feature"   (Streamlined Workflow)
-  dev.kit ai sync                    (AI Hydration)
+Secondary Commands:
+  capture  Capture CLI session interactions (start, stop, show)
+  agent    Direct agent integration management (advanced)
+
+Example:
+  dev.kit status
+  dev.kit ai sync
+  dev.kit task start "migrate to docker"
+  dev.kit skills execute diagram-generator
 USAGE
 }
 
@@ -401,16 +406,27 @@ context_compact_file() {
   fi
 }
 
-# --- Execution ---
+# --- Command Loading & Logic ---
 
+# 1. Load Internal Helpers (Not exposed as public commands)
+for helper in "$REPO_DIR"/lib/internal/*.sh; do
+  [ -e "$helper" ] || continue
+  # shellcheck disable=SC1090
+  . "$helper"
+done
+
+# 2. Load Public Commands
 for cmd_file in "$REPO_DIR"/lib/commands/*.sh; do
   [ -e "$cmd_file" ] || continue
   # shellcheck disable=SC1090
   . "$cmd_file"
 done
 
+# --- Execution ---
+
 orig_args=("$@")
 cmd="${1:-status}"
+
 case "$cmd" in
   help|-h|--help)
     usage
@@ -418,33 +434,22 @@ case "$cmd" in
     ;;
 esac
 
+# Check for public command first
 fn="dev_kit_cmd_${cmd//-/_}"
-if ! command -v "$fn" >/dev/null 2>&1; then
-  # If it doesn't look like a flag, treat the whole argument list as a request for 'exec'
-  if [[ "$cmd" != -* ]]; then
-    dev_kit_cmd_exec "${orig_args[@]}"
-    exit $?
+if command -v "$fn" >/dev/null 2>&1; then
+  ensure_dev_kit_home
+  shift || true
+  if capture_enabled; then
+    full_cmd="dev.kit ${orig_args[*]:-}"
+    output_path="$(capture_prepare "$full_cmd")"
+    "$fn" "$@" 2>&1 | tee "$output_path"
+  else
+    "$fn" "$@"
   fi
-  echo "Unknown command: $cmd" >&2
-  echo ""
-  usage
-  exit 1
-fi
-
-ensure_dev_kit_home
-if [ "$cmd" = "capture" ]; then
-  shift || true
-  "$fn" "$@"
   exit $?
 fi
 
-if capture_enabled; then
-  full_cmd="dev.kit ${orig_args[*]:-}"
-  output_path="$(capture_prepare "$full_cmd")"
-  shift || true
-  "$fn" "$@" 2>&1 | tee "$output_path"
-  exit $?
-fi
-
-shift || true
-"$fn" "$@"
+echo "Unknown command: $cmd" >&2
+echo ""
+usage
+exit 1

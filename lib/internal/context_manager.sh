@@ -55,7 +55,7 @@ dev_kit_cmd_context() {
       ;;
     help|-h|--help)
       cat <<'CONTEXT_USAGE'
-Usage: dev.kit context [path|show|reset|compact]
+Usage: dev.kit task [path|show|reset|compact]
 
 Commands:
   path    Print the context file path for current context
@@ -66,7 +66,7 @@ CONTEXT_USAGE
       ;;
     *)
       echo "Unknown context command: $sub" >&2
-      echo "Run: dev.kit context --help" >&2
+      echo "Run: dev.kit task --help" >&2
       exit 1
       ;;
   esac

@@ -34,8 +34,10 @@ dev_kit_cmd_ai() {
       fi
       ;;
     sync)
-      local provider
-      provider="$(config_value_scoped ai.provider "codex")"
+      local provider="${2:-}"
+      if [ -z "$provider" ]; then
+        provider="$(config_value_scoped ai.provider "codex")"
+      fi
       echo "Synchronizing AI skills and memories for: $provider"
       if command -v dev_kit_agent_apply_integration >/dev/null 2>&1; then
         dev_kit_agent_apply_integration "$provider" "apply"
@@ -58,7 +60,7 @@ dev_kit_cmd_ai() {
         [ -z "$pack_dir" ] && pack_dir="skill-packs/$name"
         
         local skill_md="$data_dir/$pack_dir/SKILL.md"
-        usage="dev.kit exec \"<intent for $name>\""
+        usage="dev.kit skills run \"<intent for $name>\""
         if [ -f "$skill_md" ]; then
            local example
            # Grep more lines and allow failure

@@ -110,7 +110,7 @@ dev_kit_banner() {
     else
       echo ""
       echo "dev.kit: ready"
-      echo "  run: dev.kit exec \"...\""
+      echo "  run: dev.kit skills run \"...\""
       echo "  config: dev.kit config show"
     fi
   fi

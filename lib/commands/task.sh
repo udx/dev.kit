@@ -14,7 +14,6 @@ Commands:
   log           Show session capture and interaction logs
   reset         Clear repository-scoped session context
   new <id>      Initialize a new task directory with prompt/feedback templates
-  run <id>      Execute a task prompt and append output to feedback
   apply <id>    Apply task feedback to create/update a workflow
 TASK_USAGE
 }
@@ -67,16 +66,19 @@ dev_kit_cmd_task() {
       local task_dir="$repo_root/tasks/$task_id"
       
       mkdir -p "$task_dir"
-      cat > "$task_dir/prompt.md" <<EOF
-# Task — $task_id
+      cat > "$task_dir/plan.md" <<EOF
+# Task Plan — $task_id
 status: draft
 created: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-## Scope
-- Resolve user request
-
-## Request
+## Objective
 $request
+
+## Steps
+- [ ] Normalize intent
+- [ ] Resolve dependencies
+- [ ] Implementation
+- [ ] Verification
 EOF
       cat > "$task_dir/feedback.md" <<EOF
 # Feedback — $task_id
@@ -107,25 +109,6 @@ EOF
 status: pending
 EOF
       echo "Task initialized: $task_dir"
-      ;;
-    run)
-      local task_id="${2:-}"
-      if [ -z "$task_id" ]; then echo "Error: TASK_ID required"; exit 1; fi
-      local task_dir="$repo_root/tasks/$task_id"
-      local prompt_file="$task_dir/prompt.md"
-      local feedback_file="$task_dir/feedback.md"
-      if [ ! -f "$prompt_file" ]; then echo "Error: Missing prompt"; exit 1; fi
-      if ! command -v codex >/dev/null 2>&1; then echo "Error: codex missing"; exit 1; fi
-      
-      echo "Running task: $task_id ..."
-      local report
-      report="$(codex exec "$(cat "$prompt_file")")"
-      {
-        printf "\n\n---\n"
-        printf "run: %s\n\n" "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-        printf "%s\n" "$report"
-      } >> "$feedback_file"
-      echo "Feedback written: $feedback_file"
       ;;
     apply)
       local task_id="${2:-}"
