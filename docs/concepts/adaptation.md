@@ -6,13 +6,7 @@ Domain: Concepts
 
 **Adaptation** describes how dev.kit projects shared repository sources into tool-specific formats without losing the canonical intent. It is the technical bridge for **Resilient Normalization**.
 
-```mermaid
-flowchart LR
-    Source[Canonical Source] --> Project[Adaptation / Projection]
-    Project --> ToolA[Tool A Format]
-    Project --> ToolB[Tool B Format]
-    Project --> Fallback[Fail-Open Fallback]
-```
+![Adaptation Flow](../../assets/diagrams/adaptation-flow.svg)
 
 ## The Purpose of Adaptation
 

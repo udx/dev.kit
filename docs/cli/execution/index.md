@@ -10,16 +10,10 @@ The Execution Flow is the core process dev.kit uses to resolve **Drift** (intent
 
 To ensure consistent results, every chaotic input must pass through the **Normalization Gate**.
 
-```mermaid
-flowchart LR
-    Chaos[Chaotic Input] --> Gate{Normalization Gate}
-    Gate --> Artifacts[Normalized Artifacts]
-    Artifacts --> Execution[CLI Execution]
-    Execution --> Result[Engineering Result]
-```
+![Normalization Gate](../../../assets/diagrams/normalization-gate.svg)
 
 1.  **Input**: The raw human or agent request.
-2.  **Normalize**: Transform request into a `workflow.md` (DOC-003).
+2.  **Normalize**: Transform request into a `workflow.md` (DOC-003). See [AI Prompts: The Configuration Layer](/docs/ai/prompts.md).
 3.  **Execute**: Run the bounded steps through the CLI boundary.
 4.  **Result**: Achieve the desired high-fidelity state.
 

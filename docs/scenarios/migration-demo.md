@@ -7,22 +7,7 @@ This scenario demonstrates the high-fidelity engineering lifecycle when migratin
 
 ## 🌊 The Waterfall Process
 
-```mermaid
-sequenceDiagram
-    participant User
-    participant DK as dev.kit
-    participant AI as Smart Helper
-    
-    User->>DK: dev.kit "migrate to worker-engine"
-    DK->>AI: Normalizing Intent...
-    AI-->>User: [STOP & ASK] Found Vercel config. Proceed with Worker-Engine scaffold?
-    User->>DK: Yes
-    AI->>DK: dev.kit task start "Migration TASK-001"
-    DK->>AI: Task Initialized
-    AI->>DK: [Process] Generating Dockerfile & Makefile...
-    AI->>DK: [Process] Updating environment.yaml...
-    AI-->>User: [Result] Migration artifacts ready in tasks/TASK-001/
-```
+![Migration Demo Flow](../../assets/diagrams/migration-demo-flow.svg)
 
 ## 🛠️ Execution Steps
 

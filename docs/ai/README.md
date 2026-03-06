@@ -1,40 +1,32 @@
-# AI Orchestration: Smart Helper & Agent Logic
+# AI Orchestration: The Configuration Mechanism
 
 Domain: AI
 
 ## Summary
 
-AI Orchestration in **dev.kit** is a two-stage process for resolving **Drift** through a high-fidelity engineering interface. It transforms your repository into a standalone **Skill**.
+AI Orchestration in **dev.kit** treats the AI agent as a **Configuration Mechanism**. Instead of simple chat, the agent acts as a bridge between high-level user intent and deterministic repository-based skills.
 
-```mermaid
-flowchart TD
-    Config[Stage 1: AI Integration] --> Execute[Stage 2: Task Execution]
-    
-    subgraph Stage 1
-    AgentConfig[Agent & Env Config] --> Enforce[Rule Enforcement]
-    end
-    
-    subgraph Stage 2
-    Normalize[Task Normalization] --> Resolution[Drift Resolution]
-    end
-```
+![AI Intent-to-Action Flow](../../assets/diagrams/intent-to-action.svg)
 
-## The Two-Stage Process
+## The Intent-to-Action Flow
 
-### Stage 1: AI Integration (Hydration)
-- **Agent Bootstrapping**: Sync repository memories and skills via `dev.kit agent <gemini|codex>`.
-- **Standardized Mappings**: Skills in `src/ai/data/skills/` define keywords and usage for automated agent discovery.
-- **Dynamic Hooks**: Gemini integration includes `pre_command` (health check) and `post_command` (log capture) hooks.
+### 1. Intent Capture & Skill Discovery
+When a user prompts a task (e.g., "Deploy as docker container"), the agent looks up "Experienced Skills" defined in the repository or available via remote MCP servers.
 
-### Stage 2: Task Execution & Interactive Gates
-- **Normalization Gate**: Agents must **STOP and ASK** if intent is ambiguous or matching confidence is low.
-- **Workflow Loops**: Standardized loops (`feature`, `bugfix`, `doc-sync`) defined in `src/ai/data/workflows.json` provide a deterministic roadmap.
-- **Context Persistence**: Every session update is captured into the repository's Knowledge Layer.
+### 2. Normalization Layer
+`dev.kit` enforces prompt normalization. It maps the discovered skills to the specific repository context, ensuring the AI's instructions are grounded in the actual environment.
+
+### 3. Iterative Resolution (The Loop)
+The AI doesn't just provide an answer; it iterates through instruction steps or loops through feedback cycles. This ensures that even complex "Drift" is resolved step-by-step with deterministic validation.
+
+### 4. Workflow Generation
+The final output is a set of **Workflow Steps** (commands and options) that can be executed directly by the `dev.kit` runtime.
 
 ## Core Components
 
 - **Engineering Scenarios**: `docs/scenarios/README.md` - Lifecycle examples and demo flows.
 - **Skill Packs**: `src/ai/data/skill-packs/` - High-fidelity skill implementations.
+- **Experience Layer**: `docs/ai/experience.md` - Interaction modes and persistence.
 - **CLI Overview**: `docs/cli/overview.md` - Command surface and dispatch logic.
 
 ---

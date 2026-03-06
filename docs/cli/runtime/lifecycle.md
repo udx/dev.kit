@@ -6,13 +6,7 @@ Domain: Runtime
 
 The Runtime Lifecycle defines how **dev.kit** initializes, executes tasks, and terminates. It ensures a high-fidelity environment for resolving drift.
 
-```mermaid
-flowchart TD
-    Install[1. Install & Init] --> Config[2. Config Orchestration]
-    Config --> Exec[3. Task Execution]
-    Exec --> Capture[4. Experience Capture]
-    Capture --> Exit[5. Exit & Cleanup]
-```
+![Runtime Lifecycle](../../../assets/diagrams/runtime-lifecycle.svg)
 
 ## Lifecycle Phases
 
@@ -29,7 +23,7 @@ flowchart TD
 - Verifies repository health via `dev.kit doctor`.
 
 ### 3. Task Execution (Resolution)
-**Interface**: `dev.kit task`, `dev.kit exec`.
+**Interface**: `dev.kit task`, `dev.kit skills run`.
 - Normalizes chaotic input into a `workflow.md`.
 - Executes bounded steps through the CLI boundary.
 - Triggers **Fail-Open Normalization** if tools fail.

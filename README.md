@@ -4,53 +4,49 @@
 
 **Experienced engineering flow with no-bullshit results.**
 
-`dev.kit` resolves the **Drift** (intent divergence) by **Normalizing** it into a deterministic path and **Iterating** to the result.
+`dev.kit` resolves the **Drift** (intent divergence) by **Normalizing** it into a deterministic path and **Iterating** to the result. It acts as a **Thin Empowerment Layer** (Grounding) that bridges chaotic intent with repository-based skills.
+
+## How it Works: The Grounding Bridge
+
+`dev.kit` empowers AI agents (Gemini, Antigravity) with repository-centric grounding:
+
+1.  **Grounding & Normalization**: Intent is mapped to repo-specific logic and normalized into a deterministic execution plan.
+2.  **Skill Discovery**: `dev.kit` exposes "Experienced Skills" directly to your AI agent's toolbelt (native skill discovery).
+3.  **Waterfall Progression**: AI iterates through instruction steps with deterministic validation and real-time feedback.
+
+![Intent-to-Action Flow](assets/diagrams/intent-to-action.svg)
+
+## Core Interface
+
+`dev.kit` focuses on repository health and agent empowerment, leaving high-level reasoning to your preferred agent.
+
+- **`dev.kit status`**: (Default) Engineering brief and system diagnostic.
+- **`dev.kit ai`**: Unified agent integration management (Sync, Skills, Status).
+- **`dev.kit task`**: Manage the lifecycle of active workflows and sessions.
+- **`dev.kit config`**: Environment and repository orchestration settings.
+
+## AI Integration
+
+`dev.kit` integrates natively with your AI agent to enforce standardization and repository truth.
+
+```bash
+# Sync skills and engineering context to your agent (Gemini/Codex)
+dev.kit ai sync
+```
+
+> **Grounding Layer**: `dev.kit` does not replace your agent; it hydrates it with the repository's source of truth.
 
 ## Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/udx/dev.kit/main/bin/scripts/install.sh | bash
-source "$HOME/.udx/dev.kit/source/env.sh"
+curl -fsSL https://udx.dev/dev.kit/install.sh | bash
 ```
-
-## The "Big 4" Core Commands
-
-Simplified primitives allow you to focus on the intent, not the CLI syntax.
-
-- **`dev.kit <intent>`**: Implicitly executes AI-powered requests.
-- **`dev.kit ai`**: Unified AI management (Sync, Skills, Status).
-- **`dev.kit task`**: Engineering lifecycle (Start, Log, Reset).
-- **`dev.kit config`**: Environment settings and orchestrator.
-- **`dev.kit status`**: (Default) Engineering brief and system diagnostic.
-
-## The Engineering Loop: Feature Flow
-
-```bash
-# 1. One-shot Intent (Implicit execution)
-dev.kit "Implement user auth"
-
-# 2. Start a context-tracked task
-dev.kit task start "Refactor sync script"
-
-# 3. Synchronize AI state
-dev.kit ai sync
-
-# 4. Inspect session history
-dev.kit task log
-```
-
-## 🧠 Core Philosophy
-
-### 1. Interactive Normalization (STOP & ASK)
-Agents operate with a **Normalization Gate**. If an intent is ambiguous, the agent will **STOP and ASK** for clarification rather than guessing.
-
-### 2. Repository-as-a-Skill
-Every repository is a standalone **Skill**. `dev.kit` maps internal logic into a unified interface for humans and AI agents.
 
 ## Documentation
 
 - **Scenarios & Workflows**: `docs/scenarios/README.md`
 - **CLI Overview**: `docs/cli/overview.md`
-- **AI Integration**: `docs/ai/README.md`
+- **AI Orchestration**: `docs/ai/README.md`
 
+---
 _UDX DevSecOps Team_

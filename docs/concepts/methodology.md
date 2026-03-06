@@ -11,13 +11,7 @@ The **UDX Methodology** centers on **CLI-Wrapped Automation (CWA)**. It is the p
 1.  **Repo-as-a-Skill**: Every repository exposes its logic through standardized scripts and CLI commands. Engineering experience is captured and packaged as portable automation.
 2.  **Smart Helper**: **dev.kit** resolves **Drift** (intent divergence) by translating repository logic into a high-fidelity interface.
 
-```mermaid
-flowchart LR
-    Chaos[Chaotic Scripts] --> CWA[CLI-Wrapped Automation]
-    CWA --> Skill[Portable Skill]
-    Skill --> Agent[AI Agent Integration]
-    Agent --> Resolution[Drift Resolution]
-```
+![Methodology Flow](../../assets/diagrams/methodology-flow.svg)
 
 ## The Principles
 

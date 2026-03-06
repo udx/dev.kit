@@ -6,14 +6,7 @@ Domain: Concepts
 
 **Context Driven Engineering (CDE)** is the model dev.kit uses to turn chaotic intent into executable context. It provides a structural framework for identifying and **Resolving the Drift** between intent and reality.
 
-```mermaid
-flowchart TD
-    Intent[Human Intent] --> Artifacts[Intent-as-Artifact]
-    Artifacts --> Identification[Drift Identification]
-    Identification --> Resolution[Drift Resolution Cycle]
-    Resolution --> Capture[Experience Capture]
-    Capture --> Artifacts
-```
+![CDE Flow](../../assets/diagrams/cde-flow.svg)
 
 ## Core Philosophy
 

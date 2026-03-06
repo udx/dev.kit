@@ -1,59 +1,47 @@
-# AI Integration Experience: High-Fidelity Prompting
+# AI Integration Experience: High-Fidelity Interaction
 
 Domain: AI
 
 ## Purpose
 
-The AI Integration Experience ensures that both humans and agents have a consistent, deterministic way to interact with the repository's skills. It supports multiple execution modes depending on tool availability.
+The AI Integration Experience ensures that both humans and agents have a consistent, deterministic way to interact with the repository's skills. It supports multiple execution modes, transforming the AI from a chat bot into a **Configuration Mechanism**.
 
-## The Execution Flow
+## The Interaction Design
 
-```mermaid
-flowchart TD
-    User[User Input / Drift] --> Exec[dev.kit exec]
-    Exec --> Prompt[Generate Normalized Prompt]
-    Prompt --> Mode{AI Enabled?}
-    
-    Mode -- Yes --> Codex[Run AI Engine]
-    Mode -- No --> Print[Print Prompt to Stdout]
-    
-    Codex --> Result[Capture Result & Context]
-    Print --> Manual[Manual Application]
-```
+![AI Experience Flow](../../assets/diagrams/ai-experience-flow.svg)
+
+1.  **Intent Capture**: Human or agent provides a high-level task description.
+2.  **Normalization Layer**: `dev.kit` transforms this intent into a deterministic prompt artifact.
+3.  **Execution Mode**: The prompt is either handled by a local engine (`gemini`, `codex`) or printed for manual use.
+4.  **Feedback Capture**: The result and execution context are captured back into the repository's knowledge layer.
 
 ## Operating Modes
 
-### Mode A: AI-Powered (Smart Translator)
-**Requirements**: `ai.enabled = true`, supported CLI (e.g., `codex`, `gemini`) installed.
-- **Behavior**: `dev.kit exec` automatically generates the prompt and runs the AI engine.
-- **Persistence**: Results and context are automatically captured in the repository-scoped context.
+### Mode A: AI-Powered (Local Configuration Engine)
+**Requirements**: `ai.enabled = true`, supported CLI engine installed.
+- **Behavior**: `dev.kit skills run` automatically generates the prompt and runs the AI engine.
+- **Outcome**: The AI acts as a smart configuration tool, producing executable changes or plans immediately.
+- **Persistence**: Results are automatically captured in `~/.udx/dev.kit/state/`.
 
-### Mode B: Personal Helper (Interface Translator)
+### Mode B: Human-Assisted (Interface Bridge)
 **Requirements**: `ai.enabled = false` (Default).
-- **Behavior**: `dev.kit exec` generates and prints the normalized prompt to the terminal.
-- **Usage**: Copy the output into a web UI (ChatGPT, Claude), local LLM, or a manual session.
+- **Behavior**: `dev.kit skills run` generates and prints the normalized prompt to the terminal.
+- **Usage**: Copy-paste into any web UI (ChatGPT, Claude) or local LLM.
+- **Outcome**: `dev.kit` provides the *configuration context* needed for any AI to understand the repository's skills.
 
-## Context & Persistence
+## Context & Continuity
 
-**dev.kit** maintains a repository-scoped memory to ensure continuity across multiple turns.
-- **Config**: `context.enabled = true`, `context.max_bytes = 4000`.
-- **Commands**:
-    - `dev.kit context show`: Inspect the current memory.
-    - `dev.kit context reset`: Clear the memory.
-    - `dev.kit exec --no-context`: Run a one-off command without context.
+`dev.kit` maintains repository-scoped memory to ensure momentum across multi-turn interactions.
 
-## Skill Adaptation
+- **Continuity Signals**: Injected into every prompt to tell the AI:
+    - **Where it is**: Current active workflow path.
+    - **What it's doing**: Current step ID.
+    - **What happened**: Previous step status and missing inputs.
 
-To ensure AI agents can use repository skills, `dev.kit` projects internal skill definitions into tool-specific manifests (Stage 1 AI Orchestration).
-- **Command**: `dev.kit codex config all --apply` - Syncs local skills to the agent's environment.
-- **Managed Skills**: These appear as `dev-kit-*` skills in the agent's toolbelt.
-
-## Continuity Signals
-
-For multi-turn tasks, dev.kit injects **Continuity Signals** into every prompt:
-- **Active Workflow Path**: The path to the current `workflow.md`.
-- **Current Step ID**: The specific task the agent is working on.
-- **Resumption Context**: Any missing inputs or blocked statuses from the previous turn.
+- **Memory Management**:
+    - `dev.kit task show`: Inspect the active memory.
+    - `dev.kit task reset`: Clear the memory to start fresh.
+    - `dev.kit skills run --no-context`: Run a one-off task without history.
 
 ---
 _UDX DevSecOps Team_

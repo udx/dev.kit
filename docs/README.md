@@ -1,20 +1,8 @@
 # dev.kit Documentation Index
 
-Welcome to the **Smart Helper** documentation. This guide is structured to help you resolve the **Development Drift** from foundations to execution.
+Welcome to the **dev.kit** documentation. This guide is structured to help you resolve the **Development Drift** from foundations to execution.
 
-```mermaid
-flowchart TD
-    Foundations[1. Foundations] --> Setup[2. Setup & Runtime]
-    Setup --> Flow[3. The Execution Flow]
-    Flow --> AI[4. AI Orchestration]
-    AI --> Ref[5. Engineering Reference Index]
-
-    click Foundations "/docs/concepts/methodology.md"
-    click Setup "/docs/cli/overview.md"
-    click Flow "/docs/cli/execution/index.md"
-    click AI "/docs/ai/README.md"
-    click Ref "/docs/reference/udx-reference-index.md"
-```
+![dev.kit Documentation Index](../assets/diagrams/docs-index.svg)
 
 ---
 
@@ -32,18 +20,18 @@ Configure your environment and understand the CLI surface.
 - **Configuration**: `docs/cli/config.md` - Using `environment.yaml`.
 - **Runtime Lifecycle**: `docs/cli/runtime/lifecycle.md`.
 
-### 3. The Execution Flow (Normalization)
+### 3. Configuration Mechanism (AI Orchestration)
+Leverage AI agents as a configuration layer to automate the resolution of drift.
+- **AI Integration**: `docs/ai/README.md` - The Intent-to-Action flow.
+- **User Experience**: `docs/ai/experience.md` - High-fidelity prompting.
+- **Skill Packs**: `src/ai/data/skill-packs/` - Repository-as-a-Skill.
+
+### 4. The Execution Flow (Normalization)
 Master the task normalization engine and deterministic workflows.
 - **Execution Index**: `docs/cli/execution/index.md` - Flow entry point.
 - **Task Normalization**: `docs/cli/execution/iteration-loop.md` - Drift to Resolution.
 - **Workflow Schema (DOC-003)**: `docs/cli/execution/workflow-io-schema.md`.
 - **Prompt-as-Workflow**: `docs/cli/execution/prompt-as-workflow.md`.
-
-### 4. AI Orchestration (Agent Logic)
-Leverage AI agents to automate the resolution of drift.
-- **AI Integration**: `docs/ai/README.md` - Two-stage orchestration.
-- **User Experience**: `docs/ai/experience.md` - High-fidelity prompting.
-- **Skill Packs**: `src/ai/data/skill-packs/` - Repository-as-a-Skill.
 
 ### 5. Engineering Reference Index
 A comprehensive map of all standards, compliance, and operational guidance.

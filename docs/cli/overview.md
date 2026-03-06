@@ -20,7 +20,7 @@
 
 ### Task & Execution
 - `dev.kit task start --request "<intent>"`: Begin a context-tracked task.
-- `dev.kit exec "<request>"`: Execute AI-powered requests with repo context.
+- `dev.kit skills run "<request>"`: Execute AI-powered requests with repo context.
 
 ## Support Commands
 
@@ -29,12 +29,12 @@
 - `dev.kit capture show`: Print last input/output logs.
 
 ### Context
-- `dev.kit context show`: Print context file contents.
-- `dev.kit context reset`: Clear repository-scoped context.
+- `dev.kit task show`: Print context file contents.
+- `dev.kit task reset`: Clear repository-scoped context.
 
 ### Codex (Stage 1 Integration)
-- `dev.kit codex config all --apply`: Synchronize managed Codex artifacts.
-- `dev.kit codex compare --path=skills`: Compare local vs applied skill drift.
+- `dev.kit ai config all --apply`: Synchronize managed Codex artifacts.
+- `dev.kit ai compare --path=skills`: Compare local vs applied skill drift.
 
 ## Library Dispatch
 

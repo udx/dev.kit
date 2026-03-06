@@ -8,14 +8,7 @@ The Iteration Loop is the practical mechanism dev.kit uses to resolve the **Drif
 
 ## The Drift Resolution Cycle
 
-```mermaid
-flowchart TD
-    Drift[1. Identify Drift] --> Normalize[2. Normalize to Workflow]
-    Normalize --> Iterate[3. Iterate Steps]
-    Iterate --> Validate[4. Validate Result]
-    Validate --> Capture[5. Capture Experience]
-    Capture --> Drift
-```
+![Drift Resolution Cycle](../../../assets/diagrams/drift-resolution-cycle.svg)
 
 1.  **Identify Drift**: Capture the gap between intent and current state (Prompt/Request).
 2.  **Normalize**: Convert the drift into a deterministic `workflow.md` (Task Apply).

@@ -6,11 +6,7 @@ Domain: Reference
 
 The Engineering Layers provide a structural model for categorizing repository "Skills," rules, and automation logic. Each layer builds upon the next to resolve drift and maintain a high-fidelity environment.
 
-```mermaid
-flowchart TD
-    Build[Layer 1: Source & Build] --> Deploy[Layer 2: Deployment & Runtime]
-    Deploy --> Context[Layer 3: Active Context & Orchestration]
-```
+![Engineering Layers](../../../assets/diagrams/engineering-layers.svg)
 
 ## Layer 1: Source & Build (The Foundation)
 **Scope**: How source code is structured, built, and validated.
