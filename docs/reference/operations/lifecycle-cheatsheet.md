@@ -1,42 +1,52 @@
-# Lifecycle Cheatsheet
+# Operational Lifecycle: Release & Maintenance
+
+**Domain:** Reference / Operations  
+**Status:** Canonical
 
 ## Summary
 
-Lifecycle practices that reduce production risk and keep delivery predictable. Focused on release flow, environment coordination, and operational safety.
+Lifecycle practices focus on reducing production risk and maintaining predictable delivery. In **dev.kit**, these practices are codified within the **Drift Resolution Cycle** to ensure that every environment transition is deterministic and high-fidelity.
 
-## When To Use
+---
 
-- Defining install/upgrade flows.
-- Designing release pipelines and migration steps.
-- Aligning environment responsibilities.
+## 🛠 dev.kit Grounding: Principle-to-Primitive Mapping
 
-## Quick Answers
+| Lifecycle Practice | dev.kit Implementation | Primitive / Command |
+| :--- | :--- | :--- |
+| **Environment Alignment** | Unified runtime via the Worker Ecosystem. | `udx/worker` |
+| **Step Sequencing** | Bounded, multi-step execution sequences. | `workflow.md` |
+| **State Tracking** | Lifecycle visibility (planned -> in_progress -> done). | `dev.kit status` |
+| **Pre-Deploy Readiness** | Preparation of feature branches and grounding. | `dev.kit sync prepare` |
+| **Post-Deploy Verification** | Continuous diagnostic and compliance checks. | `dev.kit doctor` |
 
-- "Should we automate this?" -> start manual, then automate once stable.
-- "Who owns this step?" -> assign explicit owner per stage.
-- "How do we manage env vars?" -> define ownership and enforce in pipeline.
+---
 
-## Core Practices
+## 🏗 High-Fidelity Mandates
 
-- Test in multiple environments before production.
-- Use orchestration to sequence lifecycle steps.
-- Treat environment variables as part of release pipeline.
-- Ensure app knows its environment identity.
-- Plan migrations and rollbacks before deployment.
-- Rotate certificates on a schedule.
-- Make security a lifecycle requirement.
+### 1. Unified Step Ownership
+Never execute ad-hoc manual steps during a release. All operational actions must be captured as discrete workflow steps.
+- **Action**: Use `dev.kit skills run` to orchestrate one-off maintenance tasks.
 
-## dev.kit Notes
+### 2. Migration-First Design
+Plan migrations and rollbacks before implementation begins. Ground your execution in verified repository logic.
+- **Action**: Document migration steps in the `plan.md` artifact before normalization.
 
-- Treat install/upgrade as explicit lifecycle steps.
-- Encode migrations in workflows, not in ad-hoc steps.
+### 3. Identity Verification
+Ensure that the application and its automation know their environment identity at runtime.
+- **Action**: Use `environment.yaml` to define scoped orchestration variables.
 
-## Practical Checks
+---
 
-- Can a release be promoted without manual edits?
-- Are migrations and rollbacks written before deploy?
-- Is environment identity explicit at runtime?
+## Operational Cues
 
-## Source
+- **Release Blocked?** -> Check `workflow.md` status to identify the specific failure step.
+- **Environment Drift?** -> Run `dev.kit doctor` to verify alignment with standard Worker runtimes.
 
-- https://andypotanin.com/developing-lifecycles-a-comprehensive-cheatsheet/
+## 📚 Authoritative References
+
+Predictable delivery requires a commitment to planning and management:
+
+- **[Developing Lifecycles Cheatsheet](https://andypotanin.com/developing-lifecycles-a-comprehensive-cheatsheet/)**: Essential practices for smooth production deployments.
+
+---
+_UDX DevSecOps Team_

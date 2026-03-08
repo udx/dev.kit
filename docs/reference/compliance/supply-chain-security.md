@@ -1,40 +1,50 @@
-# Software Supply Chain Security
+# Supply Chain Security: Dependency & Artifact Integrity
+
+**Domain:** Reference / Compliance  
+**Status:** Canonical
 
 ## Summary
 
-Supply chain security focuses on protecting dependencies, build pipelines, and release artifacts. The goal is to reduce hidden risk from third-party code and automated systems.
+Supply chain security focuses on protecting dependencies, build pipelines, and release artifacts. In **dev.kit**, these controls are enforced through isolated runtimes and deterministic environment audits.
 
-## When To Use
+---
 
-- Reviewing dependency policy.
-- Designing build and release pipelines.
-- Auditing artifact integrity.
+## 🛠 dev.kit Grounding: Control-to-Action
 
-## Quick Answers
+| Security Control | dev.kit Implementation | Primitive / Command |
+| :--- | :--- | :--- |
+| **Dependency Pinning** | Environment-as-Code with explicit versions. | `environment.yaml` |
+| **Isolated Builds** | Clean execution via the Worker Ecosystem. | `udx/worker` |
+| **Integrity Checks** | Proactive software and auth verification. | `dev.kit doctor` |
+| **Provenance Tracking** | Logical, domain-specific commit history. | `dev.kit sync run` |
 
-- "How do we trust dependencies?" -> pin, verify, and monitor.
-- "How do we trust artifacts?" -> sign and verify releases.
-- "What is the minimum baseline?" -> SBOM, integrity checks, restricted builds.
+---
 
-## Baseline Controls
+## 🏗 High-Fidelity Mandates
 
-- Pin and verify dependencies with integrity metadata.
-- Use SBOMs for visibility and audits.
-- Restrict build permissions and isolate build environments.
-- Sign and verify artifacts before deployment.
-- Monitor upstream package changes.
+### 1. Deterministic Runtimes
+Never perform high-stakes operations (builds, deployments) in an ungrounded local environment. Always use a verified container runtime.
+- **Action**: Use `udx/worker` for all task-specific execution loops.
 
-## dev.kit Notes
+### 2. Verified Authorization
+All agents and CLI meshes must be explicitly authorized and health-checked.
+- **Action**: Run `dev.kit ai status` to verify the security of remote discovery providers.
 
-- Prefer deterministic builds and pinned dependencies in tooling.
-- Keep build outputs in state, not in source.
+---
 
-## Practical Checks
+## Operational Cues
 
-- Can you trace a release artifact to its sources?
-- Are builds reproducible in isolated environments?
-- Are deployment artifacts signed and verified?
+- **New Dependency?** -> Define it in `environment.yaml` and verify its health via `dev.kit doctor`.
+- **Artifact Released?** -> Use `dev.kit sync` to capture the resolution state and provide an audit trail.
 
-## Source
+## 📚 Authoritative References
 
-- https://andypotanin.com/software-supply-chain-security/
+Security mandates are aligned with broader organizational protection strategies:
+
+- **[Unspoken Rules of Cybersecurity](https://andypotanin.com/unspoken-rules-cybersecurity/)**: Establishing effective security practices in a digital landscape.
+- **[Software Supply Chain Security](https://andypotanin.com/software-supply-chain-security/)**: Protecting build pipelines and release artifacts.
+- **[SDLC Breaking Points](https://andypotanin.com/wordpress-risks/)**: Identifying common failure points in the software development lifecycle.
+- **[Click Bombing & Fraud](https://andypotanin.com/click-bombing-2025/)**: Understanding and preventing modern digital supply chain threats.
+
+---
+_UDX DevSecOps Team_

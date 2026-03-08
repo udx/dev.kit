@@ -1,33 +1,51 @@
-# AOCA Guidance Snapshot
+# AOCA Guidance: Automation Standardization
+
+**Domain:** Reference / Compliance  
+**Status:** Canonical
 
 ## Summary
 
-Art of Cloud Automation (AOCA) is the default UDX guidance source for automation and platform decisions. Use it to standardize how automation and governance are approached.
+The **Art of Cloud Automation (AOCA)** is the primary UDX guidance source for automation and platform decisions. In **dev.kit**, AOCA provides the foundational patterns used to reduce operational variance and align governance with engineering workflows.
 
-## When To Use
+---
 
-- Defining automation standards.
-- Evaluating platform or infrastructure practices.
-- Aligning governance with engineering workflows.
+## 🛠 dev.kit Grounding: Guidance-to-Action
 
-## Quick Answers
+| AOCA Focus Area | dev.kit Implementation | Primitive / Command |
+| :--- | :--- | :--- |
+| **Automation Baseline** | Standardized CLI wrappers for all repo tasks. | `dev.kit skills` |
+| **Reduced Variance** | Bounded, multi-step engineering loops. | `workflow.md` |
+| **Embedded Governance** | Compliance checks integrated into diagnostics. | `dev.kit doctor` |
+| **Knowledge Capture** | Dynamic discovery of engineering experience. | `dev.kit ai advisory` |
 
-- "Where do we start with standards?" -> AOCA.
-- "How do we align security with automation?" -> use AOCA for baseline patterns.
-- "What is our preferred best-practice source?" -> AOCA unless a tool-specific standard is required.
+---
 
-## Focus Areas
+## 🏗 High-Fidelity Mandates
 
-- Automation as a first-class concern.
-- Standards to reduce operational variance.
-- Compliance and governance embedded in automation.
-- Supply chain risk and validation practices.
+### 1. Standard-First Automation
+Never introduce ad-hoc automation that bypasses the `dev.kit` boundary. All repository logic must be exposed as high-fidelity "Skills."
+- **Action**: Use script headers (`@description`, `@intent`) to feed the **Dynamic Discovery Engine**.
 
-## dev.kit Notes
+### 2. Traceable Governance
+Compliance evidence must be a natural byproduct of the **Drift Resolution Cycle**.
+- **Action**: Ensure all `workflow.md` artifacts include explicit verification steps.
 
-- Use AOCA to define default patterns and prompts.
-- Keep AOCA-aligned behavior in docs and templates.
+---
 
-## Source
+## Operational Cues
 
-- https://gist.github.com/fqjony/489fde2ea615b7558bbd407f8b9d97c7
+- **Ambiguous Practice?** -> Consult `dev.kit ai advisory` for AOCA-aligned patterns.
+- **New Skill Required?** -> Use AOCA baseline patterns to define the interface and logic.
+
+---
+
+## 📚 Authoritative References
+
+AOCA principles provide the baseline for cloud-native automation and governance:
+
+- **[AOCA: The Book](https://udx.io/cloud-automation-book/)**: Comprehensive guidance on automation, quality, and leadership.
+- **[Automation Best Practices](https://udx.io/cloud-automation-book/automation-best-practices)**: Systematic approaches to reducing operational variance.
+- **[Cybersecurity & Standards](https://udx.io/cloud-automation-book/cybersecurity)**: Aligning security protocols with automated engineering flows.
+
+---
+_UDX DevSecOps Team_

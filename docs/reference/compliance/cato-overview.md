@@ -1,33 +1,54 @@
-# cATO Overview
+# cATO (Continuous Authorization): Automated Compliance
+
+**Domain:** Reference / Compliance  
+**Status:** Canonical
 
 ## Summary
 
-Continuous Authorization to Operate (cATO) replaces point-in-time approvals with continuous, automated evidence. It aligns compliance with delivery workflows.
+Continuous Authorization to Operate (cATO) replaces point-in-time approvals with automated, real-time evidence. In **dev.kit**, cATO is achieved by integrating compliance checks directly into the **Drift Resolution Cycle**.
 
-## When To Use
+---
 
-- Designing compliance-friendly pipelines.
-- Defining evidence collection and audit trails.
-- Integrating governance with CI/CD.
+## 🛠 dev.kit Grounding: Principle-to-Primitive Mapping
 
-## Quick Answers
+| cATO Requirement | dev.kit Implementation | Primitive / Command |
+| :--- | :--- | :--- |
+| **Continuous Monitoring** | Real-time environment and dependency audit. | `dev.kit doctor` |
+| **Automated Evidence** | Iterative engineering logs and atomic commits. | `dev.kit sync run` |
+| **Drift Remediation** | Identification and resolution of intent divergence. | `dev.kit skills run` |
+| **Traceable Workflows** | Bounded, versioned execution plans. | `workflow.md` |
+| **Validated Supply Chain** | Verification of authorized mesh providers. | `dev.kit ai status` |
 
-- "What is cATO?" -> continuous compliance via automated evidence.
-- "What changes for teams?" -> controls move into pipelines.
-- "Why now?" -> faster delivery with ongoing assurance.
+---
 
-## Practical Implications
+## 🏗 High-Fidelity Mandates
 
-- Controls must be measurable and observable.
-- Pipelines should produce compliance evidence.
-- Configuration drift needs detection and remediation.
-- Risk acceptance is explicit and tracked.
+### 1. Compliance-as-Artifact
+Never treat compliance as a post-work activity. All evidence must be captured during the implementation phase.
+- **Action**: Ensure every task includes a **Verification** step in its `workflow.md`.
 
-## dev.kit Notes
+### 2. Observable Controls
+Repository controls must be measurable and discoverable by the **Dynamic Discovery Engine**.
+- **Action**: Keep `environment.yaml` and script headers updated to reflect security and compliance intents.
 
-- Store evidence and reports in state, not source.
-- Keep workflows traceable with explicit inputs/outputs.
+### 3. State-Based Evidence
+Store all generated evidence, reports, and security scans in the hidden **State Hub** to avoid source clutter.
+- **Action**: Use `.udx/dev.kit/` for ephemeral compliance artifacts.
 
-## Source
+---
 
-- https://andypotanin.com/implementing-a-continuous-authority-to-operate-cato-system/
+## Operational Cues
+
+- **Security Gap?** -> Run `dev.kit doctor` to identify missing scanners (e.g., `mysec`).
+- **Audit Required?** -> Use `dev.kit sync run` to generate a high-signal commit history.
+
+## 📚 Authoritative References
+
+Modern compliance strategies prioritize continuous evidence over static approvals:
+
+- **[Implementing a cATO System](https://andypotanin.com/implementing-a-continuous-authority-to-operate-cato-system/)**: A framework for automated security monitoring and assessment.
+- **[SDLC Breaking Points](https://andypotanin.com/wordpress-risks/)**: Principles for identifying vulnerabilities in the delivery chain.
+- **[Little's Law for Flow](https://andypotanin.com/littles-law-applied-to-devops/)**: Managing cycle time through automated compliance and throughput.
+
+---
+_UDX DevSecOps Team_

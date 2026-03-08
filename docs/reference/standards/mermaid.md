@@ -1,26 +1,51 @@
-# Mermaid Syntax Standard
+# Mermaid Standards: Visual Engineering
 
-Domain: Standards
+**Domain:** Reference / Standards  
+**Status:** Canonical
 
 ## Summary
 
-`dev.kit` uses **Mermaid** for all engineering diagrams (flowcharts, sequence diagrams, state machines, etc.). Standardizing on Mermaid ensures that diagrams are version-controlled alongside source code and can be rendered by both human tools (GitHub/VSCode) and AI agents.
+**Mermaid** is the primary standard for all engineering diagrams (Flowcharts, Sequence Diagrams, State Machines). In **dev.kit**, Mermaid ensures that architecture and process flows are version-controlled alongside source code and accessible to both humans and agents.
 
-## External Documentation
+---
 
-- **Official Introduction**: [Mermaid Introduction](https://mermaid.js.org/intro/)
-- **Syntax Reference**: [Mermaid Syntax Reference](https://mermaid.js.org/intro/syntax-reference.html)
-- **Live Editor**: [Mermaid Live Editor](https://mermaid.live/)
+## 🛠 dev.kit Grounding: Visual-to-Action
 
-## Repository Standards
+| Diagram Practice | dev.kit Implementation | Primitive / Command |
+| :--- | :--- | :--- |
+| **Diagram Generation** | Automated rendering of SVG/PNG assets. | `dev.kit visualizer` |
+| **Resilient Fallback** | Fallback to raw Markdown if rendering fails. | `workflow.md` |
+| **Unified Logic** | Synchronized view of code and architecture. | `dev.kit status` |
+| **Intent-to-Action** | Visual mapping of normalized workflows. | `docs/skills/` |
 
-1.  **Format**: Always use `flowchart LR` or `flowchart TD` for process flows.
-2.  **Labels**: Keep labels short and action-oriented. Use `<br/>` for line breaks within nodes.
-3.  **Consistency**: Use standard shapes for common actions:
-    - `[Rectangle]` for Processes/Normalizations.
-    - `{Rhombus}` for Decision Gates/Skill selection.
-    - `([Rounded])` for Start/End points.
-4.  **Resilience Fallback**: When a specialized diagram generator fails, `dev.kit` falls back to raw Mermaid markdown to ensure continuity.
+---
+
+## 🏗 High-Fidelity Mandates
+
+### 1. Versioned Architecture
+Never store diagrams as binary blobs. All architectural context must live as Mermaid source code to ensure it remains discoverable and diffable.
+- **Action**: Use the `dev.kit visualizer` to export high-fidelity assets from `.mmd` sources.
+
+### 2. Standardized Shapes
+Maintain visual consistency to ensure agents can accurately reason about process flows.
+- **`[Rectangle]`**: Processes / Normalizations.
+- **`{Rhombus}`**: Decision Gates / Skill Selection.
+- **`([Rounded])`**: Start / End Points.
+
+---
+
+## Operational Cues
+
+- **Outdated Diagram?** -> Run `dev.kit visualizer` to regenerate assets from repository truth.
+- **Broken Flow?** -> Check the raw Mermaid source in the `assets/diagrams/` hub.
+
+---
+## 📚 Authoritative References
+
+Visual engineering is a core part of maintaining high-fidelity documentation:
+
+- **[Synthetic Content Enrichment](https://andypotanin.com/ai-powered-revolution-content-management-synthetic-enrichment-standalone-quality/)**: Strategies for maintaining standalone quality through visual standards.
+- **[AOCA: Visual Standards](https://udx.io/cloud-automation-book/quality)**: High-fidelity patterns for architectural documentation.
 
 ---
 _UDX DevSecOps Team_
