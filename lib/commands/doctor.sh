@@ -69,6 +69,31 @@ dev_kit_cmd_doctor() {
   local sw_mmdc; sw_mmdc=$(check_sw "mmdc")
 
   if [ "$json_output" = "true" ]; then
+    local repo_root; repo_root="$(get_repo_root || true)"
+    
+    # Calculate Mesh Health
+    local gh_health="missing"
+    if command -v dev_kit_github_health >/dev/null 2>&1; then
+      case $(dev_kit_github_health; echo $?) in
+        0) gh_health="ok" ;;
+        2) gh_health="warn" ;;
+      esac
+    fi
+
+    local c7_health="missing"
+    if command -v dev_kit_context7_health >/dev/null 2>&1; then
+      case $(dev_kit_context7_health; echo $?) in
+        0) c7_health="ok" ;;
+        2) c7_health="warn" ;;
+      esac
+    fi
+
+    # Calculate Skill Count
+    local skill_count=0
+    if [ -d "$REPO_DIR/docs/workflows" ]; then
+      skill_count=$(find "$REPO_DIR/docs/workflows" -maxdepth 1 -name "*.md" ! -name "README.md" ! -name "normalization.md" ! -name "loops.md" ! -name "mermaid-patterns.md" | wc -l | tr -d ' ')
+    fi
+
     cat <<EOF
 {
   "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
@@ -83,6 +108,16 @@ dev_kit_cmd_doctor() {
     "gh": "$sw_gh",
     "gemini": "$sw_gemini",
     "mmdc": "$sw_mmdc"
+  },
+  "mesh": {
+    "github": "$gh_health",
+    "context7": "$c7_health",
+    "workflow_skills": $skill_count
+  },
+  "compliance": {
+    "tdd": "$([ -d "$repo_root/tests" ] && echo "ok" || echo "warn")",
+    "cac": "$([ -f "$repo_root/environment.yaml" ] && echo "ok" || echo "warn")",
+    "docs": "$([ -d "$repo_root/docs" ] && echo "ok" || echo "warn")"
   }
 }
 EOF
