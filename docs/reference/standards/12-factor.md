@@ -52,6 +52,8 @@ Favor `environment.yaml` for shared orchestration and `.env` for local secrets. 
 
 - **[12-Factor Environment Automation](https://udx.io/devops-manual/12-factor-environment-automation)**: Deep dive into cloud-native configuration strategy.
 - **[12factor.net](https://12factor.net/)**: The original methodology for building software-as-a-service.
+- **[Decentralized DevOps](https://andypotanin.com/how-decentralized-devops-can-help-your-organization/)**: Scaling organizations through distributed service architectures.
+- **[Navigating to the Cloud](https://andypotanin.com/windows-to-cloud/)**: Managing the complexity of modern cloud IT systems.
 
 ---
 _UDX DevSecOps Team_

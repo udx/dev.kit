@@ -69,6 +69,8 @@ CWA is inspired by the transition toward decentralized and automated engineering
 
 - **[Embrace the Future: Decentralized DevOps](https://andypotanin.com/decentralized-devops-the-future-of-software-delivery/)**: The shift toward distributed service architectures.
 - **[Automation-First Development](https://andypotanin.com/the-power-of-automation-how-it-has-transformed-the-software-development-process/)**: Breaking the struggle for efficiency through systematic automation.
+- **[Digital Rails & Logistics](https://andypotanin.com/digital-rails-and-logistics/)**: Drawing parallels between software algorithms and automotive evolution.
+- **[AOCA: The Automation Baseline](https://udx.io/cloud-automation-book/automation-best-practices)**: Establishing standardized CLI wrappers for reduced variance.
 
 ---
 _UDX DevSecOps Team_

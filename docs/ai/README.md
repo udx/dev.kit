@@ -39,6 +39,13 @@ Unified view of internal commands, managed skills, and external tools:
 - **[GitHub](mesh/github.md)**: Remote repository and workflow resolution (via `gh`).
 - **[NPM](mesh/npm.md)**: Tooling and package health management.
 
----
+## 📚 Authoritative References
 
+AI orchestration is built on systematic grounding and standalone quality:
+
+- **[Autonomous Technical Operator](https://andypotanin.com/claude-operator-prompt/)**: Principles for high-fidelity agent grounding and execution.
+- **[Synthetic Content Enrichment](https://andypotanin.com/ai-powered-revolution-content-management-synthetic-enrichment-standalone-quality/)**: Strategies for maintaining documentation quality via AI.
+- **[AOCA: Embedded Governance](https://udx.io/cloud-automation-book/cybersecurity)**: Aligning compliance with automated engineering flows.
+
+---
 _UDX DevSecOps Team_

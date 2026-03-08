@@ -47,6 +47,8 @@ Ensure that the application and its automation know their environment identity a
 Predictable delivery requires a commitment to planning and management:
 
 - **[Developing Lifecycles Cheatsheet](https://andypotanin.com/developing-lifecycles-a-comprehensive-cheatsheet/)**: Essential practices for smooth production deployments.
+- **[SDLC Breaking Points](https://andypotanin.com/wordpress-risks/)**: Identifying and mitigating vulnerabilities in the delivery lifecycle.
+- **[Implementing a cATO System](https://andypotanin.com/implementing-a-continuous-authority-to-operate-cato-system/)**: Principles for automated compliance and authorization.
 
 ---
 _UDX DevSecOps Team_
