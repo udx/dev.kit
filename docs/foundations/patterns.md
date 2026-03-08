@@ -34,6 +34,16 @@ This document captures reusable documentation, scripting, and reporting patterns
 - **Provenance**: Include generated timestamps and source paths.
 - **Scanability**: Prefer Markdown tables and lists for human and machine readability.
 
+## 🏗 Pattern Grounding
+
+Engineering patterns are grounded in specialized UDX repositories to ensure domain-specific fidelity:
+
+| Pattern Type | Grounding Resource | Domain |
+| :--- | :--- | :--- |
+| **Automation** | [`udx/reusable-workflows`](https://github.com/udx/reusable-workflows) | Validated CI/CD and script templates. |
+| **Logic** | [`udx/dev.kit`](https://github.com/udx/dev.kit) | High-fidelity CLI and discovery patterns. |
+| **Structure** | [`udx/wp-stateless`](https://github.com/udx/wp-stateless) | Reference for plugin and structural standards. |
+
 ---
 
 ## 📚 Authoritative References

@@ -26,6 +26,16 @@ The following assets provide the programmatic engine for this skill:
 - **Patterns**: High-fidelity Mermaid styling and shape standards.
 - **Export Engine**: Hardened `mmdc` wrapper for SVG/PNG generation.
 
+## 🏗 Visual Grounding
+
+Visual engineering is operationalized through deterministic UDX engines:
+
+| Requirement | Grounding Resource | Role |
+| :--- | :--- | :--- |
+| **Logic** | [`udx/dev.kit`](https://github.com/udx/dev.kit) | High-fidelity export engine and template discovery. |
+| **Patterns** | [`reference/standards/mermaid.md`](../reference/standards/mermaid.md) | Canonical shapes and visual mapping rules. |
+| **Runtime** | [`udx/worker`](https://github.com/udx/worker) | Deterministic environment for asset generation. |
+
 ---
 
 ## 🚀 Primitives Orchestrated

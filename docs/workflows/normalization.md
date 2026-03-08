@@ -32,6 +32,16 @@ Agents are auto-mapped to send and receive context from repository workflows. If
 2.  **Generates** the necessary code or documentation patterns.
 3.  **Packages** the resolution into a normalized `dev.kit` workflow step.
 
+## 🏗 Normalization Grounding
+
+Task normalization is operationalized through canonical UDX resources:
+
+| Requirement | Grounding Resource | Role |
+| :--- | :--- | :--- |
+| **Logic Mapping** | [`udx/dev.kit`](https://github.com/udx/dev.kit) | Dynamic discovery and task resolution engine. |
+| **Context Hub** | [`docs/workflows/README.md`](README.md) | Source of truth for available repository sequences. |
+| **Fidelity** | [`udx/worker`](https://github.com/udx/worker) | Deterministic runtime for validating normalized plans. |
+
 ---
 
 ## 📚 Authoritative References

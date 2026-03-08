@@ -37,6 +37,16 @@ Always validate **dev.kit** logic within a clean `udx/worker` container to emula
 docker run --rm -v $(pwd):/workspace -w /workspace udx/worker ./tests/suite.sh
 ```
 
+## 🏗 Practice Grounding
+
+High-fidelity engineering is operationalized through canonical UDX resources:
+
+| Requirement | Grounding Resource | Role |
+| :--- | :--- | :--- |
+| **Logic** | [`udx/dev.kit`](https://github.com/udx/dev.kit) | Validated primitives and discovery engine. |
+| **Runtime** | [`udx/worker`](https://github.com/udx/worker) | Deterministic, isolated base environment. |
+| **Patterns** | [`udx/reusable-workflows`](https://github.com/udx/reusable-workflows) | Validated sequences for reduced variance. |
+
 ---
 
 ## 🏗 High-Fidelity Principles

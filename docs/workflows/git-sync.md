@@ -27,6 +27,16 @@ The following assets provide the programmatic engine for this skill:
 - **Atomic Committer**: Hardened logic that ensures changes are committed in discrete, revertible blocks.
 - **PR Suggestion Engine**: Proactive prompt that interfaces with the **GitHub Mesh** to create remote Pull Requests.
 
+## 🏗 Sync Grounding
+
+Git synchronization is operationalized through canonical UDX resources:
+
+| Requirement | Grounding Resource | Role |
+| :--- | :--- | :--- |
+| **Atomic Logic** | [`udx/dev.kit`](https://github.com/udx/dev.kit) | The primary engine for logical grouping and commits. |
+| **Workflow Pattern** | [`udx/reusable-workflows`](https://github.com/udx/reusable-workflows) | Pattern baseline for remote sync and CI/CD. |
+| **Collaboration** | [`ai/mesh/github.md`](../ai/mesh/github.md) | Grounding for PR creation and remote resolution. |
+
 ---
 
 ## 🚀 Primitives Orchestrated
