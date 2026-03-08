@@ -36,6 +36,16 @@ Favor explicit keys and allowed values over implicit behavior. A high-fidelity r
 
 - **Unpredictable Config?** -> Enforce strict indentation and schema validation via CI/CD.
 - **Ambiguous Variable?** -> Move it to `environment.yaml` with an explicit description.
+## 🏗 Configuration Grounding
+
+Configuration standards are operationalized through deterministic UDX engines:
+
+| Practice | Grounding Resource | Role |
+| :--- | :--- | :--- |
+| **Validation** | [`udx/dev.kit`](https://github.com/udx/dev.kit) | Scoped orchestration and environment parsing. |
+| **Parity** | [`udx/worker`](https://github.com/udx/worker) | Deterministic environment for config stability. |
+
+---
 
 ## 📚 Authoritative References
 

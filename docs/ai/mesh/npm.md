@@ -32,6 +32,15 @@ A proactive security scanner used to identify secrets, API keys, and sensitive c
 ### 📄 `@udx/md.view`
 A Markdown rendering engine that allows for high-fidelity documentation previews directly from the CLI, ensuring that repository context is always legible and accessible.
 
+## 🏗 NPM Grounding
+
+NPM-based tooling is operationalized through canonical UDX resources:
+
+| Package | Grounding Resource | Role |
+| :--- | :--- | :--- |
+| **Tool Mesh** | [`udx/worker`](https://github.com/udx/worker) | Pre-hydrated environment for global packages. |
+| **Discovery** | [`udx/dev.kit`](https://github.com/udx/dev.kit) | Dynamic detection and health-check logic. |
+
 ---
 
 ## 🌊 Waterfall Progression (DOC-003)

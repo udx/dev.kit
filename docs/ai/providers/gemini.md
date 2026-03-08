@@ -40,6 +40,15 @@ Gemini is hard-coded to follow the **Analyze -> Normalize -> Process** workflow 
 ### Authorized Path
 Agents are auto-allowed to execute `dev.kit` commands, establishing a high-fidelity safety boundary for automated orchestration.
 
+## 🏗 Gemini Grounding
+
+AI orchestration is operationalized through canonical UDX resources:
+
+| Requirement | Grounding Resource | Role |
+| :--- | :--- | :--- |
+| **Grounding** | [`udx/dev.kit`](https://github.com/udx/dev.kit) | Dynamic context loading and skill discovery. |
+| **Stability** | [`udx/worker`](https://github.com/udx/worker) | Deterministic runtime for agent execution. |
+
 ---
 
 ## 🌊 Waterfall Progression (DOC-003)

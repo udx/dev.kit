@@ -36,6 +36,16 @@ When an external tool or standard encounters an edge case, always trigger the **
 
 - **Ambiguous Syntax?** -> Consult the official external reference linked in the module.
 - **Edge Case Detected?** -> Fallback to the **Resilient Waterfall** and resolve the drift manually.
+## 🏗 External Grounding
+
+External standards are integrated through canonical UDX resources:
+
+| Standard | Grounding Resource | Role |
+| :--- | :--- | :--- |
+| **Workflow** | [`udx/reusable-workflows`](https://github.com/udx/reusable-workflows) | Pattern baseline for GitHub Actions and pipelines. |
+| **Container** | [`udx/worker`](https://github.com/udx/worker) | Host-level parity for Docker/OCI standards. |
+
+---
 
 ## 📚 Authoritative References
 

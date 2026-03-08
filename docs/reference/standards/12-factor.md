@@ -45,6 +45,17 @@ Favor `environment.yaml` for shared orchestration and `.env` for local secrets. 
 
 - **Drift Detected?** -> Run `dev.kit sync run` to restore 12-factor codebase integrity.
 - **Missing Tooling?** -> Consult the **Skill Mesh** via `dev.kit status` to resolve the gap.
+## 🏗 Standard Mapping
+
+The 12-Factor methodology is operationalized through canonical UDX resources:
+
+| Principle Cluster | Grounding Resource | Role |
+| :--- | :--- | :--- |
+| **Runtime & Parity** | [`udx/worker`](https://github.com/udx/worker) | Deterministic environment and dependency isolation. |
+| **Code & Config** | [`udx/dev.kit`](https://github.com/udx/dev.kit) | Atomic synchronization and environment orchestration. |
+| **Execution** | [`udx/reusable-workflows`](https://github.com/udx/reusable-workflows) | Validated admin and release process patterns. |
+
+---
 
 ## 📚 Authoritative References
 

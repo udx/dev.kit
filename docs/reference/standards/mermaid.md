@@ -39,7 +39,17 @@ Maintain visual consistency to ensure agents can accurately reason about process
 - **Outdated Diagram?** -> Run `dev.kit visualizer` to regenerate assets from repository truth.
 - **Broken Flow?** -> Check the raw Mermaid source in the `assets/diagrams/` hub.
 
+## 🏗 Visual Grounding
+
+Visual engineering is operationalized through deterministic UDX engines:
+
+| Practice | Grounding Resource | Role |
+| :--- | :--- | :--- |
+| **Rendering** | [`udx/dev.kit`](https://github.com/udx/dev.kit) | High-fidelity export engine and templates. |
+| **Fidelity** | [`udx/worker`](https://github.com/udx/worker) | Deterministic environment for asset generation. |
+
 ---
+
 ## 📚 Authoritative References
 
 Visual engineering is a core part of maintaining high-fidelity documentation:

@@ -36,6 +36,15 @@ To maintain high-fidelity engineering flows, the GitHub integration prioritizes 
 | **[`udx/wp-stateless`](https://github.com/udx/wp-stateless)** | Plugin Core | Reference for high-fidelity WordPress cloud integrations. |
 | **[`udx/worker-deployment`](https://github.com/udx/worker-deployment)** | Orchestration | Standard patterns for deploying and managing the Worker Ecosystem. |
 
+## 🏗 GitHub Grounding
+
+Remote discovery and collaboration are operationalized through canonical UDX resources:
+
+| Requirement | Grounding Resource | Role |
+| :--- | :--- | :--- |
+| **Patterns** | [`udx/reusable-workflows`](https://github.com/udx/reusable-workflows) | Source of truth for remote discovery templates. |
+| **Automation** | [`udx/worker-deployment`](https://github.com/udx/worker-deployment) | Standard patterns for remote environment audits. |
+
 ---
 
 ## 🌊 Waterfall Progression (DOC-003)

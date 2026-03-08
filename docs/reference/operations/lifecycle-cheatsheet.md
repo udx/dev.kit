@@ -41,6 +41,17 @@ Ensure that the application and its automation know their environment identity a
 
 - **Release Blocked?** -> Check `workflow.md` status to identify the specific failure step.
 - **Environment Drift?** -> Run `dev.kit doctor` to verify alignment with standard Worker runtimes.
+## 🏗 Operational Grounding
+
+The release and maintenance lifecycle is operationalized through canonical UDX resources:
+
+| Phase | Grounding Resource | Role |
+| :--- | :--- | :--- |
+| **Release** | [`udx/reusable-workflows`](https://github.com/udx/reusable-workflows) | Standardized CI/CD and deployment patterns. |
+| **Deployment** | [`udx/worker-deployment`](https://github.com/udx/worker-deployment) | Orchestration of high-fidelity environments. |
+| **Maintenance** | [`udx/worker`](https://github.com/udx/worker) | Deterministic runtime for all operational tasks. |
+
+---
 
 ## 📚 Authoritative References
 
