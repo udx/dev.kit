@@ -161,26 +161,31 @@ EOF
 
   echo ""
   echo "Managed AI Skills Health (Repository):"
-  local local_skills="$REPO_DIR/docs/skills"
+  local local_skills="$REPO_DIR/docs/workflows"
   if [ -d "$local_skills" ]; then
     local count=0
-    while IFS= read -r skill; do
-      [ -z "$skill" ] && continue
+    # Scan for .md files that define skills (excluding README.md)
+    while IFS= read -r skill_file; do
+      [ -z "$skill_file" ] && continue
+      local filename; filename="$(basename "$skill_file")"
+      [ "$filename" = "README.md" ] && continue
+      [ "$filename" = "normalization.md" ] && continue
+      [ "$filename" = "loops.md" ] && continue
+      [ "$filename" = "mermaid-patterns.md" ] && continue
+
       ((count++))
-      local name
-      name="$(basename "$skill")"
+      local name="${filename%.md}"
       local status="[ok]"
       local detail="documented"
-      [ ! -f "$skill/SKILL.md" ] && { status="[warn]"; detail="missing SKILL.md"; }
       
       print_check "$name" "$status" "$detail"
-    done < <(find "$local_skills" -mindepth 1 -maxdepth 1 -type d)
+    done < <(find "$local_skills" -maxdepth 1 -name "*.md")
     
     if [ $count -eq 0 ]; then
-      print_check "skills" "[info]" "No local skills defined in docs/skills/."
+      print_check "skills" "[info]" "No specialized workflows defined in docs/workflows/."
     fi
   else
-    print_check "skills" "[info]" "No local skills directory found at $local_skills"
+    print_check "skills" "[info]" "No workflows directory found at $local_skills"
   fi
 
   echo ""

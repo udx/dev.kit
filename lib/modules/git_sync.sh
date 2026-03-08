@@ -174,13 +174,18 @@ dev_kit_git_sync_run() {
         read -r response
         if [[ "$response" =~ ^[Yy]$ ]]; then
           local pr_title="feat: resolve $task_id"
-          [ -n "$message" ] && pr_title="$message ($task_id)"
-          local pr_body="Resolves repository drift for task **$task_id**.\n\nAutomated via \`dev.kit sync\`."
+          [ -n "$message" ] && pr_title="$message"
           
-          if dev_kit_github_pr_create "$pr_title" "$pr_body"; then
-             echo "✔ Pull Request created successfully."
+          # Generate a brief summary from the git diff (stat only for brevity)
+          local diff_summary
+          diff_summary=$(git diff origin/"$target_main"...HEAD --stat | head -n 20)
+          
+          local pr_body="### 🚀 Drift Resolution: $task_id\n\n$message\n\n#### 📊 Change Summary\n\`\`\`text\n$diff_summary\n\`\`\`\n\nAutomated via \`dev.kit sync\`."
+          
+          if dev_kit_github_pr_create "$pr_title" "$pr_body" "$target_main"; then
+             echo "✔ Pull Request synchronized successfully."
           else
-             echo "❌ Failed to create Pull Request."
+             echo "❌ Failed to synchronize Pull Request."
           fi
         fi
       fi

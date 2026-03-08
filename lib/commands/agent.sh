@@ -37,12 +37,17 @@ dev_kit_agent_render_artifact() {
       local available_tools=""
       local memories=""
       
-      # Gather Skills from docs/skills/
-      for skill in "$REPO_DIR"/docs/skills/*; do
-        [ -d "$skill" ] || continue
-        local name desc
-        name="$(basename "$skill")"
-        desc="$(grep -i "^description:" "$skill/SKILL.md" 2>/dev/null | head -n 1 | sed 's/^description: //I' || echo "no description")"
+      # Gather Workflows from docs/workflows/
+      for skill_file in "$REPO_DIR"/docs/workflows/*.md; do
+        [ -f "$skill_file" ] || continue
+        local filename; filename="$(basename "$skill_file")"
+        [ "$filename" = "README.md" ] && continue
+        [ "$filename" = "normalization.md" ] && continue
+        [ "$filename" = "loops.md" ] && continue
+        [ "$filename" = "mermaid-patterns.md" ] && continue
+
+        local name="${filename%.md}"
+        local desc; desc="$(grep -i "^description:" "$skill_file" 2>/dev/null | head -n 1 | sed 's/^description: //I' || echo "Grounded workflow reasoning.")"
         agent_skills+="- **$name**: $desc\n"
       done
       
@@ -51,6 +56,8 @@ dev_kit_agent_render_artifact() {
         [ -f "$file" ] || continue
         local key desc
         key="$(basename "${file%.sh}")"
+        # Hide internal/utility commands
+        case "$key" in agent|github|skills) continue ;; esac
         desc="$(grep "^# @description:" "$file" | cut -d: -f2- | sed 's/^ //' || echo "no description")"
         available_tools+="- **dev.kit $key**: $desc\n"
       done
@@ -121,16 +128,35 @@ dev_kit_agent_apply_integration() {
     dev_kit_agent_render_artifact "$art_type" "$templates_dir/$art_src" "$rendered/$art_dst" "$rendered"
   done
 
-  # Process Skills
+  # Process Skills (from docs/workflows/)
   mkdir -p "$rendered/skills_sync"
-  for skill_dir in "$REPO_DIR"/docs/skills/*; do
-    [ -d "$skill_dir" ] || continue
-    local name="$(basename "$skill_dir")"
+  for skill_file in "$REPO_DIR"/docs/workflows/*.md; do
+    [ -f "$skill_file" ] || continue
+    local filename; filename="$(basename "$skill_file")"
+    [ "$filename" = "README.md" ] && continue
+    [ "$filename" = "normalization.md" ] && continue
+    [ "$filename" = "loops.md" ] && continue
+    [ "$filename" = "mermaid-patterns.md" ] && continue
+
+    local name="${filename%.md}"
     [[ "$name" != dev-kit-* ]] && name="dev-kit-$name"
     
-    if [ -f "$skill_dir/SKILL.md" ]; then
-      mkdir -p "$rendered/skills_sync/$name"
-      cp -R "$skill_dir/." "$rendered/skills_sync/$name/"
+    mkdir -p "$rendered/skills_sync/$name"
+    cp "$skill_file" "$rendered/skills_sync/$name/SKILL.md"
+    
+    # If there is a matching workflow yaml in assets, include it
+    local asset_yaml="$REPO_DIR/docs/workflows/assets/${filename%.md}.yaml"
+    if [ -f "$asset_yaml" ]; then
+      cp "$asset_yaml" "$rendered/skills_sync/$name/workflow.yaml"
+    fi
+    
+    # Include templates if it's the visualizer
+    if [[ "$filename" == "visualizer.md" ]]; then
+      mkdir -p "$rendered/skills_sync/$name/assets"
+      cp -R "$REPO_DIR/docs/workflows/assets/templates" "$rendered/skills_sync/$name/assets/"
+      # Also include mermaid patterns as a reference
+      mkdir -p "$rendered/skills_sync/$name/references"
+      cp "$REPO_DIR/docs/workflows/mermaid-patterns.md" "$rendered/skills_sync/$name/references/"
     fi
   done
 

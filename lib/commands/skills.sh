@@ -51,16 +51,21 @@ dev_kit_cmd_skills() {
         done
       fi
       
-      # List from local repo skill-packs
-      local local_packs="$REPO_DIR/docs/skills"
-      if [ -d "$local_packs" ]; then
-        find "$local_packs" -mindepth 1 -maxdepth 1 -type d | while read -r skill; do
-          [ ! -f "$skill/SKILL.md" ] && continue
-          local name; name="$(basename "$skill")"
+      # List from local repo workflows
+      local local_workflows="$REPO_DIR/docs/workflows"
+      if [ -d "$local_workflows" ]; then
+        find "$local_workflows" -maxdepth 1 -name "*.md" | while read -r skill_file; do
+          local filename; filename="$(basename "$skill_file")"
+          [ "$filename" = "README.md" ] && continue
+          [ "$filename" = "normalization.md" ] && continue
+          [ "$filename" = "loops.md" ] && continue
+          [ "$filename" = "mermaid-patterns.md" ] && continue
+
+          local name="${filename%.md}"
           # Skip showing if already listed in managed
-          [ -d "$skills_dir/$name" ] && continue
+          [ -d "$skills_dir/dev-kit-$name" ] && continue
           
-          local desc; desc="$(grep -i "^description:" "$skill/SKILL.md" | head -n 1 | sed 's/^description: //I')"
+          local desc; desc="$(grep -i "^description:" "$skill_file" | head -n 1 | sed 's/^description: //I' || echo "Grounded workflow reasoning.")"
           echo "- [skill]   $name: $desc"
         done
       fi
@@ -85,33 +90,34 @@ dev_kit_cmd_skills() {
         exit 1
       fi
       
-      # Determine skill path
+      # Determine skill path or file
       local skill_path=""
+      local skill_file=""
       if [ -d "$skills_dir/$skill_name" ]; then
         skill_path="$skills_dir/$skill_name"
       elif [ -d "$skills_dir/dev-kit-$skill_name" ]; then
         skill_path="$skills_dir/dev-kit-$skill_name"
-      elif [ -d "$REPO_DIR/docs/skills/$skill_name" ]; then
-        skill_path="$REPO_DIR/docs/skills/$skill_name"
-      elif [ -d "$REPO_DIR/docs/skills/dev-kit-$skill_name" ]; then
-        skill_path="$REPO_DIR/docs/skills/dev-kit-$skill_name"
+      elif [ -f "$REPO_DIR/docs/workflows/$skill_name.md" ]; then
+        skill_file="$REPO_DIR/docs/workflows/$skill_name.md"
+      elif [ -f "$REPO_DIR/docs/workflows/dev-kit-$skill_name.md" ]; then
+        skill_file="$REPO_DIR/docs/workflows/dev-kit-$skill_name.md"
       fi
       
       # If skill path found, execute legacy script logic
       if [ -n "$skill_path" ]; then
-        local script_file=""
+        local script_exec=""
         if [ -d "$skill_path/scripts" ]; then
           if [ -f "$skill_path/scripts/$intent" ]; then
-            script_file="$skill_path/scripts/$intent"
+            script_exec="$skill_path/scripts/$intent"
           fi
         fi
         
-        if [ -n "$script_file" ]; then
-          [ ! -x "$script_file" ] && chmod +x "$script_file"
+        if [ -n "$script_exec" ]; then
+          [ ! -x "$script_exec" ] && chmod +x "$script_exec"
           export SKILL_PATH="$skill_path"
           export SKILL_NAME="$skill_name"
           shift 3 || true
-          "$script_file" "$@"
+          "$script_exec" "$@"
           exit $?
         fi
       fi
@@ -146,22 +152,25 @@ dev_kit_cmd_skills() {
       [ -z "$skill_name" ] && { echo "Error: Skill name required."; exit 1; }
       
       local skill_path=""
+      local skill_file=""
       if [ -d "$skills_dir/$skill_name" ]; then
         skill_path="$skills_dir/$skill_name"
       elif [ -d "$skills_dir/dev-kit-$skill_name" ]; then
         skill_path="$skills_dir/dev-kit-$skill_name"
-      elif [ -d "$REPO_DIR/docs/skills/$skill_name" ]; then
-        skill_path="$REPO_DIR/docs/skills/$skill_name"
-      elif [ -d "$REPO_DIR/docs/skills/dev-kit-$skill_name" ]; then
-        skill_path="$REPO_DIR/docs/skills/dev-kit-$skill_name"
+      elif [ -f "$REPO_DIR/docs/workflows/$skill_name.md" ]; then
+        skill_file="$REPO_DIR/docs/workflows/$skill_name.md"
+      elif [ -f "$REPO_DIR/docs/workflows/dev-kit-$skill_name.md" ]; then
+        skill_file="$REPO_DIR/docs/workflows/dev-kit-$skill_name.md"
       fi
       
-      if [ -z "$skill_path" ] || [ ! -f "$skill_path/SKILL.md" ]; then
+      if [ -n "$skill_path" ] && [ -f "$skill_path/SKILL.md" ]; then
+        cat "$skill_path/SKILL.md"
+      elif [ -n "$skill_file" ]; then
+        cat "$skill_file"
+      else
         echo "Error: Skill info for '$skill_name' not found." >&2
         exit 1
       fi
-      
-      cat "$skill_path/SKILL.md"
       ;;
     help|-h|--help)
       cat <<'SKILLS_HELP'
