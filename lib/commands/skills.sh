@@ -35,6 +35,14 @@ dev_kit_cmd_skills() {
         local desc; desc="$(grep "^# @description:" "$file" | cut -d: -f2- | sed 's/^ //' || echo "no description")"
         echo "- [command] $name: $desc"
       done
+      
+      # List from lib/modules/
+      for file in "$REPO_DIR"/lib/modules/*.sh; do
+        [ -f "$file" ] || continue
+        local name; name="$(basename "${file%.sh}")"
+        local desc; desc="$(grep "^# @description:" "$file" | cut -d: -f2- | sed 's/^ //' || echo "no description")"
+        echo "- [module]  $name: $desc"
+      done
       echo ""
 
       # 2. AI Skills (Dynamic Reasoning)

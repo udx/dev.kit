@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-# dev.kit Context7 Module
-# High-fidelity search and resolution for the "Skill Mesh" (Multi-repo context).
-# Integrates with Context7 API (v2) and optional CLI for library-bound context.
+# @description: High-fidelity search and resolution for the "Skill Mesh" (Multi-repo context).
+# @intent: context7, knowledge, search, resolution, mesh
+# @objective: Bridge disparate repository context into a unified engineering mesh via structured API and CLI discovery.
 
 # Check if Context7 integration is available (API key or CLI)
 dev_kit_context7_health() {

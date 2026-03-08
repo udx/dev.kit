@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
-# dev.kit GitHub Module
-# Provides high-fidelity integration with GitHub CLI (gh) for remote context.
+# @description: Provides high-fidelity integration with GitHub CLI (gh) for remote context.
+# @intent: github, pr, issue, remote, discovery
+# @objective: Empower agents and humans to interact with the broader engineering ecosystem via authenticated remote discovery and collaboration.
 
 # Check if GitHub CLI is available and optionally if a token is set
 dev_kit_github_health() {

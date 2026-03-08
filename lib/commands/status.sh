@@ -86,7 +86,14 @@ dev_kit_cmd_status() {
 
   # 5. Empowerment Mesh
   echo ""
-  printf "%sEmpowerment Mesh:%s\n" "$(ui_cyan)" "$(ui_reset)"
+  printf "%sEmpowerment Mesh (Capability Discovery):%s\n" "$(ui_cyan)" "$(ui_reset)"
+  
+  local cmd_count; cmd_count=$(ls "$REPO_DIR"/lib/commands/*.sh 2>/dev/null | wc -l)
+  local mod_count; mod_count=$(ls "$REPO_DIR"/lib/modules/*.sh 2>/dev/null | wc -l)
+  local skill_count; skill_count=$(ls "$REPO_DIR"/docs/workflows/*.md 2>/dev/null | grep -v "README.md\|normalization.md\|loops.md\|mermaid-patterns.md" | wc -l)
+  
+  ui_ok "Capabilities" "$cmd_count Commands | $mod_count Modules | $skill_count AI Skills"
+
   if command -v dev_kit_github_health >/dev/null 2>&1 && dev_kit_github_health >/dev/null 2>&1; then
     ui_ok "Remote" "GitHub Authorized"
   fi

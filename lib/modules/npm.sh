@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
-# dev.kit NPM Module
-# Manages health, discovery, and installation hints for @udx-scoped CLI tools.
+# @description: Manages health, discovery, and installation hints for @udx-scoped CLI tools.
+# @intent: npm, package, hydration, health, tool
+# @objective: Maintain high-fidelity environment hydration by detecting and advising on the installation of authorized UDX mesh tools.
 
 # Check if an NPM package/binary is healthy
 # Usage: dev_kit_npm_health "@udx/mcurl" "mcurl"

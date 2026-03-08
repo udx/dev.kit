@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
-# dev.kit Git Sync Module
-# Core logic for logical, atomic repository synchronization and drift resolution.
+# @description: Core logic for logical, atomic repository synchronization and drift resolution.
+# @intent: sync, commit, drift, atomic, push, resolve, prepare, branch
+# @objective: Maintain high-fidelity repository state by grouping changes into logical domains and resolving intent divergence.
 
 # Prepare the repository for work (Pre-flight checks)
 # Usage: dev_kit_git_sync_prepare [target_branch]
