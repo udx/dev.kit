@@ -162,4 +162,28 @@ dev_kit_git_sync_run() {
 
   rm -f .drift.tmp .processed.tmp
   echo "--- Git Sync Workflow Complete ---"
+
+  # 5. Proactive PR Suggestion (New)
+  if [ "$dry_run" = "false" ] && command -v dev_kit_github_health >/dev/null 2>&1; then
+    if dev_kit_github_health >/dev/null 2>&1; then
+      local current_branch; current_branch=$(git branch --show-current)
+      # Don't suggest PR for the default main branch
+      if [[ "$current_branch" != "main" && "$current_branch" != "master" ]]; then
+        echo ""
+        printf "✔ Synchronization complete. Would you like to create a Pull Request for $current_branch? (y/N): "
+        read -r response
+        if [[ "$response" =~ ^[Yy]$ ]]; then
+          local pr_title="feat: resolve $task_id"
+          [ -n "$message" ] && pr_title="$message ($task_id)"
+          local pr_body="Resolves repository drift for task **$task_id**.\n\nAutomated via \`dev.kit sync\`."
+          
+          if dev_kit_github_pr_create "$pr_title" "$pr_body"; then
+             echo "✔ Pull Request created successfully."
+          else
+             echo "❌ Failed to create Pull Request."
+          fi
+        fi
+      fi
+    fi
+  fi
 }
