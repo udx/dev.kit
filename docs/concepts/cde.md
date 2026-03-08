@@ -1,53 +1,40 @@
-# Context Driven Engineering (CDE)
+# Context Driven Engineering (CDE): Resolving the Drift
+
+Domain: Concepts
 
 ## Summary
 
-CDE describes how dev.kit turns repository intent into executable context. It is a practical model for artifacts, boundaries, and iteration.
+**Context Driven Engineering (CDE)** is the model dev.kit uses to turn chaotic intent into executable context. It provides a structural framework for identifying and **Resolving the Drift** between intent and reality.
 
-## What CDE Is
+![CDE Flow](../../assets/diagrams/cde-flow.svg)
 
-- A way to express intent as concrete, versioned artifacts.
-- A boundary model: intent in docs, execution through validated CLI.
-- A contract that makes prompts and workflows predictable.
+## Core Philosophy
 
-## Artifacts (Real Objects)
+- **Intent-as-Artifact**: Intent is expressed as concrete, versioned artifacts (docs, prompts, schemas).
+- **Drift Identification**: By comparing the current state against these artifacts, dev.kit identifies the "Drift."
+- **Normalization Boundary**: Drift is resolved through a validated CLI boundary, ensuring every task is deterministic and reproducible.
 
-- Prompt templates: `src/ai/data/prompts.json`
-- Skills and schemas: `src/ai/data/skills/`
-- Workflow schema: `docs/cli/execution/workflow-io-schema.md`
-- CLI primitives: `docs/cli/execution/cli-primitives.md`
+## Artifacts (The Source of Truth)
 
-## Contract Boundaries
+- **Prompt Templates**: `src/ai/data/prompts.json` - How we talk to agents.
+- **Skills and Schemas**: `src/ai/data/skills/` - The capabilities of the repository.
+- **Workflow Schema (DOC-003)**: `docs/cli/execution/workflow-io-schema.md` - The contract for task execution.
+- **CLI Primitives**: `docs/cli/execution/cli-primitives.md` - The building blocks of automation.
 
-- Intent lives in docs and specs.
-- Interfaces are artifacts and schemas.
-- Execution happens only through validated CLI boundaries.
-- Determinism is enforced at those boundaries.
+## The Drift Resolution Lifecycle
 
-## Iteration Model
-
-input
-→ analyze
-→ configure
-→ execute
-→ post-validate
-→ report
-→ notify
+CDE maps the development waterfall into a resilient loop:
+1. **Analyze**: Identify the drift from the user's intent.
+2. **Normalize**: Map the drift to a deterministic `workflow.md`.
+3. **Iterate**: Execute the workflow steps within the repository boundary.
+4. **Post-Validate**: Ensure the drift has been resolved.
+5. **Capture**: Package the engineering experience back into the repository skills.
 
 ## Output Contracts
 
-Outputs declare a single `output_type`:
-- `prompt`: machine-consumable, execution-ready.
-- `markdown`: human-readable narrative.
+Outputs follow strict normalization rules:
+- `prompt`: Execution-ready for AI agents.
+- `markdown`: Human-readable narrative for documentation and feedback.
 
-Workflow outputs also encode bounded limits:
-- max_steps_per_iteration: 7
-- max_files_per_step: 5
-- max_new_files_per_iteration: 4
-- max_move_operations_per_step: 10
-- extract_child_workflow_if_any_exceeded: true
-
-## References
-
-- Prompt-as-workflow: `docs/cli/execution/prompt-as-workflow.md`
-- Concepts: `docs/concepts/index.md`
+---
+_UDX DevSecOps Team_

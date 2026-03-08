@@ -64,7 +64,7 @@ ui_banner() {
   printf "%s%s%s%s%s\n" "$c1" "$left" "$c2" "$right" "$r"
   printf "%s%s%s\n" "$d" "ready to run" "$r"
   printf "%s%s%s\n" "$c3" "  run:" "$r"
-  printf "    %sdev.kit exec \"...\"%s\n" "$c4" "$r"
+  printf "    %sdev.kit skills run \"...\"%s\n" "$c4" "$r"
   printf "%s%s%s\n" "$c3" "  config:" "$r"
   printf "    %sdev.kit config show%s\n" "$c4" "$r"
 }

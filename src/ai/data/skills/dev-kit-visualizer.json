@@ -1,0 +1,22 @@
+{
+  "name": "dev-kit-visualizer",
+  "description": "Generate high-fidelity Mermaid diagrams and optional SVG exports from text or files. Supports architecture, flowchart, sequence, state, and ER diagrams.",
+  "pack_dir": "skill-packs/dev-kit-visualizer",
+  "keywords": ["architecture", "mermaid", "svg", "diagram", "flowchart", "sequence", "erDiagram"],
+  "sections": [
+    {
+      "title": "Purpose",
+      "lines": [
+        "Generate deterministic Mermaid output with a success-first UX contract."
+      ]
+    },
+    {
+      "title": "Typical Workflow",
+      "bullets": [
+        "Plan: Identify diagram type and data source.",
+        "Normalize: Resolve file paths or literal text input.",
+        "Process: Scaffold from template and generate Mermaid/SVG."
+      ]
+    }
+  ]
+}

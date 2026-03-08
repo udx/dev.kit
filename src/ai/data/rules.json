@@ -7,18 +7,22 @@
     {
       "title": "Destructive actions",
       "rules": [
+        { "pattern": ["dev.kit", "sync"], "decision": "prompt" },
         { "pattern": ["rm"], "decision": "prompt" },
         { "pattern": ["rmdir"], "decision": "prompt" },
         { "pattern": ["unlink"], "decision": "prompt" },
         { "pattern": ["git", "clean"], "decision": "prompt" },
-        { "pattern": ["git", "reset", "--hard"], "decision": "prompt" },
-        { "pattern": ["git", "checkout", "--"], "decision": "prompt" },
-        { "pattern": ["git", "restore", "--source"], "decision": "prompt" }
+        { "pattern": ["git", "reset"], "decision": "prompt" },
+        { "pattern": ["git", "checkout"], "decision": "prompt" },
+        { "pattern": ["git", "restore"], "decision": "prompt" },
+        { "pattern": ["git", "push"], "decision": "prompt" }
       ]
     },
     {
       "title": "Apply / update operations",
       "rules": [
+        { "pattern": ["dev.kit", "sync"], "decision": "prompt" },
+        { "pattern": ["dev.kit", "ai", "sync"], "decision": "allow" },
         { "pattern": ["git", "apply"], "decision": "prompt" },
         { "pattern": ["git", "am"], "decision": "prompt" },
         { "pattern": ["terraform", "apply"], "decision": "prompt" },

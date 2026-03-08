@@ -1,172 +1,63 @@
-<img src="assets/logo.svg" alt="dev.kit logo">
+<img src="assets/logo.svg" alt="dev.kit logo" width="200">
 
-# dev.kit
+# dev.kit — Resolve the Development Drift
 
-Deterministic developer workflow kit for humans + AI. One CLI entrypoint, shared prompts/templates under `src/`, and a stable contract for iteration.
+**Experienced engineering flow with no-bullshit results.**
+
+`dev.kit` resolves the **Drift** (intent divergence) by **Normalizing** it into a deterministic path and **Iterating** to the result. It acts as a **Thin Empowerment Layer** (Grounding) that bridges chaotic intent with repository-based skills.
+
+## How it Works: The Grounding Bridge
+
+`dev.kit` empowers AI agents (Gemini, Antigravity) with repository-centric grounding:
+
+1.  **Grounding & Normalization**: Intent is mapped to repo-specific logic and normalized into a deterministic execution plan.
+2.  **Skill Discovery**: `dev.kit` exposes "Experienced Skills" directly to your AI agent's toolbelt (native skill discovery).
+3.  **Waterfall Progression**: AI iterates through instruction steps with deterministic validation and real-time feedback.
+
+![Intent-to-Action Flow](assets/diagrams/intent-to-action.svg)
+
+## Core Interface
+
+`dev.kit` focuses on repository health and agent empowerment, leaving high-level reasoning to your preferred agent.
+
+- **`dev.kit status`**: (Default) Engineering brief and system diagnostic.
+- **`dev.kit ai`**: Unified agent integration management (Sync, Skills, Status).
+- **`dev.kit task`**: Manage the lifecycle of active workflows and sessions.
+- **`dev.kit config`**: Environment and repository orchestration settings.
+
+## Managed AI Skills
+
+`dev.kit` provides a suite of deterministic engineering skills that are grounded in your repository's truth:
+
+- **`visualizer`**: Generate and export high-fidelity Mermaid diagrams (SVG).
+- **`git-sync`**: Resolve repository drift with logical, atomic commits.
+- **`core`**: Maintain environment health and synchronize agent context.
+
+> **Execution**: Run any skill with `dev.kit skills run <name>`.
+
+## AI Integration
+
+`dev.kit` integrates natively with your AI agent to enforce standardization and repository truth.
+
+```bash
+# Sync skills and engineering context to your agent (Gemini/Codex)
+dev.kit ai sync
+```
+
+> **Grounding Layer**: `dev.kit` does not replace your agent; it hydrates it with the repository's source of truth.
 
 ## Install
 
-Quick start (one-liner):
-
 ```bash
-curl -fsSL https://raw.githubusercontent.com/udx/dev.kit/main/bin/scripts/install.sh | bash
-
-# If the installer doesn't prompt for shell updates:
-source "$HOME/.udx/dev.kit/source/env.sh"
+curl -fsSL https://udx.dev/dev.kit/install.sh | bash
 ```
 
-```mermaid
-flowchart TD
-  A["Start"] --> B["Run installer"]
-  B --> C{"Shell update prompt?"}
-  C -->|"Yes"| D["Shell updates applied"]
-  C -->|"No"| E["Source env.sh"]
-  D --> F["Installed"]
-  E --> F
-```
+## Documentation
 
-## Configure (First Run)
+- **Managed AI Skills**: `docs/ai/skills.md`
+- **Scenarios & Workflows**: `docs/scenarios/README.md`
+- **CLI Overview**: `docs/cli/overview.md`
+- **AI Orchestration**: `docs/ai/README.md`
 
-See current config:
-
-```bash
-dev.kit config show
-```
-
-Defaults (out of the box):
-
-- AI disabled (`ai.enabled = false`)
-- Minimal prompt (`exec.prompt = ai.codex.min`)
-- Non-streaming logs (`exec.stream = false`)
-- Repo-scoped context (`context.enabled = true`, `context.max_bytes = 4000`)
-
-Optional: set explicit state path
-
-```bash
-dev.kit config set --key state_path --value "~/.udx/dev.kit/state"
-```
-
-Enable AI (Codex):
-
-```bash
-dev.kit config set --key ai.enabled --value true
-dev.kit codex apply
-```
-
-```mermaid
-flowchart TD
-  A["Config show"] --> B{"Enable AI?"}
-  B -->|"Yes"| C["Set ai.enabled=true"]
-  C --> D["dev.kit codex apply"]
-  B -->|"No"| E["Keep AI disabled"]
-  D --> F["Configured"]
-  E --> F
-```
-
-## Use (Incremental)
-
-1. **Prompt-only (no AI installed)**  
-   Generate a deterministic prompt and run it in any tool:
-
-```bash
-dev.kit prompt --request "Summarize repo structure"
-```
-
-2. **AI-enabled (Codex installed)**  
-   Run `dev.kit exec` to generate + execute the prompt:
-
-```bash
-dev.kit exec "Summarize repo structure"
-```
-
-If Codex is not installed, `dev.kit exec` prints the prompt so you can run it manually.
-
-3. **Dry-run (print only)**
-
-```bash
-dev.kit exec --print "Summarize repo structure"
-```
-
-```mermaid
-flowchart TD
-  A["Pick mode"] --> B["Prompt-only: dev.kit prompt"]
-  A --> C["AI-enabled: dev.kit exec"]
-  A --> D["Dry-run: dev.kit exec --print"]
-  B --> E["Run prompt manually"]
-  C --> F["Run via Codex"]
-  D --> E
-```
-
-## Auto-Detection + Suggestions
-
-- `dev.kit exec` uses the same prompt generator as `dev.kit prompt`.
-- If AI is disabled or Codex is missing, `dev.kit exec` prints the prompt and exits.
-- Context history is automatically included (repo-scoped).
-
-```mermaid
-flowchart TD
-  A["dev.kit exec"] --> B{"AI enabled?"}
-  B -->|"No"| C["Print prompt and exit"]
-  B -->|"Yes"| D{"Codex installed?"}
-  D -->|"No"| C
-  D -->|"Yes"| E["Include repo context history"]
-  E --> F["Generate prompt from templates"]
-  F --> G["Execute via Codex"]
-  G --> H["Output result"]
-```
-
-## What You Can Do (Core)
-
-```bash
-dev.kit prompt --request "Summarize repo structure"
-dev.kit exec "Summarize repo structure"
-dev.kit exec --print "Summarize repo structure"
-```
-
-Context controls:
-
-```bash
-dev.kit exec --reset "remember: 1234"
-dev.kit exec --no-context "one-off question"
-dev.kit context show
-```
-
-## With AI Integration (Empower)
-
-Apply repo skills to Codex:
-
-```bash
-dev.kit codex apply
-dev.kit ai skills
-```
-
-Tips:
-
-- Streaming logs are off by default; pass `--stream` for full runner output.
-- Simple requests answer directly; complex requests route to workflow.
-
-## Docs
-
-Start here: `docs/README.md`
-
-Doc map (by topic):
-
-- CLI and execution model: `docs/cli/overview.md`, `docs/cli/execution/index.md`
-- AI integration: `docs/ai/README.md`
-- Concepts and contracts: `docs/concepts/index.md`, `docs/concepts/specs.md`
-- References and standards: `docs/reference/udx-reference-index.md`
-
-## Repo Map (Core)
-
-- `bin/` CLI entrypoints
-- `lib/` runtime library code
-- `src/` runtime source + templates
-- `config/` runtime configuration
-- `docs/` specs and contracts
-- `src/ai/` shared AI integration assets
-- `src/ai/data/` shared AI data (JSON)
-- `src/ai/integrations/` integration-specific schemas/templates (codex, claude, gemini)
-- `src/ai/data/prompts.json` iteration prompts
-- `src/mermaid/` mermaid templates
-- `src/docker/` docker assets
-- `scripts/` helpers
+---
+_UDX DevSecOps Team_

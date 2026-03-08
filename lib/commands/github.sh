@@ -19,7 +19,7 @@ set -euo pipefail
 #   dev.kit github review-prs     [--repo OWNER/REPO] [--state open|closed|merged|all] [--limit N] [--json] [--include-drafts]
 
 dev_kit_cmd_github() {
-  shift || true
+  
 
   LIMIT=30
   STATE="open"       # issues: open|closed|all ; prs: open|closed|merged|all

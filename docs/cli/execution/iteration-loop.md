@@ -1,68 +1,49 @@
-# Iteration Loop
+# Iteration Loop: Resolving the Drift
 
 Domain: Execution
 
 ## Purpose
 
-Define the review → workflow → apply → validate → log iteration cycle as a
-repo-native contract. This loop aligns reasoning systems and the CLI runtime
-on shared artifacts without granting execution authority to agents.
+The Iteration Loop is the practical mechanism dev.kit uses to resolve the **Drift** between human intent and the repository's current state. It defines a deterministic cycle of planning, execution, and validation.
 
-## Cycle
+## The Drift Resolution Cycle
 
-review
-→ workflow (plan)
-→ apply
-→ validate
-→ log
+![Drift Resolution Cycle](../../../assets/diagrams/drift-resolution-cycle.svg)
 
-## Artifacts
+1.  **Identify Drift**: Capture the gap between intent and current state (Prompt/Request).
+2.  **Normalize**: Convert the drift into a deterministic `workflow.md` (Task Apply).
+3.  **Iterate**: Execute the bounded steps (Exec/Codex).
+4.  **Validate**: Verify the result against the original intent (Doctor/Audit).
+5.  **Capture**: Package the resolution logic into repository skills for future use.
 
-- Review input: `docs/_tree.txt` (generated, optional)
-- Review output: `tasks/<task-id>/feedback.md`
-- Workflow (active): `~/.udx/dev.kit/state/codex/workflows/<repo-id>/<task-id>/workflow.md`
-- Workflow (reference): `src/`
-- Helper scripts: `scripts/apply-task.sh`
-- Subtask loop: `docs/cli/execution/subtask-loop.md` (task-specific prompt/feedback)
-- Skill contract: `src/ai/data/skills/dev-kit-iteration.json`
+## Core Artifacts
+
+- **Input**: `tasks/<task-id>/prompt.md` - The intent.
+- **Plan**: `tasks/<task-id>/workflow.md` - The normalized steps.
+- **Feedback**: `tasks/<task-id>/feedback.md` - The execution log.
+- **State**: `~/.udx/dev.kit/state/` - The runtime context.
 
 ## Session Continuity
 
-Keep workflow state continuous across turns (interactive Codex or `codex exec`).
+To maintain momentum across multiple AI turns, the following signals must be preserved:
+- **Active Workflow**: The path to the current `workflow.md`.
+- **Step Status**: `planned | in_progress | done | blocked`.
+- **Open Questions**: Explicitly list missing inputs or blocks.
+- **Next Action**: The specific CLI command or user input required to proceed.
 
-Required continuity signals:
-- Carry forward the latest workflow file content and step `status` values.
-- Include the active workflow path in each response when work continues.
-- If a response pauses for user input, list the open questions explicitly.
-- When resuming, restate the active step ID and update its status.
+## Boundaries & Guardrails
 
-Recommended continuation packet:
-- Workflow path (`~/.udx/dev.kit/state/codex/workflows/<repo-id>/<task-id>/workflow.md`)
-- Current step ID + status
-- Open questions or missing inputs
-- Next action (requested from user or to be executed by CLI)
-
-## See Also
-
-- Spec kernel entrypoint: `docs/README.md`
-- Repo overview: `README.md`
-- Iteration skill contract: `src/ai/data/skills/dev-kit-iteration.json`
-
-## Boundaries
-
-- Reasoning systems and adapters produce artifacts only.
-- The CLI runtime is the execution boundary.
-- Workflows describe intended changes; they do not apply them.
-- Validation is explicit and recorded in the workflow or feedback log.
+- **Reasoning vs. Execution**: AI agents produce artifacts (Workflows/Prompts); the CLI runtime executes them.
+- **No Hidden Side Effects**: Every change must be declared in a workflow step.
+- **Deterministic Paths**: If a tool fails, use the **Fail-Open** fallback to ensure the loop continues.
+- **Validation First**: Every iteration must conclude with an explicit validation step.
 
 ## Resolution Rules
 
-- A review task is resolved when workflow steps are complete and the task feedback
-  in `tasks/<task-id>/feedback.md` is updated.
-- A subtask is resolved when `tasks/<task-id>/feedback.md` is marked complete.
-- Resolution entries must include task ID, affected file paths, and a summary.
+A task is considered **Resolved** when:
+1. All workflow steps are marked `done`.
+2. The `feedback.md` contains the final engineering result.
+3. Repository health is verified via `dev.kit doctor`.
 
-## Guardrails
-
-- No hidden side effects. All changes must be declared in artifacts.
-- No implicit execution. Apply steps require explicit instruction.
+---
+_UDX DevSecOps Team_

@@ -1,1 +1,13 @@
-TODO: Generate and replace all .mmd files with mermaid diagrams by filename and config artifact
+---
+config:
+  theme: mc
+---
+flowchart TD
+    Install[1. Install dev.kit] --> Env[2. Configure Local Environment]
+    Env --> Agent[3. Enable AI Agent Integration]
+    Agent --> Waterfall[4. Experience Development Waterfall]    
+
+style Install fill:#ADD8E6
+style Env fill:#93CCEA
+style Agent fill:#C2C5FF
+style Waterfall fill:#D6E7EC

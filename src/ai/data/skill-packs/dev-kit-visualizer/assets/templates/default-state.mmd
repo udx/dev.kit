@@ -1,0 +1,8 @@
+---
+config:
+  theme: mc
+---
+stateDiagram-v2
+  [*] --> Idle
+  Idle --> Active: start
+  Active --> Idle: stop

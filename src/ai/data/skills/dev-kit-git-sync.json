@@ -1,0 +1,22 @@
+{
+  "name": "dev-kit-git-sync",
+  "description": "Smart logical repository synchronization and atomic commits. Categorizes changes into domain-specific groups and generates high-fidelity messages.",
+  "pack_dir": "skill-packs/dev-kit-git-sync",
+  "keywords": ["git", "sync", "commit", "drift", "resolve", "logical commit", "atomic"],
+  "sections": [
+    {
+      "title": "Categorization",
+      "bullets": [
+        "Docs, AI, CLI, Core, and Misc groupings."
+      ]
+    },
+    {
+      "title": "Typical Workflow",
+      "bullets": [
+        "Plan: Identify repository drift and task context.",
+        "Normalize: Group changes into logical commit domains.",
+        "Process: Execute atomic commits and sync state."
+      ]
+    }
+  ]
+}

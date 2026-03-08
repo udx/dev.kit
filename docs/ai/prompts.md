@@ -1,28 +1,65 @@
-# Prompts
+# AI Prompts: The Configuration Layer
 
-Scope: prompt sources, overlays, selection rules, and CLI usage.
+Domain: AI
 
-Structure (under `src/ai/`):
-- `src/ai/data/prompts.json`: common AI prompt definitions
-- `src/ai/integrations/codex/prompts.json`: Codex-specific prompt overlay
-- `src/ai/integrations/codex/schemas/prompts.schema.json`: JSON schema shared by prompt data files
+## Purpose
 
-Template:
-- Prompts are intentionally minimal; integration overlays inherit the common AI prompt using `inherits`.
+Define how **dev.kit** transforms chaotic user intent into a high-fidelity, deterministic prompt. The AI treats these prompts as the primary **Configuration Layer** for interacting with the repository.
 
-Codex tips:
-- The Codex overlay includes interactive tips and shortcuts such as `!` for running local shell commands, `@` for fuzzy file search, and `/review` or `/fork` slash commands for specialized workflows.
-- Use `!` only in interactive Codex sessions. For `codex exec`, include the command output in the prompt ahead of time.
+## Prompt Generation Structure
 
-Prompt selection:
-- Local config: `.udx/dev.kit/config.env` (created on demand)
-- Global config: `~/.udx/dev.kit/config.env` (created by installer)
-- Precedence: local overrides global.
-- Default template: `ai`
+`dev.kit` generates prompts by aggregating multiple sources:
 
-Keys:
-- `exec.prompt`: `ai|ai.codex`
+1.  **Common Prompt**: `src/ai/data/prompts.json` - Core engineering logic.
+2.  **Integration Overlays**: `src/ai/integrations/codex/prompts.json` - Engine-specific optimizations.
+3.  **Active Repository Context**: `context.yaml`, active skills, and local documentation.
+4.  **Operational Experience**: Current task status and iteration logs.
 
-CLI:
-- `dev.kit prompt` generates the normalized prompt artifact (stdout or `--out`).
-- `dev.kit exec` reuses the same prompt generator before running `codex exec`.
+## The Workflow Generator Prompt (Core Logic)
+
+This is the primary logic used by `dev.kit` to translate intent into a deterministic action plan:
+
+```text
+You are a deterministic workflow generator.
+
+Task:
+Convert the user request into a workflow document that uses CLI execution steps.
+
+Input:
+- User request (freeform).
+- Referenced files and context (paths or summaries).
+
+Logic:
+- Derive the minimal number of steps required to complete the request.
+- Each step must include: Task, Input, Logic/Tooling, Expected output.
+- Use CLI execution primitives for each step.
+- Mark each step with status: planned.
+- Apply the Extraction Gate; if 2+ answers are yes, extract a child workflow.
+- Child workflows are nested under the parent workflow directory.
+
+Output:
+- A single Markdown workflow file with ordered steps and status per step.
+```
+
+## CLI Usage
+
+- `dev.kit prompt`: Generate the normalized prompt artifact (stdout).
+- `dev.kit prompt --out <file>`: Export the prompt for manual use.
+- `dev.kit skills run`: Automatically generates and submits the prompt to the configured AI engine.
+
+## Engine-Specific Overlays (Codex/Gemini)
+
+Overlays allow `dev.kit` to adapt the prompt for specific AI capabilities:
+
+- **Codex**: Includes interactive tips like `!` for shell commands and `/review` or `/fork` slash commands.
+- **Gemini**: Includes rule enforcement and systematic log capture hooks.
+
+## Configuration & Selection
+
+- **Local Config**: `<repo>/.udx/dev.kit/config.env`
+- **Global Config**: `~/.udx/dev.kit/config.env`
+- **Key**: `exec.prompt` - Determines which template is used (e.g., `ai`, `ai.codex`).
+
+---
+_UDX DevSecOps Team_
+

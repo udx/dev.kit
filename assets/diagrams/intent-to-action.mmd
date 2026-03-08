@@ -1,0 +1,20 @@
+flowchart TD
+    User([User Prompt]) --> Agent[AI Agent / Config Layer]
+    Agent --> Lookup{Skill Lookup}
+    
+    subgraph Skills ["Skill-per-Repository"]
+        Lookup --> Local[Local Skills]
+        Lookup --> Remote[Remote Skills / MCP]
+    end
+
+    Local & Remote --> Map[Map Intent to Repo Skill]
+    Map --> Norm[Normalize Prompt]
+    
+    subgraph Feedback ["Iteration & Loop"]
+        Norm --> AI[AI Instruction Stepper]
+        AI --> FB{Feedback Loop}
+        FB -- Needs More --> AI
+    end
+
+    FB -- Resolved --> Result[Workflow Steps / CMD]
+    Result --> Exec[Execution]

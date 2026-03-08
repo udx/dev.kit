@@ -1,34 +1,38 @@
-# UDX Reference Index
+# Engineering Reference Index: Resolving the Drift
+
+Domain: Reference
 
 ## Summary
 
-This index maps reference material to common dev.kit and engineering decisions. Use it to find the right source of truth fast.
+The Reference Index maps engineering standards, compliance guardrails, and operational practices to the **dev.kit** resolution engine. It is the high-fidelity source of truth for repository engineering.
 
-## How To Use
+## Topic Map: Resolving Common Drift
 
-- Start with the topic page that matches your question.
-- Use UDX guidance for general practice and guardrails.
-- Use external standards only for tool-specific details.
+### 1. Foundations (The Core)
+Understand the engineering principles and layers that govern the system.
+- **Principles**: `docs/reference/foundations/principles.md` - Core engineering values.
+- **Layers**: `docs/reference/foundations/layers.md` - Structural hierarchy.
+- **Knowledgebase**: `docs/reference/foundations/knowledge.md` - Reusable patterns.
 
-## Common Questions Map
+### 2. Standards (The Interface)
+External and internal standards for configuration, diagrams, and processes.
+- **12-Factor App**: `docs/reference/standards/12-factor.md` - Runtime behavior and config.
+- **Mermaid Standards**: `docs/reference/standards/mermaid.md` - All engineering diagrams.
+- **YAML Standards**: `docs/reference/standards/yaml-standards.md` - Config file structure.
+- **External Tools**: `docs/reference/standards/external-standards.md` - Third-party tool rules.
 
-- "Where should config live?" -> `12-factor.md`, `yaml-standards.md`
-- "How do we scale delivery?" -> `devops-littles-law.md`, `lifecycle-cheatsheet.md`
-- "How do we handle supply chain risk?" -> `supply-chain-security.md`
-- "How should we define standards?" -> `aoca-guidance.md`, `devops-manual-guidance.md`
-- "What is cATO and do we need it?" -> `cato-overview.md`
-- "Where do external tool rules live?" -> `external-standards.md`
-- "Which layer does this belong to?" -> `layers.md`
+### 3. Compliance & Security (The Shield)
+Guardrails to ensure safe and compliant engineering.
+- **Continuous Authorization**: `docs/reference/compliance/cato-overview.md` - cATO.
+- **Supply Chain Security**: `docs/reference/compliance/supply-chain-security.md` - SLSA.
+- **Guidance & Standards**: `docs/reference/compliance/aoca-guidance.md`.
 
-## Reference Groups
+### 4. Operations (The Workflow)
+Practical guidance for maintaining the engineering lifecycle.
+- **SDLC Lifecycle**: `docs/reference/operations/lifecycle-cheatsheet.md`.
+- **Little's Law**: `docs/reference/operations/devops-littles-law.md`.
+- **Manual Guidance**: `docs/reference/operations/devops-manual-guidance.md`.
+- **Ecosystem Refs**: `docs/reference/operations/worker-ecosystem-refs.md`.
 
-- Engineering principles: `principles.md`, `layers.md`
-- Operational practices: `lifecycle-cheatsheet.md`, `devops-littles-law.md`
-- Configuration standards: `12-factor.md`, `yaml-standards.md`
-- Security and compliance: `supply-chain-security.md`, `cato-overview.md`
-- Guidance sources: `aoca-guidance.md`, `devops-manual-guidance.md`
-- External standards: `external-standards.md`
-
-## Source
-
-- https://gist.github.com/fqjony/489fde2ea615b7558bbd407f8b9d97c7
+---
+_UDX DevSecOps Team_

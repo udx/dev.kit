@@ -1,88 +1,47 @@
-# AI Integration Experience
+# AI Integration Experience: High-Fidelity Interaction
 
-Domain: AI Integration
+Domain: AI
 
 ## Purpose
 
-Define the user experience for dev.kit with and without AI integrations.
+The AI Integration Experience ensures that both humans and agents have a consistent, deterministic way to interact with the repository's skills. It supports multiple execution modes, transforming the AI from a chat bot into a **Configuration Mechanism**.
 
-## Common Flow (Prompt First)
+## The Interaction Design
 
-- `dev.kit prompt` generates the normalized prompt artifact.
-- `dev.kit exec` wraps prompt generation and runs Codex when enabled.
-- Prompts always include `$dev-kit-prompt-router` and workflow/continuity rules.
+![AI Experience Flow](../../assets/diagrams/ai-experience-flow.svg)
 
-Flow diagram:
+1.  **Intent Capture**: Human or agent provides a high-level task description.
+2.  **Normalization Layer**: `dev.kit` transforms this intent into a deterministic prompt artifact.
+3.  **Execution Mode**: The prompt is either handled by a local engine (`gemini`, `codex`) or printed for manual use.
+4.  **Feedback Capture**: The result and execution context are captured back into the repository's knowledge layer.
 
-```
-User input
-  -> dev.kit exec "..."
-     -> dev.kit prompt (ai / ai.codex)
-     -> codex exec "<normalized prompt>"
+## Operating Modes
 
-Manual path
-  -> dev.kit prompt --request "..." --template ai.codex
-     -> codex exec "<normalized prompt>"
-```
+### Mode A: AI-Powered (Local Configuration Engine)
+**Requirements**: `ai.enabled = true`, supported CLI engine installed.
+- **Behavior**: `dev.kit skills run` automatically generates the prompt and runs the AI engine.
+- **Outcome**: The AI acts as a smart configuration tool, producing executable changes or plans immediately.
+- **Persistence**: Results are automatically captured in `~/.udx/dev.kit/state/`.
 
-## Mode A — AI Disabled (default)
+### Mode B: Human-Assisted (Interface Bridge)
+**Requirements**: `ai.enabled = false` (Default).
+- **Behavior**: `dev.kit skills run` generates and prints the normalized prompt to the terminal.
+- **Usage**: Copy-paste into any web UI (ChatGPT, Claude) or local LLM.
+- **Outcome**: `dev.kit` provides the *configuration context* needed for any AI to understand the repository's skills.
 
-Config:
-- `ai.enabled = false`
-- `exec.prompt = ai` (default)
+## Context & Continuity
 
-Behavior:
-- `dev.kit exec` prints the normalized prompt and exits.
-- Use the output with Codex sessions, `codex exec`, Context7 MCP, or a REST client.
+`dev.kit` maintains repository-scoped memory to ensure momentum across multi-turn interactions.
 
-## Mode B — AI Enabled + Codex CLI
+- **Continuity Signals**: Injected into every prompt to tell the AI:
+    - **Where it is**: Current active workflow path.
+    - **What it's doing**: Current step ID.
+    - **What happened**: Previous step status and missing inputs.
 
-Config:
-- `ai.enabled = true`
-- `exec.prompt = ai.codex.min` (default)
-- `exec.stream = false` (default)
+- **Memory Management**:
+    - `dev.kit task show`: Inspect the active memory.
+    - `dev.kit task reset`: Clear the memory to start fresh.
+    - `dev.kit skills run --no-context`: Run a one-off task without history.
 
-Behavior:
-- `dev.kit exec` runs `codex exec` using the normalized prompt.
-- dev.kit stores prompt/request/result logs under `{{DEV_KIT_STATE}}/codex/logs/<repo-id>/`.
-- Codex stores its own sessions under `~/.codex/sessions`.
-
-## Context Persistence
-
-When enabled, dev.kit appends the latest request/response to a repo-scoped
-context file and includes it in subsequent prompts.
-
-Config:
-- `context.enabled = true` (default)
-- `context.dir = <path>` (optional override)
-- `context.max_bytes = 4000` (default)
-
-Behavior:
-- When a `## Context` section is present, treat it as repo-scoped persistent memory.
-
-Commands:
-- `dev.kit context show`
-- `dev.kit context reset`
-- `dev.kit context compact`
-- `dev.kit exec --no-context`
-
-## Mode C — AI Enabled but Codex Missing
-
-Config:
-- `ai.enabled = true`
-
-Behavior:
-- `dev.kit exec` reports that `codex` is missing.
-- Use `dev.kit exec --print` or `dev.kit prompt` to obtain the prompt manually.
-
-## Codex Config Apply
-
-- `dev.kit codex apply` renders `src/ai/data` using Codex schemas/templates into `~/.codex/`.
-- This installs `AGENTS.md`, `config.toml`, `rules/default.rules`, and `skills/`.
-- The prompt + skills remain the primary integration point; Codex config provides baseline behavior.
-
-## Continuity Across Turns
-
-- Use the workflow file path and current step ID from the last response when continuing.
-- For non-interactive runs, use `codex exec --resume` to continue the most recent session.
-- For interactive sessions, use `codex resume` to reopen a prior thread.
+---
+_UDX DevSecOps Team_

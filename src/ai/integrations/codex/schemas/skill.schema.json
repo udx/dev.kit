@@ -5,6 +5,7 @@
   "properties": {
     "name": { "type": "string" },
     "description": { "type": "string" },
+    "pack_dir": { "type": "string" },
     "sections": {
       "type": "array",
       "items": {

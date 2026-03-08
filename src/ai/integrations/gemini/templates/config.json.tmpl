@@ -1,0 +1,18 @@
+{
+  "personality": "pragmatic",
+  "approval_policy": "never",
+  "sandbox_mode": "workspace-write",
+  "web_search": "live",
+  "web_search_request": true,
+  "hooks": {
+    "pre_command": "dev.kit ai status --quiet"
+  },
+  "workflows_dir": "{{DEV_KIT_SOURCE}}/src/ai/data/workflows.json",
+  "sandbox_workspace_write": {
+    "network_access": true,
+    "writable_roots": [
+      "{{HOME}}/git",
+      "{{DEV_KIT_HOME}}"
+    ]
+  }
+}

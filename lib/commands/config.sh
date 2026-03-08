@@ -1,18 +1,13 @@
 #!/bin/bash
 
+if [ -n "${REPO_DIR:-}" ] && [ -f "$REPO_DIR/lib/utils.sh" ]; then
+  # shellcheck source=/dev/null
+  . "$REPO_DIR/lib/utils.sh"
+fi
+
 dev_kit_cmd_config() {
-  shift || true
   ensure_dev_kit_home
   local sub="${1:-}"
-
-  ensure_global_config() {
-    if [ ! -f "$CONFIG_FILE" ]; then
-      if [ -f "$REPO_DIR/config/default.env" ]; then
-        mkdir -p "$(dirname "$CONFIG_FILE")"
-        cp "$REPO_DIR/config/default.env" "$CONFIG_FILE"
-      fi
-    fi
-  }
 
   scope_path() {
     local scope="$1"
@@ -39,7 +34,7 @@ dev_kit_cmd_config() {
       return 1
     fi
     case "$variant" in
-      show) echo "$base/config.env" ;;
+      show|set|reset) echo "$base/config.env" ;;
       default) echo "$base/config.default.env" ;;
       min) echo "$base/config.min.env" ;;
       max) echo "$base/config.max.env" ;;
@@ -86,6 +81,27 @@ dev_kit_cmd_config() {
       i=$((i+1))
     done
     printf "%s" "$key"
+  }
+
+  parse_scope_flag() {
+    local scope="global"
+    local args=("$@")
+    local i=0
+    while [ $i -lt ${#args[@]} ]; do
+      case "${args[$i]}" in
+        --scope=*)
+          scope="${args[$i]#--scope=}"
+          ;;
+        --scope)
+          if [ $((i+1)) -lt ${#args[@]} ]; then
+            scope="${args[$((i+1))]}"
+            i=$((i+1))
+          fi
+          ;;
+      esac
+      i=$((i+1))
+    done
+    printf "%s" "$scope"
   }
 
   parse_force_flag() {
@@ -149,24 +165,10 @@ dev_kit_cmd_config() {
     mkdir -p "$(dirname "$path")"
     mv "$tmp" "$path"
     if [ -n "$value" ]; then
-      echo "Set: $key = $value"
+      echo "Set: $key = $value ($path)"
     else
-      echo "Reset: $key"
+      echo "Reset: $key ($path)"
     fi
-  }
-
-  confirm_action() {
-    local msg="$1"
-    if [ ! -t 0 ]; then
-      echo "Non-interactive. Aborted."
-      exit 1
-    fi
-    printf "%s [y/N] " "$msg"
-    read -r answer || true
-    case "$answer" in
-      y|Y|yes|YES) ;;
-      *) echo "Aborted."; exit 1 ;;
-    esac
   }
 
   detect_cli() {
@@ -198,9 +200,6 @@ dev_kit_cmd_config() {
       if [ -z "${path:-}" ]; then
         echo "Config scope not available: $sub" >&2
         exit 1
-      fi
-      if [ "$sub" = "global" ]; then
-        ensure_global_config
       fi
       if [ "$action" = "--custom" ] || [ "$action" = "custom" ]; then
         local schema_artifact="$REPO_DIR/docs/artifacts/modules/config/local-schema.json"
@@ -257,7 +256,6 @@ dev_kit_cmd_config() {
         exit 0
       fi
       if [ "$sub" = "repo" ]; then
-        ensure_global_config
         if [ -f "$CONFIG_FILE" ]; then
           cat "$CONFIG_FILE"
           exit 0
@@ -271,7 +269,7 @@ dev_kit_cmd_config() {
       key="$(parse_key_flag "$@")"
       if [ -n "$key" ]; then
         local val=""
-        val="$(config_value "$CONFIG_FILE" "$key" "")"
+        val="$(config_value_scoped "$key" "")"
         if [ -n "$val" ]; then
           echo "$key = $val"
         else
@@ -280,12 +278,23 @@ dev_kit_cmd_config() {
         fi
         exit 0
       fi
-      if [ -f "$CONFIG_FILE" ]; then
-        cat "$CONFIG_FILE"
-      else
-        echo "No config found: $CONFIG_FILE"
+      if [ -f "${ENVIRONMENT_YAML:-}" ]; then
+        echo "Orchestrator: $ENVIRONMENT_YAML"
+        cat "$ENVIRONMENT_YAML"
+        echo ""
       fi
-      echo ""
+      if [ -f "$CONFIG_FILE" ]; then
+        echo "Global: $CONFIG_FILE"
+        cat "$CONFIG_FILE"
+        echo ""
+      fi
+      local local_path
+      local_path="$(local_config_path || true)"
+      if [ -n "$local_path" ] && [ -f "$local_path" ]; then
+        echo "Local: $local_path"
+        cat "$local_path"
+        echo ""
+      fi
       echo "Detected CLIs (read-only):"
       detect_cli git
       detect_cli gh
@@ -298,15 +307,24 @@ dev_kit_cmd_config() {
     reset)
       local force="false"
       force="$(parse_force_flag "$@")"
+      local scope="global"
+      scope="$(parse_scope_flag "$@")"
       local key=""
       key="$(parse_key_flag "$@")"
+      local target_path=""
+      if [ "$scope" = "repo" ]; then
+        target_path="$(scope_path "repo" "reset")"
+      else
+        target_path="$CONFIG_FILE"
+      fi
+
       if [ -n "$key" ]; then
         if [ "$force" != "true" ]; then
-          confirm_action "Reset $key to default?"
+          confirm_action "Reset $key to default in $scope scope?"
         fi
         local default_val=""
         default_val="$(config_value "$REPO_DIR/config/default.env" "$key" "")"
-        update_config_value "$key" "$default_val" "$CONFIG_FILE" "reset"
+        update_config_value "$key" "$default_val" "$target_path" "reset"
         exit 0
       fi
       if [ ! -f "$REPO_DIR/config/default.env" ]; then
@@ -314,38 +332,63 @@ dev_kit_cmd_config() {
         exit 1
       fi
       if [ -t 0 ] && [ "$force" != "true" ]; then
-        confirm_action "Reset config to defaults?"
+        confirm_action "Reset $scope config to defaults?"
       fi
-      cp "$REPO_DIR/config/default.env" "$CONFIG_FILE"
-      cp "$REPO_DIR/config/default.env" "$DEV_KIT_HOME/config.env"
-      echo "Reset: $CONFIG_FILE"
+      if [ "$scope" = "repo" ]; then
+        if [ -z "$target_path" ]; then
+          echo "Repo scope not available" >&2
+          exit 1
+        fi
+        cp "$REPO_DIR/config/default.env" "$target_path"
+      else
+        cp "$REPO_DIR/config/default.env" "$CONFIG_FILE"
+        cp "$REPO_DIR/config/default.env" "$DEV_KIT_HOME/config.env"
+      fi
+      echo "Reset: $target_path"
       ;;
   set)
       local force="false"
       force="$(parse_force_flag "$@")"
       local developer="false"
       developer="$(parse_developer_flag "$@")"
+      local scope="global"
+      scope="$(parse_scope_flag "$@")"
       local key=""
       local value=""
       key="$(parse_key_flag "$@")"
+
+      local target_path=""
+      if [ "$scope" = "repo" ]; then
+        target_path="$(scope_path "repo" "set")"
+      else
+        target_path="$CONFIG_FILE"
+      fi
+
       if [ "$developer" = "true" ]; then
-        update_config_value "exec.prompt" "developer" "$CONFIG_FILE" "set"
-        update_config_value "developer.enabled" "true" "$CONFIG_FILE" "set"
+        update_config_value "exec.prompt" "developer" "$target_path" "set"
+        update_config_value "developer.enabled" "true" "$target_path" "set"
         exit 0
       fi
+
       if [ -n "$key" ]; then
-        value="${3:-}"
+        # If --key was used, the value is the first non-flag argument that is NOT the key or --key
+        local arg
+        for arg in "$@"; do
+          if [[ "$arg" != --* ]] && [ "$arg" != "$key" ] && [ "$arg" != "set" ]; then
+            value="$arg"
+            break
+          fi
+        done
       else
+        # positional legacy support: dev.kit config set <key> <value>
         key="${2:-}"
         value="${3:-}"
       fi
-      if [ -n "$key" ] && [ "${2:-}" = "--key" ] && [ -n "${3:-}" ]; then
-        if [ "${4:-}" = "--value" ] && [ -n "${5:-}" ]; then
-          value="${5:-}"
-        else
-          value="${4:-}"
-        fi
+      # re-check key/value if not set by --key/--value
+      if [ -z "$key" ] || [[ "$key" == --* ]]; then
+          key=""
       fi
+
       if [ -z "$key" ]; then
         if [ -t 0 ] && [ "$force" != "true" ]; then
           key="$(prompt_value "key" "")"
@@ -363,11 +406,11 @@ dev_kit_cmd_config() {
         fi
       fi
       if [ -z "$key" ] || [ -z "$value" ]; then
-        echo "Usage: dev.kit config set --key <key> <value>" >&2
+        echo "Usage: dev.kit config set [--scope global|repo] --key <key> <value>" >&2
         exit 1
       fi
-      update_config_value "$key" "$value" "$CONFIG_FILE" "set"
-      if [ "$key" = "state_path" ]; then
+      update_config_value "$key" "$value" "$target_path" "set"
+      if [ "$scope" = "global" ] && [ "$key" = "state_path" ]; then
         update_config_value "$key" "$value" "$DEV_KIT_HOME/config.env" "set"
       fi
       ;;
@@ -385,6 +428,7 @@ Commands:
 Options:
   --key <key>    Target a specific config key
   --value <val>  Set a config value when using --key
+  --scope <val>  Target scope: global (default) or repo
   --force        Skip confirmation prompts
   --developer    Enable developer mode (sets exec.prompt + developer.enabled)
 CONFIG_USAGE
