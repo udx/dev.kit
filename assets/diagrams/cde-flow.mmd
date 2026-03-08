@@ -1,6 +1,12 @@
-flowchart TD
-    Intent[Human Intent] --> Artifacts[Intent-as-Artifact]
-    Artifacts --> Identification[Drift Identification]
-    Identification --> Resolution[Drift Resolution Cycle]
-    Resolution --> Capture[Experience Capture]
-    Capture --> Artifacts
+flowchart LR
+    Intent([Intent]) --> Specs[Intent-as-Artifact]
+    Specs --> Discovery{Drift Discovery}
+    Discovery --> Resolution[Resolution Cycle]
+    Resolution --> Capture([Experience Capture])
+    Capture -.-> Specs
+    
+    style Intent fill:#f9f,stroke:#333,stroke-width:2px
+    style Specs fill:#bbf,stroke:#333,stroke-width:2px
+    style Discovery fill:#dfd,stroke:#333,stroke-width:2px
+    style Resolution fill:#bbf,stroke:#333,stroke-width:2px
+    style Capture fill:#f9f,stroke:#333,stroke-width:2px

@@ -1,0 +1,9 @@
+flowchart LR
+    User([User Intent]) --> Bridge[Grounding Bridge]
+    Bridge --> Skills{Skill Discovery}
+    Skills --> Local[Local Repo]
+    Skills --> Remote[Remote Mesh]
+    
+    style User fill:#f9f,stroke:#333,stroke-width:2px
+    style Bridge fill:#bbf,stroke:#333,stroke-width:2px
+    style Skills fill:#dfd,stroke:#333,stroke-width:2px
