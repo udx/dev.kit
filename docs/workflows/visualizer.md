@@ -38,8 +38,8 @@ This skill is grounded in the following **Deterministic Primitives**:
 
 ## 📂 Managed Assets
 
-- **Templates**: Standard flowchart, sequence, and state machine patterns.
-- **Patterns**: High-fidelity Mermaid styling and shape standards.
+- **Templates**: Standard flowchart, sequence, and state machine patterns in `docs/workflows/assets/templates/`.
+- **Patterns**: High-fidelity Mermaid styling and shape standards in `docs/workflows/mermaid-patterns.md`.
 
 ---
 

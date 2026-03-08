@@ -39,7 +39,7 @@ This skill is grounded in the following **Deterministic Primitives**:
 
 ## 📂 Managed Assets
 
-- **Workflow YAML**: Defines the synchronization steps and grouping rules.
+- **Workflow YAML**: Canonical synchronization sequence in `docs/workflows/assets/git-sync.yaml`.
 
 ---
 
