@@ -43,6 +43,18 @@ Workflow for synchronizing repository documentation and agent context.
   4. **Validate**: Verify that all internal and external links are high-fidelity.
   5. **Capture**: `dev.kit ai sync` to ground the agent in the updated knowledge.
 
+## 🏗 Standard Loop Mapping
+
+The standard engineering loops are operationalized through specialized UDX targets:
+
+| Loop Domain | Grounding Target | Pattern Role |
+| :--- | :--- | :--- |
+| **Logic Implementation** | [`udx/dev.kit`](https://github.com/udx/dev.kit) | Intent normalization and task management. |
+| **Environment Parity** | [`udx/worker`](https://github.com/udx/worker) | Deterministic runtime for loop execution. |
+| **Automation Flow** | [`udx/reusable-workflows`](https://github.com/udx/reusable-workflows) | Pattern baseline for sequence steps. |
+
+---
+
 ## 🏗 Workflow Grounding
 
 Engineering loops are operationalized through deterministic UDX engines:
