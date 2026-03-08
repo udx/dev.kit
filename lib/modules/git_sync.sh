@@ -114,6 +114,14 @@ dev_kit_git_sync_run() {
   local task_id="${2:-unknown}"
   local message="${3:-}"
   
+  # Resolve target main branch
+  local target_main="main"
+  if ! git rev-parse --verify origin/main >/dev/null 2>&1; then
+    if git rev-parse --verify origin/master >/dev/null 2>&1; then
+      target_main="master"
+    fi
+  fi
+
   echo "--- dev.kit Git Sync: Starting Workflow ---"
   
   # Detect drift
@@ -177,8 +185,13 @@ dev_kit_git_sync_run() {
           [ -n "$message" ] && pr_title="$message"
           
           # Generate a brief summary from the git diff (stat only for brevity)
-          local diff_summary
-          diff_summary=$(git diff origin/"$target_main"...HEAD --stat | head -n 20)
+          local diff_summary=""
+          if git rev-parse --verify origin/"$target_main" >/dev/null 2>&1; then
+            diff_summary=$(git diff origin/"$target_main"...HEAD --stat | head -n 20)
+          else
+            # Fallback if origin is not available
+            diff_summary="Changes since common ancestor could not be calculated (origin missing)."
+          fi
           
           local pr_body="### 🚀 Drift Resolution: $task_id\n\n$message\n\n#### 📊 Change Summary\n\`\`\`text\n$diff_summary\n\`\`\`\n\nAutomated via \`dev.kit sync\`."
           
