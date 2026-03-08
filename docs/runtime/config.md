@@ -46,6 +46,16 @@ Configuration in **dev.kit** provides a safe, deterministic foundation for both 
 
 - **Explicit Override**: All settings can be overridden by environment variables (e.g., `DEV_KIT_AI_ENABLED=true`).
 - **Secret Isolation**: Sensitive credentials must never live in `environment.yaml`. Use repo-bound `.env` files (gitignored).
+## 🏗 Config Grounding
+
+Environment orchestration is operationalized through deterministic UDX engines:
+
+| Requirement | Grounding Resource | Role |
+| :--- | :--- | :--- |
+| **Validation** | [`udx/dev.kit`](https://github.com/udx/dev.kit) | High-fidelity parsing of `environment.yaml`. |
+| **Parity** | [`udx/worker`](https://github.com/udx/worker) | Deterministic environment for config stability. |
+
+---
 
 ## 📚 Authoritative References
 

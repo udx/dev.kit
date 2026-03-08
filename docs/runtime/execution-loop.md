@@ -54,6 +54,16 @@ To maintain high-fidelity momentum across multi-turn interactions:
 - **Primitive-Only**: Agents are auto-authorized to use `dev.kit` commands. Non-standardized commands require user confirmation.
 - **Grounding First**: Every session begins with environment hydration (`dev.kit ai sync`).
 - **No Shadow Logic**: Every action must be discoverable and reproducible via repository source code.
+## 🏗 Loop Grounding
+
+The resolution cycle is operationalized through deterministic UDX engines:
+
+| Requirement | Grounding Resource | Role |
+| :--- | :--- | :--- |
+| **Normalization** | [`udx/dev.kit`](https://github.com/udx/dev.kit) | Dynamic discovery and task management. |
+| **Execution** | [`udx/worker`](https://github.com/udx/worker) | Deterministic runtime for logic iteration. |
+
+---
 
 ## 📚 Authoritative References
 

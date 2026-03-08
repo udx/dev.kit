@@ -29,12 +29,21 @@ The deterministic CLI engine and its operational lifecycle.
 - **[Lifecycle](runtime/lifecycle.md)**: The bootstrap, execute, and cleanup phases.
 - **[Execution Loop](runtime/execution-loop.md)**: Workflow schemas and resolution cycles.
 
+## 🔄 Workflow Mesh
+Intent-to-resolution mapping and engineering loops.
+- **[Workflow Mesh Overview](workflows/README.md)**: Dynamic reasoning and deterministic sequences.
+- **[Task Normalization](workflows/normalization.md)**: The agent-led intent mapping boundary.
+- **[Engineering Loops](workflows/loops.md)**: Feature, bugfix, and discovery lifecycles.
+- **[Git Synchronization](workflows/git-sync.md)**: Logical grouping and atomic commits.
+- **[Visual Engineering](workflows/visualizer.md)**: Architectural diagramming and flow analysis.
+
 ## 🧠 AI Integration
 Grounded, context-aware intelligence for your repository.
 - **[AI Overview](ai/README.md)**: How dev.kit transforms LLMs into configuration engines.
-- **[Skill Mesh](skills/README.md)**: Dynamic reasoning toolsets and managed skills.
 - **[Mission & Principles](ai/agents.md)**: The core directives for all AI agents.
-- **[Engineering Loops](ai/workflows.md)**: Standardized task-resolution workflows.
+- **[AI Mesh: GitHub](ai/mesh/github.md)**: Remote discovery and PR management.
+- **[AI Mesh: NPM](ai/mesh/npm.md)**: Environment hydration and tool detection.
+- **[AI Mesh: Context7](ai/mesh/context7.md)**: Cross-repo knowledge synchronization.
 
 ## 🕸 Reference
 

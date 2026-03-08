@@ -41,5 +41,16 @@ The agent mission is aligned with industry patterns for autonomous technical ope
 - **[Proactive Leadership Patterns](https://andypotanin.com/marine-metrics/)**: Using data-driven metrics to drive results and maintain momentum.
 - **[Specialized Development Roles](https://andypotanin.com/best-practices-specialized-software-development/)**: Securing cloud-native systems through specialized agent missions.
 
+## 🏗 Agent Grounding
+
+Agent missions are operationalized through canonical UDX resources:
+
+| Requirement | Grounding Resource | Role |
+| :--- | :--- | :--- |
+| **Logic** | [`udx/dev.kit`](https://github.com/udx/dev.kit) | Validated CLI primitives and task normalization. |
+| **Runtime** | [`udx/worker`](https://github.com/udx/worker) | Deterministic environment for agent execution. |
+| **Workflows** | [`udx/reusable-workflows`](https://github.com/udx/reusable-workflows) | Pattern baseline for multi-turn loops. |
+
 ---
-_UDX DevSecOps Team_
+
+## 📚 Authoritative References
