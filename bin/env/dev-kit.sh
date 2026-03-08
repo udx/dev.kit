@@ -116,12 +116,22 @@ dev_kit_banner() {
   fi
 }
 
+dev_kit_auto_sync() {
+  local auto_sync; auto_sync="$(dev_kit_config_bool ai.auto_sync false)"
+  local ai_enabled; ai_enabled="$(dev_kit_config_bool ai.enabled false)"
+  
+  if [ "$auto_sync" = "true" ] && [ "$ai_enabled" = "true" ]; then
+    (dev.kit ai sync >/dev/null 2>&1 &)
+  fi
+}
+
 dev_kit_banner_prompt() {
   if [ -z "${DEV_KIT_BANNER_PENDING:-}" ]; then
     return 0
   fi
   DEV_KIT_BANNER_PENDING=""
   dev_kit_banner
+  dev_kit_auto_sync
 }
 
 if [ -z "${DEV_KIT_BANNER_SHOWN_LOCAL:-}" ]; then

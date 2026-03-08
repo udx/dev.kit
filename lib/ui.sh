@@ -101,17 +101,30 @@ ui_section() {
 ui_ok() {
   local label="$1"
   local detail="${2:-}"
-  printf "OK  %s\n" "$label"
-  if [ -n "$detail" ]; then
-    printf "   %s\n" "$detail"
-  fi
+  printf "%s✔%s %-18s %s%s%s\n" "$(ui_emerald)" "$(ui_reset)" "$label" "$(ui_dim)" "$detail" "$(ui_reset)"
 }
 
 ui_warn() {
   local label="$1"
   local detail="${2:-}"
-  printf "WARN %s\n" "$label"
-  if [ -n "$detail" ]; then
-    printf "   %s\n" "$detail"
+  printf "%s⚠%s %-18s %s%s%s\n" "$(ui_yellow)" "$(ui_reset)" "$label" "$(ui_dim)" "$detail" "$(ui_reset)"
+}
+
+ui_info() {
+  local label="$1"
+  local detail="${2:-}"
+  printf "%sℹ%s %-18s %s%s%s\n" "$(ui_cyan)" "$(ui_reset)" "$label" "$(ui_dim)" "$detail" "$(ui_reset)"
+}
+
+ui_tip() {
+  local msg="$1"
+  printf "  %s💡 %s%s\n" "$(ui_orange)" "$msg" "$(ui_reset)"
+}
+
+ui_sync_reminder() {
+  if git status --short | grep -q .; then
+    ui_tip "You have unstaged changes. Run 'dev.kit sync run' to atomically commit them."
+  else
+    ui_tip "Repository is clean. Run 'dev.kit sync prepare' before starting new work."
   fi
 }

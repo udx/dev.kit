@@ -150,10 +150,10 @@ get_environment_yaml() {
 ENVIRONMENT_YAML="$(get_environment_yaml)"
 
 local_config_path() {
-  local root
-  root="$(get_repo_root)"
-  if [ -n "$root" ]; then
-    echo "$root/.udx/dev.kit/config.env"
+  local state_dir
+  state_dir="$(get_repo_state_dir || true)"
+  if [ -n "$state_dir" ]; then
+    echo "$state_dir/config.env"
   fi
 }
 
@@ -236,7 +236,7 @@ list_commands() {
     name="$(basename "${file%.sh}")"
     # Filter legacy/internal commands or secondary commands from main list if needed
     case "$name" in
-      audit|github|agent) continue ;;
+      github|agent) continue ;;
     esac
     echo "$name"
   done | LC_ALL=C sort
@@ -345,21 +345,14 @@ context_compact_file() {
 
 # --- Command Loading & Logic ---
 
-# 1. Load Internal Helpers (Not exposed as public commands)
-for helper in "$REPO_DIR"/lib/internal/*.sh; do
-  [ -e "$helper" ] || continue
-  # shellcheck disable=SC1090
-  . "$helper"
-done
-
-# 2. Load Modules (Shared logic for integrations)
+# 1. Load Modules (Shared logic for integrations)
 for module in "$REPO_DIR"/lib/modules/*.sh; do
   [ -e "$module" ] || continue
   # shellcheck disable=SC1090
   . "$module"
 done
 
-# 3. Load Public Commands
+# 2. Load Public Commands
 for cmd_file in "$REPO_DIR"/lib/commands/*.sh; do
   [ -e "$cmd_file" ] || continue
   # shellcheck disable=SC1090

@@ -1,37 +1,60 @@
-# Little's Law for DevOps
+# Little's Law: Flow Optimization
+
+**Domain:** Reference / Operations  
+**Status:** Canonical
 
 ## Summary
 
-Little's Law connects WIP, throughput, and cycle time. Use it to reason about delivery flow and why too much parallel work slows shipping.
+Little's Law provides the mathematical foundation for delivery flow, connecting Work-in-Progress (WIP), throughput, and cycle time. In **dev.kit**, these principles are enforced to minimize context switching and maximize engineering velocity.
 
-## When To Use
+---
 
-- Tuning delivery flow and team throughput.
-- Explaining why WIP caps matter.
-- Evaluating bottlenecks.
+## 🛠 dev.kit Grounding: Flow-to-Action
 
-## Quick Answers
+| Flow Principle | dev.kit Implementation | Primitive / Command |
+| :--- | :--- | :--- |
+| **Minimize WIP** | Bounded, single-intent execution sequences. | `workflow.md` |
+| **Reduce Cycle Time** | Deterministic normalization and task pruning. | `dev.kit task` |
+| **Bottleneck Relief** | Proactive environment and software hydration. | `dev.kit doctor` |
+| **Context Fidelity** | Externalized, project-scoped engineering state. | `.udx/dev.kit/` |
 
-- "Why are we slow?" -> too much WIP or a bottleneck.
-- "How do we shorten cycle time?" -> reduce WIP and queue time.
-- "How do we increase throughput?" -> fix the bottleneck, not just add work.
+---
 
-## Core Model
+## 🏗 High-Fidelity Mandates
 
-- WIP = Throughput x Cycle Time
+### 1. Bounded Execution (DOC-003)
+Never allow a task to expand indefinitely. Complex intents must be normalized into discrete, manageable steps to maintain a low cycle time.
+- **Action**: Use the **Normalization Boundary** to extract child workflows if bounds are exceeded.
 
-## Practical Moves
+### 2. Proactive Hygiene
+Stagnant tasks increase WIP and obscure the engineering audit trail.
+- **Action**: Use `dev.kit task cleanup` to prune stale context and maintain a lean workspace.
 
-- Cap WIP per stage.
-- Track cycle time distribution, not just averages.
-- Reduce context switching.
-- Identify and relieve bottlenecks.
+---
 
-## dev.kit Notes
+## Operational Cues
 
-- Keep workflows bounded to reduce WIP per task.
-- Prefer smaller, reviewable changes.
+- **Shipping Too Slow?** -> Audit active tasks via `dev.kit task list` and reduce parallel WIP.
+- **Context Overload?** -> Finalize and sync current work via `dev.kit sync` before starting new tasks.
+## 🏗 Flow Grounding
 
-## Source
+Flow optimization is operationalized through deterministic UDX engines:
 
-- https://andypotanin.com/littles-law-applied-to-devops/
+| Principle | Grounding Resource | Role |
+| :--- | :--- | :--- |
+| **WIP Control** | [`udx/dev.kit`](https://github.com/udx/dev.kit) | Bounding tasks via normalized workflows. |
+| **Cycle Time** | [`udx/reusable-workflows`](https://github.com/udx/reusable-workflows) | Pre-defined patterns for rapid execution. |
+| **Throughput** | [`udx/worker`](https://github.com/udx/worker) | Removing environment bottlenecks. |
+
+---
+
+## 📚 Authoritative References
+
+Flow optimization is built on the mathematical connection between WIP and Lead Time:
+
+- **[Little's Law for DevOps](https://andypotanin.com/littles-law-applied-to-devops/)**: Understanding the mechanics of delivery flow and WIP caps.
+- **[Scaling Profit Strategically](https://andypotanin.com/scaling-profit-strategically/)**: Understanding the flow of value through business distribution channels.
+- **[Proactive Leadership](https://andypotanin.com/marine-metrics/)**: Using data-driven metrics to drive results and maintain flow.
+
+---
+_UDX DevSecOps Team_

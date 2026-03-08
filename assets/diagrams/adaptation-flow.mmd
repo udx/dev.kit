@@ -1,5 +1,10 @@
 flowchart LR
-    Source[Canonical Source] --> Project[Adaptation / Projection]
-    Project --> ToolA[Tool A Format]
-    Project --> ToolB[Tool B Format]
-    Project --> Fallback[Fail-Open Fallback]
+    Source[(Repo Source)] --> Discovery{Discovery}
+    Discovery --> Mapping[Fidelity Mapping]
+    Mapping --> Projection([Tool Projection])
+    Projection -- Fail-Open --> Source
+    
+    style Source fill:#bbf,stroke:#333,stroke-width:2px
+    style Discovery fill:#dfd,stroke:#333,stroke-width:2px
+    style Mapping fill:#dfd,stroke:#333,stroke-width:2px
+    style Projection fill:#f9f,stroke:#333,stroke-width:2px

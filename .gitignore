@@ -1,8 +1,10 @@
-# Workspace
+# dev.kit State & Hub
 .udx/
 .dev.kit/
 .codex/
 .tmp/
+.drift.tmp
+.processed.tmp
 tasks/
 
 # OS

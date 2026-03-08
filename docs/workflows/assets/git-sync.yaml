@@ -1,0 +1,26 @@
+name: Git Sync
+description: Logical commit and synchronization workflow.
+inputs:
+  task_id:
+    description: Current task ID for traceability.
+    required: true
+  dry_run:
+    description: Preview changes without committing.
+    default: "false"
+  message:
+    description: Optional commit message prefix.
+    default: ""
+
+steps:
+  - id: prepare-sync
+    name: Prepare Sync Environment
+    run: dev.kit sync prepare
+
+  - id: group-and-commit
+    name: Execute Atomic Commits
+    run: dev.kit sync run --task-id "${{inputs.task_id}}" --dry-run "${{inputs.dry_run}}" --message "${{inputs.message}}"
+
+  - id: finalize
+    name: Finalize and Cleanup
+    run: |
+      echo "--- Git Sync Workflow Complete ---"

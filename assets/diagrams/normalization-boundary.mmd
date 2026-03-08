@@ -1,0 +1,9 @@
+flowchart LR
+    Intent([Mapped Intent]) --> Gate{Normalization Gate}
+    Gate --> Workflow[workflow.md]
+    Workflow --> Steps[Bounded Steps]
+    
+    style Intent fill:#f9f,stroke:#333,stroke-width:2px
+    style Gate fill:#dfd,stroke:#333,stroke-width:2px
+    style Workflow fill:#bbf,stroke:#333,stroke-width:2px
+    style Steps fill:#bbf,stroke:#333,stroke-width:2px

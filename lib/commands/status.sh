@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# @description: Engineering brief and system diagnostic.
+# @intent: status, check, health, info, diagnostic
+# @objective: Provide a compact, high-signal overview of the current engineering environment, active tasks, and empowerment mesh.
+# @usage: dev.kit status
+# @usage: dev.kit status --json
+# @workflow: 1. Identity & Operating Mode -> 2. Environment Health -> 3. Active Context -> 4. Empowerment Mesh -> 5. Actionable Advice
+
 if [ -n "${REPO_DIR:-}" ] && [ -f "$REPO_DIR/lib/utils.sh" ]; then
   # shellcheck source=/dev/null
   . "$REPO_DIR/lib/utils.sh"
@@ -17,123 +24,87 @@ dev_kit_cmd_status() {
     return
   fi
 
-  print_section "dev.kit | Engineering Brief"
+  ui_header "Engineering Brief"
 
-  # 1. Identity & Version
+  # 1. Identity
   local version="0.1.0"
-  if [ -f "$REPO_DIR/VERSION" ]; then
-    version="$(cat "$REPO_DIR/VERSION")"
-  fi
-  printf "Instance:  udx/dev.kit v%s\n" "$version"
+  [ -f "$REPO_DIR/VERSION" ] && version="$(cat "$REPO_DIR/VERSION")"
   
-  # 2. Operating Mode
-  local ai_enabled
-  ai_enabled="$(config_value_scoped ai.enabled "false")"
-  local mode="Personal Helper (Local Automation)"
+  # 2. Operating Mode & Environment
+  local ai_enabled; ai_enabled="$(config_value_scoped ai.enabled "false")"
+  local provider; provider="$(config_value_scoped ai.provider "codex")"
+  
   if [ "$ai_enabled" = "true" ]; then
-    local provider
-    provider="$(config_value_scoped ai.provider "codex")"
-    mode="AI-Powered (Smart Translator via $provider)"
+    ui_ok "Mode" "AI-Powered ($provider)"
+  else
+    ui_info "Mode" "Personal Helper (Local)"
   fi
-  print_check "Mode" "[ok]" "$mode"
-
-  # 3. Environment Health (Brief)
-  local orchestrator="missing"
-  if [ -f "$ENVIRONMENT_YAML" ]; then
-    orchestrator="ok ($ENVIRONMENT_YAML)"
-  fi
-  print_check "Orchestrator" "[ok]" "$orchestrator"
 
   local env_line="source \"$HOME/.udx/dev.kit/source/env.sh\""
-  local profile=""
-  case "${SHELL:-}" in
-    */zsh) profile="$HOME/.zshrc" ;;
-    */bash) profile="$HOME/.bash_profile" ;;
-    *) profile="$HOME/.bash_profile" ;;
-  esac
-  local shell_status="missing"
+  local profile=""; case "${SHELL:-}" in */zsh) profile="$HOME/.zshrc" ;; *) profile="$HOME/.bash_profile" ;; esac
   if [ -f "$profile" ] && grep -Fqx "$env_line" "$profile"; then
-    shell_status="ok (integrated in $profile)"
+    ui_ok "Shell" "Integrated ($profile)"
+  else
+    ui_warn "Shell" "Missing integration"
   fi
-  print_check "Shell" "[ok]" "$shell_status"
 
-  # 4. Active Context
-  local repo_root
-  repo_root="$(get_repo_root || true)"
+  # 3. Workspace & Context
+  local repo_root; repo_root="$(get_repo_root || true)"
   if [ -n "$repo_root" ]; then
-    print_check "Workspace" "[ok]" "$repo_root"
+    ui_ok "Workspace" "$(basename "$repo_root")"
     
-    # Check for active workflow.md in tasks/
+    # Active Task
     local active_workflow=""
     if [ -d "$repo_root/tasks" ]; then
       active_workflow="$(find "$repo_root/tasks" -name "workflow.md" -exec grep -l "status: planned\|status: active" {} + | head -n 1 || true)"
       if [ -n "$active_workflow" ]; then
-        local task_id
-        task_id="$(basename "$(dirname "$active_workflow")")"
+        local task_id; task_id="$(basename "$(dirname "$active_workflow")")"
         echo ""
-        echo "Waterfall Progression: [$task_id]"
-        # Pull first 5 steps from workflow.md
+        printf "%sWaterfall Progression: [%s]%s\n" "$(ui_cyan)" "$task_id" "$(ui_reset)"
         grep -A 2 "^### Step" "$active_workflow" | awk '
-          /^### Step/ {
-            step = $0;
-            sub(/^### /, "", step);
-            printf "- " step;
-          }
+          /^### Step/ { step = $0; sub(/^### /, "", step); printf "  %-20s", step; }
           /^status:/ {
             status = $2;
-            if (status == "completed" || status == "done") printf " (Done)\n";
-            else if (status == "active" || status == "running") printf " (Active)\n";
-            else printf " (Planned)\n";
+            if (status == "completed" || status == "done") printf " \033[32m✔\033[0m\n";
+            else if (status == "active" || status == "running") printf " \033[36m›\033[0m\n";
+            else printf " \033[2m…\033[0m\n";
           }
         '
-      else
-        print_check "Active Task" "[ok]" "available in $repo_root/tasks/"
       fi
     fi
   else
-    print_check "Workspace" "[warn]" "not in a git repository"
+    ui_warn "Workspace" "Not in a repository"
   fi
 
-  # 5. AI Advisory
+  # 4. Virtual Skills (Discovery)
   echo ""
-  if command -v dev_kit_cmd_ai >/dev/null 2>&1; then
-    dev_kit_cmd_ai advisory
-  fi
+  printf "%sVirtual Skills (Environment Discovery):%s\n" "$(ui_cyan)" "$(ui_reset)"
+  if command -v gh >/dev/null 2>&1; then ui_ok "GitHub" "CLI (Discovery Active)"; else ui_info "GitHub" "Missing"; fi
+  if command -v npm >/dev/null 2>&1; then ui_ok "NPM" "Node Runtime"; else ui_info "NPM" "Missing"; fi
+  if command -v docker >/dev/null 2>&1; then ui_ok "Docker" "Engine Detected"; else ui_info "Docker" "Missing"; fi
+  if command -v gcloud >/dev/null 2>&1; then ui_ok "Google" "Cloud CLI"; fi
 
-  # 6. Engineering Advisory (Local Actions)
+  # 5. Empowerment Mesh
   echo ""
-  echo "System Advisory (Actionable):"
-  if [ "$shell_status" = "missing" ]; then
-    echo "- [action] Run: dev.kit doctor --shell-integrate"
-  fi
-  if [ "$ai_enabled" = "false" ]; then
-    echo "- [info] AI features are disabled. Use 'dev.kit config set --key ai.enabled true' to enable."
-  fi
-  echo "- [tip] Run 'dev.kit ai skills' to list managed repository powers."
-  echo "- [tip] Run 'dev.kit doctor' for deep system analysis."
-  echo "Engineering Empowerment:"
+  printf "%sEmpowerment Mesh (Capability Discovery):%s\n" "$(ui_cyan)" "$(ui_reset)"
+  
+  local cmd_count; cmd_count=$(ls "$REPO_DIR"/lib/commands/*.sh 2>/dev/null | wc -l)
+  local mod_count; mod_count=$(ls "$REPO_DIR"/lib/modules/*.sh 2>/dev/null | wc -l)
+  local skill_count; skill_count=$(ls "$REPO_DIR"/docs/workflows/*.md 2>/dev/null | grep -v "README.md\|normalization.md\|loops.md\|mermaid-patterns.md" | wc -l)
+  
+  ui_ok "Capabilities" "$cmd_count Commands | $mod_count Modules | $skill_count AI Skills"
+
   if command -v dev_kit_github_health >/dev/null 2>&1 && dev_kit_github_health >/dev/null 2>&1; then
-    echo "- [ok] GitHub Mesh active"
-  else
-    echo "- [  ] GitHub Mesh (gh)"
-  fi
-  if command -v dev_kit_context7_health >/dev/null 2>&1 && dev_kit_context7_health >/dev/null 2>&1; then
-    echo "- [ok] Knowledge Mesh active"
-  else
-    echo "- [  ] Knowledge Mesh (context7)"
+    ui_ok "Remote" "GitHub Authorized"
   fi
   
-  # Check udx tools via the new npm module
-  if command -v npm >/dev/null 2>&1; then
-    local installed=0
-    for pkg in "@udx/mcurl" "@udx/mysec" "@udx/md.view"; do
-      if dev_kit_npm_health "$pkg" >/dev/null 2>&1; then
-        installed=$((installed + 1))
-      fi
-    done
-    if [ $installed -gt 0 ]; then
-      echo "- [ok] @udx Tools ($installed/3)"
-    fi
+  if command -v dev_kit_context7_health >/dev/null 2>&1 && dev_kit_context7_health >/dev/null 2>&1; then
+    ui_ok "Knowledge" "Context7 API (v2)"
   fi
+
+  # 6. Actionable Tips
+  echo ""
+  ui_tip "Run 'dev.kit skills run \"<intent>\"' to resolve drift."
+  ui_tip "Run 'dev.kit sync' to atomically commit changes."
   echo ""
 }

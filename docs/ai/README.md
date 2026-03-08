@@ -1,35 +1,51 @@
-# AI Orchestration: The Configuration Mechanism
+# AI Integration: The Grounding Bridge
 
-Domain: AI
+**Domain:** AI / Orchestration  
+**Status:** Canonical
 
 ## Summary
 
-AI Orchestration in **dev.kit** treats the AI agent as a **Configuration Mechanism**. Instead of simple chat, the agent acts as a bridge between high-level user intent and deterministic repository-based skills.
+AI capabilities in **dev.kit** are a high-fidelity projection of [Context-Driven Engineering (CDE)](../foundations/cde.md). By grounding LLMs in deterministic CLI logic and repository truth, we transform them from generic chatbots into **Context-Driven Configuration Engines**.
 
-![AI Intent-to-Action Flow](../../assets/diagrams/intent-to-action.svg)
+---
 
-## The Intent-to-Action Flow
+## 🛠 Hierarchical Grounding
 
-### 1. Intent Capture & Skill Discovery
-When a user prompts a task (e.g., "Deploy as docker container"), the agent looks up "Experienced Skills" defined in the repository or available via remote MCP servers.
+1.  **[Core Foundations](../foundations/cde.md)**: The principles of Context-Driven Engineering (CDE).
+2.  **[dev.kit Primitives](../foundations/dev-kit.md)**: The thin empowerment layer and its core pillars.
+3.  **[CLI Runtime](../runtime/overview.md)**: The deterministic engine that executes all logic.
+4.  **[Agent Principles](agents.md)**: Global mission, safety mandates, and hygiene.
 
-### 2. Normalization Layer
-`dev.kit` enforces prompt normalization. It maps the discovered skills to the specific repository context, ensuring the AI's instructions are grounded in the actual environment.
+---
 
-### 3. Iterative Resolution (The Loop)
-The AI doesn't just provide an answer; it iterates through instruction steps or loops through feedback cycles. This ensures that even complex "Drift" is resolved step-by-step with deterministic validation.
+## 🏗 Authorization & Safety
 
-### 4. Workflow Generation
-The final output is a set of **Workflow Steps** (commands and options) that can be executed directly by the `dev.kit` runtime.
+To maintain high-fidelity engineering boundaries, **dev.kit** enforces a strict execution policy:
 
-## Core Components
+- **Authorized Path**: Agents are **auto-allowed** to execute all `dev.kit` commands and repository-bound skills. These are deterministic, standardized engineering paths.
+- **Restricted Raw OS**: Direct, non-standardized destructive operations (e.g., raw `rm`, `git push`) are **restricted** and require explicit user confirmation.
+- **Reactive Sync**: Agents autonomously perform `dev.kit ai sync` (grounding) but never perform `dev.kit sync run` (commits) without a directive.
 
-- **Managed AI Skills**: `docs/ai/skills.md` - Index and technical logic of repository-bound engineering.
-- **AI Integrations**: `docs/ai/integrations.md` - Provider-specific mechanisms (Gemini, Codex, etc.).
-- **Engineering Scenarios**: `docs/scenarios/README.md` - Lifecycle examples and demo flows.
-- **Skill Packs**: `src/ai/data/skill-packs/` - High-fidelity skill implementations.
-- **Experience Layer**: `docs/ai/experience.md` - Interaction modes and persistence.
-- **CLI Overview**: `docs/cli/overview.md` - Command surface and dispatch logic.
+---
+
+## 🔌 Integration Layers
+
+### 🧠 LLM Providers
+- **[Gemini Integration](providers/gemini.md)**: Native Google AI integration with grounding hooks.
+
+### 🕸 Skill Mesh (Shared Discovery)
+Unified view of internal commands, managed skills, and external tools:
+- **[Context7](mesh/context7.md)**: Structured repository hub and synchronization.
+- **[GitHub](mesh/github.md)**: Remote repository and workflow resolution (via `gh`).
+- **[NPM](mesh/npm.md)**: Tooling and package health management.
+
+## 📚 Authoritative References
+
+AI orchestration is built on systematic grounding and standalone quality:
+
+- **[Autonomous Technical Operator](https://andypotanin.com/claude-operator-prompt/)**: Principles for high-fidelity agent grounding and execution.
+- **[Synthetic Content Enrichment](https://andypotanin.com/ai-powered-revolution-content-management-synthetic-enrichment-standalone-quality/)**: Strategies for maintaining documentation quality via AI.
+- **[AOCA: Embedded Governance](https://udx.io/cloud-automation-book/cybersecurity)**: Aligning compliance with automated engineering flows.
 
 ---
 _UDX DevSecOps Team_

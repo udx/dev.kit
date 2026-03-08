@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 
-# dev.kit Visualizer Module
-# Programmatic engine for Mermaid diagram creation and SVG export.
+# @description: Programmatic engine for Mermaid diagram creation and SVG export.
+# @intent: visualizer, diagram, mermaid, export, svg
+# @objective: Empower agents and humans to generate and render architectural diagrams using standardized Mermaid templates.
 
 # Create a new Mermaid diagram from a template
 # Usage: dev_kit_visualizer_create <type> <output_path> [template_dir]
 dev_kit_visualizer_create() {
   local type="${1:-flowchart}"
   local output_path="$2"
-  local template_dir="${3:-$REPO_DIR/src/ai/data/skill-packs/dev-kit-visualizer/assets/templates}"
+  local template_dir="${3:-$REPO_DIR/docs/workflows/assets/templates}"
   
   local diagram_type
   case "$type" in

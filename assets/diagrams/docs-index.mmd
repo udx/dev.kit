@@ -1,11 +1,14 @@
-flowchart TD
-    Foundations[1. Foundations] --> Setup[2. Setup & Runtime]
-    Setup --> Config[3. Configuration Mechanism]
-    Config --> Flow[4. The Execution Flow]
-    Flow --> Ref[5. Engineering Reference Index]
+flowchart LR
+    Foundations[1. Foundations] --> Runtime[2. Runtime]
+    Runtime --> AI[3. AI Integration]
+    AI --> Ref[4. Reference]
 
-    click Foundations "/docs/concepts/methodology.md"
-    click Setup "/docs/cli/overview.md"
-    click Config "/docs/ai/README.md"
-    click Flow "/docs/cli/execution/index.md"
-    click Ref "/docs/reference/udx-reference-index.md"
+    click Foundations "foundations/cde.md"
+    click Runtime "runtime/overview.md"
+    click AI "ai/README.md"
+    click Ref "reference/standards/12-factor.md"
+    
+    style Foundations fill:#dfd,stroke:#333,stroke-width:2px
+    style Runtime fill:#bbf,stroke:#333,stroke-width:2px
+    style AI fill:#f9f,stroke:#333,stroke-width:2px
+    style Ref fill:#dfd,stroke:#333,stroke-width:2px

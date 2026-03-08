@@ -1,0 +1,9 @@
+flowchart LR
+    Steps([Workflow Steps]) --> Engine[CLI Engine]
+    Engine --> Skills[Internal Skills]
+    Engine --> Tools[Virtual Tools]
+    Skills & Tools --> Resolution[Resolved Drift]
+    
+    style Steps fill:#f9f,stroke:#333,stroke-width:2px
+    style Engine fill:#dfd,stroke:#333,stroke-width:2px
+    style Resolution fill:#bbf,stroke:#333,stroke-width:2px

@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# @description: Manage GitHub operations (PRs, issues, actions) if gh CLI is available.
+# @intent: github, pr, issue, repo, remote
+
 # github.sh
 #
 # GitHub triage helper (GH CLI only): assigned issues, my PRs, PRs to review.
@@ -17,6 +20,7 @@ set -euo pipefail
 #   dev.kit github assigned-issues [--repo OWNER/REPO] [--state open|closed|all] [--limit N] [--json]
 #   dev.kit github my-prs         [--repo OWNER/REPO] [--state open|closed|merged|all] [--limit N] [--json]
 #   dev.kit github review-prs     [--repo OWNER/REPO] [--state open|closed|merged|all] [--limit N] [--json] [--include-drafts]
+#   dev.kit github pr-create      --title "Title" --body "Body" [--base branch] [--head branch] [--draft]
 
 dev_kit_cmd_github() {
   
@@ -27,6 +31,13 @@ dev_kit_cmd_github() {
   JSON=0
   INCLUDE_DRAFTS=0
   COMMAND=""
+  
+  # pr-create options
+  PR_TITLE=""
+  PR_BODY=""
+  PR_BASE="main"
+  PR_HEAD=""
+  PR_DRAFT="false"
 
   die() { echo "ERROR: $*" >&2; exit 1; }
 
@@ -41,6 +52,7 @@ Commands:
   assigned-issues    List issues assigned to you
   my-prs             List PRs authored by you
   review-prs         List PRs requesting your review
+  pr-create          Create a new Pull Request
 
 Options:
   --repo OWNER/REPO      Restrict to one repository
@@ -48,6 +60,14 @@ Options:
   --limit N              Max results (default: 30)
   --json                 JSON output (adds useful default fields)
   --include-drafts       (review-prs only) include draft PRs
+  
+Options (pr-create):
+  --title TITLE          PR title
+  --body BODY            PR body
+  --base BRANCH          Base branch (default: main)
+  --head BRANCH          Head branch (default: current branch)
+  --draft                Create as draft PR
+
   -h, --help             Show this help
 
 Auth:
@@ -116,9 +136,21 @@ EOF
     run_gh "${args[@]}"
   }
 
+  pr_create() {
+    [[ -n "$PR_TITLE" ]] || die "pr-create: --title is required"
+    [[ -n "$PR_BODY" ]] || die "pr-create: --body is required"
+    
+    if command -v dev_kit_github_pr_create >/dev/null 2>&1; then
+      ensure_auth
+      dev_kit_github_pr_create "$PR_TITLE" "$PR_BODY" "$PR_BASE" "$PR_HEAD" "$PR_DRAFT"
+    else
+      die "GitHub module logic not loaded."
+    fi
+  }
+
   while [[ $# -gt 0 ]]; do
     case "$1" in
-      assigned-issues|my-prs|review-prs)
+      assigned-issues|my-prs|review-prs|pr-create)
         COMMAND="$1"; shift;;
       --repo)
         REPO="${2:-}"; shift 2;;
@@ -130,6 +162,16 @@ EOF
         JSON=1; shift;;
       --include-drafts)
         INCLUDE_DRAFTS=1; shift;;
+      --title)
+        PR_TITLE="${2:-}"; shift 2;;
+      --body)
+        PR_BODY="${2:-}"; shift 2;;
+      --base)
+        PR_BASE="${2:-}"; shift 2;;
+      --head)
+        PR_HEAD="${2:-}"; shift 2;;
+      --draft)
+        PR_DRAFT="true"; shift;;
       -h|--help)
         usage; exit 0;;
       *)
@@ -145,6 +187,7 @@ EOF
     assigned-issues) assigned_issues ;;
     my-prs) my_prs ;;
     review-prs) review_prs ;;
+    pr-create) pr_create ;;
     *) die "Unknown command: $COMMAND" ;;
   esac
 }

@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# @description: Environment and repository orchestration settings.
+# @intent: config, setting, env, setup, manage
+
 if [ -n "${REPO_DIR:-}" ] && [ -f "$REPO_DIR/lib/utils.sh" ]; then
   # shellcheck source=/dev/null
   . "$REPO_DIR/lib/utils.sh"
