@@ -1,6 +1,14 @@
-#!/usr/bin/env bash
+#!/bin/bash
+
+# @description: Unified agent integration management (Sync, Skills, Status).
+# @intent: ai, agent, integration, skills, sync, status
+# @objective: Manage the lifecycle of AI integrations by synchronizing skills, monitoring health, and providing engineering advisory insights.
+# @usage: dev.kit ai status
+# @usage: dev.kit ai sync gemini
+# @workflow: 1. Monitor Integration Health -> 2. Synchronize Skills & Memories -> 3. Ground Agent in Engineering Loop -> 4. Provide Advisory Insights
 
 if [ -n "${REPO_DIR:-}" ] && [ -f "$REPO_DIR/lib/utils.sh" ]; then
+
   # shellcheck source=/dev/null
   . "$REPO_DIR/lib/utils.sh"
 fi
@@ -13,7 +21,7 @@ dev_kit_cmd_ai() {
     status)
       print_section "dev.kit | AI Integration Status"
       local provider
-      provider="$(config_value_scoped ai.provider "codex")"
+      provider="$(config_value_scoped ai.provider "gemini")"
       local enabled
       enabled="$(config_value_scoped ai.enabled "false")"
       
@@ -27,16 +35,11 @@ dev_kit_cmd_ai() {
       else
         print_check "Gemini" "[warn]" "missing (run: dev.kit ai sync)"
       fi
-      if [ -d "$HOME/.codex" ]; then
-        print_check "Codex" "[ok]" "path: ~/.codex"
-      else
-        print_check "Codex" "[warn]" "missing (run: dev.kit ai sync)"
-      fi
       ;;
     sync)
       local provider="${2:-}"
       if [ -z "$provider" ]; then
-        provider="$(config_value_scoped ai.provider "codex")"
+        provider="$(config_value_scoped ai.provider "gemini")"
       fi
       echo "Synchronizing AI skills and memories for: $provider"
       if command -v dev_kit_agent_apply_integration >/dev/null 2>&1; then
@@ -48,81 +51,52 @@ dev_kit_cmd_ai() {
       ;;
     skills)
       print_section "dev.kit | Managed AI Skills"
-      local skill_file=""
-      while IFS= read -r skill_file; do
-        [ -z "$skill_file" ] && continue
-        local name desc usage keywords workflow
-        name="$(jq -r '.name' "$skill_file" || echo "unknown")"
-        desc="$(jq -r '.description' "$skill_file" || echo "no description")"
-        
-        local pack_dir
-        pack_dir="$(jq -r '.pack_dir // empty' "$skill_file" || echo "")"
-        [ -z "$pack_dir" ] && pack_dir="skill-packs/$name"
-        
-        local skill_md="$data_dir/$pack_dir/SKILL.md"
-        usage="dev.kit skills run \"<intent for $name>\""
-        if [ -f "$skill_md" ]; then
-           local example
-           # Grep more lines and allow failure
-           example="$(grep -A 10 "## CLI Usage Example" "$skill_md" 2>/dev/null | grep "dev.kit" | head -n 1 | sed 's/^[[:space:]]*//' || true)"
-           [ -n "$example" ] && usage="$example"
-        fi
-        
-        keywords="$(jq -r '.keywords | join(", ") // "none"' "$skill_file" 2>/dev/null || echo "none")"
-        workflow="$(jq -r '.sections[] | select(.title == "Typical Workflow") | .bullets | join("; ") // "none"' "$skill_file" 2>/dev/null || echo "none")"
-        
-        echo "- [skill] $name"
-        echo "  description: $desc"
-        echo "  usage:       $usage"
-        echo "  keywords:    $keywords"
-        echo "  workflow:    $workflow"
-        echo ""
-      done < <(find "$data_dir/skills" -type f -name '*.json' | sort)
+      local local_packs="$REPO_DIR/docs/skills"
+      if [ -d "$local_packs" ]; then
+        find "$local_packs" -mindepth 1 -maxdepth 1 -type d | sort | while IFS= read -r skill; do
+          local name desc usage
+          name="$(basename "$skill")"
+          desc="$(grep -i "^description:" "$skill/SKILL.md" 2>/dev/null | head -n 1 | sed 's/^description: //I' || echo "no description")"
+          usage="dev.kit skills run \"$name\" \"<intent>\""
+          
+          echo "- [skill] $name"
+          echo "  description: $desc"
+          echo "  usage:       $usage"
+          echo ""
+        done
+      fi
       ;;
     commands)
       print_section "dev.kit | CLI Commands Metadata"
-      local cmd_data="$data_dir/commands.json"
-      if [ ! -f "$cmd_data" ]; then
-        echo "Error: Command metadata not found: $cmd_data" >&2
-        exit 1
-      fi
-      
-      jq -c '.commands[]' "$cmd_data" | while IFS= read -r cmd; do
-        local key desc keywords w_plan w_norm w_proc
-        key="$(echo "$cmd" | jq -r '.key' || echo "unknown")"
-        desc="$(echo "$cmd" | jq -r '.description' || echo "no description")"
-        keywords="$(echo "$cmd" | jq -r '.keywords | join(", ")' 2>/dev/null || echo "none")"
-        w_plan="$(echo "$cmd" | jq -r '.workflow.plan' 2>/dev/null || echo "none")"
-        w_norm="$(echo "$cmd" | jq -r '.workflow.normalize' 2>/dev/null || echo "none")"
-        w_proc="$(echo "$cmd" | jq -r '.workflow.process' 2>/dev/null || echo "none")"
+      for file in "$REPO_DIR"/lib/commands/*.sh; do
+        [ -f "$file" ] || continue
+        local key; key="$(basename "${file%.sh}")"
+        local desc; desc="$(grep "^# @description:" "$file" | cut -d: -f2- | sed 's/^ //' || echo "no description")"
+        local objective; objective="$(grep "^# @objective:" "$file" | cut -d: -f2- | sed 's/^ //' || echo "")"
+        local workflow; workflow="$(grep "^# @workflow:" "$file" | cut -d: -f2- | sed 's/^ //' || echo "")"
+        local intents; intents="$(grep "^# @intent:" "$file" | cut -d: -f2- | sed 's/^ //' || echo "none")"
         
         echo "- [command] dev.kit $key"
         echo "  description: $desc"
-        echo "  keywords:    $keywords"
-        echo "  workflow:    Plan: $w_plan; Normalize: $w_norm; Process: $w_proc"
+        [ -n "$objective" ] && echo "  objective:   $objective"
+        [ -n "$workflow" ] && echo "  workflow:    $workflow"
+        echo "  intents:     $intents"
         echo ""
       done
       ;;
     workflows)
       print_section "dev.kit | Engineering Loops (Workflows)"
-      local workflow_data="$data_dir/workflows.json"
-      if [ ! -f "$workflow_data" ]; then
-        echo "Error: Workflow data not found: $workflow_data" >&2
-        exit 1
+      local workflow_file="$REPO_DIR/docs/ai/workflows.md"
+      if [ -f "$workflow_file" ]; then
+        # Parse markdown headers as workflow names
+        grep "^## " "$workflow_file" | sed 's/^## //' | while IFS= read -r name; do
+          echo "- [loop] $name"
+          # Simple extraction of description/steps if needed
+          echo ""
+        done
+      else
+        echo "No centralized workflow documentation found."
       fi
-      
-      jq -c '.workflows[]' "$workflow_data" | while IFS= read -r wf; do
-        local name desc steps
-        name="$(echo "$wf" | jq -r '.name')"
-        desc="$(echo "$wf" | jq -r '.description')"
-        steps="$(echo "$wf" | jq -r '.steps | join("\n    - ")')"
-        
-        echo "- [loop] $name"
-        echo "  description: $desc"
-        echo "  steps:"
-        echo "    - $steps"
-        echo ""
-      done
       ;;
     advisory)
       local ops_dir="$REPO_DIR/docs/reference/operations"
