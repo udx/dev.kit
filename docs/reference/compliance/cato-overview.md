@@ -41,6 +41,17 @@ Store all generated evidence, reports, and security scans in the hidden **State 
 
 - **Security Gap?** -> Run `dev.kit doctor` to identify missing scanners (e.g., `mysec`).
 - **Audit Required?** -> Use `dev.kit sync run` to generate a high-signal commit history.
+## 🏗 cATO Grounding
+
+Continuous authorization is operationalized through canonical UDX resources:
+
+| Requirement | Grounding Resource | Role |
+| :--- | :--- | :--- |
+| **Monitoring** | [`udx/dev.kit`](https://github.com/udx/dev.kit) | Real-time diagnostics and doctor audits. |
+| **Evidence** | [`udx/worker`](https://github.com/udx/worker) | Hardened environment for context stability. |
+| **Workflows** | [`udx/reusable-workflows`](https://github.com/udx/reusable-workflows) | Validated compliance and delivery patterns. |
+
+---
 
 ## 📚 Authoritative References
 

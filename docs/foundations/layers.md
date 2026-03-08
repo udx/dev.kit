@@ -54,6 +54,17 @@ The Engineering Layers provide a structural model for categorizing repository "S
 | **L1** | Raw Code | Validated Artifact | **Stability**   |
 | **L2** | Artifact | Running Process    | **Portability** |
 | **L3** | Intent   | Resolved Drift     | **Flow**        |
+## 🏗 Layer Grounding
+
+Each engineering layer is grounded in specialized UDX repositories to ensure domain-specific fidelity:
+
+| Layer | Grounding Target | Domain |
+| :--- | :--- | :--- |
+| **L1 (Source)** | [`udx/wp-stateless`](https://github.com/udx/wp-stateless) | Core logic and structural evolution. |
+| **L2 (Runtime)** | [`udx/worker`](https://github.com/udx/worker) | Environment parity and configuration. |
+| **L3 (Orchestration)**| [`udx/reusable-workflows`](https://github.com/udx/reusable-workflows) | High-fidelity execution and flow. |
+
+---
 
 ## 📚 Authoritative References
 

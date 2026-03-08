@@ -36,6 +36,17 @@ All agents and CLI meshes must be explicitly authorized and health-checked.
 
 - **New Dependency?** -> Define it in `environment.yaml` and verify its health via `dev.kit doctor`.
 - **Artifact Released?** -> Use `dev.kit sync` to capture the resolution state and provide an audit trail.
+## 🏗 Security Grounding
+
+Supply chain integrity is enforced through canonical UDX resources:
+
+| Control Area | Grounding Resource | Role |
+| :--- | :--- | :--- |
+| **Integrity** | [`udx/worker`](https://github.com/udx/worker) | Clean, isolated execution sandbox. |
+| **Automation** | [`udx/reusable-workflows`](https://github.com/udx/reusable-workflows) | Validated pipeline and build patterns. |
+| **Provenance** | [`udx/dev.kit`](https://github.com/udx/dev.kit) | Logical, atomic audit trail of all changes. |
+
+---
 
 ## 📚 Authoritative References
 

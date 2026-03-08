@@ -36,6 +36,17 @@ Stagnant tasks increase WIP and obscure the engineering audit trail.
 
 - **Shipping Too Slow?** -> Audit active tasks via `dev.kit task list` and reduce parallel WIP.
 - **Context Overload?** -> Finalize and sync current work via `dev.kit sync` before starting new tasks.
+## 🏗 Flow Grounding
+
+Flow optimization is operationalized through deterministic UDX engines:
+
+| Principle | Grounding Resource | Role |
+| :--- | :--- | :--- |
+| **WIP Control** | [`udx/dev.kit`](https://github.com/udx/dev.kit) | Bounding tasks via normalized workflows. |
+| **Cycle Time** | [`udx/reusable-workflows`](https://github.com/udx/reusable-workflows) | Pre-defined patterns for rapid execution. |
+| **Throughput** | [`udx/worker`](https://github.com/udx/worker) | Removing environment bottlenecks. |
+
+---
 
 ## 📚 Authoritative References
 

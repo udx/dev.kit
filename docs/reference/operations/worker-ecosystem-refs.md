@@ -56,19 +56,17 @@ Treat Worker runtime documentation and configuration as the absolute source of t
 - **Environment Friction?** -> Run your task in a clean `udx/worker` container to isolate the drift.
 - **Adding New Skills?** -> Verify that the new logic is compatible with the standard Worker runtime.
 
+## 🏗 Ecosystem Mapping
+
+The Worker Ecosystem provides the high-fidelity targets for diverse engineering domains:
+
+| Domain | Mapping Resource | Purpose |
+| :--- | :--- | :--- |
+| **Core Runtimes** | [`udx/worker`](https://github.com/udx/worker) | Base and language-specific images. |
+| **Orchestration** | [`udx/worker-deployment`](https://github.com/udx/worker-deployment) | Deployment and CLI mesh tools. |
+| **Workflows** | [`udx/reusable-workflows`](https://github.com/udx/reusable-workflows) | Standard CI/CD and automation patterns. |
+
 ---
-
-## Reference Areas
-
-- Core runtimes: base runtime and language-specific runtimes.
-- Deployment and CLI tools.
-- Configuration and authorization formats.
-- Examples and playbooks.
-
-## dev.kit Notes
-
-- Treat runtime and config docs as sources of truth.
-- Use examples only as patterns, not as specs.
 
 ## 📚 Authoritative References
 

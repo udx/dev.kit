@@ -36,6 +36,17 @@ The **Runtime Lifecycle** defines how **dev.kit** initializes, orchestrates engi
 - Groups changes into logical, domain-specific commits.
 - Captures the resolution logic back into the repository as a new **Skill**.
 - Prunes stale context and ephemeral task state from the workspace.
+## 🏗 Standard Phase Mapping
+
+The Runtime Lifecycle is grounded in canonical UDX infrastructure and patterns:
+
+| Phase | Grounding Resource | Role |
+| :--- | :--- | :--- |
+| **Hydration** | [`udx/worker`](https://github.com/udx/worker) | Base container for deterministic environment setup. |
+| **Execution** | [`udx/reusable-workflows`](https://github.com/udx/reusable-workflows) | Patterns for automated, multi-step logic. |
+| **Finalization** | [`udx/worker-deployment`](https://github.com/udx/worker-deployment) | Standard patterns for final environment orchestration. |
+
+---
 
 ## 📚 Authoritative References
 

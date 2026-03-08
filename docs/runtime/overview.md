@@ -50,6 +50,17 @@ To ensure deterministic behavior and context fidelity, **dev.kit** is optimized 
 1.  **Internal Commands**: Metadata-rich scripts in `lib/commands/*.sh`.
 2.  **Managed Skills**: Specialized toolsets in `docs/skills/`.
 3.  **Virtual Skills**: External CLI tools (gh, npm, docker) detected in the environment.
+## 🏗 Engine Grounding
+
+The `dev.kit` engine is grounded in core UDX infrastructure to ensure high-fidelity execution:
+
+| Component | Grounding Resource | Role |
+| :--- | :--- | :--- |
+| **Runtime** | [`udx/worker`](https://github.com/udx/worker) | Standardized, pre-hydrated base environment. |
+| **API Mesh** | [`@udx/mcurl`](docs/ai/mesh/npm.md) | High-fidelity API interaction and error handling. |
+| **Orchestration**| [`udx/reusable-workflows`](https://github.com/udx/reusable-workflows) | Deterministic CI/CD and deployment patterns. |
+
+---
 
 ## 📚 Authoritative References
 

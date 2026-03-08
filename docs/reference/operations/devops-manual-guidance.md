@@ -37,6 +37,16 @@ All engineering momentum must be visible and audit-ready at the repository level
 - **Auditing Maturity?** -> Run `dev.kit doctor` to evaluate the repository against the high-fidelity baseline.
 - **Defining Gates?** -> Use DevOps Manual patterns to define success criteria in your `plan.md`.
 
+## 🏗 Manual Grounding
+
+Operational controls are operationalized through canonical UDX resources:
+
+| Control Area | Grounding Resource | Role |
+| :--- | :--- | :--- |
+| **Verification** | [`udx/dev.kit`](https://github.com/udx/dev.kit) | Standardized diagnostics and doctor audits. |
+| **Gates** | [`udx/reusable-workflows`](https://github.com/udx/reusable-workflows) | Pattern baseline for CI/CD and delivery. |
+| **Runtime** | [`udx/worker`](https://github.com/udx/worker) | Hardened environment for control stability. |
+
 ---
 
 ## 📚 Authoritative References

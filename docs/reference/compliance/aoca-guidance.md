@@ -37,6 +37,16 @@ Compliance evidence must be a natural byproduct of the **Drift Resolution Cycle*
 - **Ambiguous Practice?** -> Consult `dev.kit ai advisory` for AOCA-aligned patterns.
 - **New Skill Required?** -> Use AOCA baseline patterns to define the interface and logic.
 
+## 🏗 AOCA Grounding
+
+Automation standardization is operationalized through canonical UDX resources:
+
+| AOCA Area | Grounding Resource | Role |
+| :--- | :--- | :--- |
+| **Baseline** | [`udx/reusable-workflows`](https://github.com/udx/reusable-workflows) | Validated automation and platform patterns. |
+| **Governance** | [`udx/dev.kit`](https://github.com/udx/dev.kit) | Standardized CLI wrappers and compliance logic. |
+| **Platform** | [`udx/worker`](https://github.com/udx/worker) | The deterministic runtime for all platform tasks. |
+
 ---
 
 ## 📚 Authoritative References

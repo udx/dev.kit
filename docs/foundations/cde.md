@@ -61,6 +61,17 @@ Before a task is considered resolved, verify:
 - [ ] Did the execution path survive potential tool failures (**Fail-Open**)?
 - [ ] Is the resulting logic captured as a reusable, repo-native **Skill**?
 - [ ] Is the final state documented in Markdown for the next iteration?
+## 🏗 Principle Grounding
+
+Context-Driven Engineering is operationalized through canonical UDX resources:
+
+| CDE Principle | Grounding Resource | Role |
+| :--- | :--- | :--- |
+| **Resolve the Drift** | [`udx/dev.kit`](https://github.com/udx/dev.kit) | The primary engine for intent resolution. |
+| **Deterministic Base** | [`udx/worker`](https://github.com/udx/worker) | Hardened environment for context stability. |
+| **Atomic Flow** | [`udx/reusable-workflows`](https://github.com/udx/reusable-workflows) | Pattern baseline for normalized execution. |
+
+---
 
 ## 📚 Authoritative References
 
