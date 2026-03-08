@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 
-# dev.kit Visualizer Command
-# Unified entry point for programmatic visual engineering.
+# @description: Generate and export high-fidelity Mermaid diagrams (SVG).
+# @intent: diagram, mermaid, svg, export, flowchart, sequence
+# @objective: Enable seamless transition from "Intent" to "Visual Asset" by automating both the creation of Mermaid (.mmd) diagrams and their rendering into SVG documentation.
+# @usage: dev.kit visualizer create flowchart "assets/arch.mmd"
+# @usage: dev.kit visualizer export "assets/arch.mmd"
+# @workflow: 1. Request diagram type -> 2. Generate .mmd -> 3. Refine logic -> 4. Export .svg
 
 dev_kit_cmd_visualizer() {
   local sub="${1:-help}"

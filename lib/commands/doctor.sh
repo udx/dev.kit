@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# @description: Deep system analysis and environment hydration advice.
+# @intent: doctor, check, health, environment, diagnosis
+# @objective: Audit the engineering environment for healthy integrations, secure configurations, and required software, providing proactive advice for empowerment.
+# @usage: dev.kit doctor
+# @usage: dev.kit doctor --shell-integrate
+# @workflow: 1. Core Health -> 2. Software Prerequisites -> 3. External Engineering Context (Mesh) -> 4. AI Skills Health -> 5. Security & Secrets Advisory
+
 if [ -n "${REPO_DIR:-}" ] && [ -f "$REPO_DIR/lib/utils.sh" ]; then
   # shellcheck source=/dev/null
   . "$REPO_DIR/lib/utils.sh"
@@ -58,7 +65,6 @@ dev_kit_cmd_doctor() {
   local sw_docker; sw_docker=$(check_sw "docker")
   local sw_npm; sw_npm=$(check_sw "npm")
   local sw_gh; sw_gh=$(check_sw "gh")
-  local sw_codex; sw_codex=$(check_sw "codex")
   local sw_gemini; sw_gemini=$(check_sw "gemini")
   local sw_mmdc; sw_mmdc=$(check_sw "mmdc")
 
@@ -75,7 +81,6 @@ dev_kit_cmd_doctor() {
     "docker": "$sw_docker",
     "npm": "$sw_npm",
     "gh": "$sw_gh",
-    "codex": "$sw_codex",
     "gemini": "$sw_gemini",
     "mmdc": "$sw_mmdc"
   }
@@ -109,8 +114,7 @@ EOF
   check_software "docker" "$sw_docker" "Containerization" "Install Docker to run isolated worker environments."
   check_software "npm" "$sw_npm" "Node package manager" "Install npm/node for frontend and tooling support."
   check_software "gh" "$sw_gh" "GitHub CLI" "Install gh for automated repository and Skill Mesh resolution."
-  check_software "codex" "$sw_codex" "OpenAI CLI" "Use dev.kit ai sync to hydrate your agent with repository skills."
-  check_software "gemini" "$sw_gemini" "Gemini CLI" "Install gemini for native Google AI integration."
+  check_software "gemini" "$sw_gemini" "Gemini CLI" "Use dev.kit ai sync to hydrate your agent with repository skills."
   check_software "mmdc" "$sw_mmdc" "Mermaid CLI" "Install for local SVG rendering: npm install -g @mermaid-js/mermaid-cli"
 
   echo ""
@@ -156,44 +160,85 @@ EOF
   fi
 
   echo ""
-  echo "Managed AI Skills Health:"
-  local skills_dir="$HOME/.gemini/skills"
-  if [ -d "$skills_dir" ]; then
+  echo "Managed AI Skills Health (Repository):"
+  local local_skills="$REPO_DIR/docs/skills"
+  if [ -d "$local_skills" ]; then
     local count=0
     while IFS= read -r skill; do
       [ -z "$skill" ] && continue
-      count=$((count + 1))
+      ((count++))
       local name
       name="$(basename "$skill")"
       local status="[ok]"
       local detail="documented"
       [ ! -f "$skill/SKILL.md" ] && { status="[warn]"; detail="missing SKILL.md"; }
       
-      # Managed skills no longer require local scripts (moved to core commands)
       print_check "$name" "$status" "$detail"
-    done < <(find "$skills_dir" -mindepth 1 -maxdepth 1 -name "dev-kit-*" -type d)
+    done < <(find "$local_skills" -mindepth 1 -maxdepth 1 -type d)
     
     if [ $count -eq 0 ]; then
-      print_check "skills" "[warn]" "No managed skills found. Run: dev.kit ai sync"
+      print_check "skills" "[info]" "No local skills defined in docs/skills/."
     fi
   else
-    print_check "skills" "[missing]" "Skills directory not found: $skills_dir"
-    echo "  - [advice] Run: dev.kit ai sync to initialize AI environment."
+    print_check "skills" "[info]" "No local skills directory found at $local_skills"
   fi
 
   echo ""
   echo "Advisory (Security & Secrets):"
   local repo_root
   repo_root="$(get_repo_root || true)"
+  
+  if command -v mysec >/dev/null 2>&1; then
+    print_check "mysec" "[ok]" "Active (Secret Scanning)"
+  else
+    print_check "mysec" "[info]" "Missing (npm install -g @udx/mysec)"
+  fi
+  
   if [ -n "$repo_root" ]; then
     if [ -f "$repo_root/.env" ]; then
       if git check-ignore "$repo_root/.env" >/dev/null 2>&1; then
-        echo "- [ok] .env is isolated (gitignored)."
+        print_check ".env" "[ok]" "Gitignored (Safe)"
       else
-        echo "- [alert] .env is NOT ignored! Add it to .gitignore immediately."
+        print_check ".env" "[alert]" "Not Gitignored! (Risk)"
       fi
     fi
   fi
   echo "- [info] Use environment.yaml for non-sensitive orchestration."
+
+  # 6. Repository Audit (Compliance)
+  echo ""
+  print_section "Repository Compliance (Repo-as-a-Skill)"
+  
+  if [ -n "$repo_root" ]; then
+    # TDD Check
+    if [ -d "$repo_root/tests" ] || [ -d "$repo_root/test" ] || [ -d "$repo_root/spec" ]; then
+      print_check "TDD" "[ok]" "Test suite detected"
+    else
+      print_check "TDD" "[warn]" "Missing tests/ or spec/ directory"
+    fi
+
+    # Config-as-Code Check
+    if [ -f "$repo_root/environment.yaml" ]; then
+      print_check "CaC" "[ok]" "environment.yaml active"
+    else
+      print_check "CaC" "[warn]" "Missing environment.yaml"
+    fi
+
+    # Documentation Check
+    if [ -d "$repo_root/docs" ]; then
+      print_check "Docs" "[ok]" "Knowledge base active"
+    else
+      print_check "Docs" "[warn]" "Missing docs/ directory"
+    fi
+
+    # AI Readiness
+    if [ -d "$repo_root/src/ai" ]; then
+      print_check "AI Skills" "[ok]" "Repo skills defined"
+    else
+      print_check "AI Skills" "[warn]" "Missing src/ai/ directory"
+    fi
+  else
+    echo "  - [info] Run inside a git repository for full compliance audit."
+  fi
   echo ""
 }

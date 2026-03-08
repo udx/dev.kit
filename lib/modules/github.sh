@@ -52,3 +52,20 @@ dev_kit_github_list_runners() {
   
   gh api "orgs/$org/actions/runners" --jq '.runners[] | {name: .name, status: .status, labels: [.labels[].name]}' 2>/dev/null
 }
+
+# Create a Pull Request
+# Usage: dev_kit_github_pr_create <title> <body> [base_branch] [head_branch] [draft_flag]
+dev_kit_github_pr_create() {
+  local title="$1"
+  local body="$2"
+  local base="${3:-main}"
+  local head="${4:-$(git branch --show-current)}"
+  local draft="${5:-false}"
+
+  dev_kit_github_health || return $?
+
+  local args=(pr create --title "$title" --body "$body" --base "$base" --head "$head")
+  [[ "$draft" == "true" ]] && args+=(--draft)
+
+  gh "${args[@]}"
+}

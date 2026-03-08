@@ -27,6 +27,35 @@ dev_kit_context7_health() {
   return 1 # Not available
 }
 
+# Synchronize a repository with the Context7 hub
+# Usage: dev_kit_context7_sync [repo_path]
+dev_kit_context7_sync() {
+  local repo_path="${1:-$REPO_DIR}"
+  
+  # 1. Check health first
+  if ! dev_kit_context7_health; then
+    echo "Error: Context7 not ready (API key or CLI missing)." >&2
+    return 1
+  fi
+
+  # 2. Prefer CLI for sync if available
+  if command -v context7 >/dev/null 2>&1; then
+    echo "Synchronizing $repo_path with Context7 CLI..." >&2
+    (cd "$repo_path" && context7 sync)
+    return $?
+  fi
+
+  # 3. Fallback to API-based sync notification (if implemented in API)
+  local api_key; api_key="$(config_value_scoped context7.api_key "${CONTEXT7_API_KEY:-}")"
+  if [ -n "$api_key" ]; then
+    echo "Sending sync signal to Context7 API for $repo_path..." >&2
+    # Placeholder for API-based sync trigger
+    return 0
+  fi
+
+  return 1
+}
+
 # Search for libraries and engineering context using Context7
 # Usage: dev_kit_context7_search "react" "how to use hooks"
 dev_kit_context7_search() {

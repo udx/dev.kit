@@ -134,3 +134,16 @@ ensure_dev_kit_home() {
     cp "$REPO_DIR/config/default.env" "$CONFIG_FILE"
   fi
 }
+
+get_repo_state_dir() {
+  local root; root="$(get_repo_root || true)"
+  if [ -n "$root" ]; then
+    echo "$root/.udx/dev.kit"
+  else
+    echo "$PWD/.udx/dev.kit"
+  fi
+}
+
+get_tasks_dir() {
+  echo "$(get_repo_state_dir)/tasks"
+}

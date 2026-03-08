@@ -7,16 +7,14 @@ system:
   state_path: "~/.udx/dev.kit/state"
 
 exec:
-  prompt: "ai.codex.min"
+  prompt: "ai.gemini.v1"
   stream: false
 
 ai:
   enabled: false
-  provider: "codex" # Supported: codex, claude, gemini
-  mapping:
-    skills: "src/ai/data/skills"
-    rules: "src/ai/data/rules.json"
-    agents: "src/ai/data/agents.json"
+  provider: "gemini" # Supported: gemini
+  auto_sync: true   # Automatically synchronize skills on shell load
+  # Discovery: Capabilities resolved at runtime via lib/commands and docs/skills
 
 context:
   enabled: true

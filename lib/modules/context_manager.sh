@@ -9,16 +9,11 @@ dev_kit_context_normalize() {
   local intent="$1"
   local output_context="${2:-}"
   
-  echo "Normalizing intent: $intent" >&2
-  
   # 1. Discover relevant skills and sources
   local context_data
   context_data="$(dev_kit_context_resolve "$intent")"
   
-  # 2. Map to deterministic steps (Drafting logic)
-  # This typically calls the AI provider with a normalization prompt if enabled,
-  # or uses local heuristic mapping for known patterns.
-  
+  # 2. Map to deterministic steps
   if [ -n "$output_context" ]; then
     echo "$context_data" > "$output_context"
   fi
@@ -26,55 +21,54 @@ dev_kit_context_normalize() {
   echo "$context_data"
 }
 
-# Search for internal task mappings (YAML-based)
-dev_kit_context_search_mappings() {
+# Search for capabilities via Dynamic Discovery Engine
+dev_kit_context_search_discovery() {
   local query="$1"
-  local internal_file="$REPO_DIR/src/mappings/internal.yaml"
-  local mesh_file="$REPO_DIR/src/mappings/mesh.yaml"
-  
-  # Search internal.yaml
-  if [ -f "$internal_file" ]; then
-    awk -v q="$query" '
-      BEGIN { FS=":[[:space:]]*"; section=""; name=""; }
-      /^skills:|^workflows:/ { section=$0; sub(/:/,"",section); next }
-      /^[[:space:]]+- name:/ { name=$0; sub(/.*name:[[:space:]]*/,"",name); gsub(/"/,"",name); next }
-      /^[[:space:]]+intent:/ {
-        intent_line=$0;
-        if (index(tolower(intent_line), tolower(q)) > 0) {
-          printf "{\"name\": \"%s\", \"type\": \"mapping-%s\"},", name, section;
-        }
-      }
-    ' "$internal_file"
+  local matches=()
+
+  # 1. Internal Commands (Scan lib/commands/*.sh)
+  # Look for # @intent: ... headers
+  for file in "$REPO_DIR"/lib/commands/*.sh; do
+    [ -f "$file" ] || continue
+    local name
+    name="$(basename "${file%.sh}")"
+    local intents
+    intents="$(grep "^# @intent:" "$file" | cut -d: -f2- | tr ',' ' ')"
+    
+    # Check if name or intent matches query
+    if [[ "$name" == *"$query"* ]] || echo "$intents" | grep -qi "$query"; then
+       matches+=("{\"name\": \"$name\", \"type\": \"command\", \"priority\": \"high\"}")
+    fi
+  done
+
+  # 2. Virtual Skills (Environment Probe)
+  # Dynamically register skills based on available CLI tools
+  if command -v gh >/dev/null 2>&1; then
+    if [[ "github pr issue repo" =~ $query ]]; then
+       matches+=("{\"name\": \"github\", \"type\": \"virtual-skill\", \"tool\": \"gh\", \"priority\": \"medium\"}")
+    fi
+  fi
+  if command -v npm >/dev/null 2>&1; then
+    if [[ "npm package node module" =~ $query ]]; then
+       matches+=("{\"name\": \"npm\", \"type\": \"virtual-skill\", \"tool\": \"npm\", \"priority\": \"medium\"}")
+    fi
+  fi
+  if command -v docker >/dev/null 2>&1; then
+    if [[ "docker container image" =~ $query ]]; then
+       matches+=("{\"name\": \"docker\", \"type\": \"virtual-skill\", \"tool\": \"docker\", \"priority\": \"medium\"}")
+    fi
   fi
 
-  # Search mesh.yaml (External packages/mesh)
-  if [ -f "$mesh_file" ]; then
-    awk -v q="$query" '
-      BEGIN { FS=":[[:space:]]*"; section=""; name=""; }
-      /^mesh:|^packages:/ { section=$0; sub(/:/,"",section); next }
-      /^[[:space:]]+- name:/ { name=$0; sub(/.*name:[[:space:]]*/,"",name); gsub(/"/,"",name); next }
-      /^[[:space:]]+intent:/ {
-        intent_line=$0;
-        if (index(tolower(intent_line), tolower(q)) > 0) {
-          # Check health for packages if npm module loaded
-          health="unknown";
-          if (section == "packages") {
-            health="available"; # Default if mapping exists
-          }
-          printf "{\"name\": \"%s\", \"type\": \"mesh-%s\", \"health\": \"%s\"},", name, section, health;
-        }
-      }
-    ' "$mesh_file"
-  fi | sed 's/,$//'
+  (IFS=,; echo "${matches[*]}")
 }
 
 # Resolve context and dependencies across the "Skill Mesh"
 dev_kit_context_resolve() {
   local intent="$1"
   
-  # Category 1: Explicit Task Mappings (Core Normalization)
-  local mappings
-  mappings="$(dev_kit_context_search_mappings "$intent")"
+  # Category 1: Dynamic Command & Virtual Skill Discovery
+  local discovery
+  discovery="$(dev_kit_context_search_discovery "$intent")"
   
   # Category 2: Internal Workflows (Markdown-based engineering loops)
   local internal_workflows
@@ -93,24 +87,24 @@ dev_kit_context_resolve() {
 {
   "intent": "$intent",
   "mappings": {
-    "explicit": [$mappings],
+    "discovery": [$discovery],
     "internal_workflows": [$internal_workflows],
     "internal_skills": [$internal_skills],
     "external_references": [$external_refs]
   },
-  "grounding_layer": "repo-centric",
-  "resolution_version": "v1.1"
+  "grounding_layer": "dynamic-discovery",
+  "resolution_version": "v2.0"
 }
 EOF
 }
 
-# Search for internal workflow definitions (docs/scenarios, tasks)
+# Search for internal workflow definitions (docs/ai, docs/scenarios, tasks)
 dev_kit_context_search_workflows() {
   local query="$1"
   local matches=()
   
-  # Search in docs/scenarios and tasks/ for .md files matching intent
-  local search_dirs=("$REPO_DIR/docs/scenarios" "$REPO_DIR/tasks")
+  # Search in docs/ai, docs/scenarios and tasks/ for .md files matching intent
+  local search_dirs=("$REPO_DIR/docs/ai" "$REPO_DIR/docs/scenarios" "$REPO_DIR/tasks")
   for dir in "${search_dirs[@]}"; do
     [ -d "$dir" ] || continue
     while IFS= read -r file; do
@@ -132,9 +126,9 @@ dev_kit_context_search_local() {
   local query="$1"
   local matches=()
   
-  local data_dir="$REPO_DIR/src/ai/data/skill-packs"
-  if [ -d "$data_dir" ]; then
-    for skill in "$data_dir"/*; do
+  local skill_dir="$REPO_DIR/docs/skills"
+  if [ -d "$skill_dir" ]; then
+    for skill in "$skill_dir"/*; do
       [ -d "$skill" ] || continue
       local name
       name="$(basename "$skill")"
@@ -146,7 +140,7 @@ dev_kit_context_search_local() {
       fi
 
       # 2. Keyword/Metadata match in SKILL.md
-      if grep -qiE "$query|keywords:.*$query" "$skill/SKILL.md" 2>/dev/null; then
+      if [ -f "$skill/SKILL.md" ] && grep -qiE "$query|keywords:.*$query" "$skill/SKILL.md" 2>/dev/null; then
         matches+=("{\"name\": \"$name\", \"type\": \"skill\", \"priority\": \"medium\"}")
       fi
     done

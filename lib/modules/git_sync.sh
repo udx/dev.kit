@@ -3,6 +3,60 @@
 # dev.kit Git Sync Module
 # Core logic for logical, atomic repository synchronization and drift resolution.
 
+# Prepare the repository for work (Pre-flight checks)
+# Usage: dev_kit_git_sync_prepare [target_branch]
+dev_kit_git_sync_prepare() {
+  local target_main="${1:-main}"
+  
+  echo "--- dev.kit Git Sync: Pre-work Preparation ---"
+  
+  # 1. Detect current branch
+  local current_branch
+  current_branch=$(git branch --show-current)
+  echo "✔ Current branch: $current_branch"
+  
+  # 2. Check for origin updates
+  echo "Checking origin/$target_main for updates..."
+  git fetch origin "$target_main" --quiet
+  
+  local behind
+  behind=$(git rev-list HEAD..origin/"$target_main" --count)
+  if [ "$behind" -gt 0 ]; then
+    echo "⚠ Your branch is behind origin/$target_main by $behind commits."
+    printf "Would you like to merge origin/$target_main into $current_branch? (y/N): "
+    read -r response
+    if [[ "$response" =~ ^[Yy]$ ]]; then
+      if git merge origin/"$target_main"; then
+        echo "✔ Merged latest $target_main into $current_branch."
+      else
+        echo "❌ Merge conflict detected. Please resolve manually."
+        return 1
+      fi
+    fi
+  else
+    echo "✔ Your branch is up-to-date with origin/$target_main."
+  fi
+  
+  # 3. Ask if new branch is needed
+  printf "Would you like to create a new branch for this work? (y/N): "
+  read -r response
+  if [[ "$response" =~ ^[Yy]$ ]]; then
+    printf "Enter new branch name: "
+    read -r new_branch
+    if [ -n "$new_branch" ]; then
+      if git checkout -b "$new_branch"; then
+        echo "✔ Switched to new branch: $new_branch"
+      else
+        echo "❌ Failed to create branch $new_branch."
+        return 1
+      fi
+    fi
+  fi
+  
+  echo "--- Preparation Complete ---"
+  return 0
+}
+
 # Process a group of files matching a pattern and commit them
 # Usage: dev_kit_git_sync_process_group <name> <pattern> <task_id> [dry_run] [base_msg]
 dev_kit_git_sync_process_group() {
