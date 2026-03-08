@@ -16,6 +16,17 @@ Capabilities are resolved at runtime through a **Dynamic Discovery Engine** that
 AI iterates through instruction steps with deterministic validation and real-time status updates.
 ![Execution Engine](assets/diagrams/execution-engine.svg)
 
+## Standard Engineering Flow
+
+`dev.kit` provides a **Thin Empowerment Layer** that bridges chaotic intent with deterministic repository functions.
+
+| Phase | Description | Implementation |
+| :--- | :--- | :--- |
+| **1. Grounding** | **UDX Worker** provides the isolated, pre-hydrated base environment. | [`udx/worker`](docs/reference/operations/worker-ecosystem-refs.md) |
+| **2. Discovery** | **Skill Mesh** resolves internal commands and `@udx` NPM packages. | [`@udx/mcurl`](docs/ai/mesh/npm.md) |
+| **3. Normalize** | AI Reasoning Skills transform intent into a bounded `workflow.md`. | [`SKILL.md`](docs/skills/README.md) |
+| **4. Execute** | Deterministic Primitives execute the logic within the CLI boundary. | `lib/commands/` |
+
 ---
 
 ## Core Interface
