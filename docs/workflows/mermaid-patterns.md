@@ -32,6 +32,15 @@ This reference provides standardized patterns for Mermaid-based visualizations w
 - **Fail-Open**: If `mmdc` fails, always provide the raw Mermaid source to the user/agent.
 - **Sandboxing**: In restricted environments, leverage Puppeteer `--no-sandbox` flags via local configuration.
 
+## 🏗 Standard Grounding
+
+Visual standards are operationalized through deterministic UDX engines:
+
+| Requirement | Grounding Resource | Role |
+| :--- | :--- | :--- |
+| **Logic** | [`udx/dev.kit`](https://github.com/udx/dev.kit) | High-fidelity export engine and pattern discovery. |
+| **Runtime** | [`udx/worker`](https://github.com/udx/worker) | Deterministic environment for asset generation. |
+
 ---
 
 ## 📚 Authoritative References

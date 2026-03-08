@@ -24,10 +24,19 @@ Common logic and templates used by the mesh are stored in the `assets/` director
 - **`assets/git-sync.yaml`**: The canonical synchronization sequence.
 - **`assets/templates/`**: Standard Mermaid patterns for visual engineering.
 
+## 🏗 Mesh Grounding
+
+The Workflow Mesh is operationalized through canonical UDX resources:
+
+| Requirement | Grounding Resource | Role |
+| :--- | :--- | :--- |
+| **Logic** | [`udx/dev.kit`](https://github.com/udx/dev.kit) | Dynamic discovery and orchestration engine. |
+| **Runtime** | [`udx/worker`](https://github.com/udx/worker) | Deterministic environment for workflow execution. |
+| **Patterns** | [`udx/reusable-workflows`](https://github.com/udx/reusable-workflows) | Pattern baseline for cross-repo sequences. |
+
 ---
 
-## 🛠 Grounding & Sync
-
+## 🛠 Synchronization
 Agents hydrate their environment by running **`dev.kit ai sync`**. This process scans the mesh for high-fidelity documentation and projects metadata into the agent's active context.
 
 ---

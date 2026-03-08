@@ -32,6 +32,18 @@ Agents are auto-mapped to send and receive context from repository workflows. If
 2.  **Generates** the necessary code or documentation patterns.
 3.  **Packages** the resolution into a normalized `dev.kit` workflow step.
 
+## 🏗 Standard Task Mapping
+
+The normalization mapper routes common engineering intents to specialized UDX repositories:
+
+| Intent Domain | Grounding Target | Mapping logic |
+| :--- | :--- | :--- |
+| **Containerization** | [`udx/worker`](https://github.com/udx/worker) | Normalize to base environment specs. |
+| **Plugin Dev** | [`udx/wp-stateless`](https://github.com/udx/wp-stateless) | Normalize to structural plugin patterns. |
+| **CI/CD / Actions** | [`udx/reusable-workflows`](https://github.com/udx/reusable-workflows) | Normalize to validated pipeline steps. |
+
+---
+
 ## 🏗 Normalization Grounding
 
 Task normalization is operationalized through canonical UDX resources:

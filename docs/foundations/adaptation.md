@@ -36,7 +36,7 @@
 | **`.mmd` (Mermaid)**   | `.svg` or `.png`  | Renders visual diagrams for documentation (Falls back to raw code if `mmdc` is missing). |
 | **Script Headers**     | CLI Help Menus    | Parses shell script comments into a dynamic `dev.kit --help` interface.                  |
 
-## 🏗 Adaptation Primitives
+## 🏗 Adaptation Grounding
 
 To ensure high-fidelity projections, `dev.kit` leverages canonical UDX resources as the targets for intent normalization:
 
