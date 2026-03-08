@@ -32,6 +32,16 @@ Context7 provides an MCP server that allows AI agents to directly browse and que
 - **Installation**: `npm install -g @upstash/context7`
 - **Use Case**: Local resolution and manual repository synchronization management.
 
+## 🏗 Standard Resource Mapping
+
+Context7 serves as the high-fidelity hub for all canonical UDX repository context:
+
+| Repository | Role | Purpose |
+| :--- | :--- | :--- |
+| **[`udx/dev.kit`](https://github.com/udx/dev.kit)** | Empowerment Layer | Primary engine for task normalization and skill discovery. |
+| **[`udx/worker`](https://github.com/udx/worker)** | Base Environment | Canonical documentation for the deterministic container runtime. |
+| **[`udx/worker-deployment`](https://github.com/udx/worker-deployment)** | Orchestration | Patterns for deploying and managing high-fidelity environments. |
+
 ---
 
 ## 🌊 Waterfall Progression (DOC-003)

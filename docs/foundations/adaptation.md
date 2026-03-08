@@ -36,6 +36,16 @@
 | **`.mmd` (Mermaid)**   | `.svg` or `.png`  | Renders visual diagrams for documentation (Falls back to raw code if `mmdc` is missing). |
 | **Script Headers**     | CLI Help Menus    | Parses shell script comments into a dynamic `dev.kit --help` interface.                  |
 
+## 🏗 Adaptation Primitives
+
+To ensure high-fidelity projections, `dev.kit` leverages canonical UDX resources as the targets for intent normalization:
+
+| Primitive | Adaptation Goal | Target Source |
+| :--- | :--- | :--- |
+| **Workflow Logic** | Project intent into reusable CI/CD patterns. | [`udx/reusable-workflows`](https://github.com/udx/reusable-workflows) |
+| **Runtime Context** | Normalize environment parity across containers. | [`udx/worker`](https://github.com/udx/worker) |
+| **Plugin Evolution** | Scale high-fidelity WordPress integrations. | [`udx/wp-stateless`](https://github.com/udx/wp-stateless) |
+
 ---
 
 ## The Adaptation Lifecycle
