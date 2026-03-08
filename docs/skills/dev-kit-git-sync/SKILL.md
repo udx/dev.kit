@@ -16,6 +16,7 @@ This skill utilizes dynamic LLM reasoning to perform the following:
 - **Logical Domain Determination**: Analyzing changed files to map them to high-fidelity domains (docs, ai, cli, core).
 - **Contextual Intent Capture**: Generating meaningful commit messages that reflect the "Why" behind the drift resolution.
 - **Drift Identification**: Recognizing unstaged changes and determining the correct synchronization sequence.
+- **Collaborative Orchestration**: Identifying when a task is ready for review and proactively suggesting the creation of a Pull Request.
 
 ---
 
@@ -24,6 +25,7 @@ This skill utilizes dynamic LLM reasoning to perform the following:
 The following assets provide the programmatic engine for this skill:
 - **`workflow.yaml`**: The canonical definition of synchronization steps and grouping rules.
 - **Atomic Committer**: Hardened logic that ensures changes are committed in discrete, revertible blocks.
+- **PR Suggestion Engine**: Proactive prompt that interfaces with the **GitHub Mesh** to create remote Pull Requests.
 
 ---
 
