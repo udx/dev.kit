@@ -1,0 +1,34 @@
+#compdef dev.kit
+
+_dev_kit() {
+  local -a commands
+  local -a options
+  local cmd
+  local dev_kit_cmd
+
+  dev_kit_cmd="${0:A:h:h}/dev-kit"
+
+  commands=(${(f)"$("$dev_kit_cmd" help 2>/dev/null | awk '
+    /^Commands:/ { flag=1; next }
+    flag && $0 ~ /^  [a-zA-Z0-9-]+/ { print $1 ":" substr($0, index($0, $2)) }
+    flag && $0 == "" { exit }
+  ')"})
+
+  if (( CURRENT == 2 )); then
+    _describe 'command' commands
+    return
+  fi
+
+  cmd="$words[2]"
+  options=(${(f)"$("$dev_kit_cmd" "$cmd" --help 2>/dev/null | awk '
+    /^Options:/ { flag=1; next }
+    flag && $0 ~ /^  --/ { print $1 ":" substr($0, index($0, $2)) }
+    flag && $0 == "" { exit }
+  ')"})
+
+  if (( ${#options} )); then
+    _describe 'option' options
+  fi
+}
+
+_dev_kit "$@"

@@ -57,11 +57,27 @@ The audit output becomes a focused improvement plan with bounded next steps.
 
 ```bash
 # 1. Install & Run the Pulse Check
-curl -sSL [https://dev.kit/install](https://dev.kit/install) | bash && dev.kit
+bash bin/scripts/install.sh
+source "$HOME/.udx/dev.kit/bin/env/dev-kit.sh"
+dev.kit
 
 # 2. Let an Agent Fix Compliance
 dev.kit --json | agent-execute "Fix all fidelity gaps"
 
 # 3. Let an Agent Develop a Feature
 dev.kit bridge --json | agent-execute "Add a new module using existing primitives"
+```
+
+## Install
+
+```bash
+bash bin/scripts/install.sh
+source "$HOME/.udx/dev.kit/bin/env/dev-kit.sh"
+dev.kit status
+```
+
+## Uninstall
+
+```bash
+"$HOME/.udx/dev.kit/bin/scripts/uninstall.sh"
 ```
