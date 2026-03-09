@@ -22,17 +22,14 @@ set -euo pipefail
 #   dev.kit github review-prs     [--repo OWNER/REPO] [--state open|closed|merged|all] [--limit N] [--json] [--include-drafts]
 #   dev.kit github pr-create      --title "Title" --body "Body" [--base branch] [--head branch] [--draft]
 
-dev_kit_cmd_github() {
-  
-
+dev_kit_cmd_gh() {
   LIMIT=30
-  STATE="open"       # issues: open|closed|all ; prs: open|closed|merged|all
+  STATE="open"
   REPO=""
   JSON=0
   INCLUDE_DRAFTS=0
   COMMAND=""
   
-  # pr-create options
   PR_TITLE=""
   PR_BODY=""
   PR_BASE="main"
@@ -43,10 +40,10 @@ dev_kit_cmd_github() {
 
   usage() {
     cat <<EOF
-dev.kit github: GitHub triage helper (GH CLI only)
+dev.kit gh: GitHub triage helper (GH CLI required)
 
 Usage:
-  dev.kit github <command> [options]
+  dev.kit gh <command> [options]
 
 Commands:
   assigned-issues    List issues assigned to you

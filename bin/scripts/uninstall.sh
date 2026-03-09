@@ -14,26 +14,46 @@ DEV_KIT_OWNER="${DEV_KIT_OWNER:-udx}"
 DEV_KIT_REPO="${DEV_KIT_REPO:-dev.kit}"
 ENGINE_DIR="${HOME}/.${DEV_KIT_OWNER}/${DEV_KIT_REPO}"
 
+confirm_action() {
+  local msg="$1"
+  if [ -t 0 ]; then
+    printf "%s [y/N] " "$msg"
+    read -r answer || true
+    case "$answer" in
+      y|Y|yes|YES) return 0 ;;
+      *) return 1 ;;
+    esac
+  fi
+  return 0
+}
+
 if [ -L "$TARGET" ] || [ -f "$TARGET" ]; then
-  rm -f "$TARGET"
-  if command -v ui_ok >/dev/null 2>&1; then
-    ui_ok "Removed" "$TARGET"
-  else
-    echo "Removed: $TARGET"
+  if confirm_action "Remove dev.kit binary from $TARGET?"; then
+    rm -f "$TARGET"
+    if command -v ui_ok >/dev/null 2>&1; then
+      ui_ok "Removed" "$TARGET"
+    else
+      echo "Removed: $TARGET"
+    fi
   fi
 else
-  if command -v ui_warn >/dev/null 2>&1; then
-    ui_warn "Not found" "$TARGET"
-  else
-    echo "Not found: $TARGET"
+  echo "Binary not found at $TARGET"
+fi
+
+if [ -d "$ENGINE_DIR" ]; then
+  if [ "${1:-}" = "--purge" ] || confirm_action "Purge dev.kit engine directory ($ENGINE_DIR)?"; then
+    if confirm_action "Backup state before purging?"; then
+      ts=$(date +%Y%m%d_%H%M%S)
+      backup_path="$HOME/dev-kit-state-backup-${ts}.tar.gz"
+      tar -czf "$backup_path" -C "$ENGINE_DIR" . 2>/dev/null || true
+      echo "State backed up to $backup_path"
+    fi
+    rm -rf "$ENGINE_DIR"
+    if command -v ui_ok >/dev/null 2>&1; then
+      ui_ok "Purged" "$ENGINE_DIR"
+    else
+      echo "Purged: $ENGINE_DIR"
+    fi
   fi
 fi
 
-if [ "${1:-}" = "--purge" ]; then
-  rm -rf "$ENGINE_DIR"
-  if command -v ui_ok >/dev/null 2>&1; then
-    ui_ok "Purged" "$ENGINE_DIR"
-  else
-    echo "Purged: $ENGINE_DIR"
-  fi
-fi

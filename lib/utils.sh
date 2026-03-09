@@ -93,14 +93,13 @@ skill_frontmatter_value() {
 confirm_action() {
   local msg="$1"
   if [ ! -t 0 ]; then
-    echo "Non-interactive. Aborted."
-    exit 1
+    return 1
   fi
   printf "%s [y/N] " "$msg"
   read -r answer || true
   case "$answer" in
-    y|Y|yes|YES) ;;
-    *) echo "Aborted."; exit 1 ;;
+    y|Y|yes|YES) return 0 ;;
+    *) return 1 ;;
   esac
 }
 
@@ -119,20 +118,6 @@ dev_kit_validate_json_required() {
       exit 1
     fi
   done
-}
-
-ensure_dev_kit_home() {
-  mkdir -p "$DEV_KIT_HOME"
-  mkdir -p "$DEV_KIT_STATE"
-  if [ ! -w "$DEV_KIT_STATE" ]; then
-    echo "dev.kit: config path not writable: $DEV_KIT_STATE" >&2
-    echo "dev.kit: fix permissions or choose a different DEV_KIT_STATE" >&2
-    exit 1
-  fi
-  if [ ! -f "$CONFIG_FILE" ] && [ -f "$REPO_DIR/config/default.env" ]; then
-    mkdir -p "$(dirname "$CONFIG_FILE")"
-    cp "$REPO_DIR/config/default.env" "$CONFIG_FILE"
-  fi
 }
 
 get_repo_state_dir() {

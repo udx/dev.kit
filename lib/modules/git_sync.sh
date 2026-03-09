@@ -109,12 +109,38 @@ dev_kit_git_sync_process_group() {
 }
 
 # Run the full git sync workflow
-# Usage: dev_kit_git_sync_run [dry_run] [task_id] [message]
+# Usage: dev_kit_git_sync_run [dry_run] [task_id] [message] [push_flag]
 dev_kit_git_sync_run() {
   local dry_run="${1:-false}"
   local task_id="${2:-unknown}"
   local message="${3:-}"
+  local push_flag="${4:-false}"
   
+  # 0. Pre-sync Verification (Run Tests)
+  if [ "$dry_run" = "false" ]; then
+    echo "--- Step 0: Pre-sync Verification ---"
+    local has_tests="false"
+    local repo_root; repo_root="$(get_repo_root || true)"
+    if [ -n "$repo_root" ]; then
+      [ -d "$repo_root/tests" ] || [ -d "$repo_root/test" ] || [ -d "$repo_root/spec" ] && has_tests="true"
+    fi
+
+    if [ "$has_tests" = "true" ]; then
+      echo "Tests detected. Running high-fidelity verification..."
+      if dev.kit test; then
+        echo "✔ Verification successful. Proceeding with sync."
+      else
+        echo "❌ Verification failed. Please resolve test failures before syncing."
+        if ! confirm_action "Tests failed. Force sync anyway?"; then
+          return 1
+        fi
+      fi
+    else
+      echo "No tests detected. Skipping verification step."
+    fi
+    echo ""
+  fi
+
   # Resolve target main branch
   local target_main="main"
   if ! git rev-parse --verify origin/main >/dev/null 2>&1; then
@@ -133,17 +159,19 @@ dev_kit_git_sync_run() {
   echo "$staged $unstaged $untracked" | tr ' ' '\n' | sort -u > .drift.tmp
   : > .processed.tmp
 
-  # Define groups (Standard UDX grouping)
-  local -a groups=(
-    "docs:Group Documentation:^docs/|^README.md"
-    "ai:Group AI & Integrations:^src/ai/|^.gemini/|^src/mappings/"
-    "cli:Group CLI & Scripts:^bin/|^lib/|^src/cli/"
-    "core:Group Core Infrastructure:^src/|^environment.yaml|^context7.json"
-  )
+  # Define groups (Loaded from config for Easy Management)
+  local groups_raw; groups_raw=$(config_value_scoped git_sync_groups "docs:^docs/|^README.md,ai:^src/ai/|^.gemini/|^src/mappings/,cli:^bin/|^lib/|^src/cli/,core:^src/|^environment.yaml|^context7.json")
+  
+  local -a groups=()
+  IFS=',' read -r -a groups_arr <<< "$groups_raw"
+  for g in "${groups_arr[@]}"; do
+    groups+=("$g")
+  done
 
   for group in "${groups[@]}"; do
-    IFS=':' read -r id name pattern <<< "$group"
-    echo "--- Step: $name ($id) ---"
+    local id; id=$(echo "$group" | cut -d: -f1)
+    local pattern; pattern=$(echo "$group" | cut -d: -f2-)
+    echo "--- Step: Group $id ---"
     dev_kit_git_sync_process_group "$id" "$pattern" "$task_id" "$dry_run" "$message"
   done
 
@@ -172,37 +200,48 @@ dev_kit_git_sync_run() {
   rm -f .drift.tmp .processed.tmp
   echo "--- Git Sync Workflow Complete ---"
 
-  # 5. Proactive PR Suggestion (New)
-  if [ "$dry_run" = "false" ] && command -v dev_kit_github_health >/dev/null 2>&1; then
-    if dev_kit_github_health >/dev/null 2>&1; then
-      local current_branch; current_branch=$(git branch --show-current)
-      # Don't suggest PR for the default main branch
-      if [[ "$current_branch" != "main" && "$current_branch" != "master" ]]; then
-        echo ""
-        printf "✔ Synchronization complete. Would you like to create a Pull Request for $current_branch? (y/N): "
-        read -r response
-        if [[ "$response" =~ ^[Yy]$ ]]; then
-          local pr_title="feat: resolve $task_id"
-          [ -n "$message" ] && pr_title="$message"
-          
-          # Generate a brief summary from the git diff (stat only for brevity)
-          local diff_summary=""
-          if git rev-parse --verify origin/"$target_main" >/dev/null 2>&1; then
-            diff_summary=$(git diff origin/"$target_main"...HEAD --stat | head -n 20)
-          else
-            # Fallback if origin is not available
-            diff_summary="Changes since common ancestor could not be calculated (origin missing)."
-          fi
-          
-          local pr_body="### 🚀 Drift Resolution: $task_id\n\n$message\n\n#### 📊 Change Summary\n\`\`\`text\n$diff_summary\n\`\`\`\n\nAutomated via \`dev.kit sync\`."
-          
-          if dev_kit_github_pr_create "$pr_title" "$pr_body" "$target_main"; then
-             echo "✔ Pull Request synchronized successfully."
-          else
-             echo "❌ Failed to synchronize Pull Request."
+  # 5. Push and PR Management
+  if [ "$dry_run" = "false" ]; then
+    local current_branch; current_branch=$(git branch --show-current)
+    local remote; remote=$(git config --get "branch.${current_branch}.remote" || echo "origin")
+    
+    # Check if we should push
+    if [ "$push_flag" = "true" ] || confirm_action "Synchronization complete. Push changes to $remote/$current_branch?"; then
+      echo "Pushing changes to $remote $current_branch..."
+      if git push "$remote" "$current_branch"; then
+        echo "✔ Pushed successfully."
+        
+        # Proactive PR Suggestion
+        if command -v dev_kit_github_health >/dev/null 2>&1 && dev_kit_github_health >/dev/null 2>&1; then
+          # Don't suggest PR for the default main branch
+          if [[ "$current_branch" != "main" && "$current_branch" != "master" ]]; then
+            echo ""
+            if confirm_action "Would you like to synchronize a Pull Request for $current_branch?"; then
+              local pr_title="feat: resolve $task_id"
+              [ -n "$message" ] && pr_title="$message"
+              
+              # Generate a brief summary from the git diff
+              local diff_summary=""
+              if git rev-parse --verify "$remote/$target_main" >/dev/null 2>&1; then
+                diff_summary=$(git diff "$remote/$target_main"...HEAD --stat | head -n 20)
+              else
+                diff_summary="Changes since common ancestor could not be calculated ($remote/$target_main missing)."
+              fi
+              
+              local pr_body="### 🚀 Drift Resolution: $task_id\n\n$message\n\n#### 📊 Change Summary\n\`\`\`text\n$diff_summary\n\`\`\`\n\nAutomated via \`dev.kit sync\`."
+              
+              if dev_kit_github_pr_create "$pr_title" "$pr_body" "$target_main"; then
+                 echo "✔ Pull Request synchronized successfully."
+              else
+                 echo "❌ Failed to synchronize Pull Request."
+              fi
+            fi
           fi
         fi
+      else
+        echo "❌ Push failed. Please check your remote configuration or permissions."
       fi
     fi
   fi
 }
+

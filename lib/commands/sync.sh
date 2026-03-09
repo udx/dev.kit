@@ -41,10 +41,12 @@ dev_kit_cmd_sync() {
       local dry_run="false"
       local task_id="unknown"
       local message=""
-      
+      local push="false"
+
       while [[ $# -gt 0 ]]; do
         case "$1" in
           --dry-run) dry_run="true"; shift ;;
+          --push) push="true"; shift ;;
           --task-id) task_id="$2"; shift 2 ;;
           --message) message="$2"; shift 2 ;;
           -h|--help)
@@ -57,13 +59,14 @@ Commands:
 
 Options (run):
   --dry-run       Show what commits would be made without executing them
+  --push          Push changes to origin after committing
   --task-id <id>  The current task ID to associate with commits
   --message <m>   Optional base message prefix
   -h, --help      Show this help message
 
 Example:
   dev.kit sync prepare main
-  dev.kit sync run --task-id "TASK-123"
+  dev.kit sync run --task-id "TASK-123" --push
 SYNC_HELP
             return 0
             ;;
@@ -72,11 +75,12 @@ SYNC_HELP
       done
 
       if command -v dev_kit_git_sync_run >/dev/null 2>&1; then
-        dev_kit_git_sync_run "$dry_run" "$task_id" "$message"
+        dev_kit_git_sync_run "$dry_run" "$task_id" "$message" "$push"
       else
         echo "Error: Git sync module not loaded." >&2
         return 1
       fi
       ;;
+
   esac
 }

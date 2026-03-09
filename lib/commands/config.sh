@@ -137,36 +137,7 @@ dev_kit_cmd_config() {
     local key="$1"
     local value="$2"
     local path="${3:-$CONFIG_FILE}"
-    local mode="${4:-set}"
-    local tmp=""
-    tmp="$(mktemp)"
-    if [ -f "$path" ]; then
-      awk -v k="$key" -v v="$value" -v mode="$mode" '
-        BEGIN { found=0 }
-        {
-          if ($0 ~ "^[[:space:]]*"k"[[:space:]]*=") {
-            found=1
-            if (mode=="reset" && v=="") { next }
-            print k" = "v
-            next
-          }
-          print
-        }
-        END {
-          if (!found && v!="") {
-            print k" = "v
-          }
-        }
-      ' "$path" > "$tmp"
-    else
-      if [ -n "$value" ]; then
-        printf "%s = %s\n" "$key" "$value" > "$tmp"
-      else
-        : > "$tmp"
-      fi
-    fi
-    mkdir -p "$(dirname "$path")"
-    mv "$tmp" "$path"
+    config_set_value "$key" "$value" "$path"
     if [ -n "$value" ]; then
       echo "Set: $key = $value ($path)"
     else
@@ -179,14 +150,42 @@ dev_kit_cmd_config() {
     local path=""
     if command -v "$name" >/dev/null 2>&1; then
       path="$(command -v "$name")"
-      printf "%-10s %s\n" "$name" "found ($path)"
+      local ver=""
+      case "$name" in
+        git) ver=$($name --version | awk '{print $3}') ;;
+        gh) ver=$($name version | head -n1 | awk '{print $3}') ;;
+        docker) ver=$($name --version | awk '{print $3}' | tr -d ',') ;;
+        npm) ver=$($name --version) ;;
+        node) ver=$($name --version) ;;
+        python) ver=$($name --version 2>&1 | awk '{print $2}') ;;
+        *) ver="found" ;;
+      esac
+      printf "%-12s %-10s %s\n" "$name" "$ver" "($path)"
     else
-      printf "%-10s %s\n" "$name" "missing"
+      printf "%-12s %-10s %s\n" "$name" "missing" ""
     fi
   }
 
   case "$sub" in
+    detect)
+      if command -v ui_header >/dev/null 2>&1; then
+        ui_header "dev.kit | software detection"
+      else
+        echo "--- Software Detection ---"
+      fi
+      detect_cli git
+      detect_cli gh
+      detect_cli docker
+      detect_cli npm
+      detect_cli node
+      detect_cli python
+      detect_cli terraform
+      detect_cli ruff
+      detect_cli tsc
+      detect_cli mmdc
+      ;;
     global|repo)
+
       local action="${2:---show}"
       local path=""
       case "$action" in
@@ -326,8 +325,8 @@ dev_kit_cmd_config() {
           confirm_action "Reset $key to default in $scope scope?"
         fi
         local default_val=""
-        default_val="$(config_value "$REPO_DIR/config/default.env" "$key" "")"
-        update_config_value "$key" "$default_val" "$target_path" "reset"
+        default_val="$(config_get_value "$REPO_DIR/config/default.env" "$key" "")"
+        update_config_value "$key" "$default_val" "$target_path"
         exit 0
       fi
       if [ ! -f "$REPO_DIR/config/default.env" ]; then

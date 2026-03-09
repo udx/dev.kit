@@ -10,6 +10,7 @@ DEV_KIT_REPO="${DEV_KIT_REPO:-dev.kit}"
 ENGINE_DIR="${HOME}/.${DEV_KIT_OWNER}/${DEV_KIT_REPO}"
 SOURCE_DIR="${ENGINE_DIR}/source"
 STATE_DIR="${ENGINE_DIR}/state"
+BACKUP_DIR="${ENGINE_DIR}/backups"
 ENV_SRC="${REPO_DIR}/bin/env/dev-kit.sh"
 ENV_DST="${SOURCE_DIR}/env.sh"
 COMP_SRC_DIR="${REPO_DIR}/bin/completions"
@@ -20,6 +21,39 @@ LIB_SRC_DIR="${REPO_DIR}/lib"
 LIB_DST_DIR="${SOURCE_DIR}/lib"
 PROFILE=""
 
+if [ -f "$UI_LIB" ]; then
+  # shellcheck disable=SC1090
+  . "$UI_LIB"
+fi
+
+confirm_action() {
+  local msg="$1"
+  if [ -t 0 ]; then
+    printf "%s [y/N] " "$msg"
+    read -r answer || true
+    case "$answer" in
+      y|Y|yes|YES) return 0 ;;
+      *) return 1 ;;
+    esac
+  fi
+  return 0
+}
+
+backup_existing() {
+  if [ -d "$ENGINE_DIR" ]; then
+    local ts
+    ts=$(date +%Y%m%d_%H%M%S)
+    mkdir -p "$BACKUP_DIR"
+    local backup_path="${BACKUP_DIR}/backup_${ts}.tar.gz"
+    if command -v ui_info >/dev/null 2>&1; then
+      ui_info "Backing up existing installation..." "$backup_path"
+    else
+      echo "INFO Backing up existing installation to $backup_path"
+    fi
+    tar -czf "$backup_path" -C "$(dirname "$ENGINE_DIR")" "$(basename "$ENGINE_DIR")" --exclude="backups" 2>/dev/null || true
+  fi
+}
+
 detect_profiles() {
   local found=""
   if [ -f "$HOME/.zshrc" ]; then found="$found $HOME/.zshrc"; fi
@@ -28,9 +62,6 @@ detect_profiles() {
   if [ -f "$HOME/.profile" ]; then found="$found $HOME/.profile"; fi
   PROFILE=$(echo "$found" | tr ' ' '\n' | sort -u | tr '\n' ' ')
 }
-
-mkdir -p "$BIN_DIR"
-mkdir -p "$ENGINE_DIR"
 
 copy_dir_contents() {
   local src="$1"
@@ -41,35 +72,20 @@ copy_dir_contents() {
 }
 
 sync_engine() {
-  # Use a temporary staging area for the source copy
   local stage
   stage="$(mktemp -d)"
-  
-  # Copy everything from REPO_DIR, excluding patterns that cause recursion
-  # We use rsync if available for easier exclusion, otherwise fallback
   if command -v rsync >/dev/null 2>&1; then
     rsync -a --exclude 'tests/.tmp' --exclude '.git' "$REPO_DIR/" "$stage/"
   else
-    # Fallback: copy specific top-level directories
     for d in bin lib templates docs src config scripts assets schemas tests; do
       [ -d "$REPO_DIR/$d" ] && copy_dir_contents "$REPO_DIR/$d" "$stage/$d"
     done
     [ -f "$REPO_DIR/environment.yaml" ] && cp "$REPO_DIR/environment.yaml" "$stage/environment.yaml"
+    [ -f "$REPO_DIR/README.md" ] && cp "$REPO_DIR/README.md" "$stage/README.md"
   fi
-
-  # Now sync from stage to SOURCE_DIR
   copy_dir_contents "$stage" "$SOURCE_DIR"
   rm -rf "$stage"
 }
-
-desired_target="${SOURCE_DIR}/bin/dev-kit"
-if [ -f "$UI_LIB" ]; then
-  # shellcheck disable=SC1090
-  . "$UI_LIB"
-fi
-
-mkdir -p "$SOURCE_DIR"
-mkdir -p "$STATE_DIR"
 
 if command -v ui_header >/dev/null 2>&1; then
   ui_header "dev.kit | install"
@@ -79,8 +95,21 @@ else
   echo "----------------"
 fi
 
+if ! confirm_action "Proceed with dev.kit installation/update?"; then
+  echo "Installation cancelled."
+  exit 0
+fi
+
+backup_existing
+
+mkdir -p "$BIN_DIR"
+mkdir -p "$ENGINE_DIR"
+mkdir -p "$SOURCE_DIR"
+mkdir -p "$STATE_DIR"
+
 sync_engine
 
+desired_target="${SOURCE_DIR}/bin/dev-kit"
 if [ -L "$TARGET" ]; then
   current_target="$(readlink "$TARGET")"
   if [ "$current_target" != "$desired_target" ]; then
@@ -89,12 +118,6 @@ if [ -L "$TARGET" ]; then
       ui_ok "Symlink updated" "$TARGET -> $desired_target"
     else
       echo "OK  Symlink updated ($TARGET -> $desired_target)"
-    fi
-  else
-    if command -v ui_ok >/dev/null 2>&1; then
-      ui_ok "Already installed" "$TARGET"
-    else
-      echo "OK  Already installed ($TARGET)"
     fi
   fi
 elif [ -e "$TARGET" ]; then
@@ -114,11 +137,6 @@ fi
 
 if [ -f "$ENV_SRC" ]; then
   cp "$ENV_SRC" "$ENV_DST"
-  if command -v ui_ok >/dev/null 2>&1; then
-    ui_ok "Env installed" "$ENV_DST"
-  else
-    echo "OK  Env installed ($ENV_DST)"
-  fi
 fi
 
 if [ ! -f "$ENGINE_DIR/env.sh" ]; then
@@ -143,15 +161,6 @@ fi
 
 if [ -f "$CONFIG_SRC" ] && [ ! -f "$CONFIG_DST" ]; then
   cp "$CONFIG_SRC" "$CONFIG_DST"
-  if command -v ui_ok >/dev/null 2>&1; then
-    ui_ok "Config installed" "$CONFIG_DST"
-  else
-    echo "OK  Config installed ($CONFIG_DST)"
-  fi
-fi
-
-if [ -f "$CONFIG_DST" ] && [ ! -f "$ENGINE_DIR/config.env" ]; then
-  cp "$CONFIG_DST" "$ENGINE_DIR/config.env"
 fi
 
 detect_profiles
@@ -162,52 +171,21 @@ MODIFIED_PROFILES=""
 
 if [ -t 0 ] && [ -n "$PROFILE" ]; then
   for p in $PROFILE; do
-    echo ""
     if grep -Fqx "$env_line" "$p" && grep -Fqx "$path_line" "$p"; then
-      if command -v ui_ok >/dev/null 2>&1; then
-        ui_ok "Shell already configured" "$p"
-      else
-        echo "OK  Shell already configured ($p)"
-      fi
       MODIFIED_PROFILES="$MODIFIED_PROFILES $p"
       continue
     fi
 
-    printf "Configure dev.kit in %s? [y/N] " "$p"
-    read -r answer || true
-    case "$answer" in
-      y|Y|yes|YES)
-        if ! grep -Fqx "$path_line" "$p"; then
-          printf "\n# dev.kit bin\n%s\n" "$path_line" >> "$p"
-        fi
-        if ! grep -Fqx "$env_line" "$p"; then
-          printf "# dev.kit environment\n%s\n" "$env_line" >> "$p"
-        fi
-        if command -v ui_ok >/dev/null 2>&1; then
-          ui_ok "Shell configured" "$p"
-        else
-          echo "OK  Shell configured ($p)"
-        fi
-        MODIFIED_PROFILES="$MODIFIED_PROFILES $p"
-        ;;
-      *)
-        if command -v ui_warn >/dev/null 2>&1; then
-          ui_warn "Skipped configuration" "$p"
-        else
-          echo "WARN Skipped configuration ($p)"
-        fi
-        ;;
-    esac
+    if confirm_action "Configure dev.kit in $p?"; then
+      if ! grep -Fqx "$path_line" "$p"; then
+        printf "\n# dev.kit bin\n%s\n" "$path_line" >> "$p"
+      fi
+      if ! grep -Fqx "$env_line" "$p"; then
+        printf "# dev.kit environment\n%s\n" "$env_line" >> "$p"
+      fi
+      MODIFIED_PROFILES="$MODIFIED_PROFILES $p"
+    fi
   done
-else
-  if command -v ui_section >/dev/null 2>&1; then
-    ui_section "Manual Configuration"
-  else
-    echo "Manual Configuration:"
-  fi
-  echo "Add the following to your shell profile:"
-  echo "  $path_line"
-  echo "  $env_line"
 fi
 
 echo ""
@@ -217,47 +195,40 @@ else
   echo "Ready to go:"
 fi
 
-# Determine if the current shell's profile was modified
 CURRENT_SHELL_PROFILE=""
-case "$SHELL" in
-  */zsh) CURRENT_SHELL_PROFILE="$HOME/.zshrc" ;;
-  */bash) 
-    [ -f "$HOME/.bash_profile" ] && CURRENT_SHELL_PROFILE="$HOME/.bash_profile" || CURRENT_SHELL_PROFILE="$HOME/.bashrc"
+# Robust shell detection
+case "$(basename "${SHELL:-}")" in
+  zsh) 
+    CURRENT_SHELL_PROFILE="$HOME/.zshrc"
+    ;;
+  bash) 
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+      CURRENT_SHELL_PROFILE="$HOME/.bash_profile"
+    else
+      CURRENT_SHELL_PROFILE="$HOME/.bashrc"
+    fi
+    ;;
+  *)
+    # Fallback: check which profile we actually modified
+    for p in $MODIFIED_PROFILES; do
+      CURRENT_SHELL_PROFILE="$p"
+      break
+    done
     ;;
 esac
 
 if [[ "$MODIFIED_PROFILES" == *"$CURRENT_SHELL_PROFILE"* ]]; then
   echo "1. Reload:         source $CURRENT_SHELL_PROFILE"
-  echo "2. Brief:          dev.kit"
-  echo ""
+  echo "2. Run:            dev.kit"
   if [ -t 0 ]; then
-    printf "Reload current session now? [y/N] "
-    read -r reload_now || true
-    case "$reload_now" in
-      y|Y|yes|YES)
-        echo "Sourcing $CURRENT_SHELL_PROFILE..."
-        # Note: We can source env.sh directly for immediate effect in this subshell
-        # but the instructions tell the user how to fix their parent shell.
-        source "$SOURCE_DIR/env.sh"
-        dev.kit status
-        ;;
-    esac
+    if confirm_action "Reload current session now?"; then
+      source "$SOURCE_DIR/env.sh"
+      dev.kit status
+    fi
   fi
 else
   echo "1. Source Now:     source \"$SOURCE_DIR/env.sh\""
-  echo "2. Brief:          dev.kit"
-  echo ""
-  echo "NOTE: Your current shell ($SHELL) was not permanently configured."
-  if [ -t 0 ]; then
-    printf "Source environment now? [y/N] "
-    read -r source_now || true
-    case "$source_now" in
-      y|Y|yes|YES)
-        echo "Sourcing..."
-        source "$SOURCE_DIR/env.sh"
-        dev.kit status
-        ;;
-    esac
-  fi
+  echo "2. Run:            dev.kit"
 fi
 echo ""
+

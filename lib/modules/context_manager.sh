@@ -13,12 +13,46 @@ dev_kit_context_normalize() {
   local context_data
   context_data="$(dev_kit_context_resolve "$intent")"
   
-  # 2. Map to deterministic steps
+  # 2. Add CDE Improvement Suggestions
+  local suggestions
+  suggestions="$(dev_kit_context_suggest_improvements "$intent")"
+  
+  # 3. Combine and return a typed context manifest
+  local full_context
+  full_context=$(echo "$context_data" | jq --argjson sug "$suggestions" '. + {suggestions: $sug}')
+  
   if [ -n "$output_context" ]; then
-    echo "$context_data" > "$output_context"
+    echo "$full_context" > "$output_context"
   fi
   
-  echo "$context_data"
+  echo "$full_context"
+}
+
+# Suggest improvements based on intent and repository state
+dev_kit_context_suggest_improvements() {
+  local intent="$1"
+  local suggestions=()
+
+  # Heuristic: Check for missing documentation
+  if [[ "$intent" == *"new feature"* ]] || [[ "$intent" == *"implement"* ]]; then
+    suggestions+=("{\"type\": \"doc\", \"message\": \"Ensure a corresponding MD file is created in docs/features/\"}")
+  fi
+
+  # Heuristic: Check for CDE compliance
+  if [ ! -f "$REPO_DIR/.udx/dev.kit/config.env" ]; then
+    suggestions+=("{\"type\": \"config\", \"message\": \"Local .udx config missing. Run 'dev.kit config reset --scope repo' to initialize.\"}")
+  fi
+
+  # Heuristic: CI/CD check
+  if [ ! -d "$REPO_DIR/.github/workflows" ]; then
+    suggestions+=("{\"type\": \"ops\", \"message\": \"GitHub Workflows missing. Consider adding context7-ops.yml for better automation.\"}")
+  fi
+
+  if [ ${#suggestions[@]} -eq 0 ]; then
+    echo "[]"
+  else
+    (IFS=,; echo "[${suggestions[*]}]")
+  fi
 }
 
 # Search for capabilities via Dynamic Discovery Engine
