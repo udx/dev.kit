@@ -18,7 +18,14 @@ log_info() { printf "  ${C_BLUE}ℹ %s${C_RESET}\n" "$1"; }
 log_ok()   { printf "  ${C_GREEN}✔ %s${C_RESET}\n" "$1"; }
 log_fail() { printf "  ${C_RED}✖ %s${C_RESET}\n" "$1"; exit 1; }
 
-echo "--- dev.kit High-Fidelity Test Suite ---"
+# 0. Verify Environment (OS Check)
+log_info "Testing: Environment Integrity"
+if [ -f /etc/os-release ] && grep -qi "ubuntu" /etc/os-release; then
+  log_ok "Running on Ubuntu-based environment (Worker Parity)"
+else
+  # Only warn if not on Ubuntu, but still allow test to proceed unless it's a hard requirement
+  log_info "Note: Not running on Ubuntu (Local development mode)"
+fi
 
 # 1. Verify Discovery (Doctor)
 log_info "Testing: Discovery & Doctor Health"
