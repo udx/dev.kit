@@ -35,9 +35,7 @@ To maintain high-fidelity engineering boundaries, **dev.kit** enforces a strict 
 
 ### 🕸 Skill Mesh (Shared Discovery)
 Unified view of internal commands, managed skills, and external tools:
-- **[Context7](mesh/context7.md)**: Structured repository hub and synchronization.
-- **[GitHub](mesh/github.md)**: Remote repository and workflow resolution (via `gh`).
-- **[NPM](mesh/npm.md)**: Tooling and package health management.
+- **[AI Skill Mesh](mesh.md)**: Unified remote discovery (GitHub), knowledge hub (Context7), and runtime hydration (NPM).
 
 ## 📚 Authoritative References
 

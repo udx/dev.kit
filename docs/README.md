@@ -14,17 +14,15 @@ Context-Driven Engineering (CDE) is a methodology that treats repositories as sp
 
 ## 🏗 Foundations
 Core concepts and engineering principles that drive the ecosystem.
-- **[Context-Driven Engineering](foundations/cde.md)**: Our core philosophy of resolving drift.
-- **[dev.kit Primitives](foundations/dev-kit.md)**: The thin empowerment layer and its core pillars.
-- **[Best Practices](foundations/best-practices.md)**: High-fidelity engineering rules and command mappings.
-- **[Context Adaptation](foundations/adaptation.md)**: Resilient projections and fail-open interaction.
-- **[Methodology](foundations/methodology.md)**: CLI-Wrapped Automation (CWA).
-- **[Engineering Layers](foundations/layers.md)**: The structural hierarchy of the repo.
-- **[Patterns & Templates](foundations/patterns.md)**: Reusable documentation and script patterns.
+- **[Core Philosophy (CDE)](foundations/cde.md)**: Resolving drift and the thin empowerment layer.
+- **[UDX Methodology (CWA)](foundations/methodology.md)**: CLI-wrapped automation and resilient projections.
+- **[Best Practices & Patterns](foundations/best-practices.md)**: High-fidelity standards and iterative loops.
+- **[Engineering Layers](foundations/layers.md)**: The structural hierarchy of the repository.
 
 ## ⚙️ Runtime
 The deterministic CLI engine and its operational lifecycle.
 - **[Runtime Overview](runtime/overview.md)**: Primitives, architecture, and command surface.
+- **[Installation & Maintenance](runtime/install.md)**: Safe mode, backups, and lifecycle purging.
 - **[Configuration](runtime/config.md)**: Scoped orchestration via `environment.yaml` and `.env`.
 - **[Lifecycle](runtime/lifecycle.md)**: The bootstrap, execute, and cleanup phases.
 - **[Execution Loop](runtime/execution-loop.md)**: Workflow schemas and resolution cycles.
@@ -41,9 +39,8 @@ Intent-to-resolution mapping and engineering loops.
 Grounded, context-aware intelligence for your repository.
 - **[AI Overview](ai/README.md)**: How dev.kit transforms LLMs into configuration engines.
 - **[Mission & Principles](ai/agents.md)**: The core directives for all AI agents.
-- **[AI Mesh: GitHub](ai/mesh/github.md)**: Remote discovery and PR management.
-- **[AI Mesh: NPM](ai/mesh/npm.md)**: Environment hydration and tool detection.
-- **[AI Mesh: Context7](ai/mesh/context7.md)**: Cross-repo knowledge synchronization.
+- **[AI Skill Mesh](ai/mesh.md)**: Unified remote discovery, knowledge hub, and hydration.
+
 
 ## 🕸 Reference
 

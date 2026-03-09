@@ -20,7 +20,7 @@ UDX enforces a **Container-First** approach to engineering to eliminate environm
 The `udx/worker` is the foundational base layer for all UDX engineering tasks. It provides a hardened, audit-ready environment optimized for the `dev.kit` runtime.
 
 - **Authoritative Docs**: [UDX Worker Documentation](https://github.com/udx/worker/tree/latest/docs)
-- **Deployment Pattern**: [Worker Deployment](https://github.com/udx/worker-deployment)
+- **Deployment Pattern**: [@udx/worker-deployment](https://github.com/udx/worker-deployment)
 
 ---
 
@@ -29,8 +29,8 @@ The `udx/worker` is the foundational base layer for all UDX engineering tasks. I
 | Component               | role          | dev.kit Implementation                        |
 | :---------------------- | :------------ | :-------------------------------------------- |
 | **`udx/worker`**        | Base Layer    | Primary execution target for all CLI tasks.   |
-| **`worker-deployment`** | Orchestration | Standard pattern for automated sessions.      |
-| **Isolated Testing**    | Fidelity      | verified via `./tests/suite.sh` in-container. |
+| **`worker-deployment`** | Orchestration | Verified via `worker run` (@udx/worker-deployment). |
+| **Isolated Testing**    | Fidelity      | Verified via `dev.kit test --worker`.         |
 | **Unified Logic**       | Portability   | Same behavior across Local, CI, and Prod.     |
 
 ---
@@ -41,7 +41,7 @@ The `udx/worker` is the foundational base layer for all UDX engineering tasks. I
 
 Never perform destructive or high-stakes operations in an ungrounded local shell. Always leverage the **Worker Ecosystem** to ensure environment parity.
 
-- **Action**: Use the standard `docker run` command for isolated testing and verification.
+- **Action**: Use `dev.kit test --worker` to run tests inside a managed `udx/worker` container using `worker run`.
 
 ### 2. Runtime Truth
 

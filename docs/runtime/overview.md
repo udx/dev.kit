@@ -23,7 +23,9 @@ To ensure deterministic behavior and context fidelity, **dev.kit** is optimized 
 
 - **`bin/dev-kit`**: The primary dispatch entrypoint. Loads internal helpers and routes subcommands.
 - **`bin/env/dev-kit.sh`**: Shell initialization (Banner, PATH setup, and completions).
-- **`bin/scripts/install.sh`**: High-fidelity installer for local environment hydration.
+- **`bin/scripts/install.sh`**: High-fidelity installer with safe-mode and backups.
+- **`bin/scripts/uninstall.sh`**: Simple uninstaller with optional state purging.
+
 
 ---
 
@@ -31,7 +33,9 @@ To ensure deterministic behavior and context fidelity, **dev.kit** is optimized 
 
 ### Status & Discovery
 - **`dev.kit status`**: (Default) High-fidelity engineering brief and task visibility.
+- **`dev.kit suggest`**: Suggest repository improvements and CDE compliance fixes.
 - **`dev.kit doctor`**: Deep system analysis, environment hydration, and compliance audit.
+
 
 ### AI & Skill Mesh
 - **`dev.kit ai`**: Unified agent integration management, skill synchronization, and grounding.

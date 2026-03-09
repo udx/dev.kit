@@ -13,15 +13,21 @@
 
 The agent is responsible for dynamic prompt transformation. It receives intent from the user, identifies the required capabilities, and sends structured instructions to the `dev.kit` workflow engine.
 
-### 1. Strict Mappings (Deterministic)
+### 1. Dynamic Suggestions (Incremental Experience)
+Every normalization cycle includes a heuristic check of the repository and environment. The `dev.kit suggest` command is used to provide actionable feedback that improves CDE compliance.
+- **Example**: Detecting missing documentation or unnormalized CI/CD configs.
+- **Action**: Suggested fixes are included in the normalization context for the agent to consider.
+
+### 2. Strict Mappings (Deterministic)
 Used for well-defined engineering tasks where the path is predictable and hardened.
-- **Example**: Git Synchronization, environment hydration (`doctor`), or diagram rendering.
+- **Example**: Git Synchronization, environment hydration (`config detect`), or diagram rendering.
 - **Enforcement**: Direct mapping to `lib/commands/` or `docs/workflows/assets/*.yaml`.
 
-### 2. Non-Strict Mappings (Reasoning-First)
+### 3. Non-Strict Mappings (Reasoning-First)
 Used for creative or complex tasks where the agent must reason about the best path before committing to a sequence.
 - **Example**: Implementing a new feature, refactoring complex logic, or resolving multi-domain drift.
 - **Enforcement**: The agent generates a custom `workflow.md` that orchestrates multiple primitives.
+
 
 ---
 

@@ -19,6 +19,7 @@ Configuration in **dev.kit** provides a safe, deterministic foundation for both 
 ## CLI Interfaces
 
 - **`dev.kit config show`**: View active host and repository configuration.
+- **`dev.kit config detect`**: Auto-detect required software and CLI versions in the environment.
 - **`dev.kit config set --key <key> --value <value>`**: Update a specific setting.
 - **`dev.kit config reset`**: Revert to the high-fidelity default baseline.
 
@@ -30,6 +31,9 @@ Configuration in **dev.kit** provides a safe, deterministic foundation for both 
 - `quiet`: Control CLI output verbosity.
 - `developer`: Enable internal developer-specific helpers.
 - `state_path`: Global location for transient runtime state.
+- `shell.auto_enable`: Automatically enable shell integrations.
+- `output.mode`: Set the default output fidelity (e.g., `brief`, `verbose`).
+
 
 ### 2. AI & Orchestration
 - `ai.enabled`: Enable/Disable AI-Powered automation mode.
