@@ -1,5 +1,7 @@
 # ⚡️ dev.kit: The Repo Engine
 
+![dev.kit](assets/logo.svg)
+
 **The deterministic middleware that translates chaotic repositories into high-fidelity, 12-factor standards.**
 
 `dev.kit` acts as a **Contextual Proxy** between your environment and AI agents. It serves as both the **Logic** (the engine) and the **Template** (the blueprint) to resolve architectural drift.
@@ -12,11 +14,23 @@ The entire engine is distilled into a single, high-impact verb.
 
 ### `dev.kit`
 
-**The Pulse Check.** Instantly analyzes your repository, calculates your **Fidelity Score**, and generates a prioritized `workflow.md` of required drift resolutions.
+**The Pulse Check.** Instantly analyzes your repository, calculates your **Fidelity Score**, and generates a prioritized improvement plan for drift resolution.
 
-- **`dev.kit --json` (Compliance Mode)** Outputs a machine-readable audit of 12-factor misalignments. Agents use this to identify and fix "Fidelity Gaps" (missing tests, broken builds, or structural drift).
+#### Compliance Mode
 
-- **`dev.kit bridge --json` (Development Mode)** Resolves the repository into high-fidelity, agent-friendly assets. It maps the **Skill Mesh**, available CLI primitives, and internal logic so agents can execute tasks without hallucinating paths or patterns.
+`dev.kit --json` outputs a machine-readable audit of 12-factor misalignments. Agents can use this to identify and fix fidelity gaps such as missing tests, broken builds, or structural drift.
+
+![compliance audit](assets/compliance-audit.svg)
+
+The audit output becomes a focused improvement plan with bounded next steps.
+
+![compliance improve](assets/compliance-improve.svg)
+
+#### Development Mode
+
+`dev.kit bridge --json` resolves the repository into high-fidelity, agent-friendly assets. It maps the skill mesh, available CLI primitives, and internal logic so agents can execute tasks without hallucinating paths or patterns.
+
+![dev.kit bridge](assets/dev-kit-bridge.svg)
 
 ---
 
