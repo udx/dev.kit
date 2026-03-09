@@ -1,70 +1,53 @@
-# dev.kit: The Thin Empowerment Layer
+# ⚡️ dev.kit: The Repo Engine
 
-**Experienced engineering flow with high-fidelity, deterministic results.**
+**The deterministic middleware that translates chaotic repositories into high-fidelity, 12-factor standards.**
 
-`dev.kit` resolves the **Drift** (intent divergence) by **Normalizing** it into a deterministic path and **Iterating** to resolution. It acts as a **Thin Empowerment Layer** that bridges human intent with repository truth via **Context-Driven Engineering (CDE)**.
-
-### 1. Grounding (The Bridge)
-Intent is mapped to repo-specific logic and normalized into a deterministic execution plan.
-![Grounding Bridge](assets/diagrams/grounding-bridge.svg)
-
-### 2. Normalization (The Gate)
-Capabilities are resolved at runtime through a **Dynamic Discovery Engine** that scans script headers and skills.
-![Normalization Gate](assets/diagrams/normalization-boundary.svg)
-
-### 3. Execution (The Engine)
-AI iterates through instruction steps with deterministic validation and real-time status updates.
-![Execution Engine](assets/diagrams/execution-engine.svg)
-
-## Standard Engineering Flow
-
-`dev.kit` provides a **Thin Empowerment Layer** that bridges chaotic intent with deterministic repository functions.
-
-| Phase | Description | Implementation |
-| :--- | :--- | :--- |
-| **1. Grounding** | **UDX Worker** provides the isolated, pre-hydrated base environment. | [`udx/worker`](docs/reference/operations/worker-ecosystem-refs.md) |
-| **2. Discovery** | **Skill Mesh** resolves internal commands and `@udx` NPM packages. | [`@udx/mcurl`](docs/ai/mesh/npm.md) |
-| **3. Normalize** | AI Reasoning Skills transform intent into a bounded `workflow.md`. | [`SKILL.md`](docs/skills/README.md) |
-| **4. Execute** | Deterministic Primitives execute the logic within the CLI boundary. | `lib/commands/` |
+`dev.kit` acts as a **Contextual Proxy** between your environment and AI agents. It serves as both the **Logic** (the engine) and the **Template** (the blueprint) to resolve architectural drift.
 
 ---
 
-## Core Interface
+## 🕹 The Single-Command Interface
 
-- **`dev.kit status`**: (Default) High-fidelity engineering brief and system health.
-- **`dev.kit doctor`**: Verify environment health, software detection, and compliance.
-- **`dev.kit ai`**: Unified agent integration management and grounding.
-- **`dev.kit sync`**: Logical, atomic repository synchronization and drift resolution.
-- **`dev.kit task`**: Manage the lifecycle of active workflows and engineering sessions.
+The entire engine is distilled into a single, high-impact verb.
 
-> **Execution**: Run any repository-bound skill with `dev.kit skills run <name>`.
+### `dev.kit`
 
----
+**The Pulse Check.** Instantly analyzes your repository, calculates your **Fidelity Score**, and generates a prioritized `workflow.md` of required drift resolutions.
 
-## Documentation
+- **`dev.kit --json` (Compliance Mode)** Outputs a machine-readable audit of 12-factor misalignments. Agents use this to identify and fix "Fidelity Gaps" (missing tests, broken builds, or structural drift).
 
-The `dev.kit` knowledge base is structured to reflect **CDE Principles**.
-
-- **[Foundations](docs/README.md#%EF%B8%8F-foundations)**: Core philosophy (CDE), dev.kit primitives, and methodology.
-- **[Runtime](docs/README.md#%EF%B8%8F-runtime)**: CLI overview, lifecycle, and execution loops.
-- **[AI Integration](docs/README.md#-ai-integration)**: Grounded orchestration and agent mission.
-- **[Best Practices](docs/foundations/best-practices.md)**: High-fidelity engineering rules and command mappings.
+- **`dev.kit bridge --json` (Development Mode)** Resolves the repository into high-fidelity, agent-friendly assets. It maps the **Skill Mesh**, available CLI primitives, and internal logic so agents can execute tasks without hallucinating paths or patterns.
 
 ---
 
-## Install
+## 🏗 How it Works
+
+- **The Normalization Gate**: Chaotic repo states are filtered into bounded, repeatable workflow artifacts.
+- **Logic-as-Template**: The `dev.kit` repository is the canonical example of the standards it enforces. Its structure is the blueprint; its commands are the truth.
+- **The Bridge**: Instead of feeding an agent raw files, the `bridge` command provides a structured "Map of Truth," ensuring the agent works within validated boundaries.
+
+---
+
+## ✅ The Fidelity States
+
+| State         | Human Experience        | Agent Experience                                   |
+| :------------ | :---------------------- | :------------------------------------------------- |
+| **Build**     | _I know how to build._  | Strict 12-factor separation (Build/Release/Run).   |
+| **Test**      | _I know how to verify._ | Deterministic loops to validate health instantly.  |
+| **Structure** | _I know where to add._  | Standardized hierarchy; zero-guesswork navigation. |
+| **Pattern**   | _I know how to grow._   | Repeatable Analyze-Normalize-Process sequences.    |
+
+---
+
+## 🚀 60-Second Onboard
 
 ```bash
-curl -fsSL https://udx.dev/dev.kit/install.sh | bash
+# 1. Install & Run the Pulse Check
+curl -sSL [https://dev.kit/install](https://dev.kit/install) | bash && dev.kit
+
+# 2. Let an Agent Fix Compliance
+dev.kit --json | agent-execute "Fix all fidelity gaps"
+
+# 3. Let an Agent Develop a Feature
+dev.kit bridge --json | agent-execute "Add a new module using existing primitives"
 ```
-
-## 📚 Authoritative References
-
-The `dev.kit` mission is grounded in foundational research on high-fidelity automation and AI orchestration:
-
-- **[The Power of Automation](https://andypotanin.com/the-power-of-automation-how-it-has-transformed-the-software-development-process/)**: Systematic transformation of the engineering flow.
-- **[Observation-Driven Management](https://andypotanin.com/observation-driven-management-revolutionizing-task-assignment-efficiency-workplace/)**: Revolutionary task normalization through pattern recognition.
-- **[Autonomous Technical Operations](https://andypotanin.com/claude-operator-prompt/)**: Principles for high-fidelity agent grounding and execution.
-
----
-_UDX DevSecOps Team_
