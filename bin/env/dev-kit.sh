@@ -3,7 +3,7 @@
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 # shellcheck disable=SC1091
 . "$REPO_DIR/lib/modules/bootstrap.sh"
-dev_kit_bootstrap "$REPO_DIR"
+dev_kit_bootstrap
 
 case ":$PATH:" in
   *":${DEV_KIT_BIN_DIR}:"*) ;;

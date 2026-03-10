@@ -1,31 +1,8 @@
 #!/usr/bin/env bash
 
-dev_kit_load_defaults() {
-  local config_file="$1"
-  local key=""
-  local value=""
-
-  [ -f "$config_file" ] || return 0
-
-  while IFS='=' read -r key value; do
-    case "$key" in
-      ''|\#*) continue ;;
-    esac
-    if [ -z "${!key+x}" ]; then
-      eval "export ${key}=\"${value}\""
-    fi
-  done < "$config_file"
-}
-
 dev_kit_bootstrap() {
-  local root_dir="$1"
-
-  dev_kit_load_defaults "$root_dir/config/default.env"
-
-  export DEV_KIT_OWNER="${DEV_KIT_OWNER:-udx}"
-  export DEV_KIT_REPO="${DEV_KIT_REPO:-dev.kit}"
   export DEV_KIT_BIN_DIR="${DEV_KIT_BIN_DIR:-$HOME/.local/bin}"
-  export DEV_KIT_HOME="${DEV_KIT_HOME:-$HOME/.${DEV_KIT_OWNER}/${DEV_KIT_REPO}}"
+  export DEV_KIT_HOME="${DEV_KIT_HOME:-$HOME/.udx/dev.kit}"
 }
 
 dev_kit_path_contains_bin_dir() {

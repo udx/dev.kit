@@ -1,10 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SCRIPT_PATH="${BASH_SOURCE[0]}"
+
+while [ -L "$SCRIPT_PATH" ]; do
+  SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
+  SCRIPT_PATH="$(readlink "$SCRIPT_PATH")"
+  case "$SCRIPT_PATH" in
+    /*) ;;
+    *) SCRIPT_PATH="${SCRIPT_DIR}/${SCRIPT_PATH}" ;;
+  esac
+done
+
+REPO_DIR="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)"
 # shellcheck disable=SC1091
 . "$REPO_DIR/lib/modules/bootstrap.sh"
-dev_kit_bootstrap "$REPO_DIR"
+dev_kit_bootstrap
 
 for module_file in "$REPO_DIR"/lib/modules/*.sh; do
   [ "$module_file" = "$REPO_DIR/lib/modules/bootstrap.sh" ] && continue
@@ -51,7 +62,7 @@ Options:
 EOF
 }
 
-command="${1:-status}"
+command="${1:-audit}"
 format="text"
 
 if [ "${2:-}" = "--json" ] || [ "${1:-}" = "--json" ]; then
@@ -73,8 +84,15 @@ case "$command" in
     fi
     dev_kit_cmd_bridge "$format"
     ;;
+  audit)
+    if [ "${2:-}" = "-h" ] || [ "${2:-}" = "--help" ]; then
+      command_usage "audit"
+      exit 0
+    fi
+    dev_kit_cmd_audit "$format"
+    ;;
   --json)
-    dev_kit_cmd_status "json"
+    dev_kit_cmd_audit "json"
     ;;
   help|-h|--help)
     usage

@@ -1,0 +1,7 @@
+{
+  "name": "simple-repo",
+  "private": true,
+  "scripts": {
+    "start": "node index.js"
+  }
+}

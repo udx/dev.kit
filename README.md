@@ -81,3 +81,5 @@ dev.kit status
 ```bash
 "$HOME/.udx/dev.kit/bin/scripts/uninstall.sh"
 ```
+
+Development and test workflow lives in [docs/development.md](/Users/jonyfq/git/udx/dev.kit/docs/development.md).
