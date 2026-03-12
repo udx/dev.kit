@@ -8,6 +8,15 @@ It scans a repository for the workflow contracts that reduce drift across engine
 
 The goal is to make repos easier to work on the same way every time. As a repo gets closer to a 12-factor operating model, humans and agents need less tribal knowledge to build, test, run, deploy, and improve it.
 
+## Install
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/udx/dev.kit/main/bin/scripts/install.sh | bash
+dev.kit
+```
+
+This installs `dev.kit` into `~/.udx/dev.kit` and adds `dev.kit` to `~/.local/bin/dev.kit`. If `~/.local/bin` is not already on `PATH`, the installer prints the exact command to export it manually.
+
 ## Commands
 
 `dev.kit`
@@ -20,6 +29,14 @@ The goal is to make repos easier to work on the same way every time. As a repo g
 
 - Exposes the repo model for agents and automation.
 - Returns detected archetypes, factor statuses, entrypoints, and guidance so agents can work from grounded repo reality instead of guessing.
+
+## Examples
+
+```bash
+dev.kit
+dev.kit --json
+dev.kit bridge --json
+```
 
 ![compliance audit](assets/compliance-audit.svg)
 
@@ -37,27 +54,13 @@ The value is operational clarity:
 - let teammates and agents operate with less ambiguity
 - standardize how work moves from local changes to CI and deployment
 
-## Install
-
-```bash
-bash bin/scripts/install.sh
-source "$HOME/.udx/dev.kit/bin/env/dev-kit.sh"
-dev.kit
-```
-
-## Examples
-
-```bash
-dev.kit
-dev.kit --json
-dev.kit bridge --json
-```
-
 ## Uninstall
 
 ```bash
-"$HOME/.udx/dev.kit/bin/scripts/uninstall.sh"
+dev.kit uninstall
 ```
+
+Removes the local install from `~/.udx/dev.kit` and the `~/.local/bin/dev.kit` symlink.
 
 Further docs:
 

@@ -9,6 +9,8 @@ TEST_HOME="${DEV_KIT_TEST_HOME:-$(mktemp -d "${TMPDIR:-/tmp}/dev-kit-test-home.X
 PROFILE_FILES=("$TEST_HOME/.bash_profile" "$TEST_HOME/.bashrc" "$TEST_HOME/.zshrc")
 BASE_PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 INSTALL_OUTPUT=""
+INSTALLER_COPY=""
+ARCHIVE_FILE=""
 SIMPLE_REPO="$REPO_DIR/tests/fixtures/simple-repo"
 DOCUMENTED_SHELL_REPO="$REPO_DIR/tests/fixtures/documented-shell-repo"
 PHP_REPO="$REPO_DIR/tests/fixtures/php-repo"
@@ -50,9 +52,16 @@ for profile in "${PROFILE_FILES[@]}"; do
   printf "# dev.kit test sentinel\n" > "$profile"
 done
 
-INSTALL_OUTPUT="$(bash "$REPO_DIR/bin/scripts/install.sh")"
+INSTALLER_COPY="$TEST_HOME/install.sh"
+ARCHIVE_FILE="$TEST_HOME/dev-kit-main.tar.gz"
+cp "$REPO_DIR/bin/scripts/install.sh" "$INSTALLER_COPY"
+tar -czf "$ARCHIVE_FILE" -C "$(dirname "$REPO_DIR")" "$(basename "$REPO_DIR")"
+
+INSTALL_OUTPUT="$(DEV_KIT_INSTALL_ARCHIVE_URL="file://$ARCHIVE_FILE" bash "$INSTALLER_COPY")"
 assert_contains "$INSTALL_OUTPUT" "Installed dev.kit" "installer reports success"
 assert_contains "$INSTALL_OUTPUT" "shell:  unchanged" "installer leaves shell init untouched"
+assert_contains "$INSTALL_OUTPUT" "next:   export PATH=\"$HOME/.local/bin:\$PATH\"" "installer prints PATH fallback"
+assert_contains "$INSTALL_OUTPUT" "then:   dev.kit" "installer prints command follow-up"
 
 DEV_KIT_HOME="$HOME/.udx/dev.kit"
 DEV_KIT_BIN_DIR="$HOME/.local/bin"
@@ -82,10 +91,16 @@ else
   pass "command is not exposed before PATH setup"
 fi
 
+if HOME="$TEST_HOME" PATH="$BASE_PATH" bash -lc 'command -v dev.kit >/dev/null 2>&1'; then
+  fail "command is not exposed in a fresh login shell before PATH setup"
+else
+  pass "command is not exposed in a fresh login shell before PATH setup"
+fi
+
 # shellcheck disable=SC1090
 . "$DEV_KIT_HOME/bin/env/dev-kit.sh"
 
-assert_contains ":$PATH:" ":$DEV_KIT_BIN_DIR:" "env script prepends the user bin dir"
+assert_contains ":$PATH:" ":$DEV_KIT_BIN_DIR:" "env script prepends the user bin dir for the current shell"
 
 if command -v dev.kit >/dev/null 2>&1; then
   pass "command resolves after env setup"
@@ -178,6 +193,7 @@ help_output="$(dev.kit help)"
 assert_contains "$help_output" "audit" "help discovers audit dynamically"
 assert_contains "$help_output" "status" "help discovers status dynamically"
 assert_contains "$help_output" "bridge" "help discovers bridge dynamically"
+assert_contains "$help_output" "uninstall" "help discovers uninstall dynamically"
 
 if declare -F _dev_kit_complete >/dev/null 2>&1; then
   pass "bash completion function is loaded"
@@ -193,6 +209,7 @@ completion_list=" ${COMPREPLY[*]} "
 assert_contains "$completion_list" " status " "completion lists status"
 assert_contains "$completion_list" " bridge " "completion lists bridge"
 assert_contains "$completion_list" " audit " "completion lists audit"
+assert_contains "$completion_list" " uninstall " "completion lists uninstall"
 assert_contains "$completion_list" " --json " "completion lists global json flag"
 
 COMP_WORDS=(dev.kit bridge --)
@@ -202,9 +219,23 @@ _dev_kit_complete
 bridge_completion_list=" ${COMPREPLY[*]} "
 assert_contains "$bridge_completion_list" " --json " "bridge completion lists json flag"
 
-UNINSTALL_OUTPUT="$("$DEV_KIT_HOME/bin/scripts/uninstall.sh")"
+COMP_WORDS=(dev.kit uninstall --)
+COMP_CWORD=2
+COMPREPLY=()
+_dev_kit_complete
+uninstall_completion_list=" ${COMPREPLY[*]} "
+assert_contains "$uninstall_completion_list" " --yes " "uninstall completion lists yes flag"
+assert_not_contains "$uninstall_completion_list" "--json" "uninstall completion omits json flag"
+
+UNINSTALL_CANCEL_OUTPUT="$(printf 'n\n' | "$DEV_KIT_HOME/bin/scripts/uninstall.sh" 2>&1 || true)"
+assert_contains "$UNINSTALL_CANCEL_OUTPUT" "Cancelled." "uninstall prompt cancels by default"
+assert_file_exists "$DEV_KIT_BIN_DIR/dev.kit" "cancelled uninstall keeps global symlink"
+assert_file_exists "$DEV_KIT_HOME" "cancelled uninstall keeps installed home"
+
+UNINSTALL_OUTPUT="$(dev.kit uninstall --yes)"
 assert_contains "$UNINSTALL_OUTPUT" "Removed binary:" "uninstall removes the global binary"
 assert_contains "$UNINSTALL_OUTPUT" "Removed home:" "uninstall removes the installed home"
+assert_contains "$UNINSTALL_OUTPUT" "Shell profile files were not modified." "uninstall leaves shell init untouched"
 assert_file_missing "$DEV_KIT_BIN_DIR/dev.kit" "global symlink is removed"
 assert_file_missing "$DEV_KIT_HOME" "installed home is removed"
 
