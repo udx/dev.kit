@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 dev_kit_rule_catalog_path() {
-  printf "%s" "$REPO_DIR/src/configs/audit-rules.yml"
+  printf "%s" "$REPO_DIR/src/configs/audit-rules.yaml"
 }
 
 dev_kit_rule_field() {

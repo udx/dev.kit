@@ -17,8 +17,14 @@ REPO_DIR="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)"
 . "$REPO_DIR/lib/modules/bootstrap.sh"
 dev_kit_bootstrap
 
+if [ -f "$REPO_DIR/lib/modules/utils.sh" ]; then
+  # shellcheck disable=SC1090
+  . "$REPO_DIR/lib/modules/utils.sh"
+fi
+
 for module_file in "$REPO_DIR"/lib/modules/*.sh; do
   [ "$module_file" = "$REPO_DIR/lib/modules/bootstrap.sh" ] && continue
+  [ "$module_file" = "$REPO_DIR/lib/modules/utils.sh" ] && continue
   # shellcheck disable=SC1090
   . "$module_file"
 done

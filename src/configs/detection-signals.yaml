@@ -1,0 +1,58 @@
+lists:
+  documentation_files:
+    - README.md
+    - README
+  markdown_file_globs:
+    - README*
+    - docs/*.md
+  makefiles:
+    - Makefile
+    - makefile
+    - GNUmakefile
+  node_files:
+    - package.json
+  php_files:
+    - composer.json
+    - phpunit.xml
+    - phpunit.xml.dist
+  container_files:
+    - Dockerfile
+    - docker-compose.yml
+    - docker-compose.yaml
+  container_globs:
+    - Dockerfile.*
+  dependency_manifest_files:
+    - package.json
+    - composer.json
+    - requirements.txt
+    - pyproject.toml
+    - go.mod
+    - Cargo.toml
+    - Gemfile
+  dependency_partial_files:
+    - Dockerfile
+  config_contract_files:
+    - .env.example
+    - .env.sample
+    - .env.template
+    - docker-compose.yml
+    - docker-compose.yaml
+    - deploy.yml
+  runtime_files:
+    - Dockerfile
+    - Procfile
+  shell_dirs:
+    - bin
+    - scripts
+  shell_globs:
+    - *.sh
+  test_dirs:
+    - tests
+    - test
+    - spec
+  verification_files:
+    - phpunit.xml
+    - phpunit.xml.dist
+  verification_globs:
+    - *.bats
+    - *test*.sh

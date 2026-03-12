@@ -1,0 +1,6 @@
+{
+  "name": "acme/php-repo",
+  "require-dev": {
+    "phpunit/phpunit": "^10.0"
+  }
+}

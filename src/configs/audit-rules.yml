@@ -1,7 +1,0 @@
-rules:
-  - id: missing-readme
-    check: readme
-    message: Add a README so humans and agents can orient quickly.
-  - id: missing-test-command
-    check: test_command
-    message: Add a runnable test command so verification is deterministic.

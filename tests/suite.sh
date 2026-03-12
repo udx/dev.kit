@@ -9,13 +9,35 @@ TEST_HOME="${DEV_KIT_TEST_HOME:-$(mktemp -d "${TMPDIR:-/tmp}/dev-kit-test-home.X
 PROFILE_FILES=("$TEST_HOME/.bash_profile" "$TEST_HOME/.bashrc" "$TEST_HOME/.zshrc")
 BASE_PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 INSTALL_OUTPUT=""
-FIXTURE_REPO="$REPO_DIR/tests/fixtures/simple-repo"
+SIMPLE_REPO="$REPO_DIR/tests/fixtures/simple-repo"
+DOCUMENTED_SHELL_REPO="$REPO_DIR/tests/fixtures/documented-shell-repo"
+PHP_REPO="$REPO_DIR/tests/fixtures/php-repo"
+DOCKER_REPO="$REPO_DIR/tests/fixtures/docker-repo"
 
 cleanup() {
   rm -rf "$TEST_HOME"
 }
 
 trap cleanup EXIT
+
+print_block() {
+  local title="$1"
+  local content="$2"
+
+  printf '%s\n' "--- ${title} ---"
+  printf '%s\n' "$content"
+  printf '%s\n' "--- end ${title} ---"
+}
+
+fixture_audit_text() {
+  local repo_dir="$1"
+  (cd "$repo_dir" && dev.kit)
+}
+
+fixture_audit_json() {
+  local repo_dir="$1"
+  (cd "$repo_dir" && dev.kit --json)
+}
 
 mkdir -p "$TEST_HOME"
 export HOME="$TEST_HOME"
@@ -37,7 +59,9 @@ DEV_KIT_BIN_DIR="$HOME/.local/bin"
 assert_file_exists "$DEV_KIT_HOME/bin/dev-kit" "installs command source into dev.kit home"
 assert_file_exists "$DEV_KIT_HOME/lib/modules/bootstrap.sh" "installs internal modules"
 assert_file_exists "$DEV_KIT_HOME/lib/commands/status.sh" "installs public commands"
-assert_file_exists "$DEV_KIT_HOME/src/configs/audit-rules.yml" "installs source rule catalog"
+assert_file_exists "$DEV_KIT_HOME/src/configs/audit-rules.yaml" "installs source rule catalog"
+assert_file_exists "$DEV_KIT_HOME/src/configs/detection-patterns.yaml" "installs detection pattern catalog"
+assert_file_exists "$DEV_KIT_HOME/src/configs/detection-signals.yaml" "installs detection signal catalog"
 assert_file_missing "$DEV_KIT_HOME/source" "does not create legacy source directory"
 assert_file_missing "$DEV_KIT_HOME/state" "does not create legacy state directory"
 assert_file_missing "$DEV_KIT_HOME/config" "does not install a config layer"
@@ -70,31 +94,52 @@ assert_contains "$status_output" "state: installed" "status reports installed st
 status_json="$(dev.kit status --json)"
 assert_contains "$status_json" "\"state\": \"installed\"" "status json reports installed state"
 
-audit_output="$(cd "$FIXTURE_REPO" && dev.kit)"
-printf '%s\n' "--- dev.kit fixture output ---"
-printf '%s\n' "$audit_output"
-printf '%s\n' "--- end dev.kit fixture output ---"
-assert_contains "$audit_output" "repo: simple-repo" "audit reports the fixture repo name"
-assert_contains "$audit_output" "stack: node" "audit detects node repositories"
-assert_contains "$audit_output" "readme: missing" "audit reports missing readme"
-assert_contains "$audit_output" "test command: missing" "audit reports missing test command"
-assert_contains "$audit_output" "Add a README" "audit gives useful readme advice"
-assert_contains "$audit_output" "Add a runnable test command" "audit gives useful test advice"
+simple_output="$(fixture_audit_text "$SIMPLE_REPO")"
+print_block "simple repo audit" "$simple_output"
+assert_contains "$simple_output" "profile: node" "simple repo audit detects node profile"
+assert_contains "$simple_output" "documentation: missing" "simple repo audit marks documentation missing"
+assert_contains "$simple_output" "verification: partial" "simple repo audit marks verification partial"
+assert_contains "$simple_output" "evidence: tests" "simple repo audit uses test directory evidence"
+assert_contains "$simple_output" "Add a README" "simple repo audit gives documentation advice"
+assert_contains "$simple_output" "Verification assets exist" "simple repo audit gives partial verification advice"
 
-audit_json="$(cd "$FIXTURE_REPO" && dev.kit --json)"
-printf '%s\n' "--- dev.kit fixture json ---"
-printf '%s\n' "$audit_json"
-printf '%s\n' "--- end dev.kit fixture json ---"
-assert_contains "$audit_json" "\"command\": \"audit\"" "default json output is audit"
-assert_contains "$audit_json" "\"repo\": \"simple-repo\"" "audit json reports repo name"
-assert_contains "$audit_json" "\"readme\": \"missing\"" "audit json reports missing readme"
-assert_contains "$audit_json" "\"test_command\": \"missing\"" "audit json reports missing test command"
-assert_contains "$audit_json" "\"id\": \"missing-readme\"" "audit json includes readme finding"
-assert_contains "$audit_json" "\"id\": \"missing-test-command\"" "audit json includes test finding"
+simple_json="$(fixture_audit_json "$SIMPLE_REPO")"
+print_block "simple repo json" "$simple_json"
+assert_contains "$simple_json" "\"command\": \"audit\"" "simple repo json reports audit command"
+assert_contains "$simple_json" "\"profile\": \"node\"" "simple repo json reports node profile"
+assert_contains "$simple_json" "\"verification\": {" "simple repo json includes verification factor"
+assert_contains "$simple_json" "\"status\": \"partial\"" "simple repo json reports partial factor state"
+assert_contains "$simple_json" "\"id\": \"partial-verification-entrypoint\"" "simple repo json includes partial verification finding"
 
-bridge_json="$(cd "$FIXTURE_REPO" && dev.kit bridge --json)"
+documented_shell_output="$(fixture_audit_text "$DOCUMENTED_SHELL_REPO")"
+print_block "documented shell repo audit" "$documented_shell_output"
+assert_contains "$documented_shell_output" "profile: shell" "documented shell audit detects shell profile"
+assert_contains "$documented_shell_output" "documentation: present" "documented shell audit marks documentation present"
+assert_contains "$documented_shell_output" "verification: present" "documented shell audit marks verification present"
+assert_contains "$documented_shell_output" "entrypoint: bash tests/run.sh" "documented shell audit finds documented verification entrypoint"
+assert_contains "$documented_shell_output" "runtime: partial" "documented shell audit marks runtime partial"
+
+php_output="$(fixture_audit_text "$PHP_REPO")"
+print_block "php repo audit" "$php_output"
+assert_contains "$php_output" "profile: php" "php audit detects php profile"
+assert_contains "$php_output" "dependencies: present" "php audit detects dependency manifest"
+assert_contains "$php_output" "verification: partial" "php audit marks verification partial"
+assert_contains "$php_output" "phpunit.xml" "php audit uses phpunit evidence"
+
+docker_output="$(fixture_audit_text "$DOCKER_REPO")"
+print_block "docker repo audit" "$docker_output"
+assert_contains "$docker_output" "profile: container" "docker audit detects container profile"
+assert_contains "$docker_output" "runtime: present" "docker audit marks runtime present"
+assert_contains "$docker_output" "build_release_run: present" "docker audit marks build release run present"
+assert_contains "$docker_output" "entrypoint: docker run --rm acme/docker-repo" "docker audit finds documented runtime entrypoint"
+
+bridge_json="$(cd "$DOCUMENTED_SHELL_REPO" && dev.kit bridge --json)"
+print_block "documented shell bridge json" "$bridge_json"
 assert_contains "$bridge_json" "\"command\": \"bridge\"" "bridge json is available"
-assert_contains "$bridge_json" "\"capabilities\": [\"audit\", \"bridge\", \"status\"]" "bridge exposes discovered capabilities"
+assert_contains "$bridge_json" "\"model\": {" "bridge json includes model"
+assert_contains "$bridge_json" "\"profiles\": [\"shell\"]" "bridge json exposes discovered profiles"
+assert_contains "$bridge_json" "\"guidance\": [" "bridge json includes agent guidance"
+assert_contains "$bridge_json" "canonical verification step" "bridge json explains verification workflow"
 
 help_output="$(dev.kit help)"
 assert_contains "$help_output" "audit" "help discovers audit dynamically"
