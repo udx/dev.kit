@@ -60,57 +60,56 @@ EOF
 
 command_usage() {
   local command_name="$1"
-  cat <<EOF
-Usage: dev.kit ${command_name} [--json]
-
-Options:
-  --json     Output machine-readable JSON
-EOF
+  echo "Usage: dev.kit ${command_name} [options]"
+  echo
+  echo "Options:"
+  case "$command_name" in
+    audit|bridge|status)
+      echo "  --json     Output machine-readable JSON"
+      ;;
+    uninstall)
+      echo "  --yes      Remove dev.kit without a confirmation prompt"
+      ;;
+  esac
 }
 
 command="${1:-audit}"
 format="text"
+command_args=()
 
-if [ "${2:-}" = "--json" ] || [ "${1:-}" = "--json" ]; then
+if [ "$#" -gt 0 ]; then
+  shift
+fi
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --json)
+      format="json"
+      ;;
+    *)
+      command_args+=("$1")
+      ;;
+  esac
+  shift
+done
+
+if [ "$command" = "--json" ]; then
+  command="audit"
   format="json"
 fi
 
 case "$command" in
-  status)
-    if [ "${2:-}" = "-h" ] || [ "${2:-}" = "--help" ]; then
-      command_usage "status"
-      exit 0
-    fi
-    dev_kit_cmd_status "$format"
-    ;;
-  bridge)
-    if [ "${2:-}" = "-h" ] || [ "${2:-}" = "--help" ]; then
-      command_usage "bridge"
-      exit 0
-    fi
-    dev_kit_cmd_bridge "$format"
-    ;;
-  audit)
-    if [ "${2:-}" = "-h" ] || [ "${2:-}" = "--help" ]; then
-      command_usage "audit"
-      exit 0
-    fi
-    dev_kit_cmd_audit "$format"
-    ;;
-  --json)
-    dev_kit_cmd_audit "json"
-    ;;
   help|-h|--help)
     usage
     ;;
   *)
     fn="dev_kit_cmd_${command//-/_}"
     if command -v "$fn" >/dev/null 2>&1; then
-      if [ "${2:-}" = "-h" ] || [ "${2:-}" = "--help" ]; then
+      if [ "${command_args[0]:-}" = "-h" ] || [ "${command_args[0]:-}" = "--help" ]; then
         command_usage "$command"
         exit 0
       fi
-      "$fn" "$format"
+      "$fn" "$format" "${command_args[@]}"
       exit 0
     fi
     echo "Unknown command: $command" >&2
