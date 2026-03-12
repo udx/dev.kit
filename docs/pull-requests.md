@@ -7,6 +7,7 @@ Useful pull requests are not just code dumps. They explain the operational chang
 - state the problem first
 - summarize the actual change in a short `Changes` section
 - keep the scope coherent instead of mixing unrelated work
+- start from a branch that is reasonably fresh against the target base branch
 - include docs or examples when behavior or workflow changes
 - give reviewers enough runtime or config context to validate the change
 
@@ -56,10 +57,22 @@ Patterns worth repeating from those PRs:
 ## PR Rules
 
 - keep one PR focused on one logical improvement area
+- do not open a PR from a long-lived catch-all branch if the work can still be split or rebased cleanly
 - if the change has multiple logical parts, use separate commits with clean commit subjects
 - include docs updates when the engineering contract changes
 - prefer reproducible validation over “tested locally” statements
 - do not hide important behavior changes inside dependency bump PRs without explaining the behavioral reason
+
+## Branch Hygiene
+
+PR quality starts before the PR body is written.
+
+- sync with the target base branch before starting or resuming work
+- avoid stacking unrelated work on one long-lived branch
+- if the branch already accumulated mixed history, split it before review when practical
+- if splitting is not practical, be explicit in the PR body that the PR is cumulative and group the changes honestly
+
+A good PR body cannot rescue a bad branch shape. It can only make the review less painful.
 
 ## Anti-Patterns
 
