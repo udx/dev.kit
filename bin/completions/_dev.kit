@@ -2,50 +2,32 @@
 
 _dev_kit() {
   local -a commands
-  local -a subcommands
   local -a options
-  local cmd cur
-  local -a help_lines
-  local -a parsed
-  commands=(${(f)"$(dev.kit help 2>/dev/null | awk '/^  /{print $1}')"})
+  local cmd
+  local dev_kit_cmd
 
-  cmd="$words[2]"
-  cur="$words[CURRENT]"
+  dev_kit_cmd="${0:A:h:h}/dev-kit"
+
+  commands=(${(f)"$("$dev_kit_cmd" help 2>/dev/null | awk '
+    /^Commands:/ { flag=1; next }
+    flag && $0 ~ /^  [a-zA-Z0-9-]+/ { print $1 ":" substr($0, index($0, $2)) }
+    flag && $0 == "" { exit }
+  ')"})
 
   if (( CURRENT == 2 )); then
     _describe 'command' commands
     return
   fi
 
-  if (( CURRENT == 3 )); then
-    subcommands=(${(f)"$(dev.kit "$cmd" -h 2>/dev/null | awk '
-      /^Commands:/ {flag=1; next}
-      flag && $0 ~ /^  [a-zA-Z0-9]/ {print $1}
-      flag && $0 == "" {exit}
-    ')"})
-    if (( ${#subcommands} )); then
-      _describe 'subcommand' subcommands
-      return
-    fi
-  fi
+  cmd="$words[2]"
+  options=(${(f)"$("$dev_kit_cmd" "$cmd" --help 2>/dev/null | awk '
+    /^Options:/ { flag=1; next }
+    flag && $0 ~ /^  --/ { print $1 ":" substr($0, index($0, $2)) }
+    flag && $0 == "" { exit }
+  ')"})
 
-  if [[ "$cur" == -* ]]; then
-    options=(${(f)"$(dev.kit "$cmd" -h 2>/dev/null | awk '
-      /^Options:/ {flag=1; next}
-      flag && $0 == "" {exit}
-      flag {
-        for (i=1; i<=NF; i++) {
-          if ($i ~ /^--/) {
-            gsub(/,/, "", $i);
-            print $i
-          }
-        }
-      }
-    ' | sort -u)"})
-    if (( ${#options} )); then
-      compadd -- $options
-      return
-    fi
+  if (( ${#options} )); then
+    _describe 'option' options
   fi
 }
 

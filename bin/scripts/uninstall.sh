@@ -1,39 +1,25 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-UI_LIB="${REPO_DIR}/lib/ui.sh"
-if [ -f "$UI_LIB" ]; then
-  # shellcheck disable=SC1090
-  . "$UI_LIB"
-fi
+# shellcheck disable=SC1091
+. "$REPO_DIR/lib/modules/bootstrap.sh"
+dev_kit_bootstrap
 
-BIN_DIR="${HOME}/.local/bin"
-TARGET="${BIN_DIR}/dev.kit"
-DEV_KIT_OWNER="${DEV_KIT_OWNER:-udx}"
-DEV_KIT_REPO="${DEV_KIT_REPO:-dev.kit}"
-ENGINE_DIR="${HOME}/.${DEV_KIT_OWNER}/${DEV_KIT_REPO}"
+TARGET="${DEV_KIT_BIN_DIR}/dev.kit"
 
 if [ -L "$TARGET" ] || [ -f "$TARGET" ]; then
   rm -f "$TARGET"
-  if command -v ui_ok >/dev/null 2>&1; then
-    ui_ok "Removed" "$TARGET"
-  else
-    echo "Removed: $TARGET"
-  fi
+  echo "Removed binary: $TARGET"
 else
-  if command -v ui_warn >/dev/null 2>&1; then
-    ui_warn "Not found" "$TARGET"
-  else
-    echo "Not found: $TARGET"
-  fi
+  echo "Binary not found: $TARGET"
 fi
 
-if [ "${1:-}" = "--purge" ]; then
-  rm -rf "$ENGINE_DIR"
-  if command -v ui_ok >/dev/null 2>&1; then
-    ui_ok "Purged" "$ENGINE_DIR"
-  else
-    echo "Purged: $ENGINE_DIR"
-  fi
+if [ -d "$DEV_KIT_HOME" ]; then
+  rm -rf "$DEV_KIT_HOME"
+  echo "Removed home: $DEV_KIT_HOME"
+else
+  echo "Home not found: $DEV_KIT_HOME"
 fi
+
+echo "Shell profile files were not modified."

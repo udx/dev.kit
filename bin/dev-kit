@@ -1,386 +1,121 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
-# --- Helper Functions ---
+SCRIPT_PATH="${BASH_SOURCE[0]}"
 
-resolve_self() {
-  local target="$0"
-  if command -v realpath >/dev/null 2>&1; then
-    realpath "$target"
-    return
-  fi
-  if command -v readlink >/dev/null 2>&1; then
-    while [ -L "$target" ]; do
-      local link
-      link="$(readlink "$target")"
-      case "$link" in
-        /*) target="$link" ;;
-        *) target="$(cd "$(dirname "$target")" && cd "$(dirname "$link")" && pwd)/$(basename "$link")" ;;
-      esac
-    done
-    local dir
-    dir="$(cd "$(dirname "$target")" && pwd -P)"
-    echo "$dir/$(basename "$target")"
-    return
-  fi
-  echo "$target"
-}
+while [ -L "$SCRIPT_PATH" ]; do
+  SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
+  SCRIPT_PATH="$(readlink "$SCRIPT_PATH")"
+  case "$SCRIPT_PATH" in
+    /*) ;;
+    *) SCRIPT_PATH="${SCRIPT_DIR}/${SCRIPT_PATH}" ;;
+  esac
+done
 
-export SCRIPT_PATH="$(resolve_self)"
-export REPO_DIR="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)"
+REPO_DIR="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)"
+# shellcheck disable=SC1091
+. "$REPO_DIR/lib/modules/bootstrap.sh"
+dev_kit_bootstrap
 
-# Global Pathing
-export DEV_KIT_OWNER="${DEV_KIT_OWNER:-udx}"
-export DEV_KIT_REPO="${DEV_KIT_REPO:-dev.kit}"
-export DEV_KIT_HOME="${DEV_KIT_HOME:-$HOME/.${DEV_KIT_OWNER}/${DEV_KIT_REPO}}"
-
-get_repo_root() {
-  if command -v git >/dev/null 2>&1; then
-    git rev-parse --show-toplevel 2>/dev/null || true
-  fi
-}
-
-bootstrap_state_path() {
-  local path=""
-  if [ -f "$DEV_KIT_HOME/config.env" ]; then
-    path="$(awk -F= '
-      $1 ~ "^[[:space:]]*state_path[[:space:]]*$" {
-        gsub(/[[:space:]]/,"",$2);
-        print $2;
-        exit
-      }
-    ' "$DEV_KIT_HOME/config.env")"
-  fi
-  printf "%s" "$path"
-}
-
-bootstrap_expand_path() {
-  local val="$1"
-  if [[ "$val" == "~/"* ]]; then
-    echo "$HOME/${val:2}"
-    return
-  fi
-  if [[ "$val" == /* ]]; then
-    echo "$val"
-    return
-  fi
-  if [ -n "$val" ]; then
-    echo "$DEV_KIT_HOME/$val"
-    return
-  fi
-  echo ""
-}
-
-BOOTSTRAP_STATE_PATH="$(bootstrap_expand_path "$(bootstrap_state_path)")"
-DEV_KIT_STATE="${DEV_KIT_STATE:-${BOOTSTRAP_STATE_PATH:-$DEV_KIT_HOME/state}}"
-DEV_KIT_SOURCE="${DEV_KIT_SOURCE:-$DEV_KIT_HOME/source}"
-if [ ! -d "$DEV_KIT_SOURCE" ]; then
-  DEV_KIT_SOURCE="$DEV_KIT_HOME"
-fi
-if [ ! -d "$DEV_KIT_STATE" ]; then
-  DEV_KIT_STATE="$DEV_KIT_HOME"
-fi
-CONFIG_FILE="${DEV_KIT_CONFIG:-$DEV_KIT_STATE/config.env}"
-if [ ! -f "$CONFIG_FILE" ] && [ -f "$DEV_KIT_HOME/config.env" ]; then
-  CONFIG_FILE="$DEV_KIT_HOME/config.env"
-fi
-
-expand_path() {
-  local val="$1"
-  if [[ "$val" == "~/"* ]]; then
-    echo "$HOME/${val:2}"
-    return
-  fi
-  if [[ "$val" == /* ]]; then
-    echo "$val"
-    return
-  fi
-  echo "$REPO_DIR/$val"
-}
-
-config_value() {
-  local file="$1"
-  local key="$2"
-  local default="${3:-}"
-  local val=""
-  if [ -f "$file" ]; then
-    val="$(awk -F= -v k="$key" '
-      $1 ~ "^[[:space:]]*"k"[[:space:]]*$" {
-        sub(/^[[:space:]]*/,"",$2);
-        sub(/[[:space:]]*$/,"",$2);
-        print $2;
-        exit
-      }
-    ' "$file")"
-  fi
-  if [ -n "$val" ]; then
-    echo "$val"
-  else
-    echo "$default"
-  fi
-}
-
-# --- Library Loading ---
-
-UTILS_LIB="$REPO_DIR/lib/utils.sh"
-if [ -f "$UTILS_LIB" ]; then
+if [ -f "$REPO_DIR/lib/modules/utils.sh" ]; then
   # shellcheck disable=SC1090
-  . "$UTILS_LIB"
+  . "$REPO_DIR/lib/modules/utils.sh"
 fi
 
-UI_LIB="$REPO_DIR/lib/ui.sh"
-if [ -f "$UI_LIB" ]; then
+for module_file in "$REPO_DIR"/lib/modules/*.sh; do
+  [ "$module_file" = "$REPO_DIR/lib/modules/bootstrap.sh" ] && continue
+  [ "$module_file" = "$REPO_DIR/lib/modules/utils.sh" ] && continue
   # shellcheck disable=SC1090
-  . "$UI_LIB"
-fi
+  . "$module_file"
+done
 
-# --- Orchestrator helpers ---
-
-get_environment_yaml() {
-  local repo_root
-  repo_root="$(get_repo_root || true)"
-  if [ -n "$repo_root" ] && [ -f "$repo_root/environment.yaml" ]; then
-    echo "$repo_root/environment.yaml"
-  elif [ -f "$DEV_KIT_HOME/environment.yaml" ]; then
-    echo "$DEV_KIT_HOME/environment.yaml"
-  elif [ -f "$REPO_DIR/environment.yaml" ]; then
-    echo "$REPO_DIR/environment.yaml"
-  fi
-}
-ENVIRONMENT_YAML="$(get_environment_yaml)"
-
-local_config_path() {
-  local state_dir
-  state_dir="$(get_repo_state_dir || true)"
-  if [ -n "$state_dir" ]; then
-    echo "$state_dir/config.env"
-  fi
-}
-
-config_value_scoped() {
-  local key="$1"
-  local default="${2:-}"
-  local val=""
-
-  # 1. Check local repo .env (Priority 1)
-  local local_path
-  local_path="$(local_config_path || true)"
-  if [ -n "$local_path" ] && [ -f "$local_path" ]; then
-    val="$(config_value "$local_path" "$key" "")"
-  fi
-
-  # 2. Check global .env (Priority 2)
-  if [ -z "$val" ]; then
-    val="$(config_value "$CONFIG_FILE" "$key" "")"
-  fi
-
-  # 3. Check YAML Orchestrator (Priority 3 / Defaults)
-  if [ -z "$val" ] && [ -f "$ENVIRONMENT_YAML" ]; then
-    local yaml_key="$key"
-    case "$key" in
-      quiet|developer|state_path) yaml_key="system.$key" ;;
-      exec.prompt|exec.stream) yaml_key="${key//./.}" ;;
-      ai.enabled|ai.provider) yaml_key="${key//./.}" ;;
-      capture.mode|capture.enabled|capture.dir) yaml_key="${key//./.}" ;;
-      context.enabled|context.max_bytes) yaml_key="${key//./.}" ;;
-      install.path_prompt) yaml_key="${key//./.}" ;;
-    esac
-    val="$(dev_kit_yaml_value "$ENVIRONMENT_YAML" "$yaml_key" "")"
-  fi
-
-  if [ -n "$val" ]; then
-    echo "$val"
-  else
-    echo "$default"
-  fi
-}
-
-# --- UI Helpers ---
-
-print_section() {
-  local title="$1"
-  if command -v ui_section >/dev/null 2>&1; then
-    ui_section "$title"
-  else
-    echo ""
-    echo "== $title =="
-  fi
-}
-
-print_check() {
-  local label="$1"
-  local status="$2"
-  local detail="${3:-}"
-  if command -v ui_ok >/dev/null 2>&1 && [ "$status" = "[ok]" ]; then
-    ui_ok "$label" "$detail"
-    return
-  fi
-  if command -v ui_warn >/dev/null 2>&1 && [ "$status" = "[warn]" ]; then
-    ui_warn "$label" "$detail"
-    return
-  fi
-  printf "%-20s %s" "$label" "$status"
-  if [ -n "$detail" ]; then
-    printf "  %s" "$detail"
-  fi
-  printf "\n"
-}
-
-# --- Command Orchestration ---
-
-list_commands() {
-  local file=""
-  for file in "$REPO_DIR"/lib/commands/*.sh; do
-    [ -e "$file" ] || continue
-    local name
-    name="$(basename "${file%.sh}")"
-    # Filter legacy/internal commands or secondary commands from main list if needed
-    case "$name" in
-      github|agent) continue ;;
-    esac
-    echo "$name"
-  done | LC_ALL=C sort
-}
+for command_file in "$REPO_DIR"/lib/commands/*.sh; do
+  # shellcheck disable=SC1090
+  . "$command_file"
+done
 
 usage() {
-  cat <<'USAGE'
-Usage: dev.kit <command> [options]
+  local command_file=""
+  local command_name=""
+  local description=""
+  cat <<'EOF'
+Usage: dev.kit <command>
 
-Core Commands:
-  status     Engineering brief and system diagnostic (Default)
-  skills     Discover and execute repository-bound skills (Deterministic)
-  ai         Unified agent integration management (Sync, Skills, Status)
-  sync       Logical, atomic commits and drift resolution
-  task       Manage the lifecycle of active workflows and sessions
-  config     Environment and repository orchestration settings
+Commands:
+EOF
 
-Secondary Commands:
-  visualizer Create and export high-fidelity Mermaid diagrams
-  agent      Direct agent integration management (advanced)
+  for command_file in $(dev_kit_list_command_files "$REPO_DIR"); do
+    command_name="$(dev_kit_command_name_from_file "$command_file")"
+    description="$(dev_kit_command_description "$command_file")"
+    printf "  %-10s %s\n" "$command_name" "$description"
+  done
 
-Example:
-  dev.kit status
-  dev.kit ai sync
-  dev.kit sync --dry-run
-  dev.kit skills run visualizer "new_diagram.sh"
-USAGE
+  cat <<'EOF'
+  help       Show this help message
+
+Options:
+  --json     Output machine-readable JSON for supported commands
+EOF
 }
 
-ensure_dev_kit_home() {
-  mkdir -p "$DEV_KIT_HOME"
-  mkdir -p "$DEV_KIT_STATE"
-  if [ ! -w "$DEV_KIT_STATE" ]; then
-    echo "dev.kit: config path not writable: $DEV_KIT_STATE" >&2
-    echo "dev.kit: fix permissions or choose a different DEV_KIT_STATE" >&2
-    exit 1
-  fi
-  if [ ! -f "$CONFIG_FILE" ] && [ -f "$REPO_DIR/config/default.env" ]; then
-    mkdir -p "$(dirname "$CONFIG_FILE")"
-    cp "$REPO_DIR/config/default.env" "$CONFIG_FILE"
-  fi
+command_usage() {
+  local command_name="$1"
+  cat <<EOF
+Usage: dev.kit ${command_name} [--json]
+
+Options:
+  --json     Output machine-readable JSON
+EOF
 }
 
-context_enabled() {
-  local enabled=""
-  enabled="$(config_value_scoped context.enabled "true")"
-  [ "$enabled" = "true" ]
-}
+command="${1:-audit}"
+format="text"
 
-context_dir() {
-  if ! context_enabled; then
-    return 1
-  fi
-  local base repo_id
-  base="$(config_value_scoped context.dir "")"
-  if [ -z "$base" ]; then
-    base="$DEV_KIT_STATE/codex/context"
-  elif [[ "$base" == "~/"* ]]; then
-    base="$HOME/${base:2}"
-  elif [[ "$base" != /* ]]; then
-    base="$DEV_KIT_STATE/$base"
-  fi
-  
-  # Determine repo_id for scoping context
-  local root
-  root="$(get_repo_root || true)"
-  [ -z "$root" ] && root="$PWD"
-  if command -v shasum >/dev/null 2>&1; then
-    repo_id="$(printf "%s" "$root" | shasum -a 256 | awk '{print $1}')"
-  else
-    repo_id="$(printf "%s" "$root" | cksum | awk '{print $1}')"
-  fi
-  
-  echo "$base/$repo_id"
-}
-
-context_file() {
-  local dir=""
-  dir="$(context_dir)" || return 1
-  echo "$dir/context.md"
-}
-
-context_max_bytes() {
-  config_value_scoped context.max_bytes "12000"
-}
-
-context_compact_file() {
-  local path="$1"
-  local max_bytes=""
-  max_bytes="$(context_max_bytes)"
-  if [ -z "$max_bytes" ] || [ ! -f "$path" ]; then
-    return 0
-  fi
-  local size=""
-  size="$(wc -c < "$path" | tr -d ' ')"
-  if [ -z "$size" ] || [ "$size" -le "$max_bytes" ]; then
-    return 0
-  fi
-  local tmp="${path}.tmp.$$"
-  if tail -c "$max_bytes" "$path" > "$tmp"; then
-    mv "$tmp" "$path"
-  else
-    rm -f "$tmp"
-  fi
-}
-
-# --- Command Loading & Logic ---
-
-# 1. Load Modules (Shared logic for integrations)
-for module in "$REPO_DIR"/lib/modules/*.sh; do
-  [ -e "$module" ] || continue
-  # shellcheck disable=SC1090
-  . "$module"
-done
-
-# 2. Load Public Commands
-for cmd_file in "$REPO_DIR"/lib/commands/*.sh; do
-  [ -e "$cmd_file" ] || continue
-  # shellcheck disable=SC1090
-  . "$cmd_file"
-done
-
-# --- Execution ---
-
-orig_args=("$@")
-cmd="${1:-status}"
-
-case "$cmd" in
-  help|-h|--help)
-    usage
-    exit 0
-    ;;
-esac
-
-# Check for public command first
-fn="dev_kit_cmd_${cmd//-/_}"
-if command -v "$fn" >/dev/null 2>&1; then
-  ensure_dev_kit_home
-  shift || true
-  "$fn" "$@"
-  exit $?
+if [ "${2:-}" = "--json" ] || [ "${1:-}" = "--json" ]; then
+  format="json"
 fi
 
-echo "Unknown command: $cmd" >&2
-echo ""
-usage
-exit 1
+case "$command" in
+  status)
+    if [ "${2:-}" = "-h" ] || [ "${2:-}" = "--help" ]; then
+      command_usage "status"
+      exit 0
+    fi
+    dev_kit_cmd_status "$format"
+    ;;
+  bridge)
+    if [ "${2:-}" = "-h" ] || [ "${2:-}" = "--help" ]; then
+      command_usage "bridge"
+      exit 0
+    fi
+    dev_kit_cmd_bridge "$format"
+    ;;
+  audit)
+    if [ "${2:-}" = "-h" ] || [ "${2:-}" = "--help" ]; then
+      command_usage "audit"
+      exit 0
+    fi
+    dev_kit_cmd_audit "$format"
+    ;;
+  --json)
+    dev_kit_cmd_audit "json"
+    ;;
+  help|-h|--help)
+    usage
+    ;;
+  *)
+    fn="dev_kit_cmd_${command//-/_}"
+    if command -v "$fn" >/dev/null 2>&1; then
+      if [ "${2:-}" = "-h" ] || [ "${2:-}" = "--help" ]; then
+        command_usage "$command"
+        exit 0
+      fi
+      "$fn" "$format"
+      exit 0
+    fi
+    echo "Unknown command: $command" >&2
+    echo >&2
+    usage >&2
+    exit 1
+    ;;
+esac

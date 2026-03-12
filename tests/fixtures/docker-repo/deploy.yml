@@ -1,0 +1,4 @@
+version: udx.io/worker-v1/deploy
+
+service:
+  image: "acme/docker-repo:latest"

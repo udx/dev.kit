@@ -1,70 +1,67 @@
-# dev.kit: The Thin Empowerment Layer
+# dev.kit
 
-**Experienced engineering flow with high-fidelity, deterministic results.**
+![dev.kit](assets/logo.svg)
 
-`dev.kit` resolves the **Drift** (intent divergence) by **Normalizing** it into a deterministic path and **Iterating** to resolution. It acts as a **Thin Empowerment Layer** that bridges human intent with repository truth via **Context-Driven Engineering (CDE)**.
+`dev.kit` is a 12-factor repo adapter.
 
-### 1. Grounding (The Bridge)
-Intent is mapped to repo-specific logic and normalized into a deterministic execution plan.
-![Grounding Bridge](assets/diagrams/grounding-bridge.svg)
+It scans a repository for the workflow contracts that reduce drift across engineering teams: documentation, dependency contracts, config boundaries, verification entrypoints, runtime entrypoints, and build/release/run separation.
 
-### 2. Normalization (The Gate)
-Capabilities are resolved at runtime through a **Dynamic Discovery Engine** that scans script headers and skills.
-![Normalization Gate](assets/diagrams/normalization-boundary.svg)
+The goal is to make repos easier to work on the same way every time. As a repo gets closer to a 12-factor operating model, humans and agents need less tribal knowledge to build, test, run, deploy, and improve it.
 
-### 3. Execution (The Engine)
-AI iterates through instruction steps with deterministic validation and real-time status updates.
-![Execution Engine](assets/diagrams/execution-engine.svg)
+## Commands
 
-## Standard Engineering Flow
+`dev.kit`
 
-`dev.kit` provides a **Thin Empowerment Layer** that bridges chaotic intent with deterministic repository functions.
+- Audits the current repo as a 12-factor engineering contract.
+- Returns a short improvement plan by default.
+- `--json` returns the same model in machine-readable form.
 
-| Phase | Description | Implementation |
-| :--- | :--- | :--- |
-| **1. Grounding** | **UDX Worker** provides the isolated, pre-hydrated base environment. | [`udx/worker`](docs/reference/operations/worker-ecosystem-refs.md) |
-| **2. Discovery** | **Skill Mesh** resolves internal commands and `@udx` NPM packages. | [`@udx/mcurl`](docs/ai/mesh/npm.md) |
-| **3. Normalize** | AI Reasoning Skills transform intent into a bounded `workflow.md`. | [`SKILL.md`](docs/skills/README.md) |
-| **4. Execute** | Deterministic Primitives execute the logic within the CLI boundary. | `lib/commands/` |
+`dev.kit bridge`
 
----
+- Exposes the repo model for agents and automation.
+- Returns detected archetypes, factor statuses, entrypoints, and guidance so agents can work from grounded repo reality instead of guessing.
 
-## Core Interface
+![compliance audit](assets/compliance-audit.svg)
 
-- **`dev.kit status`**: (Default) High-fidelity engineering brief and system health.
-- **`dev.kit doctor`**: Verify environment health, software detection, and compliance.
-- **`dev.kit ai`**: Unified agent integration management and grounding.
-- **`dev.kit sync`**: Logical, atomic repository synchronization and drift resolution.
-- **`dev.kit task`**: Manage the lifecycle of active workflows and engineering sessions.
+![dev.kit bridge](assets/dev-kit-bridge.svg)
 
-> **Execution**: Run any repository-bound skill with `dev.kit skills run <name>`.
+## Why It Matters
 
----
+Run `dev.kit` when a repo is new, drifting, hard to onboard into, or inconsistent across environments.
 
-## Documentation
+The value is operational clarity:
 
-The `dev.kit` knowledge base is structured to reflect **CDE Principles**.
-
-- **[Foundations](docs/README.md#%EF%B8%8F-foundations)**: Core philosophy (CDE), dev.kit primitives, and methodology.
-- **[Runtime](docs/README.md#%EF%B8%8F-runtime)**: CLI overview, lifecycle, and execution loops.
-- **[AI Integration](docs/README.md#-ai-integration)**: Grounded orchestration and agent mission.
-- **[Best Practices](docs/foundations/best-practices.md)**: High-fidelity engineering rules and command mappings.
-
----
+- develop without tribal knowledge
+- verify changes predictably
+- automate build and runtime workflows
+- let teammates and agents operate with less ambiguity
+- standardize how work moves from local changes to CI and deployment
 
 ## Install
 
 ```bash
-curl -fsSL https://udx.dev/dev.kit/install.sh | bash
+bash bin/scripts/install.sh
+source "$HOME/.udx/dev.kit/bin/env/dev-kit.sh"
+dev.kit
 ```
 
-## 📚 Authoritative References
+## Examples
 
-The `dev.kit` mission is grounded in foundational research on high-fidelity automation and AI orchestration:
+```bash
+dev.kit
+dev.kit --json
+dev.kit bridge --json
+```
 
-- **[The Power of Automation](https://andypotanin.com/the-power-of-automation-how-it-has-transformed-the-software-development-process/)**: Systematic transformation of the engineering flow.
-- **[Observation-Driven Management](https://andypotanin.com/observation-driven-management-revolutionizing-task-assignment-efficiency-workplace/)**: Revolutionary task normalization through pattern recognition.
-- **[Autonomous Technical Operations](https://andypotanin.com/claude-operator-prompt/)**: Principles for high-fidelity agent grounding and execution.
+## Uninstall
 
----
-_UDX DevSecOps Team_
+```bash
+"$HOME/.udx/dev.kit/bin/scripts/uninstall.sh"
+```
+
+Further docs:
+
+- [Workflow](/Users/jonyfq/git/udx/dev.kit/docs/workflow.md)
+- [Engineering Guide](/Users/jonyfq/git/udx/dev.kit/docs/engineering-guide.md)
+- [Pull Requests](/Users/jonyfq/git/udx/dev.kit/docs/pull-requests.md)
+- [Development](/Users/jonyfq/git/udx/dev.kit/docs/development.md)
