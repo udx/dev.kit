@@ -31,4 +31,4 @@ Current hooks:
 - [commit-msg](/Users/jonyfq/git/udx/dev.kit/.githooks/commit-msg) enforces lowercase commit subjects, excluding Git-generated subjects such as `Merge`, `Revert`, `fixup!`, and `squash!`
 - [pre-push](/Users/jonyfq/git/udx/dev.kit/.githooks/pre-push) runs `bash tests/run.sh`
 
-Team workflow expectations are documented separately in [docs/team-workflow.md](/Users/jonyfq/git/udx/dev.kit/docs/team-workflow.md).
+Broader engineering expectations are documented in [docs/engineering-guide.md](/Users/jonyfq/git/udx/dev.kit/docs/engineering-guide.md).
