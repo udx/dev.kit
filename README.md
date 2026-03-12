@@ -1,79 +1,57 @@
-# ⚡️ dev.kit: The Repo Engine
+# dev.kit
 
 ![dev.kit](assets/logo.svg)
 
-**The deterministic middleware that translates chaotic repositories into high-fidelity, 12-factor standards.**
+`dev.kit` is a 12-factor repo adapter.
 
-`dev.kit` acts as a **Contextual Proxy** between your environment and AI agents. It serves as both the **Logic** (the engine) and the **Template** (the blueprint) to resolve architectural drift.
+It scans a repository for the operational signals that make development easier and more consistent across a team: documentation, dependency contracts, config boundaries, verification entrypoints, runtime entrypoints, and build/release/run separation.
 
----
+The goal is simple: standardize how repos are built, tested, run, and improved so humans and agents do not have to reinvent workflow on every project.
 
-## 🕹 The Single-Command Interface
+## Commands
 
-The entire engine is distilled into a single, high-impact verb.
+`dev.kit`
 
-### `dev.kit`
+- Audits the current repo against 12-factor workflow boundaries.
+- Returns a short human-readable improvement plan by default.
+- `--json` returns the same model in machine-readable form.
 
-**The Pulse Check.** Instantly analyzes your repository, calculates your **Fidelity Score**, and generates a prioritized improvement plan for drift resolution.
+`dev.kit bridge`
 
-#### Compliance Mode
-
-`dev.kit --json` outputs a machine-readable audit of 12-factor misalignments. Agents can use this to identify and fix fidelity gaps such as missing tests, broken builds, or structural drift.
+- Exposes the repo model for agents.
+- Returns detected profiles, factor statuses, entrypoints, and guidance so agents can work from grounded repo reality instead of guessing.
 
 ![compliance audit](assets/compliance-audit.svg)
 
-The audit output becomes a focused improvement plan with bounded next steps.
-
-![compliance improve](assets/compliance-improve.svg)
-
-#### Development Mode
-
-`dev.kit bridge --json` resolves the repository into high-fidelity, agent-friendly assets. It maps the skill mesh, available CLI primitives, and internal logic so agents can execute tasks without hallucinating paths or patterns.
-
 ![dev.kit bridge](assets/dev-kit-bridge.svg)
 
----
+## Why It Fits Development
 
-## 🏗 How it Works
+Run `dev.kit` when a repo is new, drifting, hard to onboard into, or inconsistent across environments.
 
-- **The Normalization Gate**: Chaotic repo states are filtered into bounded, repeatable workflow artifacts.
-- **Logic-as-Template**: The `dev.kit` repository is the canonical example of the standards it enforces. Its structure is the blueprint; its commands are the truth.
-- **The Bridge**: Instead of feeding an agent raw files, the `bridge` command provides a structured "Map of Truth," ensuring the agent works within validated boundaries.
+As a repo gets closer to 12-factor structure, it becomes easier to:
 
----
+- develop without tribal knowledge
+- verify changes predictably
+- automate build and runtime workflows
+- let agents operate with less ambiguity
 
-## ✅ The Fidelity States
-
-| State         | Human Experience        | Agent Experience                                   |
-| :------------ | :---------------------- | :------------------------------------------------- |
-| **Build**     | _I know how to build._  | Strict 12-factor separation (Build/Release/Run).   |
-| **Test**      | _I know how to verify._ | Deterministic loops to validate health instantly.  |
-| **Structure** | _I know where to add._  | Standardized hierarchy; zero-guesswork navigation. |
-| **Pattern**   | _I know how to grow._   | Repeatable Analyze-Normalize-Process sequences.    |
-
----
-
-## 🚀 60-Second Onboard
-
-```bash
-# 1. Install & Run the Pulse Check
-bash bin/scripts/install.sh
-source "$HOME/.udx/dev.kit/bin/env/dev-kit.sh"
-dev.kit
-
-# 2. Let an Agent Fix Compliance
-dev.kit --json | agent-execute "Fix all fidelity gaps"
-
-# 3. Let an Agent Develop a Feature
-dev.kit bridge --json | agent-execute "Add a new module using existing primitives"
-```
+The value is not only compliance. The value is a normalized development workflow.
 
 ## Install
 
 ```bash
 bash bin/scripts/install.sh
 source "$HOME/.udx/dev.kit/bin/env/dev-kit.sh"
-dev.kit status
+dev.kit
+```
+
+## Examples
+
+```bash
+dev.kit
+dev.kit --json
+dev.kit bridge --json
 ```
 
 ## Uninstall
@@ -82,4 +60,7 @@ dev.kit status
 "$HOME/.udx/dev.kit/bin/scripts/uninstall.sh"
 ```
 
-Development and test workflow lives in [docs/development.md](/Users/jonyfq/git/udx/dev.kit/docs/development.md).
+Further docs:
+
+- [Workflow](/Users/jonyfq/git/udx/dev.kit/docs/workflow.md)
+- [Development](/Users/jonyfq/git/udx/dev.kit/docs/development.md)
