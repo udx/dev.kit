@@ -18,7 +18,7 @@ bash tests/run.sh
 This repo keeps Git policy minimal and programmatic:
 
 - tracked line-ending rules live in [.gitattributes](/Users/jonyfq/git/udx/dev.kit/.gitattributes)
-- an optional tracked hook enforces lowercase commit subjects from [.githooks/commit-msg](/Users/jonyfq/git/udx/dev.kit/.githooks/commit-msg)
+- optional tracked hooks live in [.githooks](/Users/jonyfq/git/udx/dev.kit/.githooks)
 
 Enable the tracked hooks once per clone:
 
@@ -26,4 +26,9 @@ Enable the tracked hooks once per clone:
 git config core.hooksPath .githooks
 ```
 
-The commit hook allows Git-generated subjects such as `Merge`, `Revert`, `fixup!`, and `squash!`, but otherwise rejects uppercase letters in the first commit line.
+Current hooks:
+
+- [commit-msg](/Users/jonyfq/git/udx/dev.kit/.githooks/commit-msg) enforces lowercase commit subjects, excluding Git-generated subjects such as `Merge`, `Revert`, `fixup!`, and `squash!`
+- [pre-push](/Users/jonyfq/git/udx/dev.kit/.githooks/pre-push) runs `bash tests/run.sh`
+
+Team workflow expectations are documented separately in [docs/team-workflow.md](/Users/jonyfq/git/udx/dev.kit/docs/team-workflow.md).

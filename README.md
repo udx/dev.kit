@@ -64,3 +64,4 @@ Further docs:
 
 - [Workflow](/Users/jonyfq/git/udx/dev.kit/docs/workflow.md)
 - [Development](/Users/jonyfq/git/udx/dev.kit/docs/development.md)
+- [Team Workflow](/Users/jonyfq/git/udx/dev.kit/docs/team-workflow.md)
