@@ -6,6 +6,7 @@ Useful pull requests are not just code dumps. They explain the operational chang
 
 - state the problem first
 - summarize the actual change in a short `Changes` section
+- describe the real diff between the base branch and the PR branch, not the idealized change you wish the branch contained
 - keep the scope coherent instead of mixing unrelated work
 - start from a branch that is reasonably fresh against the target base branch
 - include docs or examples when behavior or workflow changes

@@ -12,6 +12,7 @@
 - expose more explicit engineering-contract guidance for agents, including preferred edit boundaries and validation order
 - add machine-readable improvement priority or severity so agents can plan fixes more predictably
 - improve CLI and output UI so factor status, evidence, and guidance are easier to scan quickly
+- think through a dedicated `dev.kit` GitHub module or mode for PRs, issues, workflows, and repo operating signals
 
 ## Validation
 
