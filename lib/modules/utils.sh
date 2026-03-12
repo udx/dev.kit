@@ -12,6 +12,22 @@ dev_kit_lines_to_csv() {
   '
 }
 
+dev_kit_json_escape() {
+  printf '%s' "$1" | awk '
+    BEGIN { ORS = "" }
+    {
+      if (NR > 1) {
+        printf "\\n"
+      }
+      gsub(/\\/, "\\\\")
+      gsub(/"/, "\\\"")
+      gsub(/\t/, "\\t")
+      gsub(/\r/, "\\r")
+      printf "%s", $0
+    }
+  '
+}
+
 dev_kit_lines_to_json_array() {
   local first=1
   local item=""
@@ -34,20 +50,28 @@ dev_kit_yaml_mapping_scalar() {
   local key="$3"
 
   awk -v section="$section" -v key="$key" '
-    $1 == section ":" {
-      in_section = 1
+    $1 == "config:" {
+      in_config = 1
       next
     }
 
-    in_section && $1 ~ /^[[:space:]]*[A-Za-z0-9_-]+:/ {
+    in_config && $0 ~ /^  [A-Za-z0-9_-]+:/ {
       current = $1
       sub(":", "", current)
-      if (current == key) {
-        $1 = ""
-        sub(/^[[:space:]]+/, "")
-        print
-        exit
+      in_section = (current == section)
+      next
+    }
+
+    in_section && $0 ~ /^    [A-Za-z0-9_-]+:/ {
+      current = $1
+      sub(":", "", current)
+      if (current != key) {
+        next
       }
+
+      sub(/^[[:space:]]*[A-Za-z0-9_-]+:[[:space:]]*/, "", $0)
+      print
+      exit
     }
   ' "$file_path"
 }
@@ -58,20 +82,29 @@ dev_kit_yaml_mapping_list() {
   local key="$3"
 
   awk -v section="$section" -v key="$key" '
-    $1 == section ":" {
-      in_section = 1
+    $1 == "config:" {
+      in_config = 1
       next
     }
 
-    in_section && $1 ~ /^[[:space:]]*[A-Za-z0-9_-]+:/ {
+    in_config && $0 ~ /^  [A-Za-z0-9_-]+:/ {
+      current = $1
+      sub(":", "", current)
+      in_section = (current == section)
+      in_target = 0
+      next
+    }
+
+    in_section && $0 ~ /^    [A-Za-z0-9_-]+:/ {
       current = $1
       sub(":", "", current)
       in_target = (current == key)
       next
     }
 
-    in_target && $1 == "-" {
-      print $2
+    in_target && $0 ~ /^      - / {
+      sub(/^[[:space:]]*-[[:space:]]*/, "", $0)
+      print
     }
   ' "$file_path"
 }

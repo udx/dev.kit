@@ -1,13 +1,21 @@
 # Docker Repo
 
+## Quick Start
+
 Build:
 
 ```bash
-docker build -t acme/docker-repo .
+make build
 ```
 
 Run:
 
 ```bash
-docker run --rm acme/docker-repo
+make run
+```
+
+Test:
+
+```bash
+make test
 ```

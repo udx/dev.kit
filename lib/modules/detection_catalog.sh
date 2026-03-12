@@ -23,3 +23,11 @@ dev_kit_detection_list() {
   catalog_path="$(dev_kit_detection_signals_path)"
   dev_kit_yaml_mapping_list "$catalog_path" "lists" "$list_name"
 }
+
+dev_kit_detection_scalar() {
+  local key="$1"
+  local catalog_path=""
+
+  catalog_path="$(dev_kit_detection_signals_path)"
+  dev_kit_yaml_mapping_scalar "$catalog_path" "scalars" "$key"
+}

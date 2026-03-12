@@ -16,6 +16,7 @@ Common cases:
 The current audit focuses on practical 12-factor workflow boundaries:
 
 - `documentation`
+- `architecture`
 - `dependencies`
 - `config`
 - `verification`
@@ -41,3 +42,5 @@ Each factor is reported as `present`, `partial`, or `missing`, with evidence and
 ## Current Scope
 
 The detector currently recognizes common signals from Node, PHP, shell, and container-oriented repos. The scan policy is config-driven from [src/configs](/Users/jonyfq/git/udx/dev.kit/src/configs), so supported signals can grow without changing the CLI model.
+
+Broader repo working rules and engineering expectations live in [docs/engineering-guide.md](/Users/jonyfq/git/udx/dev.kit/docs/engineering-guide.md).

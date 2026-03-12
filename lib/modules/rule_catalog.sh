@@ -12,7 +12,17 @@ dev_kit_rule_field() {
   catalog_path="$(dev_kit_rule_catalog_path)"
 
   awk -v rule_id="$rule_id" -v field_name="$field_name" '
-    $1 == "-" && $2 == "id:" {
+    $1 == "config:" {
+      in_config = 1
+      next
+    }
+
+    in_config && $1 == "rules:" {
+      in_rules = 1
+      next
+    }
+
+    in_rules && $1 == "-" && $2 == "id:" {
       current_id = $3
       in_rule = (current_id == rule_id)
       next
