@@ -67,6 +67,7 @@ Good enforcement targets:
 - canonical verification before push
 - explicit config and output contracts
 - module structure and file-size guidance
+- pull request structure and operational clarity
 
 Poor enforcement targets:
 
@@ -74,3 +75,5 @@ Poor enforcement targets:
 - whether they merged the right base branch at the right moment without repo context
 
 `dev.kit` should increasingly validate the enforceable parts of this guide, so the repo teaches its own operating model to both humans and agents.
+
+Useful PR guidance is documented separately in [docs/pull-requests.md](/Users/jonyfq/git/udx/dev.kit/docs/pull-requests.md).

@@ -11,12 +11,14 @@
 
 - expose more explicit engineering-contract guidance for agents, including preferred edit boundaries and validation order
 - add machine-readable improvement priority or severity so agents can plan fixes more predictably
+- improve CLI and output UI so factor status, evidence, and guidance are easier to scan quickly
 
 ## Validation
 
 - add worker-backed fixture coverage for architecture edge cases
 - add fixtures for larger application layouts and infra-heavy repos
 - add checks for repos that document commands but do not actually expose them
+- make git hooks fail more gracefully when local prerequisites such as Docker are unavailable, while keeping the enforcement intent clear
 
 ## Docs
 

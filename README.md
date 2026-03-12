@@ -63,4 +63,5 @@ Further docs:
 
 - [Workflow](/Users/jonyfq/git/udx/dev.kit/docs/workflow.md)
 - [Engineering Guide](/Users/jonyfq/git/udx/dev.kit/docs/engineering-guide.md)
+- [Pull Requests](/Users/jonyfq/git/udx/dev.kit/docs/pull-requests.md)
 - [Development](/Users/jonyfq/git/udx/dev.kit/docs/development.md)
