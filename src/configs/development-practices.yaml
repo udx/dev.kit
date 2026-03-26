@@ -1,0 +1,9 @@
+kind: developmentPractices
+version: udx.io/dev.kit/v1
+
+config:
+  practices:
+    - id: incremental-development
+      message: Make sure to develop and test incrementally, so it is easier to detect problems early and build on verified behavior.
+    - id: scoped-execution
+      message: Make sure to protect development executions with scoped and limited tasks, so failures are easier to isolate and blast radius stays low.

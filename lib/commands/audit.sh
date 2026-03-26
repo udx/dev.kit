@@ -24,7 +24,7 @@ dev_kit_cmd_audit() {
     facets_json="$(dev_kit_repo_facets_json "$repo_dir")"
     factors_json="$(dev_kit_repo_factor_summary_json "$repo_dir")"
     improvement_plan_json="$(dev_kit_repo_findings_json "$repo_dir")"
-    dev_kit_template_render "audit.json.tmpl" \
+    dev_kit_template_render "audit.json" \
       "command=audit" \
       "repo=$(dev_kit_json_escape "$repo_name")" \
       "path=$(dev_kit_json_escape "$repo_dir")" \
