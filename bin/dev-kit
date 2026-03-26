@@ -67,6 +67,9 @@ command_usage() {
     audit|bridge|status)
       echo "  --json     Output machine-readable JSON"
       ;;
+    save)
+      echo "  --yes      Overwrite existing repo-local saved context without a confirmation prompt"
+      ;;
     uninstall)
       echo "  --yes      Remove dev.kit without a confirmation prompt"
       ;;

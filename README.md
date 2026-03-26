@@ -32,12 +32,18 @@ This installs `dev.kit` into `~/.udx/dev.kit` and adds `dev.kit` to `~/.local/bi
 - Exposes the repo model for agents and automation.
 - Returns detected archetypes, factor statuses, entrypoints, and guidance so agents can work from grounded repo reality instead of guessing.
 
+`dev.kit save`
+
+- Saves repo-local working context into `./.udx/dev.kit/` for the next session.
+- Generates `todo.md`, `context.md`, and `refs.md` from the current repo state and warns before overwriting existing saved context.
+
 ## Examples
 
 ```bash
 dev.kit
 dev.kit --json
 dev.kit bridge --json
+dev.kit save
 ```
 
 ![compliance audit](assets/compliance-audit.svg)

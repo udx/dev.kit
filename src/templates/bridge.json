@@ -1,6 +1,7 @@
 {
   "command": "{{command}}",
   "repo": "{{repo}}",
+  "saved_context": {{saved_context}},
   "model": {
     "archetype": "{{archetype}}",
     "archetypes": {{archetypes}},

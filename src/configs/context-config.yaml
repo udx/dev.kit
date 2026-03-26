@@ -1,0 +1,32 @@
+kind: contextConfig
+version: udx.io/dev.kit/v1
+
+config:
+  lists:
+    saved_context_files:
+      - todo.md
+      - context.md
+      - refs.md
+    priority_paths:
+      - README.md
+      - docs
+      - src/configs/development-practices.yaml
+      - package.json
+      - composer.json
+      - Dockerfile
+      - docker-compose.yml
+      - docker-compose.yaml
+      - deploy.yml
+      - deploy.yaml
+      - wp-config.php
+      - Chart.yaml
+      - helmfile.yaml
+      - .github/workflows
+      - wp-content
+      - k8s
+      - charts
+      - terraform
+      - lib
+      - src
+      - scripts
+      - tests

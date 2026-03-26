@@ -105,6 +105,10 @@ dev_kit_repo_agent_guidance_text() {
     printf '%s\n' "Treat .github workflows as the primary runtime contract and preserve declared workflow_call inputs and outputs."
   fi
 
+  if dev_kit_repo_has_saved_context "$repo_dir"; then
+    printf '%s\n' "Saved repo-local context exists at $(dev_kit_repo_saved_context_summary_text "$repo_dir"); read it before making changes."
+  fi
+
   while IFS= read -r factor; do
     status="$(dev_kit_repo_factor_status "$repo_dir" "$factor")"
     case "$factor:$status" in
