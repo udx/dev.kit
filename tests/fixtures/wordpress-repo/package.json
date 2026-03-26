@@ -1,0 +1,7 @@
+{
+  "name": "wordpress-repo",
+  "private": true,
+  "scripts": {
+    "test": "echo ok"
+  }
+}

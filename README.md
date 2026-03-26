@@ -6,6 +6,8 @@
 
 It scans a repository for the workflow contracts that reduce drift across engineering teams: documentation, dependency contracts, config boundaries, verification entrypoints, runtime entrypoints, and build/release/run separation.
 
+It also detects lightweight repo identity facets such as `framework:wordpress`, `runtime:container`, and `deploy:worker-config` so audit and bridge output can explain why a repo was classified a certain way.
+
 The goal is to make repos easier to work on the same way every time. As a repo gets closer to a 12-factor operating model, humans and agents need less tribal knowledge to build, test, run, deploy, and improve it.
 
 ## Install
@@ -68,3 +70,4 @@ Further docs:
 - [Engineering Guide](/Users/jonyfq/git/udx/dev.kit/docs/engineering-guide.md)
 - [Pull Requests](/Users/jonyfq/git/udx/dev.kit/docs/pull-requests.md)
 - [Development](/Users/jonyfq/git/udx/dev.kit/docs/development.md)
+- [Detection Facets](/Users/jonyfq/git/udx/dev.kit/docs/detection-facets.md)

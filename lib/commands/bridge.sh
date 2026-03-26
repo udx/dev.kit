@@ -6,9 +6,11 @@ dev_kit_cmd_bridge() {
   local format="${1:-text}"
   local repo_dir="${2:-$(pwd)}"
   local factors_json=""
+  local facets_json=""
   local guidance_json=""
 
   if [ "$format" = "json" ]; then
+    facets_json="$(dev_kit_repo_facets_json "$repo_dir")"
     factors_json="$(dev_kit_repo_factor_summary_json "$repo_dir")"
     guidance_json="$(dev_kit_repo_agent_guidance_json "$repo_dir")"
     dev_kit_template_render "bridge.json.tmpl" \
@@ -16,6 +18,7 @@ dev_kit_cmd_bridge() {
       "repo=$(dev_kit_json_escape "$repo_dir")" \
       "archetype=$(dev_kit_json_escape "$(dev_kit_repo_primary_archetype "$repo_dir")")" \
       "archetypes=$(dev_kit_repo_archetypes_json "$repo_dir")" \
+      "facets=$facets_json" \
       "profile=$(dev_kit_json_escape "$(dev_kit_repo_primary_profile "$repo_dir")")" \
       "profiles=$(dev_kit_repo_profiles_json "$repo_dir")" \
       "factors=$factors_json" \
@@ -27,6 +30,7 @@ dev_kit_cmd_bridge() {
   echo "repo: $repo_dir"
   echo "archetype: $(dev_kit_repo_primary_archetype "$repo_dir")"
   echo "archetypes: $(dev_kit_repo_archetypes_text "$repo_dir")"
+  echo "facets: $(dev_kit_repo_facets_text "$repo_dir")"
   echo "profile: $(dev_kit_repo_primary_profile "$repo_dir")"
   echo "profiles: $(dev_kit_repo_profiles_text "$repo_dir")"
   echo "agent guidance:"

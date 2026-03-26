@@ -10,6 +10,7 @@ dev_kit_cmd_audit() {
   local profiles=""
   local primary_archetype=""
   local archetypes=""
+  local facets_json=""
   local factors_json=""
   local improvement_plan_json=""
 
@@ -20,6 +21,7 @@ dev_kit_cmd_audit() {
   archetypes="$(dev_kit_repo_archetypes_text "$repo_dir")"
 
   if [ "$format" = "json" ]; then
+    facets_json="$(dev_kit_repo_facets_json "$repo_dir")"
     factors_json="$(dev_kit_repo_factor_summary_json "$repo_dir")"
     improvement_plan_json="$(dev_kit_repo_findings_json "$repo_dir")"
     dev_kit_template_render "audit.json.tmpl" \
@@ -28,6 +30,7 @@ dev_kit_cmd_audit() {
       "path=$(dev_kit_json_escape "$repo_dir")" \
       "archetype=$(dev_kit_json_escape "$primary_archetype")" \
       "archetypes=$(dev_kit_repo_archetypes_json "$repo_dir")" \
+      "facets=$facets_json" \
       "profile=$(dev_kit_json_escape "$primary_profile")" \
       "profiles=$(dev_kit_repo_profiles_json "$repo_dir")" \
       "factors=$factors_json" \
@@ -40,6 +43,7 @@ dev_kit_cmd_audit() {
   echo "path: $repo_dir"
   echo "archetype: $primary_archetype"
   echo "archetypes: $archetypes"
+  echo "facets: $(dev_kit_repo_facets_text "$repo_dir")"
   echo "profile: $primary_profile"
   echo "profiles: $profiles"
   echo "factors:"
