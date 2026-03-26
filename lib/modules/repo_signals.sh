@@ -18,11 +18,27 @@ dev_kit_repo_has_dir() {
 
 dev_kit_repo_find() {
   local repo_dir="$1"
+  local prune_path=""
+  local prune_args=()
+  local last_index=0
   shift
 
-  find "$repo_dir" \
-    \( -path "$repo_dir/.git" -o -path "$repo_dir/node_modules" -o -path "$repo_dir/vendor" \) -prune -o \
-    "$@"
+  while IFS= read -r prune_path; do
+    [ -n "$prune_path" ] || continue
+    prune_args+=(-path "$repo_dir/$prune_path" -o)
+  done <<EOF
+$(dev_kit_detection_list "prune_dirs")
+EOF
+
+  if [ "${#prune_args[@]}" -eq 0 ]; then
+    find "$repo_dir" "$@"
+    return 0
+  fi
+
+  last_index=$((${#prune_args[@]} - 1))
+  unset "prune_args[$last_index]"
+
+  find "$repo_dir" "(" "${prune_args[@]}" ")" -prune -o "$@"
 }
 
 dev_kit_repo_has_glob() {
@@ -141,6 +157,50 @@ dev_kit_repo_has_pattern_in_glob_list() {
     fi
   done <<EOF
 $(dev_kit_repo_find_from_glob_list "$repo_dir" "$list_name")
+EOF
+
+  return 1
+}
+
+dev_kit_repo_file_has_all_patterns() {
+  local file_path="$1"
+  shift
+  local pattern_name=""
+  local regex=""
+
+  [ -f "$file_path" ] || return 1
+
+  for pattern_name in "$@"; do
+    regex="$(dev_kit_detection_pattern "$pattern_name")"
+    [ -n "$regex" ] || return 1
+    if ! dev_kit_repo_pattern_in_file "$file_path" "$regex"; then
+      return 1
+    fi
+  done
+
+  return 0
+}
+
+dev_kit_repo_has_worker_deploy_config() {
+  local repo_dir="$1"
+  local file_path=""
+
+  while IFS= read -r file_path; do
+    [ -n "$file_path" ] || continue
+    if dev_kit_repo_file_has_all_patterns "$repo_dir/$file_path" "worker_deploy_config_kind" "worker_deploy_config_version"; then
+      return 0
+    fi
+  done <<EOF
+$(dev_kit_detection_list "worker_deploy_files")
+EOF
+
+  while IFS= read -r file_path; do
+    [ -n "$file_path" ] || continue
+    if dev_kit_repo_file_has_all_patterns "$file_path" "worker_deploy_config_kind" "worker_deploy_config_version"; then
+      return 0
+    fi
+  done <<EOF
+$(dev_kit_repo_find_from_glob_list "$repo_dir" "worker_deploy_globs")
 EOF
 
   return 1

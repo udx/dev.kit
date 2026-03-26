@@ -33,7 +33,7 @@ dev_kit_lines_to_json_array() {
   local item=""
 
   printf "["
-  while IFS= read -r item; do
+  while IFS= read -r item || [ -n "$item" ]; do
     [ -n "$item" ] || continue
     if [ "$first" -eq 0 ]; then
       printf ", "
@@ -103,6 +103,49 @@ dev_kit_yaml_mapping_list() {
     }
 
     in_target && $0 ~ /^      - / {
+      sub(/^[[:space:]]*-[[:space:]]*/, "", $0)
+      print
+    }
+  ' "$file_path"
+}
+
+dev_kit_yaml_nested_mapping_list() {
+  local file_path="$1"
+  local section="$2"
+  local key="$3"
+  local nested_key="$4"
+
+  awk -v section="$section" -v key="$key" -v nested_key="$nested_key" '
+    $1 == "config:" {
+      in_config = 1
+      next
+    }
+
+    in_config && $0 ~ /^  [A-Za-z0-9_-]+:/ {
+      current = $1
+      sub(":", "", current)
+      in_section = (current == section)
+      in_key = 0
+      in_nested = 0
+      next
+    }
+
+    in_section && $0 ~ /^    [A-Za-z0-9_.-]+:/ {
+      current = $1
+      sub(":", "", current)
+      in_key = (current == key)
+      in_nested = 0
+      next
+    }
+
+    in_key && $0 ~ /^      [A-Za-z0-9_-]+:/ {
+      current = $1
+      sub(":", "", current)
+      in_nested = (current == nested_key)
+      next
+    }
+
+    in_nested && $0 ~ /^        - / {
       sub(/^[[:space:]]*-[[:space:]]*/, "", $0)
       print
     }

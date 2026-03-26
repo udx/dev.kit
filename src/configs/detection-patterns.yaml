@@ -8,5 +8,7 @@ config:
     run: (npm start|pnpm start|yarn start|bun run start|make run|docker compose up[^`]*|docker run[^`]*|php -S [^`]*|python -m [^`[:space:]]+|node [^`[:space:]]+)
     env_var: ([A-Z][A-Z0-9_]{2,}=|\$\{[A-Z][A-Z0-9_]{2,}\})
     workflow_contract: (workflow_call:|workflow_dispatch:|inputs:|outputs:)
+    worker_deploy_config_kind: (kind:[[:space:]]*workerDeployConfig)
+    worker_deploy_config_version: (version:[[:space:]]*udx\.io/worker-v1/deploy)
     documentation_sections: (##[[:space:]]+(Quick Start|Usage|Development|Examples|Resources|Docs|Documentation))
     architecture_sections: (##[[:space:]]+(Architecture|Structure|Layout|Design))

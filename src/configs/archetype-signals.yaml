@@ -1,0 +1,35 @@
+kind: archetypeSignals
+version: udx.io/dev.kit/v1
+
+config:
+  lists:
+    wordpress_files:
+      - wp-config.php
+    wordpress_dirs:
+      - wp-content
+      - wp-content/plugins
+      - wp-content/themes
+      - wp-content/mu-plugins
+    kubernetes_files:
+      - Chart.yaml
+      - helmfile.yaml
+    kubernetes_globs:
+      - charts/*/Chart.yaml
+      - k8s/*.yaml
+      - k8s/*.yml
+      - k8s/**/*.yaml
+      - k8s/**/*.yml
+      - terraform/*.tf
+      - terraform/**/*.tf
+    kubernetes_dirs:
+      - k8s
+      - charts
+      - terraform
+      - helm
+    automation_dirs:
+      - lib
+      - src
+      - bin
+      - scripts
+    workflow_primary_dirs:
+      - .github/workflows
