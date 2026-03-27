@@ -6,6 +6,7 @@ DEV_KIT_SYNC_BASE_BRANCH_NAMES="main master development staging trunk"
 DEV_KIT_SYNC_BEHAVIOR="evaluation-only"
 DEV_KIT_SYNC_BRANCH_ROLE_BASE="base"
 DEV_KIT_SYNC_BRANCH_ROLE_FEATURE="feature"
+DEV_KIT_SYNC_HOOKS_DIR_DEFAULT=".githooks"
 
 dev_kit_sync_mode_rank() {
   case "$1" in
@@ -225,6 +226,146 @@ dev_kit_sync_repo_supports_release_metadata() {
   local repo_dir="$1"
 
   [ -f "$repo_dir/package.json" ] || [ -f "$repo_dir/composer.json" ] || [ -f "$repo_dir/CHANGELOG.md" ] || [ -f "$repo_dir/changelog.md" ]
+}
+
+dev_kit_sync_hooks_dir() {
+  local repo_dir="$1"
+  local hooks_path=""
+
+  hooks_path="$(git -C "$repo_dir" config --get core.hooksPath 2>/dev/null || true)"
+  if [ -n "$hooks_path" ]; then
+    printf "%s" "$hooks_path"
+    return 0
+  fi
+
+  if [ -d "$repo_dir/$DEV_KIT_SYNC_HOOKS_DIR_DEFAULT" ]; then
+    printf "%s" "$DEV_KIT_SYNC_HOOKS_DIR_DEFAULT"
+    return 0
+  fi
+
+  printf "%s" ".git/hooks"
+}
+
+dev_kit_sync_hook_file() {
+  local repo_dir="$1"
+  local hook_name="$2"
+  local hooks_dir=""
+
+  hooks_dir="$(dev_kit_sync_hooks_dir "$repo_dir")"
+  printf "%s/%s" "$repo_dir/$hooks_dir" "$hook_name"
+}
+
+dev_kit_sync_hook_summary() {
+  local repo_dir="$1"
+  local hook_name="$2"
+  local hook_file=""
+  local summary=""
+
+  hook_file="$(dev_kit_sync_hook_file "$repo_dir" "$hook_name")"
+  if [ ! -f "$hook_file" ]; then
+    printf "%s|%s" "missing" "No $hook_name hook detected"
+    return 0
+  fi
+
+  if [ "$hook_name" = "pre-push" ] && rg -n "bash tests/run.sh" "$hook_file" >/dev/null 2>&1; then
+    printf "%s|%s" "present" "Runs bash tests/run.sh before push"
+    return 0
+  fi
+
+  printf "%s|%s" "present" "Hook exists at $(basename "$hook_file")"
+}
+
+dev_kit_sync_hook_recommendation() {
+  local repo_dir="$1"
+  local hook_name="$2"
+  local hook_file=""
+
+  hook_file="$(dev_kit_sync_hook_file "$repo_dir" "$hook_name")"
+  if [ ! -f "$hook_file" ]; then
+    printf "%s" "No hook-specific preparation detected."
+    return 0
+  fi
+
+  if [ "$hook_name" = "pre-push" ] && rg -n "bash tests/run.sh" "$hook_file" >/dev/null 2>&1; then
+    printf "%s" "Before push, make sure the local verification runtime is ready for bash tests/run.sh."
+    return 0
+  fi
+
+  printf "%s" "Review the configured hook before running the related git action."
+}
+
+dev_kit_sync_hooks_lines() {
+  local repo_dir="$1"
+  local hook_name=""
+  local state_summary=""
+  local state=""
+  local summary=""
+  local recommendation=""
+
+  for hook_name in pre-commit commit-msg pre-push; do
+    state_summary="$(dev_kit_sync_hook_summary "$repo_dir" "$hook_name")"
+    state="${state_summary%%|*}"
+    summary="${state_summary#*|}"
+    recommendation="$(dev_kit_sync_hook_recommendation "$repo_dir" "$hook_name")"
+    printf "%s|%s|%s|%s\n" "$hook_name" "$state" "$summary" "$recommendation"
+  done
+}
+
+dev_kit_sync_hooks_text() {
+  local repo_dir="$1"
+  local line=""
+  local hook_name=""
+  local state=""
+  local summary=""
+  local recommendation=""
+
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    hook_name="${line%%|*}"
+    line="${line#*|}"
+    state="${line%%|*}"
+    line="${line#*|}"
+    summary="${line%%|*}"
+    recommendation="${line#*|}"
+    printf '  - %s: %s\n' "$hook_name" "$state"
+    printf '    summary: %s\n' "$summary"
+    printf '    recommendation: %s\n' "$recommendation"
+  done <<EOF
+$(dev_kit_sync_hooks_lines "$repo_dir")
+EOF
+}
+
+dev_kit_sync_hooks_json() {
+  local repo_dir="$1"
+  local first=1
+  local line=""
+  local hook_name=""
+  local state=""
+  local summary=""
+  local recommendation=""
+
+  printf "["
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    hook_name="${line%%|*}"
+    line="${line#*|}"
+    state="${line%%|*}"
+    line="${line#*|}"
+    summary="${line%%|*}"
+    recommendation="${line#*|}"
+    if [ "$first" -eq 0 ]; then
+      printf ","
+    fi
+    printf '\n    { "id": "%s", "state": "%s", "summary": "%s", "recommendation": "%s" }' \
+      "$hook_name" "$state" "$(dev_kit_json_escape "$summary")" "$(dev_kit_json_escape "$recommendation")"
+    first=0
+  done <<EOF
+$(dev_kit_sync_hooks_lines "$repo_dir")
+EOF
+  if [ "$first" -eq 0 ]; then
+    printf '\n  '
+  fi
+  printf "]"
 }
 
 dev_kit_sync_pr_template_state() {
@@ -525,7 +666,6 @@ dev_kit_sync_step_lines() {
   local step_label=""
   local step_check=""
   local step_min_mode=""
-  local step_execution=""
   local step_optional=""
   local state_line=""
   local status=""
@@ -540,8 +680,6 @@ dev_kit_sync_step_lines() {
     step_check="${step_line%%|*}"
     step_line="${step_line#*|}"
     step_min_mode="${step_line%%|*}"
-    step_line="${step_line#*|}"
-    step_execution="${step_line%%|*}"
     step_optional="${step_line##*|}"
     if ! dev_kit_sync_mode_allows_step "$mode" "$step_min_mode"; then
       continue
@@ -549,7 +687,7 @@ dev_kit_sync_step_lines() {
     state_line="$(dev_kit_sync_step_state "$repo_dir" "$step_id" "$mode")"
     status="${state_line%%|*}"
     summary="${state_line#*|}"
-    printf "%s|%s|%s|%s|%s\n" "$step_id" "$step_label" "$step_execution" "$status" "$summary"
+    printf "%s|%s|%s|%s\n" "$step_id" "$step_label" "$status" "$summary"
   done <<EOF
 $(dev_kit_workflow_step_lines "$workflow_id")
 EOF
@@ -563,7 +701,6 @@ dev_kit_sync_steps_json() {
   local line=""
   local step_id=""
   local step_label=""
-  local execution=""
   local status=""
   local summary=""
 
@@ -574,15 +711,13 @@ dev_kit_sync_steps_json() {
     line="${line#*|}"
     step_label="${line%%|*}"
     line="${line#*|}"
-    execution="${line%%|*}"
-    line="${line#*|}"
     status="${line%%|*}"
     summary="${line#*|}"
     if [ "$first" -eq 0 ]; then
       printf ","
     fi
-    printf '\n    { "id": "%s", "label": "%s", "execution": "%s", "status": "%s", "summary": "%s" }' \
-      "$step_id" "$step_label" "$execution" "$status" "$(dev_kit_json_escape "$summary")"
+    printf '\n    { "id": "%s", "label": "%s", "status": "%s", "summary": "%s" }' \
+      "$step_id" "$step_label" "$status" "$(dev_kit_json_escape "$summary")"
     first=0
   done <<EOF
 $(dev_kit_sync_step_lines "$repo_dir" "$workflow_id" "$mode")
@@ -642,7 +777,6 @@ dev_kit_sync_steps_text() {
   local line=""
   local step_id=""
   local step_label=""
-  local execution=""
   local status=""
   local summary=""
 
@@ -652,13 +786,10 @@ dev_kit_sync_steps_text() {
     line="${line#*|}"
     step_label="${line%%|*}"
     line="${line#*|}"
-    execution="${line%%|*}"
-    line="${line#*|}"
     status="${line%%|*}"
     summary="${line#*|}"
     printf '  - %s: %s\n' "$step_id" "$status"
     printf '    label: %s\n' "$step_label"
-    printf '    execution: %s\n' "$execution"
     printf '    summary: %s\n' "$summary"
   done <<EOF
 $(dev_kit_sync_step_lines "$repo_dir" "$workflow_id" "$mode")

@@ -8,6 +8,9 @@ hint: {{next_hint}}
 repo_state:
 {{repo_state_text}}
 
+hooks:
+{{hooks_text}}
+
 capabilities:
 {{capabilities_text}}
 steps:

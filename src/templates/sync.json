@@ -7,6 +7,7 @@
   "description": "{{description}}",
   "next_hint": "{{next_hint}}",
   "repo_state": {{repo_state}},
+  "hooks": {{hooks}},
   "capabilities": {{capabilities}},
   "steps": {{steps}}
 }

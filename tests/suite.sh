@@ -241,8 +241,8 @@ assert_contains "$sync_output" "workflow: sync-git" "sync uses the default git w
 assert_contains "$sync_output" "mode: dev" "sync defaults to dev mode"
 assert_contains "$sync_output" "behavior: evaluation-only" "sync text reports read-only behavior"
 assert_contains "$sync_output" "worktree_status: done" "sync reports worktree status"
-assert_contains "$sync_output" "execution: automatic" "sync text reports automatic steps"
-assert_contains "$sync_output" "execution: assisted" "sync text reports assisted steps"
+assert_contains "$sync_output" "hooks:" "sync text reports hook awareness"
+assert_contains "$sync_output" "pre-push:" "sync text reports pre-push hook state"
 assert_contains "$sync_output" "branch_prepare: done" "sync does not force a feature branch on a clean base branch"
 assert_not_contains "$sync_output" "pr_prepare:" "sync dev mode hides pr-only steps"
 
@@ -252,8 +252,8 @@ assert_contains "$sync_json" "\"command\": \"sync\"" "sync json reports sync com
 assert_contains "$sync_json" "\"workflow\": \"sync-git\"" "sync json reports workflow id"
 assert_contains "$sync_json" "\"mode\": \"dev\"" "sync json reports default dev mode"
 assert_contains "$sync_json" "\"behavior\": \"evaluation-only\"" "sync json reports read-only behavior"
-assert_contains "$sync_json" "\"execution\": \"automatic\"" "sync json reports automatic execution steps"
-assert_contains "$sync_json" "\"execution\": \"assisted\"" "sync json reports assisted execution steps"
+assert_contains "$sync_json" "\"hooks\"" "sync json reports hook awareness"
+assert_contains "$sync_json" "\"pre-push\"" "sync json reports pre-push hook state"
 assert_contains "$sync_json" "\"branch_prepare\"" "sync json exposes sync steps"
 
 sync_ci_output="$(cd "$SYNC_REPO" && dev.kit sync --ci)"

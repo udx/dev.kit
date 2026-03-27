@@ -59,7 +59,6 @@ dev_kit_workflow_step_lines() {
       step_id = ""
       step_label = ""
       step_check = ""
-      step_execution = ""
       step_optional = ""
       next
     }
@@ -69,14 +68,13 @@ dev_kit_workflow_step_lines() {
     }
     in_steps && $0 ~ /^        - id:/ {
       if (step_id != "") {
-        printf "%s|%s|%s|%s|%s|%s\n", step_id, step_label, step_check, step_min_mode, step_execution, step_optional
+        printf "%s|%s|%s|%s|%s\n", step_id, step_label, step_check, step_min_mode, step_optional
       }
       sub(/^[[:space:]]*-[[:space:]]*id:[[:space:]]*/, "", $0)
       step_id = $0
       step_label = ""
       step_check = ""
       step_min_mode = "dev"
-      step_execution = "automatic"
       step_optional = "false"
       next
     }
@@ -95,11 +93,6 @@ dev_kit_workflow_step_lines() {
       step_min_mode = $0
       next
     }
-    in_steps && $0 ~ /^          execution:/ {
-      sub(/^[[:space:]]*execution:[[:space:]]*/, "", $0)
-      step_execution = $0
-      next
-    }
     in_steps && $0 ~ /^          optional:/ {
       sub(/^[[:space:]]*optional:[[:space:]]*/, "", $0)
       step_optional = $0
@@ -107,7 +100,7 @@ dev_kit_workflow_step_lines() {
     }
     END {
       if (step_id != "") {
-        printf "%s|%s|%s|%s|%s|%s\n", step_id, step_label, step_check, step_min_mode, step_execution, step_optional
+        printf "%s|%s|%s|%s|%s\n", step_id, step_label, step_check, step_min_mode, step_optional
       }
     }
   ' "$file_path"
