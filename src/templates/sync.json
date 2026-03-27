@@ -5,6 +5,8 @@
   "mode": "{{mode}}",
   "behavior": "{{behavior}}",
   "description": "{{description}}",
+  "next_hint": "{{next_hint}}",
+  "repo_state": {{repo_state}},
   "capabilities": {{capabilities}},
   "steps": {{steps}}
 }

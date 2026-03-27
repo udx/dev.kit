@@ -3,7 +3,10 @@ repo: {{repo_dir}}
 workflow: {{workflow_id}}
 mode: {{mode}}
 behavior: {{behavior}}
-description: {{description}}
+hint: {{next_hint}}
+
+repo_state:
+{{repo_state_text}}
 
 capabilities:
 {{capabilities_text}}

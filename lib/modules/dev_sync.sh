@@ -4,6 +4,8 @@ DEV_KIT_SYNC_DEFAULT_WORKFLOW="sync-git"
 DEV_KIT_SYNC_DEFAULT_MODE="dev"
 DEV_KIT_SYNC_BASE_BRANCH_NAMES="main master development staging trunk"
 DEV_KIT_SYNC_BEHAVIOR="evaluation-only"
+DEV_KIT_SYNC_BRANCH_ROLE_BASE="base"
+DEV_KIT_SYNC_BRANCH_ROLE_FEATURE="feature"
 
 dev_kit_sync_mode_rank() {
   case "$1" in
@@ -113,6 +115,42 @@ dev_kit_sync_upstream_branch() {
   git -C "$1" rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null || true
 }
 
+dev_kit_sync_ahead_behind() {
+  local repo_dir="$1"
+  local upstream=""
+  local counts=""
+
+  upstream="$(dev_kit_sync_upstream_branch "$repo_dir")"
+  if [ -z "$upstream" ]; then
+    printf "%s|%s" "0" "0"
+    return 0
+  fi
+
+  counts="$(git -C "$repo_dir" rev-list --left-right --count "$upstream...HEAD" 2>/dev/null || true)"
+  if [ -z "$counts" ]; then
+    printf "%s|%s" "0" "0"
+    return 0
+  fi
+
+  printf "%s|%s" "$(printf "%s" "$counts" | awk '{print $1}')" "$(printf "%s" "$counts" | awk '{print $2}')"
+}
+
+dev_kit_sync_branch_role() {
+  local repo_dir="$1"
+  local branch=""
+  local default_branch=""
+
+  branch="$(dev_kit_sync_current_branch "$repo_dir")"
+  default_branch="$(dev_kit_sync_default_branch "$repo_dir")"
+
+  if [ "$branch" = "$default_branch" ]; then
+    printf "%s" "$DEV_KIT_SYNC_BRANCH_ROLE_BASE"
+    return 0
+  fi
+
+  printf "%s" "$DEV_KIT_SYNC_BRANCH_ROLE_FEATURE"
+}
+
 dev_kit_sync_worktree_counts() {
   local repo_dir="$1"
   local staged=0
@@ -215,6 +253,133 @@ dev_kit_sync_capability_lines() {
 
   printf "%s|%s\n" "github_auth" "$(dev_kit_sync_gh_auth_state)"
   printf "%s|%s\n" "remote" "$(dev_kit_sync_remote_state "$repo_dir")"
+}
+
+dev_kit_sync_repo_state_lines() {
+  local repo_dir="$1"
+  local branch=""
+  local branch_role=""
+  local default_branch=""
+  local upstream=""
+  local counts=""
+  local staged=0
+  local unstaged=0
+  local untracked=0
+  local ahead_behind=""
+  local behind=0
+  local ahead=0
+  local worktree="clean"
+
+  branch="$(dev_kit_sync_current_branch "$repo_dir")"
+  branch_role="$(dev_kit_sync_branch_role "$repo_dir")"
+  default_branch="$(dev_kit_sync_default_branch "$repo_dir")"
+  upstream="$(dev_kit_sync_upstream_branch "$repo_dir")"
+  counts="$(dev_kit_sync_worktree_counts "$repo_dir")"
+  staged="${counts%%|*}"
+  counts="${counts#*|}"
+  unstaged="${counts%%|*}"
+  untracked="${counts##*|}"
+  ahead_behind="$(dev_kit_sync_ahead_behind "$repo_dir")"
+  behind="${ahead_behind%%|*}"
+  ahead="${ahead_behind##*|}"
+
+  if [ "$staged" -gt 0 ] || [ "$unstaged" -gt 0 ] || [ "$untracked" -gt 0 ]; then
+    worktree="dirty"
+  fi
+
+  printf "%s|%s\n" "branch" "$branch"
+  printf "%s|%s\n" "branch_role" "$branch_role"
+  printf "%s|%s\n" "base_branch" "$default_branch"
+  printf "%s|%s\n" "upstream" "${upstream:-none}"
+  printf "%s|%s\n" "ahead" "$ahead"
+  printf "%s|%s\n" "behind" "$behind"
+  printf "%s|%s\n" "worktree" "$worktree"
+  printf "%s|%s\n" "staged" "$staged"
+  printf "%s|%s\n" "unstaged" "$unstaged"
+  printf "%s|%s\n" "untracked" "$untracked"
+}
+
+dev_kit_sync_repo_state_text() {
+  local repo_dir="$1"
+  local line=""
+  local key=""
+  local value=""
+
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    key="${line%%|*}"
+    value="${line#*|}"
+    printf '  - %s: %s\n' "$key" "$value"
+  done <<EOF
+$(dev_kit_sync_repo_state_lines "$repo_dir")
+EOF
+}
+
+dev_kit_sync_repo_state_json() {
+  local repo_dir="$1"
+  local first=1
+  local line=""
+  local key=""
+  local value=""
+
+  printf "{"
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    key="${line%%|*}"
+    value="${line#*|}"
+    if [ "$first" -eq 0 ]; then
+      printf ","
+    fi
+    case "$key" in
+      ahead|behind|staged|unstaged|untracked)
+        printf '\n    "%s": %s' "$key" "$value"
+        ;;
+      *)
+        printf '\n    "%s": "%s"' "$key" "$(dev_kit_json_escape "$value")"
+        ;;
+    esac
+    first=0
+  done <<EOF
+$(dev_kit_sync_repo_state_lines "$repo_dir")
+EOF
+  if [ "$first" -eq 0 ]; then
+    printf '\n  '
+  fi
+  printf "}"
+}
+
+dev_kit_sync_next_hint() {
+  local repo_dir="$1"
+  local branch=""
+  local default_branch=""
+  local upstream=""
+  local branch_role=""
+
+  branch="$(dev_kit_sync_current_branch "$repo_dir")"
+  default_branch="$(dev_kit_sync_default_branch "$repo_dir")"
+  upstream="$(dev_kit_sync_upstream_branch "$repo_dir")"
+  branch_role="$(dev_kit_sync_branch_role "$repo_dir")"
+
+  if dev_kit_sync_has_changes "$repo_dir"; then
+    if [ "$branch_role" = "$DEV_KIT_SYNC_BRANCH_ROLE_BASE" ]; then
+      printf "%s" "You have local changes on the base branch. Keep iterating locally or move them onto a feature branch before push or PR work."
+      return 0
+    fi
+    printf "%s" "You have local changes on a feature branch. Group them into logical commits before push or PR work."
+    return 0
+  fi
+
+  if [ "$branch_role" = "$DEV_KIT_SYNC_BRANCH_ROLE_BASE" ]; then
+    printf "%s" "Base branch is clean. No immediate sync action is required."
+    return 0
+  fi
+
+  if [ -z "$upstream" ]; then
+    printf "Feature branch %s is clean but has no upstream. Push it when you want to share work." "$branch"
+    return 0
+  fi
+
+  printf "Feature branch %s is clean and tracks %s. Choose whether to keep iterating, open a PR, or verify CI state." "$branch" "$upstream"
 }
 
 dev_kit_sync_step_state() {
