@@ -1,0 +1,10 @@
+dev.kit sync
+repo: {{repo_dir}}
+workflow: {{workflow_id}}
+mode: {{mode}}
+description: {{description}}
+
+capabilities:
+{{capabilities_text}}
+steps:
+{{steps_text}}

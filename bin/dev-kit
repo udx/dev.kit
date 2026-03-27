@@ -67,6 +67,12 @@ command_usage() {
     audit|bridge|status)
       echo "  --json     Output machine-readable JSON"
       ;;
+    sync)
+      echo "  --json     Output machine-readable JSON"
+      echo "  --dev      Evaluate the local development workflow"
+      echo "  --ci       Evaluate through push readiness without pull request creation"
+      echo "  --pr       Evaluate through pull request creation and review follow-up"
+      ;;
     save)
       echo "  --yes      Overwrite existing repo-local saved context without a confirmation prompt"
       ;;

@@ -1,0 +1,9 @@
+{
+  "command": "{{command}}",
+  "repo": "{{repo}}",
+  "workflow": "{{workflow}}",
+  "mode": "{{mode}}",
+  "description": "{{description}}",
+  "capabilities": {{capabilities}},
+  "steps": {{steps}}
+}

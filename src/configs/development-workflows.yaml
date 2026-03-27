@@ -1,0 +1,64 @@
+kind: developmentWorkflows
+version: udx.io/dev.kit/v1
+
+config:
+  workflows:
+    sync-git:
+      description: Sync local git work into a reviewable pull request flow
+      capabilities:
+        required_commands:
+          - git
+        optional_commands:
+          - gh
+      steps:
+        - id: worktree_status
+          label: Inspect git status
+          check: git_status
+          min_mode: dev
+          execution: automatic
+        - id: change_analysis
+          label: Analyze local changes
+          check: change_analysis
+          min_mode: dev
+          execution: assisted
+        - id: branch_analysis
+          label: Analyze branch state
+          check: branch_analysis
+          min_mode: dev
+          execution: automatic
+        - id: logical_commits
+          label: Group logical commits
+          check: logical_commits
+          min_mode: dev
+          execution: assisted
+        - id: release_metadata
+          label: Bump version and changelog if supported
+          check: release_metadata
+          min_mode: dev
+          execution: assisted
+        - id: branch_prepare
+          label: Create or validate feature branch
+          check: branch_prepare
+          min_mode: dev
+          execution: assisted
+        - id: remote_push
+          label: Push branch to remote
+          check: remote_push
+          min_mode: ci
+          execution: automatic
+        - id: pr_prepare
+          label: Generate pull request description
+          check: pr_prepare
+          min_mode: pr
+          execution: assisted
+        - id: pr_create
+          label: Create pull request
+          check: pr_create
+          min_mode: pr
+          execution: assisted
+        - id: actions_verify
+          label: Verify GitHub Actions status
+          check: actions_verify
+          min_mode: pr
+          execution: automatic
+          optional: true

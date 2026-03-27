@@ -37,6 +37,11 @@ This installs `dev.kit` into `~/.udx/dev.kit` and adds `dev.kit` to `~/.local/bi
 - Saves repo-local working context into `./.udx/dev.kit/` for the next session.
 - Generates `todo.md`, `context.md`, and `refs.md` from the current repo state and warns before overwriting existing saved context.
 
+`dev.kit sync`
+
+- Evaluates the configured development sync workflow for the current git repository.
+- Reports which git and GitHub review steps are done, pending, blocked, or skipped.
+
 ## Examples
 
 ```bash
@@ -44,6 +49,7 @@ dev.kit
 dev.kit --json
 dev.kit bridge --json
 dev.kit save
+dev.kit sync
 ```
 
 ![compliance audit](assets/compliance-audit.svg)
@@ -77,3 +83,14 @@ Further docs:
 - [Pull Requests](/Users/jonyfq/git/udx/dev.kit/docs/pull-requests.md)
 - [Development](/Users/jonyfq/git/udx/dev.kit/docs/development.md)
 - [Detection Facets](/Users/jonyfq/git/udx/dev.kit/docs/detection-facets.md)
+
+## Tests
+
+Use focused checks during development:
+
+```bash
+bash tests/smoke.sh
+bash tests/full.sh
+```
+
+Run `tests/smoke.sh` for normal local work. Reserve `tests/full.sh` for broader regression coverage and CI-style verification.
