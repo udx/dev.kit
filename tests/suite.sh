@@ -18,6 +18,7 @@ DOCKER_REPO="$REPO_DIR/tests/fixtures/docker-repo"
 WORKFLOW_REPO="$REPO_DIR/tests/fixtures/workflow-repo"
 WORDPRESS_REPO="$REPO_DIR/tests/fixtures/wordpress-repo"
 SAVE_REPO="$TEST_HOME/save-repo"
+SYNC_REPO="$TEST_HOME/sync-repo"
 TEST_MODE="${DEV_KIT_TEST_MODE:-smoke}"
 
 if [ -n "${CI:-}" ]; then
@@ -81,11 +82,13 @@ assert_file_exists "$DEV_KIT_HOME/lib/commands/status.sh" "installs public comma
 assert_file_exists "$DEV_KIT_HOME/src/configs/audit-rules.yaml" "installs source rule catalog"
 assert_file_exists "$DEV_KIT_HOME/src/configs/context-config.yaml" "installs save context catalog"
 assert_file_exists "$DEV_KIT_HOME/src/configs/development-practices.yaml" "installs development practices catalog"
+assert_file_exists "$DEV_KIT_HOME/src/configs/development-workflows.yaml" "installs development workflows catalog"
 assert_file_exists "$DEV_KIT_HOME/src/configs/detection-patterns.yaml" "installs detection pattern catalog"
 assert_file_exists "$DEV_KIT_HOME/src/configs/detection-signals.yaml" "installs detection signal catalog"
 assert_file_exists "$DEV_KIT_HOME/src/templates/audit.json" "installs audit json template"
 assert_file_exists "$DEV_KIT_HOME/src/templates/bridge.json" "installs bridge json template"
 assert_file_exists "$DEV_KIT_HOME/src/templates/saved-context-todo.md" "installs save todo template"
+assert_file_exists "$DEV_KIT_HOME/src/templates/sync.json" "installs sync json template"
 assert_file_missing "$DEV_KIT_HOME/source" "does not create legacy source directory"
 assert_file_missing "$DEV_KIT_HOME/state" "does not create legacy state directory"
 assert_file_missing "$DEV_KIT_HOME/config" "does not install a config layer"
@@ -224,11 +227,48 @@ assert_contains "$bridge_json" "\"guidance\": [" "bridge json includes agent gui
 assert_contains "$bridge_json" "structural boundaries" "bridge json explains architecture workflow"
 assert_contains "$bridge_json" "canonical verification step" "bridge json explains verification workflow"
 
+mkdir -p "$SYNC_REPO"
+git -C "$SYNC_REPO" init -b main >/dev/null 2>&1
+git -C "$SYNC_REPO" config user.name "dev.kit tests"
+git -C "$SYNC_REPO" config user.email "devkit@example.com"
+printf 'hello\n' > "$SYNC_REPO/README.md"
+git -C "$SYNC_REPO" add README.md
+git -C "$SYNC_REPO" commit -m "Initial commit" >/dev/null 2>&1
+
+sync_output="$(cd "$SYNC_REPO" && dev.kit sync)"
+print_block "sync output" "$sync_output"
+assert_contains "$sync_output" "workflow: sync-git" "sync uses the default git workflow"
+assert_contains "$sync_output" "mode: dev" "sync defaults to dev mode"
+assert_contains "$sync_output" "worktree_status: done" "sync reports worktree status"
+assert_contains "$sync_output" "execution: automatic" "sync text reports automatic steps"
+assert_contains "$sync_output" "execution: assisted" "sync text reports assisted steps"
+assert_contains "$sync_output" "branch_prepare: pending" "sync asks for a feature branch from default branch"
+assert_not_contains "$sync_output" "pr_prepare:" "sync dev mode hides pr-only steps"
+
+sync_json="$(cd "$SYNC_REPO" && dev.kit sync --json)"
+print_block "sync json" "$sync_json"
+assert_contains "$sync_json" "\"command\": \"sync\"" "sync json reports sync command"
+assert_contains "$sync_json" "\"workflow\": \"sync-git\"" "sync json reports workflow id"
+assert_contains "$sync_json" "\"mode\": \"dev\"" "sync json reports default dev mode"
+assert_contains "$sync_json" "\"execution\": \"automatic\"" "sync json reports automatic execution steps"
+assert_contains "$sync_json" "\"execution\": \"assisted\"" "sync json reports assisted execution steps"
+assert_contains "$sync_json" "\"branch_prepare\"" "sync json exposes sync steps"
+
+sync_ci_output="$(cd "$SYNC_REPO" && dev.kit sync --ci)"
+assert_contains "$sync_ci_output" "mode: ci" "sync ci mode is available"
+assert_contains "$sync_ci_output" "remote_push:" "sync ci mode includes push step"
+assert_not_contains "$sync_ci_output" "pr_prepare:" "sync ci mode still hides pr-only steps"
+
+sync_pr_output="$(cd "$SYNC_REPO" && dev.kit sync --pr)"
+assert_contains "$sync_pr_output" "mode: pr" "sync pr mode is available"
+assert_contains "$sync_pr_output" "pr_prepare:" "sync pr mode includes pull request steps"
+
 help_output="$(dev.kit help)"
 assert_contains "$help_output" "audit" "help discovers audit dynamically"
 assert_contains "$help_output" "status" "help discovers status dynamically"
 assert_contains "$help_output" "bridge" "help discovers bridge dynamically"
 assert_contains "$help_output" "save" "help discovers save dynamically"
+assert_contains "$help_output" "sync" "help discovers sync dynamically"
 assert_contains "$help_output" "uninstall" "help discovers uninstall dynamically"
 
 if declare -F _dev_kit_complete >/dev/null 2>&1; then
@@ -246,6 +286,7 @@ assert_contains "$completion_list" " status " "completion lists status"
 assert_contains "$completion_list" " bridge " "completion lists bridge"
 assert_contains "$completion_list" " audit " "completion lists audit"
 assert_contains "$completion_list" " save " "completion lists save"
+assert_contains "$completion_list" " sync " "completion lists sync"
 assert_contains "$completion_list" " uninstall " "completion lists uninstall"
 assert_contains "$completion_list" " --json " "completion lists global json flag"
 
