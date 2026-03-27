@@ -48,6 +48,7 @@ dev_kit_cmd_sync() {
       "repo=$(dev_kit_json_escape "$repo_dir")" \
       "workflow=$(dev_kit_json_escape "$workflow_id")" \
       "mode=$(dev_kit_json_escape "$mode")" \
+      "behavior=$(dev_kit_json_escape "$DEV_KIT_SYNC_BEHAVIOR")" \
       "description=$(dev_kit_json_escape "$(dev_kit_workflow_description "$workflow_id")")" \
       "capabilities=$(dev_kit_sync_capabilities_json "$repo_dir")" \
       "steps=$(dev_kit_sync_steps_json "$repo_dir" "$workflow_id" "$mode")"
@@ -58,6 +59,7 @@ dev_kit_cmd_sync() {
     "repo_dir=$repo_dir" \
     "workflow_id=$workflow_id" \
     "mode=$mode" \
+    "behavior=$DEV_KIT_SYNC_BEHAVIOR" \
     "description=$(dev_kit_workflow_description "$workflow_id")" \
     "capabilities_text=$(dev_kit_sync_capabilities_text "$repo_dir")" \
     "steps_text=$(dev_kit_sync_steps_text "$repo_dir" "$workflow_id" "$mode")"

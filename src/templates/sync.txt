@@ -2,6 +2,7 @@ dev.kit sync
 repo: {{repo_dir}}
 workflow: {{workflow_id}}
 mode: {{mode}}
+behavior: {{behavior}}
 description: {{description}}
 
 capabilities:

@@ -3,6 +3,7 @@
 DEV_KIT_SYNC_DEFAULT_WORKFLOW="sync-git"
 DEV_KIT_SYNC_DEFAULT_MODE="dev"
 DEV_KIT_SYNC_BASE_BRANCH_NAMES="main master development staging trunk"
+DEV_KIT_SYNC_BEHAVIOR="evaluation-only"
 
 dev_kit_sync_mode_rank() {
   case "$1" in
@@ -253,6 +254,8 @@ dev_kit_sync_step_state() {
     branch_analysis)
       if [ -z "$branch" ]; then
         printf "%s" "blocked|Current branch could not be detected"
+      elif [ "$branch" = "$default_branch" ] && [ -n "$upstream" ]; then
+        printf "done|Current branch %s is the tracked base branch for this repo" "$branch"
       elif [ -n "$upstream" ]; then
         printf "done|Current branch %s tracks %s and should be compared against %s" "$branch" "$upstream" "$default_branch"
       else
@@ -276,8 +279,10 @@ dev_kit_sync_step_state() {
     branch_prepare)
       if [ -z "$branch" ]; then
         printf "%s" "blocked|Cannot create or validate a feature branch until git reports the current branch"
+      elif [ "$branch" = "$default_branch" ] && ! dev_kit_sync_has_changes "$repo_dir"; then
+        printf "done|Current branch %s is the base branch and no shareable work is pending" "$default_branch"
       elif [ "$branch" = "$default_branch" ]; then
-        printf "pending|Create a feature branch from %s before pushing or opening a pull request" "$default_branch"
+        printf "pending|Current branch %s is the base branch; keep working locally or create a feature branch before push or pull request work" "$default_branch"
       else
         printf "done|Current branch %s is ready for feature work review" "$branch"
       fi

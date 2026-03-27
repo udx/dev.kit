@@ -3,6 +3,7 @@
   "repo": "{{repo}}",
   "workflow": "{{workflow}}",
   "mode": "{{mode}}",
+  "behavior": "{{behavior}}",
   "description": "{{description}}",
   "capabilities": {{capabilities}},
   "steps": {{steps}}
