@@ -26,8 +26,10 @@ dev_kit_cmd_explore() {
       "priority_refs=$(dev_kit_repo_priority_refs_json "$repo_dir")" \
       "knowledge_base=$(dev_kit_knowledge_hierarchy_json)" \
       "knowledge_sources=$(dev_kit_knowledge_preferred_sources | dev_kit_lines_to_json_array)" \
+      "tooling_refs=$(dev_kit_tooling_repos_json)" \
       "operating_surface=$(dev_kit_knowledge_operating_surface_json)" \
       "responsibility_split=$(dev_kit_knowledge_responsibility_split_json)" \
+      "workflow_contract=$(dev_kit_repo_workflow_json "$repo_dir")" \
       "typical_workflows=$(dev_kit_knowledge_typical_workflows_json)"
     return 0
   fi
@@ -54,6 +56,7 @@ dev_kit_cmd_explore() {
     echo "  - saved context: none"
   fi
   echo "  - preferred sources: $(dev_kit_knowledge_preferred_sources_text)"
+  echo "  - standard reading order: $(dev_kit_tooling_standard_reading_order | dev_kit_lines_to_csv)"
   echo
   echo "typical workflows:"
   while IFS= read -r workflow; do
@@ -62,6 +65,12 @@ dev_kit_cmd_explore() {
   done <<EOF
 $(dev_kit_knowledge_typical_workflows)
 EOF
+  echo
+  echo "tooling repos:"
+  dev_kit_tooling_repos_text
+  echo
+  echo "workflow contract:"
+  dev_kit_repo_workflow_text "$repo_dir"
   echo
   echo "responsibility split:"
   echo "  - repo mechanisms: $(dev_kit_knowledge_repo_mechanisms | dev_kit_lines_to_csv)"

@@ -1,6 +1,6 @@
 # Detection Facets
 
-`dev.kit` now exposes coarse, integration-friendly facets in both `audit --json` and `bridge --json`.
+`dev.kit` now exposes coarse, integration-friendly facets in both `explore --json` and `action --json`.
 
 The current design goal is stability, not exhaustiveness. Facets should describe durable repo traits that are cheap to detect and useful for automation.
 
@@ -30,6 +30,18 @@ The current design goal is stability, not exhaustiveness. Facets should describe
 3. Broader glob scans only when the repo is still ambiguous
 
 Generated and dependency-heavy directories are pruned by default to keep detection interactive.
+
+## Reading Priority
+
+For repo exploration and agent grounding, `dev.kit` should prefer standard engineering refs before anything custom:
+
+1. `README.md` or `readme.md`
+2. `docs/`
+3. workflow and delivery contracts such as `.github/workflows/`, `.rabbit/`, `deploy.yml`, and `Makefile`
+4. runtime and dependency contracts such as `package.json`, `composer.json`, and `Dockerfile`
+5. framework-specific roots such as `wp-config.php` and `wp-content/`
+
+Typical WordPress repos at UDX often share most of their structure, with the most important repo-specific differences concentrated in `.rabbit/` and `.github/`. Other repo families follow the same principle less uniformly, so `dev.kit` should still inspect repo-standard files such as `package.json`, `deploy.yml`, `Makefile`, `docs/`, and `README.md`.
 
 ## Extension Rules
 

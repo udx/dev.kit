@@ -18,6 +18,7 @@ dev_kit_cmd_learn() {
       "destinations=$(dev_kit_learning_destinations_json "$workflow_id")" \
       "knowledge_base=$(dev_kit_knowledge_hierarchy_json)" \
       "knowledge_sources=$(dev_kit_knowledge_preferred_sources | dev_kit_lines_to_json_array)" \
+      "tooling_refs=$(dev_kit_tooling_repos_json)" \
       "operating_surface=$(dev_kit_knowledge_operating_surface_json)" \
       "responsibility_split=$(dev_kit_knowledge_responsibility_split_json)"
     return 0
@@ -44,6 +45,10 @@ EOF
   echo "  - local repos: $(dev_kit_knowledge_local_repos_root)"
   echo "  - remote org: $(dev_kit_knowledge_remote_org_root)"
   echo "  - preferred sources: $(dev_kit_knowledge_preferred_sources_text)"
+  echo "  - dependency orgs: $(dev_kit_tooling_dependency_orgs | dev_kit_lines_to_csv)"
+  echo
+  echo "tooling repos:"
+  dev_kit_tooling_repos_text
   echo
   echo "responsibility split:"
   echo "  - repo mechanisms: $(dev_kit_knowledge_repo_mechanisms | dev_kit_lines_to_csv)"

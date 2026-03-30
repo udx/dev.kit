@@ -20,8 +20,8 @@ config:
     typical:
       items:
         - dev.kit explore
-        - dev.kit bridge --json
-        - dev.kit sync
+        - dev.kit action --json
+        - dev.kit action
         - dev.kit learn
         - bash tests/smoke.sh
   sources:

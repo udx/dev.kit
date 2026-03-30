@@ -9,7 +9,11 @@ config:
       - refs.md
     priority_paths:
       - README.md
+      - readme.md
       - docs
+      - .rabbit
+      - .github/workflows
+      - Makefile
       - src/configs/development-practices.yaml
       - package.json
       - composer.json
@@ -21,7 +25,6 @@ config:
       - wp-config.php
       - Chart.yaml
       - helmfile.yaml
-      - .github/workflows
       - wp-content
       - k8s
       - charts

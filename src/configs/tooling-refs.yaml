@@ -1,0 +1,21 @@
+kind: toolingRefs
+version: udx.io/dev.kit/v1
+
+config:
+  refs:
+    standard_reading_order:
+      - README.md
+      - build and deploy config
+      - GitHub workflows
+      - dependency and tooling repos
+    dependency_orgs:
+      - udx
+    tooling_repos:
+      - repo: udx/dev.kit
+        role: repo workflow adapter
+      - repo: udx/gh-workflows
+        role: reusable GitHub workflow contracts
+      - repo: udx/worker-engine
+        role: worker runtime and delivery patterns
+      - repo: udx/worker-nodejs
+        role: node worker runtime conventions
