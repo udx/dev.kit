@@ -34,7 +34,7 @@ _dev_kit_complete() {
   fi
 
   if [ "$COMP_CWORD" -eq 2 ] && [ "$cmd" = "action" ]; then
-    COMPREPLY=( $(compgen -W "--json --dev --ci --pr --refresh-context --yes" -- "$cur") )
+    COMPREPLY=( $(compgen -W "--json" -- "$cur") )
     return 0
   fi
 

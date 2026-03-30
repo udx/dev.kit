@@ -8,6 +8,8 @@ DEV_KIT_SYNC_BRANCH_ROLE_BASE="base"
 DEV_KIT_SYNC_BRANCH_ROLE_FEATURE="feature"
 DEV_KIT_SYNC_HOOKS_DIR_DEFAULT=".githooks"
 DEV_KIT_SYNC_TEXT_DEFAULT_MAX_NEXT_STEPS="4"
+DEV_KIT_SYNC_GH_AUTH_STATE_CACHE=""
+DEV_KIT_SYNC_GH_AUTH_STATE_CACHE_READY=0
 
 dev_kit_sync_mode_rank() {
   case "$1" in
@@ -201,16 +203,27 @@ dev_kit_sync_can_run_gh() {
 }
 
 dev_kit_sync_gh_auth_state() {
+  if [ "$DEV_KIT_SYNC_GH_AUTH_STATE_CACHE_READY" -eq 1 ]; then
+    printf "%s" "$DEV_KIT_SYNC_GH_AUTH_STATE_CACHE"
+    return 0
+  fi
+
   if ! dev_kit_sync_can_run_gh; then
+    DEV_KIT_SYNC_GH_AUTH_STATE_CACHE="missing"
+    DEV_KIT_SYNC_GH_AUTH_STATE_CACHE_READY=1
     printf "%s" "missing"
     return 0
   fi
 
-  if gh auth status >/dev/null 2>&1; then
+  if GH_PROMPT_DISABLED=1 gh auth status >/dev/null 2>&1; then
+    DEV_KIT_SYNC_GH_AUTH_STATE_CACHE="available"
+    DEV_KIT_SYNC_GH_AUTH_STATE_CACHE_READY=1
     printf "%s" "available"
     return 0
   fi
 
+  DEV_KIT_SYNC_GH_AUTH_STATE_CACHE="unauthenticated"
+  DEV_KIT_SYNC_GH_AUTH_STATE_CACHE_READY=1
   printf "%s" "unauthenticated"
 }
 

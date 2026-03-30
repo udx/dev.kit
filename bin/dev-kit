@@ -58,6 +58,107 @@ Options:
 EOF
 }
 
+home_usage() {
+  echo "Usage: dev.kit [--json]"
+  echo
+  echo "Shows repo-aware landing output for the current directory."
+}
+
+dev_kit_run_home() {
+  local format="${1:-text}"
+  local state="not installed"
+  local repo_dir="$(pwd)"
+  local repo_detected="false"
+  local repo_kind="workspace"
+  local archetype="n/a"
+  local profile="n/a"
+  local git_state="no"
+  local priority_refs=""
+  local first_priority_ref=""
+
+  if [ -d "$DEV_KIT_HOME" ]; then
+    state="installed"
+  fi
+
+  if dev_kit_repo_looks_like_repo "$repo_dir"; then
+    repo_detected="true"
+    repo_kind="repo"
+    archetype="$(dev_kit_repo_primary_archetype "$repo_dir")"
+    profile="$(dev_kit_repo_primary_profile "$repo_dir")"
+    if dev_kit_sync_has_git_repo "$repo_dir"; then
+      git_state="yes"
+    fi
+    priority_refs="$(dev_kit_repo_priority_refs "$repo_dir")"
+    first_priority_ref="$(printf '%s\n' "$priority_refs" | awk 'NF { print; exit }')"
+  fi
+
+  if [ "$format" = "json" ]; then
+    printf '{\n'
+    printf '  "name": "dev.kit",\n'
+    printf '  "home": "%s",\n' "$(dev_kit_json_escape "$DEV_KIT_HOME")"
+    printf '  "state": "%s",\n' "$(dev_kit_json_escape "$state")"
+    printf '  "workspace": {\n'
+    printf '    "path": "%s",\n' "$(dev_kit_json_escape "$repo_dir")"
+    printf '    "repo_detected": %s,\n' "$repo_detected"
+    printf '    "kind": "%s"' "$(dev_kit_json_escape "$repo_kind")"
+    if [ "$repo_detected" = "true" ]; then
+      printf ',\n    "repo": { "name": "%s", "archetype": "%s", "profile": "%s", "git": %s, "first_priority_ref": "%s" }\n' \
+        "$(dev_kit_json_escape "$(dev_kit_repo_name "$repo_dir")")" \
+        "$(dev_kit_json_escape "$archetype")" \
+        "$(dev_kit_json_escape "$profile")" \
+        "$([ "$git_state" = "yes" ] && printf 'true' || printf 'false')" \
+        "$(dev_kit_json_escape "$first_priority_ref")"
+    else
+      printf '\n'
+    fi
+    printf '  },\n'
+    printf '  "localhost_tools": %s,\n' "$(dev_kit_env_tools_json)"
+    printf '  "helpers": [\n'
+    printf '    { "id": "explore", "label": "Read the repo summary and refs", "command": "dev.kit explore" },\n'
+    printf '    { "id": "action", "label": "Review grounded next steps", "command": "dev.kit action" },\n'
+    printf '    { "id": "learn", "label": "Review lessons-learned workflow", "command": "dev.kit learn" }\n'
+    printf '  ]\n'
+    printf '}\n'
+    return 0
+  fi
+
+  dev_kit_output_title "dev.kit"
+  dev_kit_output_section "workspace"
+  dev_kit_output_row "path" "$repo_dir"
+  dev_kit_output_row "install" "$state"
+
+  if [ "$repo_detected" = "true" ]; then
+    dev_kit_output_row "mode" "repo detected"
+    dev_kit_output_row "repo" "$(dev_kit_repo_name "$repo_dir")"
+    dev_kit_output_row "archetype" "$archetype"
+    dev_kit_output_row "profile" "$profile"
+    dev_kit_output_row "git" "$git_state"
+    if [ -n "$first_priority_ref" ]; then
+      dev_kit_output_row "read first" "$first_priority_ref"
+    fi
+  else
+    dev_kit_output_row "mode" "not a repo"
+    dev_kit_output_row "guide" "navigate into a repo, then run dev.kit again"
+    dev_kit_output_row "signals" "README.md, package.json, .github, docs/, .git, Makefile"
+  fi
+
+  dev_kit_output_section "localhost"
+  dev_kit_output_kv_list_from_pipe <<EOF
+$(dev_kit_env_tool_lines)
+EOF
+
+  dev_kit_output_section "helpers"
+  if [ "$repo_detected" = "true" ]; then
+    dev_kit_output_row "explore" "dev.kit explore"
+    dev_kit_output_row "action" "dev.kit action"
+    dev_kit_output_row "learn" "dev.kit learn"
+  else
+    dev_kit_output_row "explore" "cd /path/to/repo && dev.kit"
+    dev_kit_output_row "action" "cd /path/to/repo && dev.kit action"
+    dev_kit_output_row "learn" "cd /path/to/repo && dev.kit learn"
+  fi
+}
+
 command_usage() {
   local command_name="$1"
   echo "Usage: dev.kit ${command_name} [options]"
@@ -66,13 +167,8 @@ command_usage() {
   case "$command_name" in
     action)
       echo "  --json     Output machine-readable JSON"
-      echo "  --dev      Evaluate the local development workflow"
-      echo "  --ci       Evaluate through push readiness without pull request creation"
-      echo "  --pr       Evaluate through pull request creation and review follow-up"
-      echo "  --refresh-context  Regenerate optional repo-local continuity files"
-      echo "  --yes      Overwrite existing repo-local continuity files without a confirmation prompt"
       ;;
-    explore|learn|status)
+    explore|learn)
       echo "  --json     Output machine-readable JSON"
       ;;
     uninstall)
@@ -81,7 +177,7 @@ command_usage() {
   esac
 }
 
-command="${1:-explore}"
+command="${1:-status}"
 format="text"
 command_args=()
 
@@ -102,7 +198,7 @@ while [ "$#" -gt 0 ]; do
 done
 
 if [ "$command" = "--json" ]; then
-  command="explore"
+  command="status"
   format="json"
 fi
 
@@ -110,15 +206,18 @@ case "$command" in
   audit|bridge|sync)
     command="action"
     ;;
-  save)
-    command="action"
-    command_args=(--refresh-context "${command_args[@]}")
-    ;;
 esac
 
 case "$command" in
   help|-h|--help)
     usage
+    ;;
+  home)
+    if [ "${command_args[0]:-}" = "-h" ] || [ "${command_args[0]:-}" = "--help" ]; then
+      home_usage
+      exit 0
+    fi
+    dev_kit_run_home "$format" "${command_args[@]}"
     ;;
   *)
     fn="dev_kit_cmd_${command//-/_}"

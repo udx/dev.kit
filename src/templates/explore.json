@@ -10,7 +10,6 @@
     "profiles": {{profiles}},
     "factors": {{factors}}
   },
-  "saved_context": {{saved_context}},
   "priority_refs": {{priority_refs}},
   "knowledge_base": {{knowledge_base}},
   "knowledge_sources": {{knowledge_sources}},

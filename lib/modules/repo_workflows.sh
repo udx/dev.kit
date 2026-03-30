@@ -30,9 +30,6 @@ dev_kit_repo_workflow_steps() {
 
   printf "learn|Review lessons-learned and follow-up outputs after changes stabilize|dev.kit learn\n"
 
-  if dev_kit_repo_has_saved_context "$repo_dir"; then
-    printf "refresh_context|Refresh repo-local continuity files after structural changes|dev.kit action --refresh-context --yes\n"
-  fi
 }
 
 dev_kit_repo_workflow_text() {

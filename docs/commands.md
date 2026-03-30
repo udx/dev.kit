@@ -5,14 +5,13 @@
 `dev.kit explore`
 
 - Best first step when entering a repo.
-- Also the default when you run plain `dev.kit`.
 - Reports repo identity, priority refs, operating surface, knowledge sources, and typical workflows.
 
 `dev.kit action`
 
 - Produces grounded next actions for humans and agents from the same repo model.
 - Combines factor findings, workflow contract, git workflow state, and agent guidance.
-- Supports `--json`, `--dev`, `--ci`, `--pr`, and `--refresh-context`.
+- Supports `--json`.
 
 `dev.kit learn`
 

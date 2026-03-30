@@ -24,37 +24,29 @@ dev_kit_cmd_learn() {
     return 0
   fi
 
-  echo "dev.kit learn"
-  echo "repo: $repo_dir"
-  echo "workflow: $(dev_kit_learning_workflow_name "$workflow_id")"
-  echo "description: $(dev_kit_learning_workflow_description "$workflow_id")"
-  echo "mode: evaluation-only"
-  echo
-  echo "sources:"
-  while IFS= read -r source; do
-    [ -n "$source" ] || continue
-    printf '  - %s\n' "$source"
-  done <<EOF
+  dev_kit_output_title "dev.kit learn"
+  dev_kit_output_section "workflow"
+  dev_kit_output_row "repo" "$repo_dir"
+  dev_kit_output_row "workflow" "$(dev_kit_learning_workflow_name "$workflow_id")"
+  dev_kit_output_row "description" "$(dev_kit_learning_workflow_description "$workflow_id")"
+  dev_kit_output_row "mode" "evaluation-only"
+  dev_kit_output_section "sources"
+  dev_kit_output_list_from_lines <<EOF
 $(dev_kit_learning_workflow_sources "$workflow_id")
 EOF
-  echo
-  echo "destinations:"
+  dev_kit_output_section "destinations"
   dev_kit_learning_destinations_text "$workflow_id"
-  echo
-  echo "knowledgebase:"
-  echo "  - local repos: $(dev_kit_knowledge_local_repos_root)"
-  echo "  - remote org: $(dev_kit_knowledge_remote_org_root)"
-  echo "  - preferred sources: $(dev_kit_knowledge_preferred_sources_text)"
-  echo "  - dependency orgs: $(dev_kit_tooling_dependency_orgs | dev_kit_lines_to_csv)"
-  echo
-  echo "tooling repos:"
+  dev_kit_output_section "knowledgebase"
+  dev_kit_output_row "local repos" "$(dev_kit_knowledge_local_repos_root)"
+  dev_kit_output_row "remote org" "$(dev_kit_knowledge_remote_org_root)"
+  dev_kit_output_row "preferred sources" "$(dev_kit_knowledge_preferred_sources_text)"
+  dev_kit_output_row "dependency orgs" "$(dev_kit_tooling_dependency_orgs | dev_kit_lines_to_csv)"
+  dev_kit_output_section "tooling repos"
   dev_kit_tooling_repos_text
-  echo
-  echo "responsibility split:"
-  echo "  - repo mechanisms: $(dev_kit_knowledge_repo_mechanisms | dev_kit_lines_to_csv)"
-  echo "  - agent tasks: $(dev_kit_knowledge_agent_tasks | dev_kit_lines_to_csv)"
-  echo
-  echo "next:"
-  echo "  - keep lessons lightweight and grounded in recent pull requests, docs, and saved repo context"
-  echo "  - promote durable follow-up into docs, issues, wiki pages, or slack summaries only when the workflow contract is explicit"
+  dev_kit_output_section "responsibility split"
+  dev_kit_output_row "repo mechanisms" "$(dev_kit_knowledge_repo_mechanisms | dev_kit_lines_to_csv)"
+  dev_kit_output_row "agent tasks" "$(dev_kit_knowledge_agent_tasks | dev_kit_lines_to_csv)"
+  dev_kit_output_section "next"
+  dev_kit_output_list_item "keep lessons lightweight and grounded in recent pull requests, docs, and saved repo context"
+  dev_kit_output_list_item "promote durable follow-up into docs, issues, wiki pages, or slack summaries only when the workflow contract is explicit"
 }

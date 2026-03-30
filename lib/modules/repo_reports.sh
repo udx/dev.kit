@@ -116,14 +116,10 @@ dev_kit_repo_agent_guidance_text() {
   local entrypoint=""
 
   printf '%s\n' "Treat this repository as a $(dev_kit_repo_primary_archetype "$repo_dir") and preserve its existing workflow contract."
-  printf '%s\n' "Use standard repo signals such as README, docs, manifests, workflows, deploy config, and tests as the primary contract; custom saved context is optional."
+  printf '%s\n' "Use standard repo signals such as README, docs, manifests, workflows, deploy config, tests, and repo TODO/refs files as the primary contract."
 
   if dev_kit_repo_has_archetype "$repo_dir" "workflow-repo"; then
     printf '%s\n' "Treat .github workflows as the primary runtime contract and preserve declared workflow_call inputs and outputs."
-  fi
-
-  if dev_kit_repo_has_saved_context "$repo_dir"; then
-    printf '%s\n' "Saved repo-local context exists at $(dev_kit_repo_saved_context_summary_text "$repo_dir"); use it as supplemental repo-native guidance, not as a replacement for standard repo files."
   fi
 
   while IFS= read -r factor; do

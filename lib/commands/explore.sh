@@ -22,7 +22,6 @@ dev_kit_cmd_explore() {
       "profile=$(dev_kit_json_escape "$(dev_kit_repo_primary_profile "$repo_dir")")" \
       "profiles=$(dev_kit_repo_profiles_json "$repo_dir")" \
       "factors=$factors_json" \
-      "saved_context=$(dev_kit_repo_saved_context_json "$repo_dir")" \
       "priority_refs=$(dev_kit_repo_priority_refs_json "$repo_dir")" \
       "knowledge_base=$(dev_kit_knowledge_hierarchy_json)" \
       "knowledge_sources=$(dev_kit_knowledge_preferred_sources | dev_kit_lines_to_json_array)" \
@@ -34,53 +33,39 @@ dev_kit_cmd_explore() {
     return 0
   fi
 
-  echo "dev.kit explore"
-  echo "repo: $repo_name"
-  echo "path: $repo_dir"
-  echo "what it is: $(dev_kit_repo_primary_archetype "$repo_dir")"
-  echo "archetypes: $(dev_kit_repo_archetypes_text "$repo_dir")"
-  echo "facets: $(dev_kit_repo_facets_text "$repo_dir")"
-  echo "profile: $(dev_kit_repo_primary_profile "$repo_dir")"
-  echo "profiles: $(dev_kit_repo_profiles_text "$repo_dir")"
-  echo
-  echo "software:"
-  echo "  - tools: $(dev_kit_knowledge_operating_tools_text)"
-  echo "  - formats: $(dev_kit_knowledge_operating_formats_text)"
-  echo
-  echo "knowledgebase:"
-  echo "  - local repos: $(dev_kit_knowledge_local_repos_root)"
-  echo "  - remote org: $(dev_kit_knowledge_remote_org_root)"
-  if dev_kit_repo_has_saved_context "$repo_dir"; then
-    echo "  - saved context: $(dev_kit_repo_saved_context_summary_text "$repo_dir")"
-  else
-    echo "  - saved context: none"
-  fi
-  echo "  - preferred sources: $(dev_kit_knowledge_preferred_sources_text)"
-  echo "  - standard reading order: $(dev_kit_tooling_standard_reading_order | dev_kit_lines_to_csv)"
-  echo
-  echo "typical workflows:"
-  while IFS= read -r workflow; do
-    [ -n "$workflow" ] || continue
-    printf '  - %s\n' "$workflow"
-  done <<EOF
+  dev_kit_output_title "dev.kit explore"
+  dev_kit_output_section "repo"
+  dev_kit_output_row "repo" "$repo_name"
+  dev_kit_output_row "path" "$repo_dir"
+  dev_kit_output_row "what it is" "$(dev_kit_repo_primary_archetype "$repo_dir")"
+  dev_kit_output_row "archetypes" "$(dev_kit_repo_archetypes_text "$repo_dir")"
+  dev_kit_output_row "facets" "$(dev_kit_repo_facets_text "$repo_dir")"
+  dev_kit_output_row "profile" "$(dev_kit_repo_primary_profile "$repo_dir")"
+  dev_kit_output_row "profiles" "$(dev_kit_repo_profiles_text "$repo_dir")"
+
+  dev_kit_output_section "software"
+  dev_kit_output_row "tools" "$(dev_kit_knowledge_operating_tools_text)"
+  dev_kit_output_row "formats" "$(dev_kit_knowledge_operating_formats_text)"
+
+  dev_kit_output_section "knowledgebase"
+  dev_kit_output_row "local repos" "$(dev_kit_knowledge_local_repos_root)"
+  dev_kit_output_row "remote org" "$(dev_kit_knowledge_remote_org_root)"
+  dev_kit_output_row "preferred sources" "$(dev_kit_knowledge_preferred_sources_text)"
+  dev_kit_output_row "standard reading" "$(dev_kit_tooling_standard_reading_order | dev_kit_lines_to_csv)"
+
+  dev_kit_output_section "typical workflows"
+  dev_kit_output_list_from_lines <<EOF
 $(dev_kit_knowledge_typical_workflows)
 EOF
-  echo
-  echo "tooling repos:"
+  dev_kit_output_section "tooling repos"
   dev_kit_tooling_repos_text
-  echo
-  echo "workflow contract:"
+  dev_kit_output_section "workflow contract"
   dev_kit_repo_workflow_text "$repo_dir"
-  echo
-  echo "responsibility split:"
-  echo "  - repo mechanisms: $(dev_kit_knowledge_repo_mechanisms | dev_kit_lines_to_csv)"
-  echo "  - agent tasks: $(dev_kit_knowledge_agent_tasks | dev_kit_lines_to_csv)"
-  echo
-  echo "priority refs:"
-  while IFS= read -r path; do
-    [ -n "$path" ] || continue
-    printf '  - %s\n' "$path"
-  done <<EOF
+  dev_kit_output_section "responsibility split"
+  dev_kit_output_row "repo mechanisms" "$(dev_kit_knowledge_repo_mechanisms | dev_kit_lines_to_csv)"
+  dev_kit_output_row "agent tasks" "$(dev_kit_knowledge_agent_tasks | dev_kit_lines_to_csv)"
+  dev_kit_output_section "priority refs"
+  dev_kit_output_list_from_lines <<EOF
 $(dev_kit_repo_priority_refs "$repo_dir")
 EOF
 }

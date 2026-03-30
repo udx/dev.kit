@@ -10,7 +10,7 @@ This document explains the workflow model behind `dev.kit`, not the full user gu
 - repo-centric commands and refs
 - test-driven development with lightweight smoke suites first
 - durable formats such as markdown, yaml, and mermaid
-- self-contained docs, config, tests, and saved context
+- self-contained docs, config, tests, and repo-native task tracking
 
 ## Standard Repo First
 
@@ -21,7 +21,7 @@ This document explains the workflow model behind `dev.kit`, not the full user gu
 - `.github/workflows/*`, deploy config, and command layers
 - `tests/`, documented verification entrypoints, and runtime/build commands
 
-Optional repo-local saved context under `./.udx/dev.kit/` can improve continuity, but it is an accelerator, not a prerequisite. The main job of `dev.kit action` is to translate ordinary repo signals into a better working contract for humans and AI agents.
+If TODOs, refs, or context notes are valuable, keep them in the repo as normal files so humans and programs read the same source. The main job of `dev.kit action` is to translate ordinary repo signals into a better working contract for humans and AI agents.
 
 At UDX, this often means:
 
@@ -35,7 +35,7 @@ At UDX, this often means:
 To avoid engineering drift, `dev.kit` keeps a hard boundary between deterministic repo behavior and agent behavior:
 
 - YAML catalogs and shell scripts define what can be discovered, evaluated, rendered, and tested mechanically.
-- AI agents read those contracts, saved context, docs, tests, and refs to decide how to work within the repo.
+- AI agents read those contracts, docs, tests, TODOs, and refs to decide how to work within the repo.
 - If a rule needs to be repeatable, it should move into config, templates, tests, or scripts rather than staying implicit in an agent prompt.
 
 ## When to Use `dev.kit`

@@ -28,7 +28,7 @@ config:
     preferred:
       items:
         - repo docs, configs, templates, and tests
-        - repo-local saved context under ./.udx/dev.kit/
+        - repo TODO, context, and refs files when present
         - local repos under git/udx
         - remote repos and pull requests under github.com/udx/*
         - codex sessions under ~/.codex/sessions when available
@@ -36,7 +36,7 @@ config:
     repo_mechanisms:
       items:
         - workflow discovery and policy in yaml catalogs and shell scripts
-        - command rendering, validation, and saved context generation
+        - command rendering, validation, and output generation
         - smoke-first verification and scoped regression suites
     agent_tasks:
       items:

@@ -4,7 +4,7 @@
 
 `dev.kit` is a repo-driven development tool for UDX engineering workflows.
 
-It works from standard repository evidence first: `README`, docs, tests, manifests, workflow files, deploy config, and command layers. It does not require custom repo metadata. `dev.kit action` translates that repo evidence into grounded next steps for humans and AI agents.
+It works from standard repository evidence first: `README`, docs, tests, manifests, workflow files, deploy config, command layers, and repo TODO or refs files when present. It does not require custom repo metadata. `dev.kit action` translates that repo evidence into grounded next steps for humans and AI agents.
 
 The goal is to let humans and agents enter almost any repo, recover its operating model from the repo itself, and improve it without engineering drift.
 
@@ -36,14 +36,13 @@ The design goal is context-driven engineering through repo-driven mechanisms:
 There is also a strict separation of responsibilities:
 
 - config plus scripts own deterministic workflow logic, discovery, and policy
-- agents consume repo context, saved refs, and command output instead of inventing behavior
+- agents consume repo context and command output instead of inventing behavior
 - anything critical to repeatability should live in the repo, not only in prompts
 
 ## Command Surface
 
 `dev.kit explore`
 
-- Also the default when you run plain `dev.kit`.
 - Reports what a repo is, which workflows matter, and which refs to read first.
 - Surfaces the knowledgebase hierarchy and operating surface used across UDX repos.
 - Emits a concrete workflow contract from repo facts.
@@ -51,9 +50,8 @@ There is also a strict separation of responsibilities:
 `dev.kit action`
 
 - Audits the repo as an engineering contract and turns that into concrete next actions.
-- Combines factor findings, agent guidance, git workflow evaluation, and optional continuity refresh in one place.
+- Combines factor findings, agent guidance, and git workflow evaluation in one place.
 - `--json` returns the same model in machine-readable form.
-- `--refresh-context` regenerates optional repo-local continuity files under `./.udx/dev.kit/`.
 
 `dev.kit learn`
 

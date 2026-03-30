@@ -4,6 +4,13 @@ set -euo pipefail
 DEV_KIT_BIN_DIR="${DEV_KIT_BIN_DIR:-$HOME/.local/bin}"
 DEV_KIT_HOME="${DEV_KIT_HOME:-$HOME/.udx/dev.kit}"
 TARGET="${DEV_KIT_BIN_DIR}/dev.kit"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_DIR="$(cd "${SCRIPT_DIR}/../.." 2>/dev/null && pwd || true)"
+
+if [ -f "$REPO_DIR/lib/modules/output.sh" ]; then
+  # shellcheck disable=SC1090
+  . "$REPO_DIR/lib/modules/output.sh"
+fi
 
 confirm_uninstall() {
   local reply=""
@@ -26,16 +33,40 @@ fi
 
 if [ -L "$TARGET" ] || [ -f "$TARGET" ]; then
   rm -f "$TARGET"
-  echo "Removed binary: $TARGET"
+  if command -v dev_kit_output_title >/dev/null 2>&1; then
+    dev_kit_output_title "Removed dev.kit"
+    dev_kit_output_section "uninstall"
+    dev_kit_output_row "binary" "$TARGET"
+  else
+    echo "Removed binary: $TARGET"
+  fi
 else
-  echo "Binary not found: $TARGET"
+  if command -v dev_kit_output_title >/dev/null 2>&1; then
+    dev_kit_output_title "Removed dev.kit"
+    dev_kit_output_section "uninstall"
+    dev_kit_output_row "binary" "not found: $TARGET"
+  else
+    echo "Binary not found: $TARGET"
+  fi
 fi
 
 if [ -d "$DEV_KIT_HOME" ]; then
   rm -rf "$DEV_KIT_HOME"
-  echo "Removed home: $DEV_KIT_HOME"
+  if command -v dev_kit_output_row >/dev/null 2>&1; then
+    dev_kit_output_row "home" "$DEV_KIT_HOME"
+  else
+    echo "Removed home: $DEV_KIT_HOME"
+  fi
 else
-  echo "Home not found: $DEV_KIT_HOME"
+  if command -v dev_kit_output_row >/dev/null 2>&1; then
+    dev_kit_output_row "home" "not found: $DEV_KIT_HOME"
+  else
+    echo "Home not found: $DEV_KIT_HOME"
+  fi
 fi
 
-echo "Shell profile files were not modified."
+if command -v dev_kit_output_row >/dev/null 2>&1; then
+  dev_kit_output_row "shell" "profile files were not modified"
+else
+  echo "Shell profile files were not modified."
+fi

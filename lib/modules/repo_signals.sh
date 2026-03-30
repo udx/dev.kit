@@ -4,6 +4,28 @@ dev_kit_repo_name() {
   basename "${1:-$(pwd)}"
 }
 
+dev_kit_repo_looks_like_repo() {
+  local repo_dir="${1:-$(pwd)}"
+
+  if dev_kit_sync_has_git_repo "$repo_dir"; then
+    return 0
+  fi
+
+  if [ -f "$repo_dir/README.md" ] || [ -f "$repo_dir/readme.md" ] || [ -f "$repo_dir/package.json" ] || [ -f "$repo_dir/composer.json" ] || [ -f "$repo_dir/Makefile" ] || [ -f "$repo_dir/makefile" ] || [ -f "$repo_dir/deploy.yml" ] || [ -f "$repo_dir/deploy.yaml" ]; then
+    return 0
+  fi
+
+  if [ -d "$repo_dir/.github" ] || [ -d "$repo_dir/.rabbit" ] || [ -d "$repo_dir/docs" ] || [ -d "$repo_dir/tests" ] || [ -d "$repo_dir/src" ] || [ -d "$repo_dir/lib" ]; then
+    return 0
+  fi
+
+  if dev_kit_repo_has_any_glob_from_list "$repo_dir" "workflow_globs" || dev_kit_repo_has_any_file_from_list "$repo_dir" "dependency_manifest_files"; then
+    return 0
+  fi
+
+  return 1
+}
+
 dev_kit_has_file() {
   local repo_dir="$1"
   local path="$2"

@@ -10,7 +10,9 @@ config:
         - recent pull requests
         - docs/pull-requests.md
         - docs/engineering-guide.md
-        - ./.udx/dev.kit/*.md
+        - TODO.md
+        - docs/todo.md
+        - refs.md
       destinations:
         - lessons_report
         - gh_issue

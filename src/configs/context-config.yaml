@@ -3,13 +3,22 @@ version: udx.io/dev.kit/v1
 
 config:
   lists:
-    saved_context_files:
+    repo_note_files:
       - todo.md
+      - TODO.md
       - context.md
+      - CONTEXT.md
       - refs.md
+      - REFS.md
     priority_paths:
       - README.md
       - readme.md
+      - TODO.md
+      - todo.md
+      - CONTEXT.md
+      - context.md
+      - REFS.md
+      - refs.md
       - docs
       - .rabbit
       - .github/workflows
