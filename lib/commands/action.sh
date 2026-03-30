@@ -5,6 +5,7 @@
 dev_kit_cmd_action() {
   local format="${1:-text}"
   local repo_dir="$(pwd)"
+  local repo_root=""
   local workflow_id="$DEV_KIT_SYNC_DEFAULT_WORKFLOW"
   local mode="$DEV_KIT_SYNC_DEFAULT_MODE"
   local arg=""
@@ -44,6 +45,8 @@ dev_kit_cmd_action() {
     shift
   done
 
+  repo_root="$(dev_kit_repo_root "$repo_dir")"
+  repo_dir="${repo_root:-$repo_dir}"
   repo_name="$(dev_kit_repo_name "$repo_dir")"
 
   if [ "$format" = "json" ]; then
@@ -58,6 +61,7 @@ dev_kit_cmd_action() {
       "command=action" \
       "repo=$(dev_kit_json_escape "$repo_name")" \
       "path=$(dev_kit_json_escape "$repo_dir")" \
+      "markers=$(dev_kit_repo_markers_json "$repo_dir")" \
       "mode=$(dev_kit_json_escape "$mode")" \
       "behavior=$(dev_kit_json_escape "$DEV_KIT_SYNC_BEHAVIOR")" \
       "archetype=$(dev_kit_json_escape "$(dev_kit_repo_primary_archetype "$repo_dir")")" \
@@ -83,6 +87,7 @@ dev_kit_cmd_action() {
   dev_kit_output_section "repo"
   dev_kit_output_row "repo" "$repo_name"
   dev_kit_output_row "path" "$repo_dir"
+  dev_kit_output_row "markers" "$(dev_kit_repo_markers_text "$repo_dir")"
   dev_kit_output_row "mode" "$mode"
   dev_kit_output_row "behavior" "$DEV_KIT_SYNC_BEHAVIOR"
   dev_kit_output_row "archetype" "$(dev_kit_repo_primary_archetype "$repo_dir")"

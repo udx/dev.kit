@@ -17,6 +17,7 @@ DOCKER_REPO="$REPO_DIR/tests/fixtures/docker-repo"
 WORDPRESS_REPO="$REPO_DIR/tests/fixtures/wordpress-repo"
 SIMPLE_ACTION_REPO="$TEST_HOME/simple-action-repo"
 GIT_REPO="$TEST_HOME/git-repo"
+NESTED_REPO_DIR="$DOCUMENTED_SHELL_REPO/scripts"
 TEST_MODE="${DEV_KIT_TEST_MODE:-smoke}"
 
 if [ -n "${CI:-}" ]; then
@@ -100,7 +101,12 @@ assert_contains "$default_output" "explore:           dev.kit explore" "default 
 default_json="$(cd "$DOCUMENTED_SHELL_REPO" && dev.kit --json)"
 print_block "default json" "$default_json"
 assert_contains "$default_json" "\"repo_detected\": true" "default json detects repo"
+assert_contains "$default_json" "\"root\": \"$DOCUMENTED_SHELL_REPO\"" "default json reports repo root"
 assert_contains "$default_json" "\"localhost_tools\": [" "default json reports localhost tools"
+
+nested_output="$(cd "$NESTED_REPO_DIR" && dev.kit)"
+print_block "nested output" "$nested_output"
+assert_contains "$nested_output" "repo root:         $DOCUMENTED_SHELL_REPO" "default landing resolves repo root from nested dir"
 
 non_repo_output="$(cd "$TEST_HOME" && dev.kit)"
 print_block "non repo output" "$non_repo_output"
@@ -120,12 +126,15 @@ assert_contains "$explore_output" "remote org:" "explore reports remote knowledg
 assert_contains "$explore_output" "github.com/udx" "explore lists remote knowledge root"
 assert_contains "$explore_output" "dev.kit action --json" "explore reports action workflow"
 assert_contains "$explore_output" "udx/gh-workflows" "explore reports tooling repos"
+assert_contains "$explore_output" "workflow refs:" "explore reports reusable workflow refs"
 assert_contains "$explore_output" "[workflow contract]" "explore reports workflow contract"
 assert_contains "$explore_output" "command: bash tests/run.sh" "explore workflow contract uses canonical verification"
 
 explore_json="$(cd "$DOCUMENTED_SHELL_REPO" && dev.kit explore --json)"
 print_block "explore json" "$explore_json"
 assert_contains "$explore_json" "\"command\": \"explore\"" "explore json reports command"
+assert_contains "$explore_json" "\"markers\": [" "explore json reports repo markers"
+assert_contains "$explore_json" "\"workflow_refs\": [" "explore json reports workflow refs"
 assert_contains "$explore_json" "\"knowledge_base\": { \"local_repos_root\": \"git/udx\", \"remote_org_root\": \"github.com/udx\" }" "explore json reports knowledge hierarchy"
 assert_contains "$explore_json" "\"workflow_contract\": [" "explore json reports workflow contract"
 

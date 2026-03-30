@@ -68,6 +68,7 @@ dev_kit_run_home() {
   local format="${1:-text}"
   local state="not installed"
   local repo_dir="$(pwd)"
+  local repo_root=""
   local repo_detected="false"
   local repo_kind="workspace"
   local archetype="n/a"
@@ -80,15 +81,16 @@ dev_kit_run_home() {
     state="installed"
   fi
 
-  if dev_kit_repo_looks_like_repo "$repo_dir"; then
+  repo_root="$(dev_kit_repo_root "$repo_dir")"
+  if [ -n "$repo_root" ]; then
     repo_detected="true"
     repo_kind="repo"
-    archetype="$(dev_kit_repo_primary_archetype "$repo_dir")"
-    profile="$(dev_kit_repo_primary_profile "$repo_dir")"
-    if dev_kit_sync_has_git_repo "$repo_dir"; then
+    archetype="$(dev_kit_repo_primary_archetype "$repo_root")"
+    profile="$(dev_kit_repo_primary_profile "$repo_root")"
+    if dev_kit_sync_has_git_repo "$repo_root"; then
       git_state="yes"
     fi
-    priority_refs="$(dev_kit_repo_priority_refs "$repo_dir")"
+    priority_refs="$(dev_kit_repo_priority_refs "$repo_root")"
     first_priority_ref="$(printf '%s\n' "$priority_refs" | awk 'NF { print; exit }')"
   fi
 
@@ -102,11 +104,13 @@ dev_kit_run_home() {
     printf '    "repo_detected": %s,\n' "$repo_detected"
     printf '    "kind": "%s"' "$(dev_kit_json_escape "$repo_kind")"
     if [ "$repo_detected" = "true" ]; then
-      printf ',\n    "repo": { "name": "%s", "archetype": "%s", "profile": "%s", "git": %s, "first_priority_ref": "%s" }\n' \
-        "$(dev_kit_json_escape "$(dev_kit_repo_name "$repo_dir")")" \
+      printf ',\n    "repo": { "name": "%s", "root": "%s", "archetype": "%s", "profile": "%s", "git": %s, "markers": %s, "first_priority_ref": "%s" }\n' \
+        "$(dev_kit_json_escape "$(dev_kit_repo_name "$repo_root")")" \
+        "$(dev_kit_json_escape "$repo_root")" \
         "$(dev_kit_json_escape "$archetype")" \
         "$(dev_kit_json_escape "$profile")" \
         "$([ "$git_state" = "yes" ] && printf 'true' || printf 'false')" \
+        "$(dev_kit_repo_markers_json "$repo_root")" \
         "$(dev_kit_json_escape "$first_priority_ref")"
     else
       printf '\n'
@@ -129,10 +133,12 @@ dev_kit_run_home() {
 
   if [ "$repo_detected" = "true" ]; then
     dev_kit_output_row "mode" "repo detected"
-    dev_kit_output_row "repo" "$(dev_kit_repo_name "$repo_dir")"
+    dev_kit_output_row "repo" "$(dev_kit_repo_name "$repo_root")"
+    dev_kit_output_row "repo root" "$repo_root"
     dev_kit_output_row "archetype" "$archetype"
     dev_kit_output_row "profile" "$profile"
     dev_kit_output_row "git" "$git_state"
+    dev_kit_output_row "markers" "$(dev_kit_repo_markers_text "$repo_root")"
     if [ -n "$first_priority_ref" ]; then
       dev_kit_output_row "read first" "$first_priority_ref"
     fi
@@ -177,7 +183,7 @@ command_usage() {
   esac
 }
 
-command="${1:-status}"
+command="${1:-home}"
 format="text"
 command_args=()
 
@@ -198,7 +204,7 @@ while [ "$#" -gt 0 ]; do
 done
 
 if [ "$command" = "--json" ]; then
-  command="status"
+  command="home"
   format="json"
 fi
 

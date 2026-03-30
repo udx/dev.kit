@@ -2,6 +2,8 @@
   "command": "{{command}}",
   "repo": "{{repo}}",
   "path": "{{path}}",
+  "markers": {{markers}},
+  "workflow_refs": {{workflow_refs}},
   "model": {
     "archetype": "{{archetype}}",
     "archetypes": {{archetypes}},

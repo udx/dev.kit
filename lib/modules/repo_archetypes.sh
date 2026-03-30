@@ -74,6 +74,7 @@ $facet
 dev_kit_repo_facets() {
   local repo_dir="$1"
   local facets=""
+  local markers=""
   local has_wordpress=0
   local has_kubernetes=0
   local has_container=0
@@ -84,8 +85,22 @@ dev_kit_repo_facets() {
     return 0
   fi
 
-  if dev_kit_repo_has_any_file_from_signal_list "$repo_dir" "wordpress_files" || \
-     dev_kit_repo_has_any_dir_from_signal_list "$repo_dir" "wordpress_dirs"; then
+  markers="$(dev_kit_repo_marker_lines "$repo_dir")"
+
+  case "
+$markers
+" in
+    *"
+framework:wp-config.php
+"*)
+      has_wordpress=1
+      facets="${facets}framework:wordpress
+"
+      ;;
+  esac
+
+  if [ "$has_wordpress" -eq 0 ] && { dev_kit_repo_has_any_file_from_signal_list "$repo_dir" "wordpress_files" || \
+     dev_kit_repo_has_any_dir_from_signal_list "$repo_dir" "wordpress_dirs"; }; then
     has_wordpress=1
     facets="${facets}framework:wordpress
 "
@@ -107,19 +122,53 @@ dev_kit_repo_facets() {
     fi
   fi
 
-  if dev_kit_repo_has_any_file_from_list "$repo_dir" "container_files" || \
-     dev_kit_repo_has_any_glob_from_list "$repo_dir" "container_globs"; then
+  case "
+$markers
+" in
+    *"
+runtime:Dockerfile
+"*)
+      has_container=1
+      facets="${facets}runtime:container
+"
+      ;;
+  esac
+
+  if [ "$has_container" -eq 0 ] && { dev_kit_repo_has_any_file_from_list "$repo_dir" "container_files" || \
+     dev_kit_repo_has_any_glob_from_list "$repo_dir" "container_globs"; }; then
     has_container=1
     facets="${facets}runtime:container
 "
   fi
 
-  if dev_kit_has_file "$repo_dir" "package.json"; then
+  case "
+$markers
+" in
+    *"
+manifest:package.json
+"*)
+      facets="${facets}package:node
+"
+      ;;
+  esac
+
+  if ! dev_kit_repo_has_facet_in_text "$facets" "package:node" && dev_kit_has_file "$repo_dir" "package.json"; then
     facets="${facets}package:node
 "
   fi
 
-  if dev_kit_has_file "$repo_dir" "composer.json"; then
+  case "
+$markers
+" in
+    *"
+manifest:composer.json
+"*)
+      facets="${facets}package:composer
+"
+      ;;
+  esac
+
+  if ! dev_kit_repo_has_facet_in_text "$facets" "package:composer" && dev_kit_has_file "$repo_dir" "composer.json"; then
     facets="${facets}package:composer
 "
   fi

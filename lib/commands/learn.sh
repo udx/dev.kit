@@ -5,7 +5,11 @@
 dev_kit_cmd_learn() {
   local format="${1:-text}"
   local repo_dir="${2:-$(pwd)}"
+  local repo_root=""
   local workflow_id="${3:-$DEV_KIT_LEARNING_DEFAULT_WORKFLOW}"
+
+  repo_root="$(dev_kit_repo_root "$repo_dir")"
+  repo_dir="${repo_root:-$repo_dir}"
 
   if [ "$format" = "json" ]; then
     dev_kit_template_render "learn.json" \

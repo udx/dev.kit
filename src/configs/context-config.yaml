@@ -3,6 +3,25 @@ version: udx.io/dev.kit/v1
 
 config:
   lists:
+    repo_root_files:
+      - README.md
+      - readme.md
+      - package.json
+      - composer.json
+      - wp-config.php
+      - Dockerfile
+      - Makefile
+      - makefile
+      - deploy.yml
+      - deploy.yaml
+    repo_root_dirs:
+      - .git
+      - .github
+      - .rabbit
+      - docs
+      - src
+      - lib
+      - tests
     repo_note_files:
       - todo.md
       - TODO.md
@@ -19,6 +38,7 @@ config:
       - context.md
       - REFS.md
       - refs.md
+      - .rabbit/infra_configs
       - docs
       - .rabbit
       - .github/workflows
@@ -34,7 +54,6 @@ config:
       - wp-config.php
       - Chart.yaml
       - helmfile.yaml
-      - wp-content
       - k8s
       - charts
       - terraform

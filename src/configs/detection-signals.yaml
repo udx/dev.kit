@@ -16,6 +16,9 @@ config:
       - docs/**/*.md
     prune_dirs:
       - .git
+      - wp-admin
+      - wp-content
+      - wp-includes
       - node_modules
       - vendor
       - .venv

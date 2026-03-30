@@ -5,9 +5,12 @@
 dev_kit_cmd_explore() {
   local format="${1:-text}"
   local repo_dir="${2:-$(pwd)}"
+  local repo_root=""
   local repo_name=""
   local factors_json=""
 
+  repo_root="$(dev_kit_repo_root "$repo_dir")"
+  repo_dir="${repo_root:-$repo_dir}"
   repo_name="$(dev_kit_repo_name "$repo_dir")"
 
   if [ "$format" = "json" ]; then
@@ -16,6 +19,8 @@ dev_kit_cmd_explore() {
       "command=explore" \
       "repo=$(dev_kit_json_escape "$repo_name")" \
       "path=$(dev_kit_json_escape "$repo_dir")" \
+      "markers=$(dev_kit_repo_markers_json "$repo_dir")" \
+      "workflow_refs=$(dev_kit_repo_workflow_refs_json "$repo_dir")" \
       "archetype=$(dev_kit_json_escape "$(dev_kit_repo_primary_archetype "$repo_dir")")" \
       "archetypes=$(dev_kit_repo_archetypes_json "$repo_dir")" \
       "facets=$(dev_kit_repo_facets_json "$repo_dir")" \
@@ -37,6 +42,7 @@ dev_kit_cmd_explore() {
   dev_kit_output_section "repo"
   dev_kit_output_row "repo" "$repo_name"
   dev_kit_output_row "path" "$repo_dir"
+  dev_kit_output_row "markers" "$(dev_kit_repo_markers_text "$repo_dir")"
   dev_kit_output_row "what it is" "$(dev_kit_repo_primary_archetype "$repo_dir")"
   dev_kit_output_row "archetypes" "$(dev_kit_repo_archetypes_text "$repo_dir")"
   dev_kit_output_row "facets" "$(dev_kit_repo_facets_text "$repo_dir")"
@@ -52,6 +58,7 @@ dev_kit_cmd_explore() {
   dev_kit_output_row "remote org" "$(dev_kit_knowledge_remote_org_root)"
   dev_kit_output_row "preferred sources" "$(dev_kit_knowledge_preferred_sources_text)"
   dev_kit_output_row "standard reading" "$(dev_kit_tooling_standard_reading_order | dev_kit_lines_to_csv)"
+  dev_kit_output_row "workflow refs" "$(dev_kit_repo_workflow_refs_text "$repo_dir")"
 
   dev_kit_output_section "typical workflows"
   dev_kit_output_list_from_lines <<EOF

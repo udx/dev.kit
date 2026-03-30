@@ -2,6 +2,7 @@
   "command": "{{command}}",
   "repo": "{{repo}}",
   "path": "{{path}}",
+  "markers": {{markers}},
   "mode": "{{mode}}",
   "behavior": "{{behavior}}",
   "model": {

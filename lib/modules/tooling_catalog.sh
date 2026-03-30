@@ -74,3 +74,49 @@ $(dev_kit_tooling_repo_lines)
 EOF
   printf "]"
 }
+
+dev_kit_repo_workflow_ref_lines() {
+  local repo_dir="$1"
+  local workflow_file=""
+  local workflow_ref=""
+
+  [ -d "$repo_dir/.github/workflows" ] || return 0
+
+  while IFS= read -r workflow_file; do
+    [ -n "$workflow_file" ] || continue
+    while IFS= read -r workflow_ref; do
+      [ -n "$workflow_ref" ] || continue
+      printf '%s\n' "$workflow_ref"
+    done <<EOF
+$(sed -n 's/^[[:space:]]*uses:[[:space:]]*\(udx\/[^[:space:]]*\).*/\1/p' "$workflow_file")
+EOF
+  done <<EOF
+$(find "$repo_dir/.github/workflows" -maxdepth 1 -type f \( -name '*.yml' -o -name '*.yaml' \) | sort)
+EOF
+}
+
+dev_kit_repo_workflow_refs_text() {
+  local repo_dir="$1"
+  local refs=""
+
+  refs="$(dev_kit_repo_workflow_ref_lines "$repo_dir" | awk '!seen[$0]++')"
+  if [ -z "$refs" ]; then
+    printf "%s" "none"
+    return 0
+  fi
+
+  printf "%s" "$refs" | dev_kit_lines_to_csv
+}
+
+dev_kit_repo_workflow_refs_json() {
+  local repo_dir="$1"
+  local refs=""
+
+  refs="$(dev_kit_repo_workflow_ref_lines "$repo_dir" | awk '!seen[$0]++')"
+  if [ -z "$refs" ]; then
+    printf "%s" "[]"
+    return 0
+  fi
+
+  printf "%s" "$refs" | dev_kit_lines_to_json_array
+}

@@ -1,29 +1,171 @@
 #!/usr/bin/env bash
 
+DEV_KIT_REPO_ROOT_CACHE_INPUT=""
+DEV_KIT_REPO_ROOT_CACHE_VALUE=""
+DEV_KIT_REPO_MARKERS_CACHE_REPO=""
+DEV_KIT_REPO_MARKERS_CACHE_VALUE=""
+
 dev_kit_repo_name() {
   basename "${1:-$(pwd)}"
 }
 
-dev_kit_repo_looks_like_repo() {
+dev_kit_repo_has_root_file_marker() {
+  local repo_dir="$1"
+  local path=""
+
+  while IFS= read -r path; do
+    [ -n "$path" ] || continue
+    if dev_kit_has_file "$repo_dir" "$path"; then
+      return 0
+    fi
+  done <<EOF
+$(dev_kit_context_list "repo_root_files")
+EOF
+
+  return 1
+}
+
+dev_kit_repo_has_root_dir_marker() {
+  local repo_dir="$1"
+  local path=""
+
+  while IFS= read -r path; do
+    [ -n "$path" ] || continue
+    if dev_kit_repo_has_dir "$repo_dir" "$path"; then
+      return 0
+    fi
+  done <<EOF
+$(dev_kit_context_list "repo_root_dirs")
+EOF
+
+  return 1
+}
+
+dev_kit_repo_has_root_marker() {
   local repo_dir="${1:-$(pwd)}"
 
   if dev_kit_sync_has_git_repo "$repo_dir"; then
     return 0
   fi
 
-  if [ -f "$repo_dir/README.md" ] || [ -f "$repo_dir/readme.md" ] || [ -f "$repo_dir/package.json" ] || [ -f "$repo_dir/composer.json" ] || [ -f "$repo_dir/Makefile" ] || [ -f "$repo_dir/makefile" ] || [ -f "$repo_dir/deploy.yml" ] || [ -f "$repo_dir/deploy.yaml" ]; then
+  if dev_kit_repo_has_root_file_marker "$repo_dir"; then
     return 0
   fi
 
-  if [ -d "$repo_dir/.github" ] || [ -d "$repo_dir/.rabbit" ] || [ -d "$repo_dir/docs" ] || [ -d "$repo_dir/tests" ] || [ -d "$repo_dir/src" ] || [ -d "$repo_dir/lib" ]; then
+  if dev_kit_repo_has_root_dir_marker "$repo_dir"; then
     return 0
   fi
 
-  if dev_kit_repo_has_any_glob_from_list "$repo_dir" "workflow_globs" || dev_kit_repo_has_any_file_from_list "$repo_dir" "dependency_manifest_files"; then
+  if dev_kit_has_file "$repo_dir" ".github/workflows" || dev_kit_repo_has_dir "$repo_dir" ".github/workflows"; then
     return 0
   fi
 
   return 1
+}
+
+dev_kit_repo_root() {
+  local input_dir="${1:-$(pwd)}"
+  local repo_dir=""
+  local parent_dir=""
+  local git_root=""
+
+  repo_dir="$(cd "$input_dir" 2>/dev/null && pwd || printf '%s' "$input_dir")"
+
+  if [ "$DEV_KIT_REPO_ROOT_CACHE_INPUT" = "$repo_dir" ]; then
+    printf "%s" "$DEV_KIT_REPO_ROOT_CACHE_VALUE"
+    return 0
+  fi
+
+  git_root="$(git -C "$repo_dir" rev-parse --show-toplevel 2>/dev/null || true)"
+  if [ -n "$git_root" ]; then
+    DEV_KIT_REPO_ROOT_CACHE_INPUT="$repo_dir"
+    DEV_KIT_REPO_ROOT_CACHE_VALUE="$git_root"
+    printf "%s" "$git_root"
+    return 0
+  fi
+
+  while [ -n "$repo_dir" ] && [ "$repo_dir" != "/" ]; do
+    if dev_kit_repo_has_root_marker "$repo_dir"; then
+      DEV_KIT_REPO_ROOT_CACHE_INPUT="$input_dir"
+      DEV_KIT_REPO_ROOT_CACHE_VALUE="$repo_dir"
+      printf "%s" "$repo_dir"
+      return 0
+    fi
+    parent_dir="$(dirname "$repo_dir")"
+    [ "$parent_dir" = "$repo_dir" ] && break
+    repo_dir="$parent_dir"
+  done
+
+  DEV_KIT_REPO_ROOT_CACHE_INPUT="$input_dir"
+  DEV_KIT_REPO_ROOT_CACHE_VALUE=""
+}
+
+dev_kit_repo_looks_like_repo() {
+  [ -n "$(dev_kit_repo_root "${1:-$(pwd)}")" ]
+}
+
+dev_kit_repo_marker_lines() {
+  local repo_dir="${1:-$(pwd)}"
+
+  if [ "$DEV_KIT_REPO_MARKERS_CACHE_REPO" = "$repo_dir" ]; then
+    printf "%s" "$DEV_KIT_REPO_MARKERS_CACHE_VALUE"
+    return 0
+  fi
+
+  {
+    if dev_kit_sync_has_git_repo "$repo_dir"; then
+      printf '%s\n' "git:.git"
+    fi
+    [ -f "$repo_dir/README.md" ] && printf '%s\n' "docs:README.md"
+    [ -f "$repo_dir/readme.md" ] && printf '%s\n' "docs:readme.md"
+    [ -f "$repo_dir/TODO.md" ] && printf '%s\n' "notes:TODO.md"
+    [ -f "$repo_dir/todo.md" ] && printf '%s\n' "notes:todo.md"
+    [ -f "$repo_dir/refs.md" ] && printf '%s\n' "notes:refs.md"
+    [ -f "$repo_dir/wp-config.php" ] && printf '%s\n' "framework:wp-config.php"
+    [ -f "$repo_dir/package.json" ] && printf '%s\n' "manifest:package.json"
+    [ -f "$repo_dir/composer.json" ] && printf '%s\n' "manifest:composer.json"
+    [ -f "$repo_dir/Dockerfile" ] && printf '%s\n' "runtime:Dockerfile"
+    [ -f "$repo_dir/deploy.yml" ] && printf '%s\n' "deploy:deploy.yml"
+    [ -f "$repo_dir/deploy.yaml" ] && printf '%s\n' "deploy:deploy.yaml"
+    [ -f "$repo_dir/Makefile" ] && printf '%s\n' "build:Makefile"
+    [ -f "$repo_dir/makefile" ] && printf '%s\n' "build:makefile"
+    [ -d "$repo_dir/.github/workflows" ] && printf '%s\n' "workflow:.github/workflows"
+    [ -d "$repo_dir/.rabbit" ] && printf '%s\n' "udx:.rabbit"
+    [ -d "$repo_dir/.rabbit/infra_configs" ] && printf '%s\n' "infra:.rabbit/infra_configs"
+    [ -d "$repo_dir/docs" ] && printf '%s\n' "docs:docs/"
+    [ -d "$repo_dir/tests" ] && printf '%s\n' "verify:tests/"
+  } | awk 'NF && !seen[$0]++' > /tmp/dev-kit-markers.$$
+
+  DEV_KIT_REPO_MARKERS_CACHE_REPO="$repo_dir"
+  DEV_KIT_REPO_MARKERS_CACHE_VALUE="$(cat /tmp/dev-kit-markers.$$)"
+  rm -f /tmp/dev-kit-markers.$$
+  printf "%s" "$DEV_KIT_REPO_MARKERS_CACHE_VALUE"
+}
+
+dev_kit_repo_markers_text() {
+  local repo_dir="${1:-$(pwd)}"
+  local markers=""
+
+  markers="$(dev_kit_repo_marker_lines "$repo_dir")"
+  if [ -z "$markers" ]; then
+    printf "%s" "none"
+    return 0
+  fi
+
+  printf "%s" "$markers" | dev_kit_lines_to_csv
+}
+
+dev_kit_repo_markers_json() {
+  local repo_dir="${1:-$(pwd)}"
+  local markers=""
+
+  markers="$(dev_kit_repo_marker_lines "$repo_dir")"
+  if [ -z "$markers" ]; then
+    printf "%s" "[]"
+    return 0
+  fi
+
+  printf "%s" "$markers" | dev_kit_lines_to_json_array
 }
 
 dev_kit_has_file() {
