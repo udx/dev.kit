@@ -127,42 +127,38 @@ dev_kit_run_home() {
   fi
 
   dev_kit_output_title "dev.kit"
-  dev_kit_output_section "workspace"
-  dev_kit_output_row "path" "$repo_dir"
-  dev_kit_output_row "install" "$state"
 
   if [ "$repo_detected" = "true" ]; then
-    dev_kit_output_row "mode" "repo detected"
-    dev_kit_output_row "repo" "$(dev_kit_repo_name "$repo_root")"
+    dev_kit_output_summary "$(dev_kit_repo_name "$repo_root") • ${archetype} • profile ${profile}"
+    dev_kit_output_section "workspace"
+    dev_kit_output_row "path" "$repo_dir"
     dev_kit_output_row "repo root" "$repo_root"
-    dev_kit_output_row "archetype" "$archetype"
-    dev_kit_output_row "profile" "$profile"
-    dev_kit_output_row "git" "$git_state"
     dev_kit_output_row "markers" "$(dev_kit_repo_markers_text "$repo_root")"
     if [ -n "$first_priority_ref" ]; then
-      dev_kit_output_row "read first" "$first_priority_ref"
+      dev_kit_output_section "read first"
+      dev_kit_output_list_item "$first_priority_ref"
     fi
-  else
-    dev_kit_output_row "mode" "not a repo"
-    dev_kit_output_row "guide" "navigate into a repo, then run dev.kit again"
-    dev_kit_output_row "signals" "README.md, package.json, .github, docs/, .git, Makefile"
-  fi
-
-  dev_kit_output_section "localhost"
-  dev_kit_output_kv_list_from_pipe <<EOF
-$(dev_kit_env_tool_lines)
-EOF
-
-  dev_kit_output_section "helpers"
-  if [ "$repo_detected" = "true" ]; then
+    dev_kit_output_section "helpers"
     dev_kit_output_row "explore" "dev.kit explore"
     dev_kit_output_row "action" "dev.kit action"
     dev_kit_output_row "learn" "dev.kit learn"
   else
+    dev_kit_output_summary "No repository detected in the current directory"
+    dev_kit_output_section "workspace"
+    dev_kit_output_row "path" "$repo_dir"
+    dev_kit_output_row "guide" "navigate into a repo, then run dev.kit again"
+    dev_kit_output_row "common signals" "README.md, package.json, .github, docs/, .git, Makefile"
+    dev_kit_output_section "helpers"
     dev_kit_output_row "explore" "cd /path/to/repo && dev.kit"
     dev_kit_output_row "action" "cd /path/to/repo && dev.kit action"
     dev_kit_output_row "learn" "cd /path/to/repo && dev.kit learn"
   fi
+
+  dev_kit_output_section "localhost"
+  dev_kit_output_row "install" "$state"
+  dev_kit_output_kv_list_from_pipe <<EOF
+$(dev_kit_env_tool_lines)
+EOF
 }
 
 command_usage() {

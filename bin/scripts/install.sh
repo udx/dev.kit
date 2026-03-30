@@ -126,6 +126,7 @@ main() {
 
   if command -v dev_kit_output_title >/dev/null 2>&1; then
     dev_kit_output_title "Installed dev.kit"
+    dev_kit_output_summary "Human-first raw output, stable JSON for agents"
     dev_kit_output_section "install"
     dev_kit_output_row "binary" "$target"
     dev_kit_output_row "home" "$DEV_KIT_HOME"
@@ -136,17 +137,19 @@ main() {
   fi
   if dev_kit_install_path_contains_bin_dir; then
     if command -v dev_kit_output_row >/dev/null 2>&1; then
-      dev_kit_output_row "shell" "PATH already includes $DEV_KIT_BIN_DIR"
-      dev_kit_output_row "next" "run dev.kit"
+      dev_kit_output_section "next"
+      dev_kit_output_list_item "PATH already includes $DEV_KIT_BIN_DIR"
+      dev_kit_output_list_item "run dev.kit"
     else
       echo "shell:  PATH already includes $DEV_KIT_BIN_DIR"
       echo "next:   run dev.kit"
     fi
   else
     if command -v dev_kit_output_row >/dev/null 2>&1; then
-      dev_kit_output_row "shell" "unchanged"
-      dev_kit_output_row "next" "export PATH=\"$DEV_KIT_BIN_DIR:\$PATH\""
-      dev_kit_output_row "then" "dev.kit"
+      dev_kit_output_section "next"
+      dev_kit_output_list_item "shell profiles were left unchanged"
+      dev_kit_output_list_item "export PATH=\"$DEV_KIT_BIN_DIR:\$PATH\""
+      dev_kit_output_list_item "run dev.kit"
     else
       echo "shell:  unchanged"
       echo "next:   export PATH=\"$DEV_KIT_BIN_DIR:\$PATH\""

@@ -171,7 +171,7 @@ if should_run "home"; then
 
   non_repo_output="$(cd "$TEST_HOME" && dev.kit)"
   print_block "non repo output" "$non_repo_output"
-  assert_contains "$non_repo_output" "mode:              not a repo" "default landing detects non repo workspace"
+  assert_contains "$non_repo_output" "No repository detected in the current directory" "default landing detects non repo workspace"
   assert_contains "$non_repo_output" "guide:             navigate into a repo, then run dev.kit again" "default landing guides non repo users"
 fi
 
@@ -302,8 +302,9 @@ if should_run "uninstall"; then
   assert_file_exists "$DEV_KIT_HOME" "cancelled uninstall keeps installed home"
 
   UNINSTALL_OUTPUT="$(dev.kit uninstall --yes)"
-  assert_contains "$UNINSTALL_OUTPUT" "Removed binary:" "uninstall removes the global binary"
-  assert_contains "$UNINSTALL_OUTPUT" "Removed home:" "uninstall removes the installed home"
+  assert_contains "$UNINSTALL_OUTPUT" "Removed dev.kit" "uninstall prints removal title"
+  assert_contains "$UNINSTALL_OUTPUT" "binary:" "uninstall removes the global binary"
+  assert_contains "$UNINSTALL_OUTPUT" "home:" "uninstall removes the installed home"
   assert_file_missing "$DEV_KIT_BIN_DIR/dev.kit" "global symlink is removed"
   assert_file_missing "$DEV_KIT_HOME" "installed home is removed"
 

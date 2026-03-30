@@ -17,6 +17,11 @@ dev_kit_output_row() {
   printf '  %-*s %s\n' "$DEV_KIT_OUTPUT_LABEL_WIDTH" "${label}:" "$value"
 }
 
+dev_kit_output_summary() {
+  local value="${1:-}"
+  printf '\n> %s\n' "$value"
+}
+
 dev_kit_output_list_item() {
   printf '  - %s\n' "$1"
 }
@@ -40,5 +45,20 @@ dev_kit_output_kv_list_from_pipe() {
     key="${line%%|*}"
     value="${line#*|}"
     dev_kit_output_row "$key" "$value"
+  done
+}
+
+dev_kit_output_first_lines() {
+  local max_items="${1:-3}"
+  local line=""
+  local count=0
+
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    printf '%s\n' "$line"
+    count=$((count + 1))
+    if [ "$count" -ge "$max_items" ]; then
+      break
+    fi
   done
 }

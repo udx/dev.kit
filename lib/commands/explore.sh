@@ -37,29 +37,27 @@ dev_kit_cmd_explore() {
   fi
 
   dev_kit_output_title "dev.kit explore"
-  dev_kit_output_section "repo"
-  dev_kit_output_row "repo" "$repo_name"
+  dev_kit_output_summary "${repo_name} • $(dev_kit_repo_primary_archetype "$repo_dir") • start with repo-native refs"
+  dev_kit_output_section "summary"
   dev_kit_output_row "path" "$repo_dir"
-  dev_kit_output_row "markers" "$(dev_kit_repo_markers_text "$repo_dir")"
-  dev_kit_output_row "what it is" "$(dev_kit_repo_primary_archetype "$repo_dir")"
-  dev_kit_output_row "archetypes" "$(dev_kit_repo_archetypes_text "$repo_dir")"
-  dev_kit_output_row "facets" "$(dev_kit_repo_facets_text "$repo_dir")"
   dev_kit_output_row "profile" "$(dev_kit_repo_primary_profile "$repo_dir")"
-  dev_kit_output_row "profiles" "$(dev_kit_repo_profiles_text "$repo_dir")"
+  dev_kit_output_row "markers" "$(dev_kit_repo_markers_text "$repo_dir")"
 
-  dev_kit_output_section "knowledgebase"
-  dev_kit_output_row "local repos" "$(dev_kit_knowledge_local_repos_root)"
-  dev_kit_output_row "remote org" "$(dev_kit_knowledge_remote_org_root)"
-  dev_kit_output_row "preferred sources" "$(dev_kit_knowledge_preferred_sources_text)"
-  dev_kit_output_row "workflow refs" "$(dev_kit_repo_workflow_refs_text "$repo_dir")"
+  dev_kit_output_section "read first"
+  dev_kit_output_list_from_lines <<EOF
+$(dev_kit_repo_priority_refs "$repo_dir" | dev_kit_output_first_lines 6)
+EOF
+
   if [ -n "$(dev_kit_repo_source_chain_text "$repo_dir")" ]; then
     dev_kit_output_section "source chain"
     dev_kit_repo_source_chain_text "$repo_dir"
   fi
-  dev_kit_output_section "workflow contract"
+
+  dev_kit_output_section "workflow guide"
   dev_kit_repo_workflow_text "$repo_dir"
-  dev_kit_output_section "priority refs"
-  dev_kit_output_list_from_lines <<EOF
-$(dev_kit_repo_priority_refs "$repo_dir")
-EOF
+
+  dev_kit_output_section "knowledge"
+  dev_kit_output_row "local repos" "$(dev_kit_knowledge_local_repos_root)"
+  dev_kit_output_row "remote org" "$(dev_kit_knowledge_remote_org_root)"
+  dev_kit_output_row "workflow refs" "$(dev_kit_repo_workflow_refs_text "$repo_dir")"
 }

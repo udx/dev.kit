@@ -26,21 +26,17 @@ dev_kit_cmd_learn() {
   fi
 
   dev_kit_output_title "dev.kit learn"
-  dev_kit_output_section "workflow"
+  dev_kit_output_summary "$(dev_kit_learning_workflow_name "$workflow_id") • lightweight lessons from recent repo changes"
+  dev_kit_output_section "summary"
   dev_kit_output_row "repo" "$repo_dir"
-  dev_kit_output_row "workflow" "$(dev_kit_learning_workflow_name "$workflow_id")"
-  dev_kit_output_row "description" "$(dev_kit_learning_workflow_description "$workflow_id")"
-  dev_kit_output_row "mode" "evaluation-only"
-  dev_kit_output_section "sources"
+  dev_kit_output_row "behavior" "evaluation-only"
+  dev_kit_output_row "workflow" "$(dev_kit_learning_workflow_description "$workflow_id")"
+  dev_kit_output_section "read from"
   dev_kit_output_list_from_lines <<EOF
 $(dev_kit_learning_workflow_sources "$workflow_id")
 EOF
-  dev_kit_output_section "destinations"
+  dev_kit_output_section "send to"
   dev_kit_learning_destinations_text "$workflow_id"
-  dev_kit_output_section "knowledgebase"
-  dev_kit_output_row "local repos" "$(dev_kit_knowledge_local_repos_root)"
-  dev_kit_output_row "remote org" "$(dev_kit_knowledge_remote_org_root)"
-  dev_kit_output_row "preferred sources" "$(dev_kit_knowledge_preferred_sources_text)"
   dev_kit_output_section "next"
   dev_kit_output_list_item "keep lessons lightweight and grounded in recent pull requests, docs, and repo-native context"
   dev_kit_output_list_item "promote durable follow-up into docs, issues, wiki pages, or slack summaries only when the workflow contract is explicit"

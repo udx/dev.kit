@@ -35,6 +35,7 @@ if [ -L "$TARGET" ] || [ -f "$TARGET" ]; then
   rm -f "$TARGET"
   if command -v dev_kit_output_title >/dev/null 2>&1; then
     dev_kit_output_title "Removed dev.kit"
+    dev_kit_output_summary "Local install removed"
     dev_kit_output_section "uninstall"
     dev_kit_output_row "binary" "$TARGET"
   else
@@ -43,6 +44,7 @@ if [ -L "$TARGET" ] || [ -f "$TARGET" ]; then
 else
   if command -v dev_kit_output_title >/dev/null 2>&1; then
     dev_kit_output_title "Removed dev.kit"
+    dev_kit_output_summary "Nothing else is using the local shim"
     dev_kit_output_section "uninstall"
     dev_kit_output_row "binary" "not found: $TARGET"
   else
@@ -66,7 +68,8 @@ else
 fi
 
 if command -v dev_kit_output_row >/dev/null 2>&1; then
-  dev_kit_output_row "shell" "profile files were not modified"
+  dev_kit_output_section "next"
+  dev_kit_output_list_item "profile files were not modified"
 else
   echo "Shell profile files were not modified."
 fi

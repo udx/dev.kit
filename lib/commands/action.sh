@@ -72,59 +72,39 @@ dev_kit_cmd_action() {
   fi
 
   dev_kit_output_title "dev.kit action"
-  dev_kit_output_section "repo"
-  dev_kit_output_row "repo" "$repo_name"
+  dev_kit_output_summary "${repo_name} • $(dev_kit_repo_primary_archetype "$repo_dir") • grounded next actions"
+  dev_kit_output_section "summary"
   dev_kit_output_row "path" "$repo_dir"
-  dev_kit_output_row "markers" "$(dev_kit_repo_markers_text "$repo_dir")"
-  dev_kit_output_row "behavior" "$DEV_KIT_SYNC_BEHAVIOR"
-  dev_kit_output_row "archetype" "$(dev_kit_repo_primary_archetype "$repo_dir")"
-  dev_kit_output_row "archetypes" "$(dev_kit_repo_archetypes_text "$repo_dir")"
-  dev_kit_output_row "facets" "$(dev_kit_repo_facets_text "$repo_dir")"
   dev_kit_output_row "profile" "$(dev_kit_repo_primary_profile "$repo_dir")"
-  dev_kit_output_row "profiles" "$(dev_kit_repo_profiles_text "$repo_dir")"
-  dev_kit_output_section "factors"
-  while IFS= read -r factor; do
-    [ -n "$factor" ] || continue
-    dev_kit_output_row "$factor" "$(dev_kit_repo_factor_status "$repo_dir" "$factor")"
-    dev_kit_output_row "evidence" "$(dev_kit_repo_factor_evidence_text "$repo_dir" "$factor")"
-    if dev_kit_repo_factor_entrypoint "$repo_dir" "$factor" >/dev/null 2>&1; then
-      dev_kit_output_row "entrypoint" "$(dev_kit_repo_factor_entrypoint "$repo_dir" "$factor")"
-    fi
-  done <<EOF
-$(dev_kit_repo_factor_ids)
-EOF
-  dev_kit_output_section "improvement priorities"
+  dev_kit_output_row "behavior" "$DEV_KIT_SYNC_BEHAVIOR"
+  dev_kit_output_row "markers" "$(dev_kit_repo_markers_text "$repo_dir")"
+
+  dev_kit_output_section "top priorities"
   dev_kit_output_list_from_lines <<EOF
-$(dev_kit_repo_findings_text "$repo_dir")
+$(dev_kit_repo_findings_text "$repo_dir" | dev_kit_output_first_lines 5)
 EOF
+
   if [ -n "$(dev_kit_repo_source_chain_text "$repo_dir")" ]; then
     dev_kit_output_section "source chain"
-    dev_kit_repo_source_chain_text "$repo_dir"
+    dev_kit_repo_source_chain_text "$repo_dir" | dev_kit_output_first_lines 6
   fi
-  dev_kit_output_section "workflow contract"
-  dev_kit_repo_workflow_text "$repo_dir"
+
+  dev_kit_output_section "workflow guide"
+  dev_kit_repo_workflow_text "$repo_dir" | dev_kit_output_first_lines 10
+
   if dev_kit_sync_has_git_repo "$repo_dir"; then
-    dev_kit_output_section "git workflow"
+    dev_kit_output_section "git"
     dev_kit_output_row "workflow" "$(dev_kit_workflow_name "$workflow_id")"
-    dev_kit_output_row "hint" "$(dev_kit_sync_next_hint "$repo_dir")"
-    echo
-    dev_kit_output_row "repo_state" ""
-    dev_kit_sync_repo_state_compact_text "$repo_dir"
-    echo
-    dev_kit_output_row "hooks" ""
-    dev_kit_sync_hooks_focus_text "$repo_dir"
-    echo
-    dev_kit_output_row "capabilities" ""
-    dev_kit_sync_capability_warnings_text "$repo_dir"
-    dev_kit_output_row "next" ""
-    dev_kit_sync_steps_text "$repo_dir" "$workflow_id"
+    dev_kit_output_row "next" "$(dev_kit_sync_next_hint "$repo_dir")"
+    dev_kit_sync_steps_text "$repo_dir" "$workflow_id" 3
   else
-    dev_kit_output_section "git workflow"
+    dev_kit_output_section "git"
     dev_kit_output_row "status" "unavailable"
   fi
-  dev_kit_output_section "agent guidance"
+
+  dev_kit_output_section "guidance"
   dev_kit_output_list_from_lines <<EOF
-$(dev_kit_repo_agent_guidance_text "$repo_dir")
+$(dev_kit_repo_agent_guidance_text "$repo_dir" | dev_kit_output_first_lines 4)
 EOF
 }
 
