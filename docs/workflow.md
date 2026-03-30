@@ -21,7 +21,14 @@ This document explains the workflow model behind `dev.kit`, not the full user gu
 - `.github/workflows/*`, deploy config, and command layers
 - `tests/`, documented verification entrypoints, and runtime/build commands
 
-Optional repo-local saved context under `./.udx/dev.kit/` can improve continuity, but it is an accelerator, not a prerequisite. The main job of `dev.kit bridge` is to translate ordinary repo signals into a better working contract for AI agents.
+Optional repo-local saved context under `./.udx/dev.kit/` can improve continuity, but it is an accelerator, not a prerequisite. The main job of `dev.kit action` is to translate ordinary repo signals into a better working contract for humans and AI agents.
+
+At UDX, this often means:
+
+- WordPress repos are mostly conventional, and the most important differences are often under `.rabbit/` and `.github/`.
+- Non-WordPress repos still follow the same repo-first rule, but the key distinguishing refs may instead be `package.json`, `deploy.yml`, `Makefile`, `docs/`, or other standard top-level contracts.
+- In every case, `README.md` remains one of the highest-value files to read first.
+- If the repo leans on shared workflow or delivery tooling, humans and agents should also inspect the relevant dependency repos, especially under `udx/*`.
 
 ## Separation of Responsibilities
 
@@ -44,7 +51,7 @@ Common cases:
 
 ## What `dev.kit` Looks For
 
-The current audit focuses on practical 12-factor workflow boundaries:
+The current action model focuses on practical 12-factor workflow boundaries:
 
 - `documentation`
 - `architecture`
@@ -58,14 +65,15 @@ Each factor is reported as `present`, `partial`, or `missing`, with evidence and
 
 ## Human Workflow
 
-1. Run `dev.kit explore` or `dev.kit`.
-2. Read the missing or partial factors.
-3. Normalize the repo around one clear way to configure, verify, build, and run it.
-4. Re-run `dev.kit` to confirm the repo model is improving.
+1. Run `dev.kit explore` or just `dev.kit`.
+2. Run `dev.kit action`.
+3. Read the missing or partial factors and the generated next actions.
+4. Normalize the repo around one clear way to configure, verify, build, and run it.
+5. Re-run `dev.kit action` to confirm the repo model is improving.
 
 ## Agent Workflow
 
-1. Run `dev.kit explore` or `dev.kit bridge --json`.
+1. Run `dev.kit explore` or `dev.kit action --json`.
 2. Use the reported factor model and entrypoints as the working contract.
 3. Prefer discovered commands over inferred ones.
 4. Improve partial or missing factors as part of the change when appropriate.

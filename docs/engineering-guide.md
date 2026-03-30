@@ -48,7 +48,7 @@ If the repo uses a different base branch such as `staging`, merge that branch in
 - keep changes scoped so verification and review stay clear
 - prefer the repo's canonical commands over ad hoc local habits
 - use `dev.kit` when build, test, config, or runtime expectations are unclear
-- use `dev.kit bridge --json` when an agent needs grounded repo context
+- use `dev.kit action --json` when an agent needs grounded repo context
 
 ## End of Session
 

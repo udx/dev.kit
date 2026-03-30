@@ -218,3 +218,31 @@ dev_kit_repo_write_context_summary() {
 dev_kit_repo_write_context_refs() {
   dev_kit_repo_write_context_file "$1" "$2" "refs.md" "$DEV_KIT_REPO_CONTEXT_REFS_TEMPLATE"
 }
+
+dev_kit_repo_refresh_context() {
+  local repo_dir="${1:-$(pwd)}"
+  local yes="${2:-0}"
+  local context_dir=""
+  local reply=""
+
+  context_dir="$(dev_kit_repo_context_dir "$repo_dir")"
+
+  if [ -d "$context_dir" ] && [ "$yes" -ne 1 ]; then
+    printf "Repo-local dev.kit context already exists at %s and will be overwritten. Continue? [y/N] " "$context_dir" >&2
+    read -r reply || true
+    case "$reply" in
+      y|Y|yes|YES) ;;
+      *)
+        echo "Cancelled."
+        return 1
+        ;;
+    esac
+  fi
+
+  rm -rf "$context_dir"
+  mkdir -p "$context_dir"
+
+  dev_kit_repo_write_context_todo "$repo_dir" "$context_dir"
+  dev_kit_repo_write_context_summary "$repo_dir" "$context_dir"
+  dev_kit_repo_write_context_refs "$repo_dir" "$context_dir"
+}

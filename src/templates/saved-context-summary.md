@@ -1,6 +1,6 @@
 # Context
 
-Generated from the current repo state. If files, workflows, manifests, or structure change, rerun `dev.kit save --yes` to refresh this summary.
+Generated from the current repo state. If files, workflows, manifests, or structure change, rerun `dev.kit action --refresh-context --yes` to refresh this summary.
 
 ## Repo Identity
 

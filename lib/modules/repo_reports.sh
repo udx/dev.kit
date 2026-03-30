@@ -30,6 +30,22 @@ EOF
   printf "]"
 }
 
+dev_kit_repo_findings_text() {
+  local repo_dir="$1"
+  local factor=""
+  local status=""
+  local rule_id=""
+
+  while IFS= read -r factor; do
+    status="$(dev_kit_repo_factor_status "$repo_dir" "$factor")"
+    rule_id="$(dev_kit_repo_factor_rule_id "$factor" "$status" || true)"
+    [ -n "$rule_id" ] || continue
+    printf '%s\n' "$(dev_kit_rule_message "$rule_id")"
+  done <<EOF
+$(dev_kit_repo_factor_ids)
+EOF
+}
+
 dev_kit_repo_advices() {
   local repo_dir="$1"
   local factor=""

@@ -36,6 +36,17 @@ dev_kit_command_description() {
   awk -F': ' '/^# @description:/ { print $2; exit }' "$file"
 }
 
+dev_kit_public_command_names() {
+  printf '%s\n' explore action learn uninstall
+}
+
+dev_kit_command_file_path() {
+  local root_dir="$1"
+  local command_name="$2"
+
+  printf "%s/lib/commands/%s.sh" "$root_dir" "${command_name//-/_}"
+}
+
 dev_kit_list_command_files() {
   local root_dir="$1"
   find "$root_dir/lib/commands" -maxdepth 1 -type f -name '*.sh' | sort

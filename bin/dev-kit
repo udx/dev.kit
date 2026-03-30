@@ -35,7 +35,6 @@ for command_file in "$REPO_DIR"/lib/commands/*.sh; do
 done
 
 usage() {
-  local command_file=""
   local command_name=""
   local description=""
   cat <<'EOF'
@@ -44,11 +43,12 @@ Usage: dev.kit <command>
 Commands:
 EOF
 
-  for command_file in $(dev_kit_list_command_files "$REPO_DIR"); do
-    command_name="$(dev_kit_command_name_from_file "$command_file")"
-    description="$(dev_kit_command_description "$command_file")"
+  while IFS= read -r command_name; do
+    description="$(dev_kit_command_description "$(dev_kit_command_file_path "$REPO_DIR" "$command_name")")"
     printf "  %-10s %s\n" "$command_name" "$description"
-  done
+  done <<EOF
+$(dev_kit_public_command_names)
+EOF
 
   cat <<'EOF'
   help       Show this help message
@@ -64,17 +64,16 @@ command_usage() {
   echo
   echo "Options:"
   case "$command_name" in
-    audit|bridge|status)
-      echo "  --json     Output machine-readable JSON"
-      ;;
-    sync)
+    action)
       echo "  --json     Output machine-readable JSON"
       echo "  --dev      Evaluate the local development workflow"
       echo "  --ci       Evaluate through push readiness without pull request creation"
       echo "  --pr       Evaluate through pull request creation and review follow-up"
+      echo "  --refresh-context  Regenerate optional repo-local continuity files"
+      echo "  --yes      Overwrite existing repo-local continuity files without a confirmation prompt"
       ;;
-    save)
-      echo "  --yes      Overwrite existing repo-local saved context without a confirmation prompt"
+    explore|learn|status)
+      echo "  --json     Output machine-readable JSON"
       ;;
     uninstall)
       echo "  --yes      Remove dev.kit without a confirmation prompt"
@@ -82,7 +81,7 @@ command_usage() {
   esac
 }
 
-command="${1:-audit}"
+command="${1:-explore}"
 format="text"
 command_args=()
 
@@ -103,9 +102,19 @@ while [ "$#" -gt 0 ]; do
 done
 
 if [ "$command" = "--json" ]; then
-  command="audit"
+  command="explore"
   format="json"
 fi
+
+case "$command" in
+  audit|bridge|sync)
+    command="action"
+    ;;
+  save)
+    command="action"
+    command_args=(--refresh-context "${command_args[@]}")
+    ;;
+esac
 
 case "$command" in
   help|-h|--help)

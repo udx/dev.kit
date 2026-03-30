@@ -1,0 +1,30 @@
+{
+  "command": "{{command}}",
+  "repo": "{{repo}}",
+  "path": "{{path}}",
+  "mode": "{{mode}}",
+  "behavior": "{{behavior}}",
+  "model": {
+    "archetype": "{{archetype}}",
+    "archetypes": {{archetypes}},
+    "facets": {{facets}},
+    "profile": "{{profile}}",
+    "profiles": {{profiles}},
+    "factors": {{factors}},
+    "guidance": {{guidance}},
+    "findings": {{findings}}
+  },
+  "saved_context": {{saved_context}},
+  "priority_refs": {{priority_refs}},
+  "knowledge_base": {{knowledge_base}},
+  "knowledge_sources": {{knowledge_sources}},
+  "tooling_refs": {{tooling_refs}},
+  "operating_surface": {{operating_surface}},
+  "responsibility_split": {{responsibility_split}},
+  "workflow_contract": {{workflow_contract}},
+  "git_workflow": {{git_workflow}},
+  "refresh_context": {
+    "requested": {{refresh_requested}},
+    "performed": {{refresh_performed}}
+  }
+}

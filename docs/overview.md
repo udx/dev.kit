@@ -11,6 +11,8 @@ It works from standard repository evidence first:
 
 It does not require custom repo metadata to be useful. Optional saved context under `./.udx/dev.kit/` can improve continuity, but the main contract should still live in ordinary repo files.
 
+When a repo depends on reusable internal tooling or workflows, `dev.kit` should also point humans and agents at the relevant upstream repos and refs, especially under `udx/*`.
+
 ## Goal
 
 The goal is context-driven engineering through repo-native mechanisms:
@@ -24,11 +26,10 @@ The goal is context-driven engineering through repo-native mechanisms:
 ## What `dev.kit` Does
 
 - `dev.kit explore` explains what a repo is, which refs matter, and which workflows are typical.
-- `dev.kit` audits the repo against practical engineering factors.
-- `dev.kit bridge --json` translates repo evidence into grounded AI-agent context.
-- `dev.kit sync` evaluates Git pull/push readiness through predefined workflows.
+- `dev.kit action` turns repo evidence into grounded next actions for developers and AI agents.
+- `dev.kit action --json` exposes the same contract for automation.
 - `dev.kit learn` evaluates lessons-learned workflows for recent pull requests.
-- `dev.kit save` writes optional repo-local continuity files for later sessions.
+- `dev.kit action --refresh-context` writes optional repo-local continuity files for later sessions.
 
 ## Mental Model
 

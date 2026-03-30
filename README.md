@@ -4,7 +4,7 @@
 
 `dev.kit` is a repo-driven development tool for UDX engineering workflows.
 
-It works from standard repository evidence first: `README`, docs, tests, manifests, workflow files, deploy config, and command layers. It does not require custom repo metadata. `dev.kit bridge` translates that normal repo evidence into a cleaner contract for AI agents.
+It works from standard repository evidence first: `README`, docs, tests, manifests, workflow files, deploy config, and command layers. It does not require custom repo metadata. `dev.kit action` translates that repo evidence into grounded next steps for humans and AI agents.
 
 The goal is to let humans and agents enter almost any repo, recover its operating model from the repo itself, and improve it without engineering drift.
 
@@ -23,6 +23,7 @@ It is designed to keep repo work grounded in explicit contracts:
 - how humans and agents should work in it
 - how local `git/udx` repos relate to remote `github.com/udx/*` knowledge
 - which tools and formats define the operating surface: `git`, `gh`, `npm`, `docker`, `yml`
+- which dependency and tooling repos should be read when repo workflows depend on them
 
 The design goal is context-driven engineering through repo-driven mechanisms:
 
@@ -42,31 +43,17 @@ There is also a strict separation of responsibilities:
 
 `dev.kit explore`
 
+- Also the default when you run plain `dev.kit`.
 - Reports what a repo is, which workflows matter, and which refs to read first.
 - Surfaces the knowledgebase hierarchy and operating surface used across UDX repos.
+- Emits a concrete workflow contract from repo facts.
 
-`dev.kit`
+`dev.kit action`
 
-- Audits the current repo as a 12-factor engineering contract.
-- Returns a short improvement plan by default.
+- Audits the repo as an engineering contract and turns that into concrete next actions.
+- Combines factor findings, agent guidance, git workflow evaluation, and optional continuity refresh in one place.
 - `--json` returns the same model in machine-readable form.
-
-`dev.kit bridge`
-
-- Exposes the repo model for agents and automation.
-- Returns detected archetypes, factor statuses, entrypoints, priority refs, knowledge roots, and guidance so agents can work from grounded repo reality instead of guessing.
-- Does not require custom repo-only metadata. Optional saved context can help, but standard repo files remain the primary contract.
-
-`dev.kit save`
-
-- Saves repo-local working context into `./.udx/dev.kit/` for the next session.
-- Generates `todo.md`, `context.md`, and `refs.md` from the current repo state and warns before overwriting existing saved context.
-
-`dev.kit sync`
-
-- Evaluates the configured `dev.sync git` workflow for the current git repository.
-- Reports workflow state only. It does not create branches, push commits, or open pull requests.
-- Shows a short repo-focused summary in text mode and full workflow detail in JSON mode.
+- `--refresh-context` regenerates optional repo-local continuity files under `./.udx/dev.kit/`.
 
 `dev.kit learn`
 
@@ -77,12 +64,9 @@ There is also a strict separation of responsibilities:
 
 ```bash
 dev.kit explore
-dev.kit
-dev.kit --json
-dev.kit bridge --json
-dev.kit sync
+dev.kit action
+dev.kit action --json
 dev.kit learn
-dev.kit save
 ```
 
 ![compliance audit](assets/compliance-audit.svg)
@@ -91,7 +75,7 @@ dev.kit save
 
 ## Why It Matters
 
-Run `dev.kit` when a repo is new, drifting, hard to onboard into, or inconsistent across environments.
+Run `dev.kit explore` and `dev.kit action` when a repo is new, drifting, hard to onboard into, or inconsistent across environments.
 
 The value is operational clarity:
 
