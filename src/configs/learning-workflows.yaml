@@ -1,0 +1,18 @@
+kind: learningWorkflows
+version: udx.io/dev.kit/v1
+
+config:
+  workflows:
+    pr-lessons:
+      name: dev.learn pr
+      description: Generate lightweight lessons-learned from recent pull requests and route follow-ups into durable repo artifacts
+      sources:
+        - recent pull requests
+        - docs/pull-requests.md
+        - docs/engineering-guide.md
+        - ./.udx/dev.kit/*.md
+      destinations:
+        - lessons_report
+        - gh_issue
+        - wiki
+        - slack

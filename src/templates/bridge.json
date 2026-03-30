@@ -2,6 +2,11 @@
   "command": "{{command}}",
   "repo": "{{repo}}",
   "saved_context": {{saved_context}},
+  "priority_refs": {{priority_refs}},
+  "knowledge_base": {{knowledge_base}},
+  "knowledge_sources": {{knowledge_sources}},
+  "operating_surface": {{operating_surface}},
+  "responsibility_split": {{responsibility_split}},
   "model": {
     "archetype": "{{archetype}}",
     "archetypes": {{archetypes}},

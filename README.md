@@ -2,7 +2,9 @@
 
 ![dev.kit](assets/logo.svg)
 
-`dev.kit` is a 12-factor repo adapter.
+`dev.kit` is a 12-factor repo adapter for UDX development workflows.
+
+It is intended to work against normal repositories without requiring custom repo metadata. Standard engineering files remain the source of truth: `README`, docs, tests, manifests, workflow files, deploy config, and command layers. `dev.kit bridge` then translates that standard repo evidence into a cleaner contract for AI agents.
 
 It scans a repository for the workflow contracts that reduce drift across engineering teams: documentation, dependency contracts, config boundaries, verification entrypoints, runtime entrypoints, and build/release/run separation.
 
@@ -19,7 +21,33 @@ dev.kit
 
 This installs `dev.kit` into `~/.udx/dev.kit` and adds `dev.kit` to `~/.local/bin/dev.kit`. If `~/.local/bin` is not already on `PATH`, the installer prints the exact command to export it manually.
 
+It is designed to keep repo work grounded in explicit contracts:
+
+- what the repo is
+- how humans and agents should work in it
+- how local `git/udx` repos relate to remote `github.com/udx/*` knowledge
+- which tools and formats define the operating surface: `git`, `gh`, `npm`, `docker`, `yml`
+
+The design goal is context-driven engineering through repo-driven mechanisms:
+
+- 12-factor by default
+- repo-centric instead of agent-centric
+- test-driven development with smoke-first verification
+- markdown/yaml/mmd as durable working formats
+- self-contained contracts that are easy to extend without overengineering
+
+There is also a strict separation of responsibilities:
+
+- config plus scripts own deterministic workflow logic, discovery, and policy
+- agents consume repo context, saved refs, and command output instead of inventing behavior
+- anything critical to repeatability should live in the repo, not only in prompts
+
 ## Commands
+
+`dev.kit explore`
+
+- Reports what a repo is, which workflows matter, and which refs to read first.
+- Surfaces the knowledgebase hierarchy and operating surface used across UDX repos.
 
 `dev.kit`
 
@@ -30,7 +58,8 @@ This installs `dev.kit` into `~/.udx/dev.kit` and adds `dev.kit` to `~/.local/bi
 `dev.kit bridge`
 
 - Exposes the repo model for agents and automation.
-- Returns detected archetypes, factor statuses, entrypoints, and guidance so agents can work from grounded repo reality instead of guessing.
+- Returns detected archetypes, factor statuses, entrypoints, priority refs, knowledge roots, and guidance so agents can work from grounded repo reality instead of guessing.
+- Does not require custom repo-only metadata. Optional saved context can help, but standard repo files remain the primary contract.
 
 `dev.kit save`
 
@@ -43,14 +72,21 @@ This installs `dev.kit` into `~/.udx/dev.kit` and adds `dev.kit` to `~/.local/bi
 - Reports workflow state only. It does not create branches, push commits, or open pull requests.
 - Shows a short repo-focused summary in text mode and full workflow detail in JSON mode.
 
+`dev.kit learn`
+
+- Evaluates the configured lessons-learned workflow for recent pull requests.
+- Keeps the output lightweight and schema-driven so it can later feed GitHub issues, wiki pages, or Slack summaries without adding hidden logic.
+
 ## Examples
 
 ```bash
 dev.kit
+dev.kit explore
 dev.kit --json
 dev.kit bridge --json
 dev.kit save
 dev.kit sync
+dev.kit learn
 ```
 
 ![compliance audit](assets/compliance-audit.svg)
@@ -94,4 +130,4 @@ bash tests/smoke.sh
 bash tests/full.sh
 ```
 
-Run `tests/smoke.sh` for normal local work. Reserve `tests/full.sh` for broader regression coverage and CI-style verification.
+Run `tests/smoke.sh` for normal local work. Reserve `tests/full.sh` for broader regression coverage and CI-style verification. Keep new tests lightweight by default so agents can verify command contracts without pulling in heavy environment setup.

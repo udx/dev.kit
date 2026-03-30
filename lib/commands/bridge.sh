@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# @description: Show the agent-facing 12-factor repo model
+# @description: Show the agent-facing repo workflow model
 
 dev_kit_cmd_bridge() {
   local format="${1:-text}"
@@ -9,12 +9,14 @@ dev_kit_cmd_bridge() {
   local facets_json=""
   local guidance_json=""
   local saved_context_json=""
+  local priority_refs_json=""
 
   if [ "$format" = "json" ]; then
     facets_json="$(dev_kit_repo_facets_json "$repo_dir")"
     factors_json="$(dev_kit_repo_factor_summary_json "$repo_dir")"
     guidance_json="$(dev_kit_repo_agent_guidance_json "$repo_dir")"
     saved_context_json="$(dev_kit_repo_saved_context_json "$repo_dir")"
+    priority_refs_json="$(dev_kit_repo_priority_refs_json "$repo_dir")"
     dev_kit_template_render "bridge.json" \
       "command=bridge" \
       "repo=$(dev_kit_json_escape "$repo_dir")" \
@@ -25,7 +27,12 @@ dev_kit_cmd_bridge() {
       "profiles=$(dev_kit_repo_profiles_json "$repo_dir")" \
       "factors=$factors_json" \
       "guidance=$guidance_json" \
-      "saved_context=$saved_context_json"
+      "saved_context=$saved_context_json" \
+      "priority_refs=$priority_refs_json" \
+      "knowledge_base=$(dev_kit_knowledge_hierarchy_json)" \
+      "knowledge_sources=$(dev_kit_knowledge_preferred_sources | dev_kit_lines_to_json_array)" \
+      "operating_surface=$(dev_kit_knowledge_operating_surface_json)" \
+      "responsibility_split=$(dev_kit_knowledge_responsibility_split_json)"
     return 0
   fi
 
@@ -41,6 +48,9 @@ dev_kit_cmd_bridge() {
   else
     echo "saved context: none"
   fi
+  echo "knowledgebase: $(dev_kit_knowledge_local_repos_root) -> $(dev_kit_knowledge_remote_org_root)"
+  echo "software: tools=$(dev_kit_knowledge_operating_tools_text); formats=$(dev_kit_knowledge_operating_formats_text)"
+  echo "knowledge sources: $(dev_kit_knowledge_preferred_sources_text)"
   echo "agent guidance:"
   while IFS= read -r guidance; do
     [ -n "$guidance" ] || continue

@@ -3,6 +3,16 @@ version: udx.io/dev.kit/v1
 
 config:
   practices:
+    - id: context-driven-engineering
+      message: Keep the repository as the primary source of truth so context-driven engineering comes from repo contracts, saved context, docs, tests, and config instead of agent memory.
+    - id: repo-centric
+      message: Prefer repo-centric mechanisms that discover workflows, tools, formats, and refs dynamically instead of hardcoding per-agent assumptions.
+    - id: self-contained
+      message: Keep markdown, yaml, diagrams, tests, and command contracts self-contained in the repo so local and remote UDX workflows stay aligned.
+    - id: strict-agent-boundary
+      message: Keep deterministic workflow logic in repo config and scripts, and reserve AI agents for reading that contract, generating grounded summaries, and handling non-deterministic judgment without inventing hidden rules.
+    - id: standard-repo-first
+      message: Do not require custom repo files for dev.kit to work. Prefer standard engineering signals such as README, docs, tests, manifests, workflows, and deployment config, with saved repo-local context treated as optional acceleration only.
     - id: incremental-development
       message: Make sure to develop and test incrementally, so it is easier to detect problems early and build on verified behavior.
     - id: scoped-execution

@@ -1,0 +1,45 @@
+kind: knowledgeBase
+version: udx.io/dev.kit/v1
+
+config:
+  hierarchy:
+    local_repos_root: git/udx
+    remote_org_root: github.com/udx
+  operating_surface:
+    tools:
+      items:
+        - git
+        - gh
+        - npm
+        - docker
+    formats:
+      items:
+        - yml
+        - yaml
+  workflows:
+    typical:
+      items:
+        - dev.kit explore
+        - dev.kit bridge --json
+        - dev.kit sync
+        - dev.kit learn
+        - bash tests/smoke.sh
+  sources:
+    preferred:
+      items:
+        - repo docs, configs, templates, and tests
+        - repo-local saved context under ./.udx/dev.kit/
+        - local repos under git/udx
+        - remote repos and pull requests under github.com/udx/*
+        - codex sessions under ~/.codex/sessions when available
+  responsibility_split:
+    repo_mechanisms:
+      items:
+        - workflow discovery and policy in yaml catalogs and shell scripts
+        - command rendering, validation, and saved context generation
+        - smoke-first verification and scoped regression suites
+    agent_tasks:
+      items:
+        - read repo contracts and refs before making changes
+        - summarize context, propose changes, and apply bounded judgment
+        - turn repeatable behavior into repo config, tests, docs, or scripts

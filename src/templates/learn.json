@@ -1,0 +1,15 @@
+{
+  "command": "{{command}}",
+  "repo": "{{repo}}",
+  "workflow": {
+    "id": "{{workflow_id}}",
+    "name": "{{workflow_name}}"
+  },
+  "description": "{{description}}",
+  "sources": {{sources}},
+  "destinations": {{destinations}},
+  "knowledge_base": {{knowledge_base}},
+  "knowledge_sources": {{knowledge_sources}},
+  "operating_surface": {{operating_surface}},
+  "responsibility_split": {{responsibility_split}}
+}

@@ -61,6 +61,10 @@ dev_kit_repo_saved_context_files_json() {
   dev_kit_repo_context_file_paths "$1" | dev_kit_lines_to_json_array
 }
 
+dev_kit_repo_priority_refs_json() {
+  dev_kit_repo_priority_refs "$1" | dev_kit_lines_to_json_array
+}
+
 dev_kit_repo_saved_context_json() {
   local repo_dir="${1:-$(pwd)}"
   local present="false"

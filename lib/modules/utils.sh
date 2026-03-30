@@ -151,3 +151,78 @@ dev_kit_yaml_nested_mapping_list() {
     }
   ' "$file_path"
 }
+
+dev_kit_yaml_named_block_ids() {
+  local file_path="$1"
+  local section="$2"
+
+  awk -v section="$section" '
+    $1 == "config:" {
+      in_config = 1
+      next
+    }
+
+    in_config && $0 ~ "^  " section ":" {
+      in_section = 1
+      next
+    }
+
+    in_section && $0 ~ /^    [A-Za-z0-9_-]+:/ {
+      current = $1
+      sub(":", "", current)
+      print current
+    }
+  ' "$file_path"
+}
+
+dev_kit_yaml_named_block_scalar() {
+  local file_path="$1"
+  local section="$2"
+  local block_id="$3"
+  local key="$4"
+
+  awk -v section="$section" -v block_id="$block_id" -v key="$key" '
+    $1 == "config:" { in_config = 1; next }
+    in_config && $0 ~ "^  " section ":" { in_section = 1; next }
+    in_section && $0 ~ /^    [A-Za-z0-9_-]+:/ {
+      current = $1
+      sub(":", "", current)
+      in_target = (current == block_id)
+      next
+    }
+    in_target && $0 ~ "^      " key ":" {
+      sub(/^[[:space:]]*[A-Za-z0-9_-]+:[[:space:]]*/, "", $0)
+      print
+      exit
+    }
+  ' "$file_path"
+}
+
+dev_kit_yaml_named_block_list() {
+  local file_path="$1"
+  local section="$2"
+  local block_id="$3"
+  local key="$4"
+
+  awk -v section="$section" -v block_id="$block_id" -v key="$key" '
+    $1 == "config:" { in_config = 1; next }
+    in_config && $0 ~ "^  " section ":" { in_section = 1; next }
+    in_section && $0 ~ /^    [A-Za-z0-9_-]+:/ {
+      current = $1
+      sub(":", "", current)
+      in_target = (current == block_id)
+      in_list = 0
+      next
+    }
+    in_target && $0 ~ /^      [A-Za-z0-9_-]+:/ {
+      current = $1
+      sub(":", "", current)
+      in_list = (current == key)
+      next
+    }
+    in_list && $0 ~ /^        - / {
+      sub(/^[[:space:]]*-[[:space:]]*/, "", $0)
+      print
+    }
+  ' "$file_path"
+}

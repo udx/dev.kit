@@ -7,62 +7,15 @@ dev_kit_workflow_config_path() {
 }
 
 dev_kit_workflow_list() {
-  local file_path=""
-
-  file_path="$(dev_kit_workflow_config_path)"
-  awk '
-    $1 == "config:" { in_config = 1; next }
-    in_config && $0 ~ /^  workflows:/ { in_workflows = 1; next }
-    in_workflows && $0 ~ /^    [A-Za-z0-9_-]+:/ {
-      current = $1
-      sub(":", "", current)
-      print current
-    }
-  ' "$file_path"
+  dev_kit_yaml_named_block_ids "$(dev_kit_workflow_config_path)" "workflows"
 }
 
 dev_kit_workflow_description() {
-  local workflow_id="$1"
-  local file_path=""
-
-  file_path="$(dev_kit_workflow_config_path)"
-  awk -v workflow_id="$workflow_id" '
-    $1 == "config:" { in_config = 1; next }
-    in_config && $0 ~ /^  workflows:/ { in_workflows = 1; next }
-    in_workflows && $0 ~ /^    [A-Za-z0-9_-]+:/ {
-      current = $1
-      sub(":", "", current)
-      in_target = (current == workflow_id)
-      next
-    }
-    in_target && $0 ~ /^      description:/ {
-      sub(/^[[:space:]]*description:[[:space:]]*/, "", $0)
-      print
-      exit
-    }
-  ' "$file_path"
+  dev_kit_yaml_named_block_scalar "$(dev_kit_workflow_config_path)" "workflows" "$1" "description"
 }
 
 dev_kit_workflow_name() {
-  local workflow_id="$1"
-  local file_path=""
-
-  file_path="$(dev_kit_workflow_config_path)"
-  awk -v workflow_id="$workflow_id" '
-    $1 == "config:" { in_config = 1; next }
-    in_config && $0 ~ /^  workflows:/ { in_workflows = 1; next }
-    in_workflows && $0 ~ /^    [A-Za-z0-9_-]+:/ {
-      current = $1
-      sub(":", "", current)
-      in_target = (current == workflow_id)
-      next
-    }
-    in_target && $0 ~ /^      name:/ {
-      sub(/^[[:space:]]*name:[[:space:]]*/, "", $0)
-      print
-      exit
-    }
-  ' "$file_path"
+  dev_kit_yaml_named_block_scalar "$(dev_kit_workflow_config_path)" "workflows" "$1" "name"
 }
 
 dev_kit_workflow_step_lines() {
