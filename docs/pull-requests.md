@@ -1,5 +1,7 @@
 # Pull Requests
 
+This document is specifically about PR quality and review shape. It is intentionally narrower than the overall workflow or engineering guide.
+
 Useful pull requests are not just code dumps. They explain the operational change clearly enough that reviewers, CI, and future agents can understand what changed and why.
 
 ## What Good PRs Should Do

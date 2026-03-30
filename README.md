@@ -2,15 +2,11 @@
 
 ![dev.kit](assets/logo.svg)
 
-`dev.kit` is a 12-factor repo adapter for UDX development workflows.
+`dev.kit` is a repo-driven development tool for UDX engineering workflows.
 
-It is intended to work against normal repositories without requiring custom repo metadata. Standard engineering files remain the source of truth: `README`, docs, tests, manifests, workflow files, deploy config, and command layers. `dev.kit bridge` then translates that standard repo evidence into a cleaner contract for AI agents.
+It works from standard repository evidence first: `README`, docs, tests, manifests, workflow files, deploy config, and command layers. It does not require custom repo metadata. `dev.kit bridge` translates that normal repo evidence into a cleaner contract for AI agents.
 
-It scans a repository for the workflow contracts that reduce drift across engineering teams: documentation, dependency contracts, config boundaries, verification entrypoints, runtime entrypoints, and build/release/run separation.
-
-It also detects lightweight repo identity facets such as `framework:wordpress`, `runtime:container`, and `deploy:worker-config` so audit and bridge output can explain why a repo was classified a certain way.
-
-The goal is to make repos easier to work on the same way every time. As a repo gets closer to a 12-factor operating model, humans and agents need less tribal knowledge to build, test, run, deploy, and improve it.
+The goal is to let humans and agents enter almost any repo, recover its operating model from the repo itself, and improve it without engineering drift.
 
 ## Install
 
@@ -42,7 +38,7 @@ There is also a strict separation of responsibilities:
 - agents consume repo context, saved refs, and command output instead of inventing behavior
 - anything critical to repeatability should live in the repo, not only in prompts
 
-## Commands
+## Command Surface
 
 `dev.kit explore`
 
@@ -77,16 +73,16 @@ There is also a strict separation of responsibilities:
 - Evaluates the configured lessons-learned workflow for recent pull requests.
 - Keeps the output lightweight and schema-driven so it can later feed GitHub issues, wiki pages, or Slack summaries without adding hidden logic.
 
-## Examples
+## Quick Start
 
 ```bash
-dev.kit
 dev.kit explore
+dev.kit
 dev.kit --json
 dev.kit bridge --json
-dev.kit save
 dev.kit sync
 dev.kit learn
+dev.kit save
 ```
 
 ![compliance audit](assets/compliance-audit.svg)
@@ -113,12 +109,22 @@ dev.kit uninstall
 
 Removes the local install from `~/.udx/dev.kit` and the `~/.local/bin/dev.kit` symlink.
 
-Further docs:
+## Docs
 
-- [Workflow](/Users/jonyfq/git/udx/dev.kit/docs/workflow.md)
+Start here:
+
+- [Overview](/Users/jonyfq/git/udx/dev.kit/docs/overview.md)
+- [Commands](/Users/jonyfq/git/udx/dev.kit/docs/commands.md)
+- [Workflow Model](/Users/jonyfq/git/udx/dev.kit/docs/workflow.md)
+
+Contributor and repo guidance:
+
 - [Engineering Guide](/Users/jonyfq/git/udx/dev.kit/docs/engineering-guide.md)
-- [Pull Requests](/Users/jonyfq/git/udx/dev.kit/docs/pull-requests.md)
 - [Development](/Users/jonyfq/git/udx/dev.kit/docs/development.md)
+- [Pull Requests](/Users/jonyfq/git/udx/dev.kit/docs/pull-requests.md)
+
+Reference:
+
 - [Detection Facets](/Users/jonyfq/git/udx/dev.kit/docs/detection-facets.md)
 
 ## Tests

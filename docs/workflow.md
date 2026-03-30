@@ -1,16 +1,6 @@
 # Workflow
 
-## Command Model
-
-The repo is organized around a small command surface:
-
-- `dev.kit explore` explains what the repo is, which refs matter, and the expected working surface.
-- `dev.kit` audits the repo against practical workflow factors.
-- `dev.kit bridge --json` gives agents a grounded machine-readable connector.
-- `dev.kit sync` evaluates pull and push readiness through predefined Git workflows.
-- `dev.kit learn` evaluates lessons-learned workflows for recent PRs and durable follow-up outputs.
-
-Each command is intended to stay thin. Durable behavior belongs in YAML catalogs under [src/configs](/Users/jonyfq/git/udx/dev.kit/src/configs), not in ad hoc shell branching.
+This document explains the workflow model behind `dev.kit`, not the full user guide. For the product summary, start with [docs/overview.md](/Users/jonyfq/git/udx/dev.kit/docs/overview.md). For command-by-command reference, use [docs/commands.md](/Users/jonyfq/git/udx/dev.kit/docs/commands.md).
 
 ## Context-Driven Engineering
 
@@ -68,7 +58,7 @@ Each factor is reported as `present`, `partial`, or `missing`, with evidence and
 
 ## Human Workflow
 
-1. Run `dev.kit`.
+1. Run `dev.kit explore` or `dev.kit`.
 2. Read the missing or partial factors.
 3. Normalize the repo around one clear way to configure, verify, build, and run it.
 4. Re-run `dev.kit` to confirm the repo model is improving.

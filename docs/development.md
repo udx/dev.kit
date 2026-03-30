@@ -1,8 +1,16 @@
 # Development
 
+This document is for working on the `dev.kit` codebase itself. For product behavior and repo workflow concepts, start with [docs/overview.md](/Users/jonyfq/git/udx/dev.kit/docs/overview.md) and [docs/workflow.md](/Users/jonyfq/git/udx/dev.kit/docs/workflow.md).
+
 ## Test
 
-Canonical verification runs in the preconfigured worker container:
+Use focused verification first:
+
+```bash
+bash tests/smoke.sh
+```
+
+Use the broader worker-backed run when needed:
 
 ```bash
 bash tests/run.sh
@@ -10,6 +18,7 @@ bash tests/run.sh
 
 ## Notes
 
+- `bash tests/smoke.sh` is the preferred default during normal development.
 - `bash tests/run.sh` uses [deploy.yml](/Users/jonyfq/git/udx/dev.kit/deploy.yml) with the globally installed `worker` CLI.
 - The suite validates install, env setup, dynamic command discovery, Bash completion, and uninstall in a fresh temporary `HOME`.
 

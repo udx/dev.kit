@@ -1,5 +1,7 @@
 # Engineering Guide
 
+This document is about how to build `dev.kit`, not how to use it on another repo. For the user-facing model, see [docs/overview.md](/Users/jonyfq/git/udx/dev.kit/docs/overview.md), [docs/commands.md](/Users/jonyfq/git/udx/dev.kit/docs/commands.md), and [docs/workflow.md](/Users/jonyfq/git/udx/dev.kit/docs/workflow.md).
+
 `dev.kit` treats engineering workflow as part of the repository contract.
 
 The point is not ceremony. The point is reducing drift so teammates and agents can work the same repo in the same way without long discussions, hidden local habits, or guesswork.
@@ -11,6 +13,7 @@ The point is not ceremony. The point is reducing drift so teammates and agents c
 - Keep logic modularized and split by responsibility.
 - Keep configuration and output contracts in data or templates when possible instead of embedding structure in command code.
 - Keep module files under roughly `300-400` lines when possible. Split before a file becomes a catch-all.
+- Keep docs split by concern so product intent, workflow model, contributor rules, and PR guidance do not blur together.
 
 ## Structural Pattern
 
