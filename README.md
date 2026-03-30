@@ -39,9 +39,9 @@ This installs `dev.kit` into `~/.udx/dev.kit` and adds `dev.kit` to `~/.local/bi
 
 `dev.kit sync`
 
-- Evaluates the configured development sync workflow for the current git repository.
+- Evaluates the configured `dev.sync git` workflow for the current git repository.
 - Reports workflow state only. It does not create branches, push commits, or open pull requests.
-- Reports which git and GitHub review steps are done, pending, blocked, or skipped.
+- Shows a short repo-focused summary in text mode and full workflow detail in JSON mode.
 
 ## Examples
 

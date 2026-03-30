@@ -46,7 +46,8 @@ dev_kit_cmd_sync() {
     dev_kit_template_render "sync.json" \
       "command=sync" \
       "repo=$(dev_kit_json_escape "$repo_dir")" \
-      "workflow=$(dev_kit_json_escape "$workflow_id")" \
+      "workflow_id=$(dev_kit_json_escape "$workflow_id")" \
+      "workflow_name=$(dev_kit_json_escape "$(dev_kit_workflow_name "$workflow_id")")" \
       "mode=$(dev_kit_json_escape "$mode")" \
       "behavior=$(dev_kit_json_escape "$DEV_KIT_SYNC_BEHAVIOR")" \
       "description=$(dev_kit_json_escape "$(dev_kit_workflow_description "$workflow_id")")" \
@@ -60,13 +61,12 @@ dev_kit_cmd_sync() {
 
   dev_kit_template_render "sync.txt" \
     "repo_dir=$repo_dir" \
-    "workflow_id=$workflow_id" \
+    "workflow_name=$(dev_kit_workflow_name "$workflow_id")" \
     "mode=$mode" \
     "behavior=$DEV_KIT_SYNC_BEHAVIOR" \
-    "description=$(dev_kit_workflow_description "$workflow_id")" \
     "next_hint=$(dev_kit_sync_next_hint "$repo_dir")" \
-    "repo_state_text=$(dev_kit_sync_repo_state_text "$repo_dir")" \
-    "hooks_text=$(dev_kit_sync_hooks_text "$repo_dir")" \
-    "capabilities_text=$(dev_kit_sync_capabilities_text "$repo_dir")" \
+    "repo_state_text=$(dev_kit_sync_repo_state_compact_text "$repo_dir")" \
+    "hooks_text=$(dev_kit_sync_hooks_focus_text "$repo_dir")" \
+    "capabilities_text=$(dev_kit_sync_capability_warnings_text "$repo_dir")" \
     "steps_text=$(dev_kit_sync_steps_text "$repo_dir" "$workflow_id" "$mode")"
 }

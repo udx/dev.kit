@@ -4,6 +4,7 @@ version: udx.io/dev.kit/v1
 config:
   workflows:
     sync-git:
+      name: dev.sync git
       description: Evaluate local git workflow state without changing branches, remotes, or pull requests
       capabilities:
         required_commands:

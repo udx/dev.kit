@@ -7,6 +7,7 @@ DEV_KIT_SYNC_BEHAVIOR="evaluation-only"
 DEV_KIT_SYNC_BRANCH_ROLE_BASE="base"
 DEV_KIT_SYNC_BRANCH_ROLE_FEATURE="feature"
 DEV_KIT_SYNC_HOOKS_DIR_DEFAULT=".githooks"
+DEV_KIT_SYNC_TEXT_DEFAULT_MAX_NEXT_STEPS="4"
 
 dev_kit_sync_mode_rank() {
   case "$1" in
@@ -335,6 +336,37 @@ $(dev_kit_sync_hooks_lines "$repo_dir")
 EOF
 }
 
+dev_kit_sync_hooks_focus_text() {
+  local repo_dir="$1"
+  local line=""
+  local hook_name=""
+  local state=""
+  local summary=""
+  local recommendation=""
+  local matched=0
+
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    hook_name="${line%%|*}"
+    line="${line#*|}"
+    state="${line%%|*}"
+    line="${line#*|}"
+    summary="${line%%|*}"
+    recommendation="${line#*|}"
+    if [ "$state" = "present" ]; then
+      printf '  - %s: %s\n' "$hook_name" "$summary"
+      printf '    recommendation: %s\n' "$recommendation"
+      matched=1
+    fi
+  done <<EOF
+$(dev_kit_sync_hooks_lines "$repo_dir")
+EOF
+
+  if [ "$matched" -eq 0 ]; then
+    printf '  - none detected\n'
+  fi
+}
+
 dev_kit_sync_hooks_json() {
   local repo_dir="$1"
   local first=1
@@ -454,6 +486,49 @@ dev_kit_sync_repo_state_text() {
   done <<EOF
 $(dev_kit_sync_repo_state_lines "$repo_dir")
 EOF
+}
+
+dev_kit_sync_repo_state_compact_text() {
+  local repo_dir="$1"
+  local branch=""
+  local branch_role=""
+  local base_branch=""
+  local upstream=""
+  local ahead_behind=""
+  local behind=0
+  local ahead=0
+  local counts=""
+  local staged=0
+  local unstaged=0
+  local untracked=0
+  local worktree="clean"
+
+  branch="$(dev_kit_sync_current_branch "$repo_dir")"
+  branch_role="$(dev_kit_sync_branch_role "$repo_dir")"
+  base_branch="$(dev_kit_sync_default_branch "$repo_dir")"
+  upstream="$(dev_kit_sync_upstream_branch "$repo_dir")"
+  ahead_behind="$(dev_kit_sync_ahead_behind "$repo_dir")"
+  behind="${ahead_behind%%|*}"
+  ahead="${ahead_behind##*|}"
+  counts="$(dev_kit_sync_worktree_counts "$repo_dir")"
+  staged="${counts%%|*}"
+  counts="${counts#*|}"
+  unstaged="${counts%%|*}"
+  untracked="${counts##*|}"
+
+  if [ "$staged" -gt 0 ] || [ "$unstaged" -gt 0 ] || [ "$untracked" -gt 0 ]; then
+    worktree="dirty"
+  fi
+
+  printf '  - branch: %s (%s)\n' "$branch" "$branch_role"
+  printf '  - base: %s\n' "$base_branch"
+  printf '  - upstream: %s\n' "${upstream:-none}"
+  printf '  - sync: ahead %s, behind %s\n' "$ahead" "$behind"
+  if [ "$worktree" = "clean" ]; then
+    printf '  - worktree: clean\n'
+  else
+    printf '  - worktree: dirty (%s staged, %s unstaged, %s untracked)\n' "$staged" "$unstaged" "$untracked"
+  fi
 }
 
 dev_kit_sync_repo_state_json() {
@@ -770,15 +845,43 @@ $(dev_kit_sync_capability_lines "$repo_dir")
 EOF
 }
 
+dev_kit_sync_capability_warnings_text() {
+  local repo_dir="$1"
+  local line=""
+  local name=""
+  local status=""
+  local matched=0
+
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    name="${line%%|*}"
+    status="${line#*|}"
+    if [ "$status" = "available" ]; then
+      continue
+    fi
+    printf '  - %s: %s\n' "$name" "$status"
+    matched=1
+  done <<EOF
+$(dev_kit_sync_capability_lines "$repo_dir")
+EOF
+
+  if [ "$matched" -eq 0 ]; then
+    printf '  - all required capabilities look available\n'
+  fi
+}
+
 dev_kit_sync_steps_text() {
   local repo_dir="$1"
   local workflow_id="${2:-$DEV_KIT_SYNC_DEFAULT_WORKFLOW}"
   local mode="${3:-$DEV_KIT_SYNC_DEFAULT_MODE}"
+  local max_steps="${4:-$DEV_KIT_SYNC_TEXT_DEFAULT_MAX_NEXT_STEPS}"
   local line=""
   local step_id=""
   local step_label=""
   local status=""
   local summary=""
+  local printed=0
+  local total=0
 
   while IFS= read -r line; do
     [ -n "$line" ] || continue
@@ -788,10 +891,26 @@ dev_kit_sync_steps_text() {
     line="${line#*|}"
     status="${line%%|*}"
     summary="${line#*|}"
-    printf '  - %s: %s\n' "$step_id" "$status"
-    printf '    label: %s\n' "$step_label"
-    printf '    summary: %s\n' "$summary"
+    total=$((total + 1))
+    case "$status" in
+      done|skipped)
+        continue
+        ;;
+    esac
+    if [ "$printed" -lt "$max_steps" ]; then
+      printf '  - %s: %s\n' "$step_label" "$summary"
+      printed=$((printed + 1))
+    fi
   done <<EOF
 $(dev_kit_sync_step_lines "$repo_dir" "$workflow_id" "$mode")
 EOF
+
+  if [ "$printed" -eq 0 ]; then
+    printf '  - no immediate workflow actions\n'
+    return 0
+  fi
+
+  if [ "$total" -gt "$printed" ]; then
+    printf '  - additional workflow detail is available in --json output\n'
+  fi
 }

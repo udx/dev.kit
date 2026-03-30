@@ -1,6 +1,6 @@
 dev.kit sync
 repo: {{repo_dir}}
-workflow: {{workflow_id}}
+workflow: {{workflow_name}}
 mode: {{mode}}
 behavior: {{behavior}}
 hint: {{next_hint}}
@@ -13,5 +13,5 @@ hooks:
 
 capabilities:
 {{capabilities_text}}
-steps:
+next:
 {{steps_text}}

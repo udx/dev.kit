@@ -1,7 +1,10 @@
 {
   "command": "{{command}}",
   "repo": "{{repo}}",
-  "workflow": "{{workflow}}",
+  "workflow": {
+    "id": "{{workflow_id}}",
+    "name": "{{workflow_name}}"
+  },
   "mode": "{{mode}}",
   "behavior": "{{behavior}}",
   "description": "{{description}}",
