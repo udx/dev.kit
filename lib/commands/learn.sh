@@ -21,10 +21,7 @@ dev_kit_cmd_learn() {
       "sources=$(dev_kit_learning_workflow_sources "$workflow_id" | dev_kit_lines_to_json_array)" \
       "destinations=$(dev_kit_learning_destinations_json "$workflow_id")" \
       "knowledge_base=$(dev_kit_knowledge_hierarchy_json)" \
-      "knowledge_sources=$(dev_kit_knowledge_preferred_sources | dev_kit_lines_to_json_array)" \
-      "tooling_refs=$(dev_kit_tooling_repos_json)" \
-      "operating_surface=$(dev_kit_knowledge_operating_surface_json)" \
-      "responsibility_split=$(dev_kit_knowledge_responsibility_split_json)"
+      "knowledge_sources=$(dev_kit_knowledge_preferred_sources | dev_kit_lines_to_json_array)"
     return 0
   fi
 
@@ -44,13 +41,7 @@ EOF
   dev_kit_output_row "local repos" "$(dev_kit_knowledge_local_repos_root)"
   dev_kit_output_row "remote org" "$(dev_kit_knowledge_remote_org_root)"
   dev_kit_output_row "preferred sources" "$(dev_kit_knowledge_preferred_sources_text)"
-  dev_kit_output_row "dependency orgs" "$(dev_kit_tooling_dependency_orgs | dev_kit_lines_to_csv)"
-  dev_kit_output_section "tooling repos"
-  dev_kit_tooling_repos_text
-  dev_kit_output_section "responsibility split"
-  dev_kit_output_row "repo mechanisms" "$(dev_kit_knowledge_repo_mechanisms | dev_kit_lines_to_csv)"
-  dev_kit_output_row "agent tasks" "$(dev_kit_knowledge_agent_tasks | dev_kit_lines_to_csv)"
   dev_kit_output_section "next"
-  dev_kit_output_list_item "keep lessons lightweight and grounded in recent pull requests, docs, and saved repo context"
+  dev_kit_output_list_item "keep lessons lightweight and grounded in recent pull requests, docs, and repo-native context"
   dev_kit_output_list_item "promote durable follow-up into docs, issues, wiki pages, or slack summaries only when the workflow contract is explicit"
 }

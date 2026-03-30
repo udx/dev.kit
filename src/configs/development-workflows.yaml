@@ -3,8 +3,8 @@ version: udx.io/dev.kit/v1
 
 config:
   workflows:
-    sync-git:
-      name: dev.sync git
+    action-git:
+      name: dev.action git
       description: Evaluate local git workflow state without changing branches, remotes, or pull requests
       capabilities:
         required_commands:
@@ -15,41 +15,31 @@ config:
         - id: worktree_status
           label: Inspect git status
           check: git_status
-          min_mode: dev
         - id: change_analysis
           label: Analyze local changes
           check: change_analysis
-          min_mode: dev
         - id: branch_analysis
           label: Analyze branch state
           check: branch_analysis
-          min_mode: dev
         - id: logical_commits
           label: Group logical commits
           check: logical_commits
-          min_mode: dev
         - id: release_metadata
           label: Bump version and changelog if supported
           check: release_metadata
-          min_mode: dev
         - id: branch_prepare
           label: Create or validate feature branch
           check: branch_prepare
-          min_mode: dev
         - id: remote_push
           label: Push branch to remote
           check: remote_push
-          min_mode: ci
         - id: pr_prepare
           label: Generate pull request description
           check: pr_prepare
-          min_mode: pr
         - id: pr_create
           label: Create pull request
           check: pr_create
-          min_mode: pr
         - id: actions_verify
           label: Verify GitHub Actions status
           check: actions_verify
-          min_mode: pr
           optional: true

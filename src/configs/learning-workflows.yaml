@@ -11,7 +11,6 @@ config:
         - docs/pull-requests.md
         - docs/engineering-guide.md
         - TODO.md
-        - docs/todo.md
         - refs.md
       destinations:
         - lessons_report

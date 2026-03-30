@@ -209,12 +209,6 @@ if [ "$command" = "--json" ]; then
 fi
 
 case "$command" in
-  audit|bridge|sync)
-    command="action"
-    ;;
-esac
-
-case "$command" in
   help|-h|--help)
     usage
     ;;

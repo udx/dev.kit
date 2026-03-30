@@ -5,7 +5,7 @@
 `dev.kit explore`
 
 - Best first step when entering a repo.
-- Reports repo identity, priority refs, operating surface, knowledge sources, and typical workflows.
+- Reports repo identity, priority refs, source chain, knowledge sources, and workflow contract.
 
 `dev.kit action`
 

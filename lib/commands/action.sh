@@ -7,7 +7,6 @@ dev_kit_cmd_action() {
   local repo_dir="$(pwd)"
   local repo_root=""
   local workflow_id="$DEV_KIT_SYNC_DEFAULT_WORKFLOW"
-  local mode="$DEV_KIT_SYNC_DEFAULT_MODE"
   local arg=""
   local positional_seen=0
   local repo_name=""
@@ -23,15 +22,6 @@ dev_kit_cmd_action() {
   while [ "$#" -gt 0 ]; do
     arg="$1"
     case "$arg" in
-      --dev)
-        mode="dev"
-        ;;
-      --ci)
-        mode="ci"
-        ;;
-      --pr)
-        mode="pr"
-        ;;
       *)
         if [ "$positional_seen" -eq 0 ]; then
           repo_dir="$arg"
@@ -55,14 +45,13 @@ dev_kit_cmd_action() {
     findings_json="$(dev_kit_repo_findings_json "$repo_dir")"
     priority_refs_json="$(dev_kit_repo_priority_refs_json "$repo_dir")"
     if dev_kit_sync_has_git_repo "$repo_dir"; then
-      git_workflow_json="$(dev_kit_action_git_workflow_json "$repo_dir" "$workflow_id" "$mode")"
+      git_workflow_json="$(dev_kit_action_git_workflow_json "$repo_dir" "$workflow_id")"
     fi
     dev_kit_template_render "action.json" \
       "command=action" \
       "repo=$(dev_kit_json_escape "$repo_name")" \
       "path=$(dev_kit_json_escape "$repo_dir")" \
       "markers=$(dev_kit_repo_markers_json "$repo_dir")" \
-      "mode=$(dev_kit_json_escape "$mode")" \
       "behavior=$(dev_kit_json_escape "$DEV_KIT_SYNC_BEHAVIOR")" \
       "archetype=$(dev_kit_json_escape "$(dev_kit_repo_primary_archetype "$repo_dir")")" \
       "archetypes=$(dev_kit_repo_archetypes_json "$repo_dir")" \
@@ -75,9 +64,8 @@ dev_kit_cmd_action() {
       "priority_refs=$priority_refs_json" \
       "knowledge_base=$(dev_kit_knowledge_hierarchy_json)" \
       "knowledge_sources=$(dev_kit_knowledge_preferred_sources | dev_kit_lines_to_json_array)" \
-      "tooling_refs=$(dev_kit_tooling_repos_json)" \
-      "operating_surface=$(dev_kit_knowledge_operating_surface_json)" \
-      "responsibility_split=$(dev_kit_knowledge_responsibility_split_json)" \
+      "source_chain=$(dev_kit_repo_source_chain_json "$repo_dir")" \
+      "module_docs=$(dev_kit_repo_infra_module_docs_json "$repo_dir")" \
       "workflow_contract=$(dev_kit_repo_workflow_json "$repo_dir")" \
       "git_workflow=$git_workflow_json"
     return 0
@@ -88,7 +76,6 @@ dev_kit_cmd_action() {
   dev_kit_output_row "repo" "$repo_name"
   dev_kit_output_row "path" "$repo_dir"
   dev_kit_output_row "markers" "$(dev_kit_repo_markers_text "$repo_dir")"
-  dev_kit_output_row "mode" "$mode"
   dev_kit_output_row "behavior" "$DEV_KIT_SYNC_BEHAVIOR"
   dev_kit_output_row "archetype" "$(dev_kit_repo_primary_archetype "$repo_dir")"
   dev_kit_output_row "archetypes" "$(dev_kit_repo_archetypes_text "$repo_dir")"
@@ -110,6 +97,10 @@ EOF
   dev_kit_output_list_from_lines <<EOF
 $(dev_kit_repo_findings_text "$repo_dir")
 EOF
+  if [ -n "$(dev_kit_repo_source_chain_text "$repo_dir")" ]; then
+    dev_kit_output_section "source chain"
+    dev_kit_repo_source_chain_text "$repo_dir"
+  fi
   dev_kit_output_section "workflow contract"
   dev_kit_repo_workflow_text "$repo_dir"
   if dev_kit_sync_has_git_repo "$repo_dir"; then
@@ -126,7 +117,7 @@ EOF
     dev_kit_output_row "capabilities" ""
     dev_kit_sync_capability_warnings_text "$repo_dir"
     dev_kit_output_row "next" ""
-    dev_kit_sync_steps_text "$repo_dir" "$workflow_id" "$mode"
+    dev_kit_sync_steps_text "$repo_dir" "$workflow_id"
   else
     dev_kit_output_section "git workflow"
     dev_kit_output_row "status" "unavailable"
@@ -140,17 +131,15 @@ EOF
 dev_kit_action_git_workflow_json() {
   local repo_dir="$1"
   local workflow_id="$2"
-  local mode="$3"
 
-  printf '{ "available": true, "workflow": { "id": "%s", "name": "%s" }, "mode": "%s", "behavior": "%s", "description": "%s", "next_hint": "%s", "repo_state": %s, "hooks": %s, "capabilities": %s, "steps": %s }' \
+  printf '{ "available": true, "workflow": { "id": "%s", "name": "%s" }, "behavior": "%s", "description": "%s", "next_hint": "%s", "repo_state": %s, "hooks": %s, "capabilities": %s, "steps": %s }' \
     "$(dev_kit_json_escape "$workflow_id")" \
     "$(dev_kit_json_escape "$(dev_kit_workflow_name "$workflow_id")")" \
-    "$(dev_kit_json_escape "$mode")" \
     "$(dev_kit_json_escape "$DEV_KIT_SYNC_BEHAVIOR")" \
     "$(dev_kit_json_escape "$(dev_kit_workflow_description "$workflow_id")")" \
     "$(dev_kit_json_escape "$(dev_kit_sync_next_hint "$repo_dir")")" \
     "$(dev_kit_sync_repo_state_json "$repo_dir")" \
     "$(dev_kit_sync_hooks_json "$repo_dir")" \
     "$(dev_kit_sync_capabilities_json "$repo_dir")" \
-    "$(dev_kit_sync_steps_json "$repo_dir" "$workflow_id" "$mode")"
+    "$(dev_kit_sync_steps_json "$repo_dir" "$workflow_id")"
 }

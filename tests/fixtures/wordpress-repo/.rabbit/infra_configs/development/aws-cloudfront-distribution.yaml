@@ -1,0 +1,7 @@
+services:
+  - name: "AWS Cloud Front Distribution"
+    module: "aws-cloudfront-distribution"
+    id: "wordpress-site-#{Environment}"
+    configurations:
+      aliases:
+        - "wordpress-site-#{Environment}.rabbit.ci"

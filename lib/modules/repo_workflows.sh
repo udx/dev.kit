@@ -5,9 +5,14 @@ dev_kit_repo_workflow_steps() {
   local verify_cmd=""
   local build_cmd=""
   local run_cmd=""
+  local dependency_repos=""
 
   printf "read_repo|Read the highest-priority repo refs first|%s\n" "$(dev_kit_repo_priority_refs "$repo_dir" | dev_kit_lines_to_csv)"
-  printf "read_tooling|Inspect shared tooling and dependency repos when workflows depend on them|%s\n" "$(dev_kit_tooling_repo_lines | awk -F'|' '{print $1}' | dev_kit_lines_to_csv)"
+
+  dependency_repos="$(dev_kit_repo_dependency_repo_text "$repo_dir")"
+  if [ "$dependency_repos" != "none" ]; then
+    printf "trace_deps|Inspect discovered repo dependencies referenced by workflows, package manifests, or container images|%s\n" "$dependency_repos"
+  fi
 
   verify_cmd="$(dev_kit_repo_factor_entrypoint "$repo_dir" "verification" || true)"
   if [ -n "$verify_cmd" ]; then

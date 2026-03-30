@@ -1,10 +1,12 @@
-name: Deploy
+name: Infrastructure Build
 
 on:
   workflow_dispatch:
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "deploy"
+  infrastructure:
+    uses: udx/gh-workflows/.github/workflows/infra-build.yml@master
+    with:
+      project_id: ${{ vars.GCP_PROJECT_ID }}
+      gcp_auth_provider: ${{ vars.GCP_AUTH_PROVIDER }}
+      gcp_service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}

@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
-DEV_KIT_SYNC_DEFAULT_WORKFLOW="sync-git"
-DEV_KIT_SYNC_DEFAULT_MODE="dev"
+DEV_KIT_SYNC_DEFAULT_WORKFLOW="action-git"
 DEV_KIT_SYNC_BASE_BRANCH_NAMES="main master development staging trunk"
 DEV_KIT_SYNC_BEHAVIOR="evaluation-only"
 DEV_KIT_SYNC_BRANCH_ROLE_BASE="base"
@@ -10,21 +9,66 @@ DEV_KIT_SYNC_HOOKS_DIR_DEFAULT=".githooks"
 DEV_KIT_SYNC_TEXT_DEFAULT_MAX_NEXT_STEPS="4"
 DEV_KIT_SYNC_GH_AUTH_STATE_CACHE=""
 DEV_KIT_SYNC_GH_AUTH_STATE_CACHE_READY=0
+DEV_KIT_WORKFLOW_CONFIG_FILE="src/configs/development-workflows.yaml"
 
-dev_kit_sync_mode_rank() {
-  case "$1" in
-    dev) printf "%s" "1" ;;
-    ci) printf "%s" "2" ;;
-    pr) printf "%s" "3" ;;
-    *) printf "%s" "0" ;;
-  esac
+dev_kit_workflow_config_path() {
+  printf "%s" "$REPO_DIR/$DEV_KIT_WORKFLOW_CONFIG_FILE"
 }
 
-dev_kit_sync_mode_allows_step() {
-  local mode="${1:-$DEV_KIT_SYNC_DEFAULT_MODE}"
-  local min_mode="${2:-dev}"
+dev_kit_workflow_description() {
+  dev_kit_yaml_named_block_scalar "$(dev_kit_workflow_config_path)" "workflows" "$1" "description"
+}
 
-  [ "$(dev_kit_sync_mode_rank "$mode")" -ge "$(dev_kit_sync_mode_rank "$min_mode")" ]
+dev_kit_workflow_name() {
+  dev_kit_yaml_named_block_scalar "$(dev_kit_workflow_config_path)" "workflows" "$1" "name"
+}
+
+dev_kit_workflow_step_lines() {
+  local workflow_id="$1"
+
+  awk -v workflow_id="$workflow_id" '
+    $1 == "config:" { in_config = 1; next }
+    in_config && $0 ~ /^  workflows:/ { in_workflows = 1; next }
+    in_workflows && $0 ~ /^    [A-Za-z0-9_-]+:/ {
+      current = $1
+      sub(":", "", current)
+      in_target = (current == workflow_id)
+      in_steps = 0
+      step_id = ""
+      step_label = ""
+      step_check = ""
+      next
+    }
+    in_target && $0 ~ /^      steps:/ {
+      in_steps = 1
+      next
+    }
+    in_steps && $0 ~ /^        - id:/ {
+      if (step_id != "") {
+        printf "%s|%s|%s\n", step_id, step_label, step_check
+      }
+      sub(/^[[:space:]]*-[[:space:]]*id:[[:space:]]*/, "", $0)
+      step_id = $0
+      step_label = ""
+      step_check = ""
+      next
+    }
+    in_steps && $0 ~ /^          label:/ {
+      sub(/^[[:space:]]*label:[[:space:]]*/, "", $0)
+      step_label = $0
+      next
+    }
+    in_steps && $0 ~ /^          check:/ {
+      sub(/^[[:space:]]*check:[[:space:]]*/, "", $0)
+      step_check = $0
+      next
+    }
+    END {
+      if (step_id != "") {
+        printf "%s|%s|%s\n", step_id, step_label, step_check
+      }
+    }
+  ' "$(dev_kit_workflow_config_path)"
 }
 
 dev_kit_sync_has_git_repo() {
@@ -614,7 +658,6 @@ dev_kit_sync_next_hint() {
 dev_kit_sync_step_state() {
   local repo_dir="$1"
   local step_id="$2"
-  local mode="${3:-$DEV_KIT_SYNC_DEFAULT_MODE}"
   local branch=""
   local upstream=""
   local default_branch=""
@@ -682,10 +725,6 @@ dev_kit_sync_step_state() {
       fi
       ;;
     remote_push)
-      if ! dev_kit_sync_mode_allows_step "$mode" "ci"; then
-        printf "%s" "skipped|Dev mode stops before remote push"
-        return 0
-      fi
       if [ "$(dev_kit_sync_remote_state "$repo_dir")" != "available" ]; then
         printf "%s" "blocked|origin remote is missing"
       elif [ -n "$upstream" ]; then
@@ -695,14 +734,6 @@ dev_kit_sync_step_state() {
       fi
       ;;
     pr_prepare)
-      if ! dev_kit_sync_mode_allows_step "$mode" "ci"; then
-        printf "%s" "skipped|Dev mode does not prepare a pull request yet"
-        return 0
-      fi
-      if ! dev_kit_sync_mode_allows_step "$mode" "pr"; then
-        printf "%s" "skipped|CI mode stops after push and does not prepare a pull request"
-        return 0
-      fi
       if [ "$(dev_kit_sync_remote_state "$repo_dir")" != "available" ]; then
         printf "%s" "blocked|A remote is required before preparing a pull request"
       else
@@ -710,14 +741,6 @@ dev_kit_sync_step_state() {
       fi
       ;;
     pr_create)
-      if ! dev_kit_sync_mode_allows_step "$mode" "ci"; then
-        printf "%s" "skipped|Dev mode does not create a pull request"
-        return 0
-      fi
-      if ! dev_kit_sync_mode_allows_step "$mode" "pr"; then
-        printf "%s" "skipped|CI mode does not create a pull request"
-        return 0
-      fi
       if [ "$gh_state" = "missing" ]; then
         printf "%s" "blocked|gh CLI is not installed"
       elif [ "$gh_state" = "unauthenticated" ]; then
@@ -729,10 +752,6 @@ dev_kit_sync_step_state() {
       fi
       ;;
     actions_verify)
-      if ! dev_kit_sync_mode_allows_step "$mode" "pr"; then
-        printf "%s" "skipped|Workflow verification is reserved for pr mode after pull request creation"
-        return 0
-      fi
       if [ "$gh_state" = "available" ]; then
         printf "%s" "pending|Verify related GitHub Actions after the pull request exists"
       else
@@ -748,13 +767,10 @@ dev_kit_sync_step_state() {
 dev_kit_sync_step_lines() {
   local repo_dir="$1"
   local workflow_id="${2:-$DEV_KIT_SYNC_DEFAULT_WORKFLOW}"
-  local mode="${3:-$DEV_KIT_SYNC_DEFAULT_MODE}"
   local step_line=""
   local step_id=""
   local step_label=""
   local step_check=""
-  local step_min_mode=""
-  local step_optional=""
   local state_line=""
   local status=""
   local summary=""
@@ -766,13 +782,7 @@ dev_kit_sync_step_lines() {
     step_label="${step_line%%|*}"
     step_line="${step_line#*|}"
     step_check="${step_line%%|*}"
-    step_line="${step_line#*|}"
-    step_min_mode="${step_line%%|*}"
-    step_optional="${step_line##*|}"
-    if ! dev_kit_sync_mode_allows_step "$mode" "$step_min_mode"; then
-      continue
-    fi
-    state_line="$(dev_kit_sync_step_state "$repo_dir" "$step_id" "$mode")"
+    state_line="$(dev_kit_sync_step_state "$repo_dir" "$step_id")"
     status="${state_line%%|*}"
     summary="${state_line#*|}"
     printf "%s|%s|%s|%s\n" "$step_id" "$step_label" "$status" "$summary"
@@ -784,7 +794,6 @@ EOF
 dev_kit_sync_steps_json() {
   local repo_dir="$1"
   local workflow_id="${2:-$DEV_KIT_SYNC_DEFAULT_WORKFLOW}"
-  local mode="${3:-$DEV_KIT_SYNC_DEFAULT_MODE}"
   local first=1
   local line=""
   local step_id=""
@@ -808,7 +817,7 @@ dev_kit_sync_steps_json() {
       "$step_id" "$step_label" "$status" "$(dev_kit_json_escape "$summary")"
     first=0
   done <<EOF
-$(dev_kit_sync_step_lines "$repo_dir" "$workflow_id" "$mode")
+$(dev_kit_sync_step_lines "$repo_dir" "$workflow_id")
 EOF
   if [ "$first" -eq 0 ]; then
     printf '\n  '
@@ -886,8 +895,7 @@ EOF
 dev_kit_sync_steps_text() {
   local repo_dir="$1"
   local workflow_id="${2:-$DEV_KIT_SYNC_DEFAULT_WORKFLOW}"
-  local mode="${3:-$DEV_KIT_SYNC_DEFAULT_MODE}"
-  local max_steps="${4:-$DEV_KIT_SYNC_TEXT_DEFAULT_MAX_NEXT_STEPS}"
+  local max_steps="${3:-$DEV_KIT_SYNC_TEXT_DEFAULT_MAX_NEXT_STEPS}"
   local line=""
   local step_id=""
   local step_label=""
@@ -915,7 +923,7 @@ dev_kit_sync_steps_text() {
       printed=$((printed + 1))
     fi
   done <<EOF
-$(dev_kit_sync_step_lines "$repo_dir" "$workflow_id" "$mode")
+$(dev_kit_sync_step_lines "$repo_dir" "$workflow_id")
 EOF
 
   if [ "$printed" -eq 0 ]; then

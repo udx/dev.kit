@@ -30,11 +30,9 @@ dev_kit_cmd_explore() {
       "priority_refs=$(dev_kit_repo_priority_refs_json "$repo_dir")" \
       "knowledge_base=$(dev_kit_knowledge_hierarchy_json)" \
       "knowledge_sources=$(dev_kit_knowledge_preferred_sources | dev_kit_lines_to_json_array)" \
-      "tooling_refs=$(dev_kit_tooling_repos_json)" \
-      "operating_surface=$(dev_kit_knowledge_operating_surface_json)" \
-      "responsibility_split=$(dev_kit_knowledge_responsibility_split_json)" \
-      "workflow_contract=$(dev_kit_repo_workflow_json "$repo_dir")" \
-      "typical_workflows=$(dev_kit_knowledge_typical_workflows_json)"
+      "source_chain=$(dev_kit_repo_source_chain_json "$repo_dir")" \
+      "module_docs=$(dev_kit_repo_infra_module_docs_json "$repo_dir")" \
+      "workflow_contract=$(dev_kit_repo_workflow_json "$repo_dir")"
     return 0
   fi
 
@@ -49,28 +47,17 @@ dev_kit_cmd_explore() {
   dev_kit_output_row "profile" "$(dev_kit_repo_primary_profile "$repo_dir")"
   dev_kit_output_row "profiles" "$(dev_kit_repo_profiles_text "$repo_dir")"
 
-  dev_kit_output_section "software"
-  dev_kit_output_row "tools" "$(dev_kit_knowledge_operating_tools_text)"
-  dev_kit_output_row "formats" "$(dev_kit_knowledge_operating_formats_text)"
-
   dev_kit_output_section "knowledgebase"
   dev_kit_output_row "local repos" "$(dev_kit_knowledge_local_repos_root)"
   dev_kit_output_row "remote org" "$(dev_kit_knowledge_remote_org_root)"
   dev_kit_output_row "preferred sources" "$(dev_kit_knowledge_preferred_sources_text)"
-  dev_kit_output_row "standard reading" "$(dev_kit_tooling_standard_reading_order | dev_kit_lines_to_csv)"
   dev_kit_output_row "workflow refs" "$(dev_kit_repo_workflow_refs_text "$repo_dir")"
-
-  dev_kit_output_section "typical workflows"
-  dev_kit_output_list_from_lines <<EOF
-$(dev_kit_knowledge_typical_workflows)
-EOF
-  dev_kit_output_section "tooling repos"
-  dev_kit_tooling_repos_text
+  if [ -n "$(dev_kit_repo_source_chain_text "$repo_dir")" ]; then
+    dev_kit_output_section "source chain"
+    dev_kit_repo_source_chain_text "$repo_dir"
+  fi
   dev_kit_output_section "workflow contract"
   dev_kit_repo_workflow_text "$repo_dir"
-  dev_kit_output_section "responsibility split"
-  dev_kit_output_row "repo mechanisms" "$(dev_kit_knowledge_repo_mechanisms | dev_kit_lines_to_csv)"
-  dev_kit_output_row "agent tasks" "$(dev_kit_knowledge_agent_tasks | dev_kit_lines_to_csv)"
   dev_kit_output_section "priority refs"
   dev_kit_output_list_from_lines <<EOF
 $(dev_kit_repo_priority_refs "$repo_dir")

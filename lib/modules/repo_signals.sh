@@ -5,6 +5,32 @@ DEV_KIT_REPO_ROOT_CACHE_VALUE=""
 DEV_KIT_REPO_MARKERS_CACHE_REPO=""
 DEV_KIT_REPO_MARKERS_CACHE_VALUE=""
 
+dev_kit_detection_catalog_path() {
+  printf "%s" "$REPO_DIR/src/configs/detection-patterns.yaml"
+}
+
+dev_kit_detection_signals_path() {
+  printf "%s" "$REPO_DIR/src/configs/detection-signals.yaml"
+}
+
+dev_kit_detection_pattern() {
+  local kind="$1"
+
+  dev_kit_yaml_mapping_scalar "$(dev_kit_detection_catalog_path)" "command_patterns" "$kind"
+}
+
+dev_kit_detection_list() {
+  local list_name="$1"
+
+  dev_kit_yaml_mapping_list "$(dev_kit_detection_signals_path)" "lists" "$list_name"
+}
+
+dev_kit_detection_scalar() {
+  local key="$1"
+
+  dev_kit_yaml_mapping_scalar "$(dev_kit_detection_signals_path)" "scalars" "$key"
+}
+
 dev_kit_repo_name() {
   basename "${1:-$(pwd)}"
 }
@@ -44,7 +70,7 @@ EOF
 dev_kit_repo_has_root_marker() {
   local repo_dir="${1:-$(pwd)}"
 
-  if dev_kit_sync_has_git_repo "$repo_dir"; then
+  if [ -d "$repo_dir/.git" ]; then
     return 0
   fi
 
@@ -63,24 +89,37 @@ dev_kit_repo_has_root_marker() {
   return 1
 }
 
+dev_kit_repo_has_identity_marker() {
+  local repo_dir="${1:-$(pwd)}"
+
+  if [ -d "$repo_dir/.git" ] || [ -d "$repo_dir/.github/workflows" ] || [ -d "$repo_dir/.rabbit" ]; then
+    return 0
+  fi
+
+  if [ -f "$repo_dir/wp-config.php" ] || [ -f "$repo_dir/package.json" ] || [ -f "$repo_dir/composer.json" ]; then
+    return 0
+  fi
+
+  if [ -f "$repo_dir/Dockerfile" ] || [ -f "$repo_dir/deploy.yml" ] || [ -f "$repo_dir/deploy.yaml" ]; then
+    return 0
+  fi
+
+  if [ -f "$repo_dir/Makefile" ] || [ -f "$repo_dir/makefile" ]; then
+    return 0
+  fi
+
+  return 1
+}
+
 dev_kit_repo_root() {
   local input_dir="${1:-$(pwd)}"
   local repo_dir=""
   local parent_dir=""
-  local git_root=""
 
   repo_dir="$(cd "$input_dir" 2>/dev/null && pwd || printf '%s' "$input_dir")"
 
   if [ "$DEV_KIT_REPO_ROOT_CACHE_INPUT" = "$repo_dir" ]; then
     printf "%s" "$DEV_KIT_REPO_ROOT_CACHE_VALUE"
-    return 0
-  fi
-
-  git_root="$(git -C "$repo_dir" rev-parse --show-toplevel 2>/dev/null || true)"
-  if [ -n "$git_root" ]; then
-    DEV_KIT_REPO_ROOT_CACHE_INPUT="$repo_dir"
-    DEV_KIT_REPO_ROOT_CACHE_VALUE="$git_root"
-    printf "%s" "$git_root"
     return 0
   fi
 
@@ -113,7 +152,7 @@ dev_kit_repo_marker_lines() {
   fi
 
   {
-    if dev_kit_sync_has_git_repo "$repo_dir"; then
+    if [ -d "$repo_dir/.git" ]; then
       printf '%s\n' "git:.git"
     fi
     [ -f "$repo_dir/README.md" ] && printf '%s\n' "docs:README.md"

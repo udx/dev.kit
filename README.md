@@ -22,7 +22,7 @@ It is designed to keep repo work grounded in explicit contracts:
 - what the repo is
 - how humans and agents should work in it
 - how local `git/udx` repos relate to remote `github.com/udx/*` knowledge
-- which tools and formats define the operating surface: `git`, `gh`, `npm`, `docker`, `yml`
+- which tools and formats define the working surface: `git`, `gh`, `npm`, `docker`, `yml`
 - which dependency and tooling repos should be read when repo workflows depend on them
 
 The design goal is context-driven engineering through repo-driven mechanisms:
@@ -44,7 +44,7 @@ There is also a strict separation of responsibilities:
 `dev.kit explore`
 
 - Reports what a repo is, which workflows matter, and which refs to read first.
-- Surfaces the knowledgebase hierarchy and operating surface used across UDX repos.
+- Surfaces the knowledgebase hierarchy and repo-native sources used across UDX repos.
 - Emits a concrete workflow contract from repo facts.
 
 `dev.kit action`
@@ -66,10 +66,6 @@ dev.kit action
 dev.kit action --json
 dev.kit learn
 ```
-
-![compliance audit](assets/compliance-audit.svg)
-
-![dev.kit bridge](assets/dev-kit-bridge.svg)
 
 ## Why It Matters
 
@@ -114,8 +110,9 @@ Reference:
 Use focused checks during development:
 
 ```bash
-bash tests/smoke.sh
-bash tests/full.sh
+bash tests/smoke.sh --only home,explore
+bash tests/smoke.sh --only action,learn
+bash tests/full.sh --only repo-family
 ```
 
-Run `tests/smoke.sh` for normal local work. Reserve `tests/full.sh` for broader regression coverage and CI-style verification. Keep new tests lightweight by default so agents can verify command contracts without pulling in heavy environment setup.
+Run only the slices you are changing during local work. Reserve broader `tests/full.sh` runs for repo-family regression coverage and CI-style verification. Keep new tests lightweight by default so agents can verify command contracts without pulling in heavy environment setup.

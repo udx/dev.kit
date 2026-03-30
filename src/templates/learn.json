@@ -9,8 +9,5 @@
   "sources": {{sources}},
   "destinations": {{destinations}},
   "knowledge_base": {{knowledge_base}},
-  "knowledge_sources": {{knowledge_sources}},
-  "tooling_refs": {{tooling_refs}},
-  "operating_surface": {{operating_surface}},
-  "responsibility_split": {{responsibility_split}}
+  "knowledge_sources": {{knowledge_sources}}
 }

@@ -3,7 +3,6 @@
   "repo": "{{repo}}",
   "path": "{{path}}",
   "markers": {{markers}},
-  "mode": "{{mode}}",
   "behavior": "{{behavior}}",
   "model": {
     "archetype": "{{archetype}}",
@@ -18,9 +17,8 @@
   "priority_refs": {{priority_refs}},
   "knowledge_base": {{knowledge_base}},
   "knowledge_sources": {{knowledge_sources}},
-  "tooling_refs": {{tooling_refs}},
-  "operating_surface": {{operating_surface}},
-  "responsibility_split": {{responsibility_split}},
+  "source_chain": {{source_chain}},
+  "module_docs": {{module_docs}},
   "workflow_contract": {{workflow_contract}},
   "git_workflow": {{git_workflow}}
 }
