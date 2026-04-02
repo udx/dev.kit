@@ -152,21 +152,53 @@ dev_kit_yaml_nested_mapping_list() {
   ' "$file_path"
 }
 
-dev_kit_yaml_named_block_ids() {
+dev_kit_yaml_nested_mapping_scalar() {
   local file_path="$1"
   local section="$2"
+  local key="$3"
+  local nested_key="$4"
 
-  awk -v section="$section" '
+  awk -v section="$section" -v key="$key" -v nested_key="$nested_key" '
     $1 == "config:" {
       in_config = 1
       next
     }
 
-    in_config && $0 ~ "^  " section ":" {
-      in_section = 1
+    in_config && $0 ~ /^  [A-Za-z0-9_-]+:/ {
+      current = $1
+      sub(":", "", current)
+      in_section = (current == section)
+      in_key = 0
       next
     }
 
+    in_section && $0 ~ /^    [A-Za-z0-9_-]+:/ {
+      current = $1
+      sub(":", "", current)
+      in_key = (current == key)
+      next
+    }
+
+    in_key && $0 ~ /^      [A-Za-z0-9_-]+:/ {
+      current = $1
+      sub(":", "", current)
+      if (current != nested_key) {
+        next
+      }
+      sub(/^[[:space:]]*[A-Za-z0-9_-]+:[[:space:]]*/, "", $0)
+      print
+      exit
+    }
+  ' "$file_path"
+}
+
+dev_kit_yaml_named_block_ids() {
+  local file_path="$1"
+  local section="$2"
+
+  awk -v section="$section" '
+    $1 == "config:" { in_config = 1; next }
+    in_config && $0 ~ "^  " section ":" { in_section = 1; next }
     in_section && $0 ~ /^    [A-Za-z0-9_-]+:/ {
       current = $1
       sub(":", "", current)

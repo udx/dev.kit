@@ -63,3 +63,92 @@ config:
       - src
       - scripts
       - tests
+    repo_doc_paths:
+      - CLAUDE.md
+      - AGENTS.md
+      - README.md
+      - readme.md
+      - docs/lessons-learned.md
+      - docs/architecture.md
+      - docs
+  marker_groups:
+    git_root:
+      prefix: git
+      kind: dir
+      paths:
+        - .git
+    readme_docs:
+      prefix: docs
+      kind: file
+      paths:
+        - README.md
+        - readme.md
+    todo_notes:
+      prefix: notes
+      kind: file
+      paths:
+        - TODO.md
+        - todo.md
+    refs_notes:
+      prefix: notes
+      kind: file
+      paths:
+        - refs.md
+        - REFS.md
+    wordpress_framework:
+      prefix: framework
+      kind: file
+      paths:
+        - wp-config.php
+    node_manifest:
+      prefix: manifest
+      kind: file
+      paths:
+        - package.json
+    composer_manifest:
+      prefix: manifest
+      kind: file
+      paths:
+        - composer.json
+    docker_runtime:
+      prefix: runtime
+      kind: file
+      paths:
+        - Dockerfile
+    deploy_files:
+      prefix: deploy
+      kind: file
+      paths:
+        - deploy.yml
+        - deploy.yaml
+    make_build:
+      prefix: build
+      kind: file
+      paths:
+        - Makefile
+        - makefile
+    github_workflows:
+      prefix: workflow
+      kind: dir
+      paths:
+        - .github/workflows
+    udx_root:
+      prefix: udx
+      kind: dir
+      paths:
+        - .rabbit
+    infra_configs:
+      prefix: infra
+      kind: dir
+      paths:
+        - .rabbit/infra_configs
+    docs_dir:
+      prefix: docs
+      kind: dir
+      paths:
+        - docs
+    tests_dir:
+      prefix: verify
+      kind: dir
+      paths:
+        - tests

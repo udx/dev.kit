@@ -5,6 +5,24 @@ dev_kit_bootstrap() {
   export DEV_KIT_HOME="${DEV_KIT_HOME:-$HOME/.udx/dev.kit}"
 }
 
+dev_kit_module_paths() {
+  cat <<EOF
+$REPO_DIR/lib/modules/bootstrap.sh
+$REPO_DIR/lib/modules/utils.sh
+$REPO_DIR/lib/modules/config_catalog.sh
+$REPO_DIR/lib/modules/output.sh
+$REPO_DIR/lib/modules/template_renderer.sh
+$REPO_DIR/lib/modules/local_env.sh
+$REPO_DIR/lib/modules/repo_signals.sh
+$REPO_DIR/lib/modules/repo_archetypes.sh
+$REPO_DIR/lib/modules/repo_factors.sh
+$REPO_DIR/lib/modules/repo_navigation.sh
+$REPO_DIR/lib/modules/repo_reports.sh
+$REPO_DIR/lib/modules/repo_workflows.sh
+$REPO_DIR/lib/modules/dev_sync.sh
+EOF
+}
+
 dev_kit_command_description() {
   local file="$1"
   awk -F': ' '/^# @description:/ { print $2; exit }' "$file"

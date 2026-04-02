@@ -6,7 +6,7 @@ dev_kit_cmd_action() {
   local format="${1:-text}"
   local repo_dir="$(pwd)"
   local repo_root=""
-  local workflow_id="$DEV_KIT_SYNC_DEFAULT_WORKFLOW"
+  local workflow_id="$(dev_kit_sync_default_workflow)"
   local arg=""
   local positional_seen=0
   local repo_name=""
@@ -52,7 +52,7 @@ dev_kit_cmd_action() {
       "repo=$(dev_kit_json_escape "$repo_name")" \
       "path=$(dev_kit_json_escape "$repo_dir")" \
       "markers=$(dev_kit_repo_markers_json "$repo_dir")" \
-      "behavior=$(dev_kit_json_escape "$DEV_KIT_SYNC_BEHAVIOR")" \
+      "behavior=$(dev_kit_json_escape "$(dev_kit_sync_behavior)")" \
       "archetype=$(dev_kit_json_escape "$(dev_kit_repo_primary_archetype "$repo_dir")")" \
       "archetypes=$(dev_kit_repo_archetypes_json "$repo_dir")" \
       "facets=$(dev_kit_repo_facets_json "$repo_dir")" \
@@ -77,7 +77,7 @@ dev_kit_cmd_action() {
   dev_kit_output_section "summary"
   dev_kit_output_row "path" "$repo_dir"
   dev_kit_output_row "profile" "$(dev_kit_repo_primary_profile "$repo_dir")"
-  dev_kit_output_row "behavior" "$DEV_KIT_SYNC_BEHAVIOR"
+  dev_kit_output_row "behavior" "$(dev_kit_sync_behavior)"
   dev_kit_output_row "markers" "$(dev_kit_repo_markers_text "$repo_dir")"
 
   dev_kit_output_section "top priorities"
@@ -134,7 +134,7 @@ dev_kit_action_git_workflow_json() {
   printf '{ "available": true, "workflow": { "id": "%s", "name": "%s" }, "behavior": "%s", "description": "%s", "next_hint": "%s", "repo_state": %s, "hooks": %s, "capabilities": %s, "steps": %s }' \
     "$(dev_kit_json_escape "$workflow_id")" \
     "$(dev_kit_json_escape "$(dev_kit_workflow_name "$workflow_id")")" \
-    "$(dev_kit_json_escape "$DEV_KIT_SYNC_BEHAVIOR")" \
+    "$(dev_kit_json_escape "$(dev_kit_sync_behavior)")" \
     "$(dev_kit_json_escape "$(dev_kit_workflow_description "$workflow_id")")" \
     "$(dev_kit_json_escape "$(dev_kit_sync_next_hint "$repo_dir")")" \
     "$(dev_kit_sync_repo_state_json "$repo_dir")" \

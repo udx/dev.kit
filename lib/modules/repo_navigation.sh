@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+DEV_KIT_REMOTE_LOOKUPS="${DEV_KIT_REMOTE_LOOKUPS:-0}"
+DEV_KIT_REPO_DEFAULT_BRANCH_CACHE=""
+DEV_KIT_MODULE_REPO_DIR_CACHE=""
+
 dev_kit_local_repos_root_path() {
   local root=""
 
@@ -83,12 +87,61 @@ dev_kit_repo_is_udx_slug() {
   return 1
 }
 
+dev_kit_cache_get() {
+  local cache_data="$1"
+  local cache_key="$2"
+
+  printf '%s\n' "$cache_data" | awk -F'|' -v key="$cache_key" '$1 == key { print substr($0, index($0, "|") + 1); exit }'
+}
+
+dev_kit_cache_put() {
+  local cache_name="$1"
+  local cache_key="$2"
+  local cache_value="$3"
+  local current=""
+
+  current="$(eval "printf '%s' \"\${$cache_name:-}\"")"
+  current="$(printf '%s\n' "$current" | awk -F'|' -v key="$cache_key" '$1 != key')"
+  if [ -n "$current" ]; then
+    current="${current}"$'\n'
+  fi
+  eval "$cache_name=\$(printf '%s' \"\$current\$cache_key|$cache_value\")"
+}
+
 dev_kit_repo_remote_default_branch() {
   local repo_slug="$1"
+  local cached=""
+  local repo_path=""
+  local origin_head=""
 
   dev_kit_repo_is_udx_slug "$repo_slug" || return 1
+  cached="$(dev_kit_cache_get "$DEV_KIT_REPO_DEFAULT_BRANCH_CACHE" "$repo_slug")"
+  if [ -n "$cached" ]; then
+    printf '%s' "$cached"
+    return 0
+  fi
+
+  repo_path="$(dev_kit_local_repo_path "$repo_slug" 2>/dev/null || true)"
+  if [ -d "$repo_path/.git" ]; then
+    origin_head="$(git -C "$repo_path" symbolic-ref refs/remotes/origin/HEAD 2>/dev/null || true)"
+    if [ -n "$origin_head" ]; then
+      origin_head="${origin_head##*/}"
+      dev_kit_cache_put "DEV_KIT_REPO_DEFAULT_BRANCH_CACHE" "$repo_slug" "$origin_head"
+      printf '%s' "$origin_head"
+      return 0
+    fi
+  fi
+
+  if [ "$DEV_KIT_REMOTE_LOOKUPS" != "1" ]; then
+    return 0
+  fi
+
   command -v gh >/dev/null 2>&1 || return 1
-  gh api "repos/$repo_slug" --jq '.default_branch' 2>/dev/null || true
+  cached="$(gh api "repos/$repo_slug" --jq '.default_branch' 2>/dev/null || true)"
+  if [ -n "$cached" ]; then
+    dev_kit_cache_put "DEV_KIT_REPO_DEFAULT_BRANCH_CACHE" "$repo_slug" "$cached"
+    printf '%s' "$cached"
+  fi
 }
 
 dev_kit_ref_path_without_repo() {
@@ -244,6 +297,32 @@ dev_kit_repo_dependency_repo_json() {
   printf "%s" "$lines" | dev_kit_lines_to_json_array
 }
 
+dev_kit_local_module_repo_dirs() {
+  local cached=""
+  local repo_path=""
+  local lines=""
+
+  cached="$DEV_KIT_MODULE_REPO_DIR_CACHE"
+  if [ -n "$cached" ]; then
+    printf '%s\n' "$cached"
+    return 0
+  fi
+
+  lines="$(
+    while IFS= read -r repo_path; do
+      [ -n "$repo_path" ] || continue
+      [ -d "$repo_path/cd/terraform/modules" ] || continue
+      printf '%s\n' "$repo_path"
+    done <<EOF
+$(dev_kit_local_udx_repo_dirs)
+EOF
+  )"
+
+  DEV_KIT_MODULE_REPO_DIR_CACHE="$lines"
+  [ -n "$lines" ] || return 0
+  printf '%s\n' "$lines"
+}
+
 dev_kit_repo_module_repo_paths() {
   local repo_dir="$1"
   local repo_slug=""
@@ -258,7 +337,7 @@ dev_kit_repo_module_repo_paths() {
 $(dev_kit_repo_dependency_repo_lines "$repo_dir" | awk '!seen[$0]++')
 EOF
 
-  dev_kit_local_udx_repo_dirs
+  dev_kit_local_module_repo_dirs
 }
 
 dev_kit_repo_find_module_root() {
@@ -406,7 +485,7 @@ dev_kit_repo_source_chain_text() {
     [ -n "$repo_doc" ] || continue
     printf '  - repo docs: %s\n' "$repo_doc"
   done <<EOF
-$(dev_kit_repo_priority_repo_docs "$repo_dir" | awk '!seen[$0]++')
+$(dev_kit_repo_doc_refs "$repo_dir" | awk '!seen[$0]++')
 EOF
 
   if [ -d "$repo_dir/.rabbit/infra_configs" ]; then
@@ -501,7 +580,7 @@ dev_kit_repo_source_chain_json() {
     printf '{ "kind": "repo_docs", "refs": ["%s"] }' "$(dev_kit_json_escape "$repo_doc")"
     first=0
   done <<EOF
-$(dev_kit_repo_priority_repo_docs "$repo_dir" | awk '!seen[$0]++')
+$(dev_kit_repo_doc_refs "$repo_dir" | awk '!seen[$0]++')
 EOF
 
   if [ -d "$repo_dir/.rabbit/infra_configs" ]; then

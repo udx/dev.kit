@@ -116,7 +116,7 @@ dev_kit_repo_agent_guidance_text() {
   local entrypoint=""
 
   printf '%s\n' "Treat this repository as a $(dev_kit_repo_primary_archetype "$repo_dir") and preserve its existing workflow contract."
-  printf '%s\n' "Use standard repo signals such as README, docs, manifests, workflows, deploy config, tests, and repo TODO/refs files as the primary contract."
+  dev_kit_practice_message_list "standard-repo-first" "repo-centric" | sed -n '1,2p'
 
   if dev_kit_repo_has_archetype "$repo_dir" "workflow-repo"; then
     printf '%s\n' "Treat .github workflows as the primary runtime contract and preserve declared workflow_call inputs and outputs."
@@ -166,7 +166,7 @@ dev_kit_repo_agent_contract_text() {
   local repo_dir="$1"
 
   printf '%s\n' "Use dev.kit JSON output as the machine contract: dev.kit explore --json, dev.kit action --json, dev.kit learn --json."
-  printf '%s\n' "Read repo-native sources first: README, docs, manifests, workflows, deploy config, tests, TODO, refs, and infra config."
+  dev_kit_practice_message_list "standard-repo-first" "strict-agent-boundary" | sed -n '1,2p'
 
   if [ -f "$repo_dir/AGENTS.md" ]; then
     printf '%s\n' "AGENTS.md exists; treat it as a local agent override after repo-native refs, not as the primary repo contract."

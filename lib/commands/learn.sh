@@ -38,6 +38,8 @@ EOF
   dev_kit_output_section "send to"
   dev_kit_learning_destinations_text "$workflow_id"
   dev_kit_output_section "next"
-  dev_kit_output_list_item "keep lessons lightweight and grounded in recent pull requests, docs, and repo-native context"
+  dev_kit_output_list_from_lines <<EOF
+$(dev_kit_practice_message_list "context-driven-engineering" "strict-agent-boundary" | sed -n '1,2p')
+EOF
   dev_kit_output_list_item "promote durable follow-up into docs, issues, wiki pages, or slack summaries only when the workflow contract is explicit"
 }

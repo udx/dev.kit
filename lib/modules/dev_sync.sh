@@ -1,75 +1,7 @@
 #!/usr/bin/env bash
 
-DEV_KIT_SYNC_DEFAULT_WORKFLOW="action-git"
-DEV_KIT_SYNC_BASE_BRANCH_NAMES="main master development staging trunk"
-DEV_KIT_SYNC_BEHAVIOR="evaluation-only"
-DEV_KIT_SYNC_BRANCH_ROLE_BASE="base"
-DEV_KIT_SYNC_BRANCH_ROLE_FEATURE="feature"
-DEV_KIT_SYNC_HOOKS_DIR_DEFAULT=".githooks"
-DEV_KIT_SYNC_TEXT_DEFAULT_MAX_NEXT_STEPS="4"
 DEV_KIT_SYNC_GH_AUTH_STATE_CACHE=""
 DEV_KIT_SYNC_GH_AUTH_STATE_CACHE_READY=0
-DEV_KIT_WORKFLOW_CONFIG_FILE="src/configs/development-workflows.yaml"
-
-dev_kit_workflow_config_path() {
-  printf "%s" "$REPO_DIR/$DEV_KIT_WORKFLOW_CONFIG_FILE"
-}
-
-dev_kit_workflow_description() {
-  dev_kit_yaml_named_block_scalar "$(dev_kit_workflow_config_path)" "workflows" "$1" "description"
-}
-
-dev_kit_workflow_name() {
-  dev_kit_yaml_named_block_scalar "$(dev_kit_workflow_config_path)" "workflows" "$1" "name"
-}
-
-dev_kit_workflow_step_lines() {
-  local workflow_id="$1"
-
-  awk -v workflow_id="$workflow_id" '
-    $1 == "config:" { in_config = 1; next }
-    in_config && $0 ~ /^  workflows:/ { in_workflows = 1; next }
-    in_workflows && $0 ~ /^    [A-Za-z0-9_-]+:/ {
-      current = $1
-      sub(":", "", current)
-      in_target = (current == workflow_id)
-      in_steps = 0
-      step_id = ""
-      step_label = ""
-      step_check = ""
-      next
-    }
-    in_target && $0 ~ /^      steps:/ {
-      in_steps = 1
-      next
-    }
-    in_steps && $0 ~ /^        - id:/ {
-      if (step_id != "") {
-        printf "%s|%s|%s\n", step_id, step_label, step_check
-      }
-      sub(/^[[:space:]]*-[[:space:]]*id:[[:space:]]*/, "", $0)
-      step_id = $0
-      step_label = ""
-      step_check = ""
-      next
-    }
-    in_steps && $0 ~ /^          label:/ {
-      sub(/^[[:space:]]*label:[[:space:]]*/, "", $0)
-      step_label = $0
-      next
-    }
-    in_steps && $0 ~ /^          check:/ {
-      sub(/^[[:space:]]*check:[[:space:]]*/, "", $0)
-      step_check = $0
-      next
-    }
-    END {
-      if (step_id != "") {
-        printf "%s|%s|%s\n", step_id, step_label, step_check
-      }
-    }
-  ' "$(dev_kit_workflow_config_path)"
-}
 
 dev_kit_sync_has_git_repo() {
   git -C "$1" rev-parse --git-dir >/dev/null 2>&1
@@ -89,7 +21,8 @@ dev_kit_sync_nearest_base_branch() {
   local best_distance=""
   local distance=""
 
-  for candidate in $DEV_KIT_SYNC_BASE_BRANCH_NAMES; do
+  while IFS= read -r candidate; do
+    [ -n "$candidate" ] || continue
     if git -C "$repo_dir" show-ref --verify --quiet "refs/remotes/origin/$candidate"; then
       candidate_ref="origin/$candidate"
     elif git -C "$repo_dir" show-ref --verify --quiet "refs/heads/$candidate"; then
@@ -108,7 +41,9 @@ dev_kit_sync_nearest_base_branch() {
       best_name="$candidate"
       best_distance="$distance"
     fi
-  done
+  done <<EOF
+$(dev_kit_sync_base_branch_names)
+EOF
 
   if [ -n "$best_name" ]; then
     printf "%s" "$best_name"
@@ -129,12 +64,15 @@ dev_kit_sync_default_branch() {
   fi
 
   branch="$(dev_kit_sync_current_branch "$repo_dir")"
-  for candidate in $DEV_KIT_SYNC_BASE_BRANCH_NAMES; do
+  while IFS= read -r candidate; do
+    [ -n "$candidate" ] || continue
     if [ "$branch" = "$candidate" ] && git -C "$repo_dir" show-ref --verify --quiet "refs/remotes/origin/$candidate"; then
       printf "%s" "$candidate"
       return 0
     fi
-  done
+  done <<EOF
+$(dev_kit_sync_base_branch_names)
+EOF
 
   nearest_branch="$(dev_kit_sync_nearest_base_branch "$repo_dir" "$branch")"
   if [ -n "$nearest_branch" ]; then
@@ -142,19 +80,25 @@ dev_kit_sync_default_branch() {
     return 0
   fi
 
-  for candidate in $DEV_KIT_SYNC_BASE_BRANCH_NAMES; do
+  while IFS= read -r candidate; do
+    [ -n "$candidate" ] || continue
     if git -C "$repo_dir" show-ref --verify --quiet "refs/remotes/origin/$candidate"; then
       printf "%s" "$candidate"
       return 0
     fi
-  done
+  done <<EOF
+$(dev_kit_sync_base_branch_names)
+EOF
 
-  for candidate in $DEV_KIT_SYNC_BASE_BRANCH_NAMES; do
+  while IFS= read -r candidate; do
+    [ -n "$candidate" ] || continue
     if git -C "$repo_dir" show-ref --verify --quiet "refs/heads/$candidate"; then
       printf "%s" "$candidate"
       return 0
     fi
-  done
+  done <<EOF
+$(dev_kit_sync_base_branch_names)
+EOF
 
   printf "%s" "main"
 }
@@ -192,11 +136,11 @@ dev_kit_sync_branch_role() {
   default_branch="$(dev_kit_sync_default_branch "$repo_dir")"
 
   if [ "$branch" = "$default_branch" ]; then
-    printf "%s" "$DEV_KIT_SYNC_BRANCH_ROLE_BASE"
+    printf "%s" "$(dev_kit_sync_branch_role_base)"
     return 0
   fi
 
-  printf "%s" "$DEV_KIT_SYNC_BRANCH_ROLE_FEATURE"
+  printf "%s" "$(dev_kit_sync_branch_role_feature)"
 }
 
 dev_kit_sync_worktree_counts() {
@@ -296,8 +240,8 @@ dev_kit_sync_hooks_dir() {
     return 0
   fi
 
-  if [ -d "$repo_dir/$DEV_KIT_SYNC_HOOKS_DIR_DEFAULT" ]; then
-    printf "%s" "$DEV_KIT_SYNC_HOOKS_DIR_DEFAULT"
+  if [ -d "$repo_dir/$(dev_kit_sync_hooks_dir)" ]; then
+    printf "%s" "$(dev_kit_sync_hooks_dir)"
     return 0
   fi
 
@@ -634,7 +578,7 @@ dev_kit_sync_next_hint() {
   branch_role="$(dev_kit_sync_branch_role "$repo_dir")"
 
   if dev_kit_sync_has_changes "$repo_dir"; then
-    if [ "$branch_role" = "$DEV_KIT_SYNC_BRANCH_ROLE_BASE" ]; then
+    if [ "$branch_role" = "$(dev_kit_sync_branch_role_base)" ]; then
       printf "%s" "You have local changes on the base branch. Keep iterating locally or move them onto a feature branch before push or PR work."
       return 0
     fi
@@ -642,7 +586,7 @@ dev_kit_sync_next_hint() {
     return 0
   fi
 
-  if [ "$branch_role" = "$DEV_KIT_SYNC_BRANCH_ROLE_BASE" ]; then
+  if [ "$branch_role" = "$(dev_kit_sync_branch_role_base)" ]; then
     printf "%s" "Base branch is clean. No immediate sync action is required."
     return 0
   fi
@@ -704,9 +648,9 @@ dev_kit_sync_start_here_text() {
     printf 'Add or verify the origin remote before planning push or PR work.\n'
   fi
 
-  if [ "$branch_role" = "$DEV_KIT_SYNC_BRANCH_ROLE_FEATURE" ] && [ -n "$upstream" ]; then
+  if [ "$branch_role" = "$(dev_kit_sync_branch_role_feature)" ] && [ -n "$upstream" ]; then
     printf 'Review what is ahead of %s before adding more work.\n' "$default_branch"
-  elif [ "$branch_role" = "$DEV_KIT_SYNC_BRANCH_ROLE_FEATURE" ]; then
+  elif [ "$branch_role" = "$(dev_kit_sync_branch_role_feature)" ]; then
     printf 'Review branch diff against %s before pushing a new upstream.\n' "$default_branch"
   else
     printf 'If new shareable work is starting from %s, move it onto a feature branch.\n' "$default_branch"
@@ -830,7 +774,7 @@ dev_kit_sync_step_state() {
 
 dev_kit_sync_step_lines() {
   local repo_dir="$1"
-  local workflow_id="${2:-$DEV_KIT_SYNC_DEFAULT_WORKFLOW}"
+  local workflow_id="${2:-$(dev_kit_sync_default_workflow)}"
   local step_line=""
   local step_id=""
   local step_label=""
@@ -857,7 +801,7 @@ EOF
 
 dev_kit_sync_steps_json() {
   local repo_dir="$1"
-  local workflow_id="${2:-$DEV_KIT_SYNC_DEFAULT_WORKFLOW}"
+  local workflow_id="${2:-$(dev_kit_sync_default_workflow)}"
   local first=1
   local line=""
   local step_id=""
@@ -958,8 +902,8 @@ EOF
 
 dev_kit_sync_steps_text() {
   local repo_dir="$1"
-  local workflow_id="${2:-$DEV_KIT_SYNC_DEFAULT_WORKFLOW}"
-  local max_steps="${3:-$DEV_KIT_SYNC_TEXT_DEFAULT_MAX_NEXT_STEPS}"
+  local workflow_id="${2:-$(dev_kit_sync_default_workflow)}"
+  local max_steps="${3:-$(dev_kit_sync_text_max_next_steps)}"
   local line=""
   local step_id=""
   local step_label=""

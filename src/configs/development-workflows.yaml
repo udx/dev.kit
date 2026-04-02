@@ -2,6 +2,20 @@ kind: developmentWorkflows
 version: udx.io/dev.kit/v1
 
 config:
+  defaults:
+    workflow: action-git
+    behavior: evaluation-only
+    hooks_dir: .githooks
+    text_max_next_steps: 4
+    branch_roles:
+      base: base
+      feature: feature
+    base_branch_names:
+      - main
+      - master
+      - development
+      - staging
+      - trunk
   workflows:
     action-git:
       name: dev.action git
