@@ -116,3 +116,12 @@ bash tests/full.sh --only repo-family
 ```
 
 Run only the slices you are changing during local work. Reserve broader `tests/full.sh` runs for repo-family regression coverage and CI-style verification. Keep new tests lightweight by default so agents can verify command contracts without pulling in heavy environment setup.
+
+For prompt validation against agent workflows, the repo also includes a minimal Promptfoo harness:
+
+```bash
+bash tests/promptfoo.sh
+bash bin/scripts/promptfoo-dev-kit.sh eval --repo .
+```
+
+The first command verifies the harness offline with a local mock provider. The second uses the same flow and can be pointed at a real Promptfoo provider with `DEV_KIT_PROMPTFOO_PROVIDER=...`.

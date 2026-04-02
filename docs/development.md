@@ -27,11 +27,21 @@ DEV_KIT_LOCAL_REPOS_ONLY=www.peakclt.com DEV_KIT_LOCAL_REPOS_COMMANDS=action bas
 DEV_KIT_LOCAL_REPOS_FAIL_ON_WEAK=1 bash tests/local-udx.sh
 ```
 
+Use the Promptfoo harness when you want to compare baseline prompts against prompts enriched with live `dev.kit` JSON context:
+
+```bash
+bash tests/promptfoo.sh
+bash bin/scripts/promptfoo-dev-kit.sh eval --repo .
+DEV_KIT_PROMPTFOO_PROVIDER=openai:gpt-5-mini bash bin/scripts/promptfoo-dev-kit.sh eval --repo .
+```
+
 ## Notes
 
 - `bash tests/smoke.sh` is the preferred default during normal development.
 - `bash tests/local-udx.sh` is a JSON-aware scored sweep over real `git/udx/*` repos. It should record weak contracts without failing the entire run unless command output breaks or `DEV_KIT_LOCAL_REPOS_FAIL_ON_WEAK=1` is set.
 - Prefer `DEV_KIT_LOCAL_REPOS_COMMANDS=explore` or `DEV_KIT_LOCAL_REPOS_COMMANDS=action` when working on one command path.
+- `bash tests/promptfoo.sh` is the focused offline check for the Promptfoo harness. It uses a tiny local mock provider so the eval path stays testable without external API calls.
+- `bash bin/scripts/promptfoo-dev-kit.sh eval --repo .` defaults to the same mock provider. Override `DEV_KIT_PROMPTFOO_PROVIDER` or `--provider` with a real Promptfoo provider when you want live model comparisons.
 - `bash tests/run.sh` uses [deploy.yml](/Users/jonyfq/git/udx/dev.kit/deploy.yml) with the globally installed `worker` CLI.
 - The suite validates install, env setup, dynamic command discovery, Bash completion, and uninstall in a fresh temporary `HOME`.
 
