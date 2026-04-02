@@ -482,6 +482,7 @@ dev_kit_repo_source_chain_json() {
   local line=""
   local first=1
   local kind=""
+  local emitted=0
   local workflow_ref=""
   local dependency_ref=""
   local local_file=""
@@ -524,15 +525,16 @@ EOF
     [ -n "$line" ] || continue
     kind="${line%%|*}"
     line="${line#*|}"
-    if [ "$first" -eq 0 ]; then
-      printf ", "
-    fi
+    emitted=0
     case "$kind" in
       workflow)
         workflow_ref="$line"
         local_file="$(dev_kit_repo_ref_local_file "$workflow_ref" 2>/dev/null || true)"
         repo_slug="$(dev_kit_repo_slug_from_ref "$workflow_ref")"
         default_branch="$(dev_kit_repo_remote_default_branch "$repo_slug")"
+        if [ "$first" -eq 0 ]; then
+          printf ", "
+        fi
         printf '{ "kind": "reusable_workflow", "refs": ["%s"' "$(dev_kit_json_escape "$workflow_ref")"
         if [ -f "$local_file" ]; then
           printf ', "%s"' "$(dev_kit_json_escape "$local_file")"
@@ -548,6 +550,7 @@ $(dev_kit_repo_workflow_doc_candidate_paths "$workflow_ref")
 EOF
         fi
         printf '], "default_branch": "%s" }' "$(dev_kit_json_escape "$default_branch")"
+        emitted=1
         ;;
       dependency)
         dependency_ref="${line#*|}"
@@ -556,14 +559,20 @@ EOF
         dev_kit_repo_is_udx_slug "$repo_slug" || continue
         local_file="$(dev_kit_repo_ref_local_file "$dependency_ref" 2>/dev/null || true)"
         default_branch="$(dev_kit_repo_remote_default_branch "$repo_slug")"
+        if [ "$first" -eq 0 ]; then
+          printf ", "
+        fi
         printf '{ "kind": "workflow_dependency", "refs": ["%s"' "$(dev_kit_json_escape "$dependency_ref")"
         if [ -f "$local_file" ]; then
           printf ', "%s"' "$(dev_kit_json_escape "$local_file")"
         fi
         printf '], "default_branch": "%s" }' "$(dev_kit_json_escape "$default_branch")"
+        emitted=1
         ;;
     esac
-    first=0
+    if [ "$emitted" -eq 1 ]; then
+      first=0
+    fi
   done <<EOF
 $(dev_kit_repo_workflow_dependency_lines "$repo_dir")
 EOF
