@@ -161,3 +161,22 @@ dev_kit_repo_agent_guidance_text() {
 $(dev_kit_repo_factor_ids)
 EOF
 }
+
+dev_kit_repo_agent_contract_text() {
+  local repo_dir="$1"
+
+  printf '%s\n' "Use dev.kit JSON output as the machine contract: dev.kit explore --json, dev.kit action --json, dev.kit learn --json."
+  printf '%s\n' "Read repo-native sources first: README, docs, manifests, workflows, deploy config, tests, TODO, refs, and infra config."
+
+  if [ -f "$repo_dir/AGENTS.md" ]; then
+    printf '%s\n' "AGENTS.md exists; treat it as a local agent override after repo-native refs, not as the primary repo contract."
+  else
+    printf '%s\n' "AGENTS.md is optional. If a local provider-agnostic agent note is needed, keep it small and never let it replace repo-native sources."
+  fi
+
+  printf '%s\n' "Do not create parallel agent-only state when repo files such as TODO.md, refs.md, README, docs, and workflows already carry the same context."
+}
+
+dev_kit_repo_agent_contract_json() {
+  dev_kit_repo_agent_contract_text "$1" | dev_kit_lines_to_json_array
+}

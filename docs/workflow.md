@@ -76,7 +76,8 @@ Each factor is reported as `present`, `partial`, or `missing`, with evidence and
 1. Run `dev.kit explore` or `dev.kit action --json`.
 2. Use the reported factor model and entrypoints as the working contract.
 3. Prefer discovered commands over inferred ones.
-4. Improve partial or missing factors as part of the change when appropriate.
+4. If `AGENTS.md` exists, treat it as a local override after README, docs, manifests, workflows, and tests.
+5. Improve partial or missing factors as part of the change when appropriate.
 
 ## Knowledgebase Hierarchy
 

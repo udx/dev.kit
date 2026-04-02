@@ -11,6 +11,8 @@ It works from standard repository evidence first:
 
 It does not require custom repo metadata to be useful. If TODO, context, or refs files matter, they should live in the repo as ordinary files that both humans and programs can read.
 
+If a team wants a local, provider-agnostic agent note, `AGENTS.md` is supported as an optional override. It should stay small, remain secondary to repo-native sources, and can be kept untracked.
+
 When a repo depends on reusable internal tooling or workflows, `dev.kit` should also point humans and agents at the relevant upstream repos and refs, especially under `udx/*`.
 
 ## Goal

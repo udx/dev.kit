@@ -164,6 +164,8 @@ if should_run "home"; then
   assert_contains "$default_json" "\"repo_detected\": true" "default json detects repo"
   assert_contains "$default_json" "\"root\": \"$DOCUMENTED_SHELL_REPO\"" "default json reports repo root"
   assert_contains "$default_json" "\"localhost_tools\": [" "default json reports localhost tools"
+  assert_contains "$default_json" "\"start_here\": [" "default json reports start-here workflow"
+  assert_contains "$default_json" "\"agent_contract\": [" "default json reports agent contract"
 
   nested_output="$(cd "$NESTED_REPO_DIR" && dev.kit)"
   print_block "nested output" "$nested_output"
@@ -197,6 +199,7 @@ if should_run "action"; then
   assert_contains "$simple_action_json" "\"profile\": \"node\"" "action json reports primary profile"
   assert_contains "$simple_action_json" "\"findings\": [" "action json reports findings"
   assert_contains "$simple_action_json" "\"git_workflow\": { \"available\": false }" "action json reports missing git workflow"
+  assert_contains "$simple_action_json" "\"agent_contract\": [" "action json reports agent contract"
   assert_contains "$simple_action_json" "\"verification\": {" "action json reports factor state"
   assert_contains "$simple_action_json" "Add a README" "action json reports documentation guidance"
 fi

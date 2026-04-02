@@ -20,5 +20,6 @@
   "source_chain": {{source_chain}},
   "module_docs": {{module_docs}},
   "workflow_contract": {{workflow_contract}},
+  "agent_contract": {{agent_contract}},
   "git_workflow": {{git_workflow}}
 }

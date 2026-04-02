@@ -655,6 +655,70 @@ dev_kit_sync_next_hint() {
   printf "Feature branch %s is clean and tracks %s. Choose whether to keep iterating, open a PR, or verify CI state." "$branch" "$upstream"
 }
 
+dev_kit_sync_issue_hint() {
+  local repo_dir="$1"
+  local gh_state=""
+
+  if [ "$(dev_kit_sync_remote_state "$repo_dir")" != "available" ]; then
+    printf "%s" "No origin remote detected, so related GitHub issues cannot be checked from this repo."
+    return 0
+  fi
+
+  gh_state="$(dev_kit_sync_gh_auth_state)"
+  case "$gh_state" in
+    available)
+      printf "%s" "Check related issues with gh issue list --assignee @me --state open --limit 10."
+      ;;
+    unauthenticated)
+      printf "%s" "gh is installed but not authenticated; sign in before checking related assigned issues."
+      ;;
+    *)
+      printf "%s" "Install gh if you want assigned issue and pull request context from GitHub."
+      ;;
+  esac
+}
+
+dev_kit_sync_start_here_text() {
+  local repo_dir="$1"
+  local branch=""
+  local default_branch=""
+  local upstream=""
+  local branch_role=""
+
+  branch="$(dev_kit_sync_current_branch "$repo_dir")"
+  default_branch="$(dev_kit_sync_default_branch "$repo_dir")"
+  upstream="$(dev_kit_sync_upstream_branch "$repo_dir")"
+  branch_role="$(dev_kit_sync_branch_role "$repo_dir")"
+
+  printf 'Inspect git status and worktree shape first.\n'
+
+  if [ -n "$branch" ]; then
+    printf 'Compare current branch %s against base branch %s.\n' "$branch" "$default_branch"
+  else
+    printf 'Confirm the current branch and base branch before making changes.\n'
+  fi
+
+  if [ "$(dev_kit_sync_remote_state "$repo_dir")" = "available" ]; then
+    printf 'Refresh remote state with git fetch origin --prune before branch or PR decisions.\n'
+  else
+    printf 'Add or verify the origin remote before planning push or PR work.\n'
+  fi
+
+  if [ "$branch_role" = "$DEV_KIT_SYNC_BRANCH_ROLE_FEATURE" ] && [ -n "$upstream" ]; then
+    printf 'Review what is ahead of %s before adding more work.\n' "$default_branch"
+  elif [ "$branch_role" = "$DEV_KIT_SYNC_BRANCH_ROLE_FEATURE" ]; then
+    printf 'Review branch diff against %s before pushing a new upstream.\n' "$default_branch"
+  else
+    printf 'If new shareable work is starting from %s, move it onto a feature branch.\n' "$default_branch"
+  fi
+
+  printf '%s\n' "$(dev_kit_sync_issue_hint "$repo_dir")"
+}
+
+dev_kit_sync_start_here_json() {
+  dev_kit_sync_start_here_text "$1" | dev_kit_lines_to_json_array
+}
+
 dev_kit_sync_step_state() {
   local repo_dir="$1"
   local step_id="$2"

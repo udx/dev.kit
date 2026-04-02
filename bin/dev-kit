@@ -76,6 +76,7 @@ dev_kit_run_home() {
   local git_state="no"
   local priority_refs=""
   local first_priority_ref=""
+  local second_priority_ref=""
 
   if [ -d "$DEV_KIT_HOME" ]; then
     state="installed"
@@ -92,6 +93,7 @@ dev_kit_run_home() {
     fi
     priority_refs="$(dev_kit_repo_priority_refs "$repo_root")"
     first_priority_ref="$(printf '%s\n' "$priority_refs" | awk 'NF { print; exit }')"
+    second_priority_ref="$(printf '%s\n' "$priority_refs" | awk 'NF { count += 1; if (count == 2) { print; exit } }')"
   fi
 
   if [ "$format" = "json" ]; then
@@ -117,6 +119,13 @@ dev_kit_run_home() {
     fi
     printf '  },\n'
     printf '  "localhost_tools": %s,\n' "$(dev_kit_env_tools_json)"
+    if [ "$repo_detected" = "true" ] && [ "$git_state" = "yes" ]; then
+      printf '  "start_here": %s,\n' "$(dev_kit_sync_start_here_json "$repo_root")"
+      printf '  "agent_contract": %s,\n' "$(dev_kit_repo_agent_contract_json "$repo_root")"
+    else
+      printf '  "start_here": [],\n'
+      printf '  "agent_contract": [],\n'
+    fi
     printf '  "helpers": [\n'
     printf '    { "id": "explore", "label": "Read the repo summary and refs", "command": "dev.kit explore" },\n'
     printf '    { "id": "action", "label": "Review grounded next steps", "command": "dev.kit action" },\n'
@@ -134,14 +143,23 @@ dev_kit_run_home() {
     dev_kit_output_row "path" "$repo_dir"
     dev_kit_output_row "repo root" "$repo_root"
     dev_kit_output_row "markers" "$(dev_kit_repo_markers_text "$repo_root")"
-    if [ -n "$first_priority_ref" ]; then
-      dev_kit_output_section "read first"
-      dev_kit_output_list_item "$first_priority_ref"
+    if [ "$git_state" = "yes" ]; then
+      dev_kit_output_section "start here"
+      dev_kit_output_list_from_lines <<EOF
+$(dev_kit_sync_start_here_text "$repo_root")
+EOF
     fi
+    dev_kit_output_section "read first"
+    [ -n "$first_priority_ref" ] && dev_kit_output_list_item "$first_priority_ref"
+    [ -n "$second_priority_ref" ] && dev_kit_output_list_item "$second_priority_ref"
     dev_kit_output_section "helpers"
     dev_kit_output_row "explore" "dev.kit explore"
     dev_kit_output_row "action" "dev.kit action"
     dev_kit_output_row "learn" "dev.kit learn"
+    dev_kit_output_section "agent"
+    dev_kit_output_list_from_lines <<EOF
+$(dev_kit_repo_agent_contract_text "$repo_root" | dev_kit_output_first_lines 3)
+EOF
   else
     dev_kit_output_summary "No repository detected in the current directory"
     dev_kit_output_section "workspace"
