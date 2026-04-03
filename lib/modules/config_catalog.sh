@@ -58,15 +58,19 @@ dev_kit_repo_priority_list() {
   local repo_dir="${1:-$(pwd)}"
   local list_name="$2"
   local path=""
+  local refs=""
 
   while IFS= read -r path; do
     [ -n "$path" ] || continue
     if [ -e "$repo_dir/$path" ]; then
-      printf "./%s\n" "$path"
+      refs="${refs}./${path}
+"
     fi
   done <<EOF
 $(dev_kit_context_list "$list_name")
 EOF
+
+  printf "%s" "$refs" | dev_kit_unique_lines_ci
 }
 
 dev_kit_repo_priority_refs() {
@@ -309,7 +313,7 @@ dev_kit_sync_behavior() {
   dev_kit_workflow_default_scalar "behavior"
 }
 
-dev_kit_sync_hooks_dir() {
+dev_kit_sync_default_hooks_dir() {
   dev_kit_workflow_default_scalar "hooks_dir"
 }
 

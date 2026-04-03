@@ -19,6 +19,7 @@ dev_kit_cmd_explore() {
       "command=explore" \
       "repo=$(dev_kit_json_escape "$repo_name")" \
       "path=$(dev_kit_json_escape "$repo_dir")" \
+      "entrypoints=$(dev_kit_repo_entrypoints_json "$repo_dir")" \
       "markers=$(dev_kit_repo_markers_json "$repo_dir")" \
       "workflow_refs=$(dev_kit_repo_workflow_refs_json "$repo_dir")" \
       "archetype=$(dev_kit_json_escape "$(dev_kit_repo_primary_archetype "$repo_dir")")" \
@@ -38,26 +39,16 @@ dev_kit_cmd_explore() {
 
   dev_kit_output_title "dev.kit explore"
   dev_kit_output_summary "${repo_name} • $(dev_kit_repo_primary_archetype "$repo_dir") • start with repo-native refs"
-  dev_kit_output_section "summary"
-  dev_kit_output_row "path" "$repo_dir"
-  dev_kit_output_row "profile" "$(dev_kit_repo_primary_profile "$repo_dir")"
-  dev_kit_output_row "markers" "$(dev_kit_repo_markers_text "$repo_dir")"
-
   dev_kit_output_section "read first"
   dev_kit_output_list_from_lines <<EOF
-$(dev_kit_repo_priority_refs "$repo_dir" | dev_kit_output_first_lines 6)
+$(dev_kit_repo_priority_refs "$repo_dir" | dev_kit_output_first_lines 4)
 EOF
 
-  if [ -n "$(dev_kit_repo_source_chain_text "$repo_dir")" ]; then
-    dev_kit_output_section "source chain"
-    dev_kit_repo_source_chain_text "$repo_dir"
-  fi
-
-  dev_kit_output_section "workflow guide"
-  dev_kit_repo_workflow_text "$repo_dir"
-
-  dev_kit_output_section "knowledge"
-  dev_kit_output_row "local repos" "$(dev_kit_knowledge_local_repos_root)"
-  dev_kit_output_row "remote org" "$(dev_kit_knowledge_remote_org_root)"
-  dev_kit_output_row "workflow refs" "$(dev_kit_repo_workflow_refs_text "$repo_dir")"
+  dev_kit_output_section "do next"
+  while IFS='|' read -r _step_id step_label step_command; do
+    [ -n "$step_label" ] || continue
+    dev_kit_output_list_item "${step_label}: ${step_command}"
+  done <<EOF
+$(dev_kit_repo_workflow_steps "$repo_dir" | dev_kit_output_first_lines 3)
+EOF
 }

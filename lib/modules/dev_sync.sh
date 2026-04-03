@@ -230,7 +230,7 @@ dev_kit_sync_repo_supports_release_metadata() {
   [ -f "$repo_dir/package.json" ] || [ -f "$repo_dir/composer.json" ] || [ -f "$repo_dir/CHANGELOG.md" ] || [ -f "$repo_dir/changelog.md" ]
 }
 
-dev_kit_sync_hooks_dir() {
+dev_kit_sync_repo_hooks_dir() {
   local repo_dir="$1"
   local hooks_path=""
 
@@ -240,8 +240,8 @@ dev_kit_sync_hooks_dir() {
     return 0
   fi
 
-  if [ -d "$repo_dir/$(dev_kit_sync_hooks_dir)" ]; then
-    printf "%s" "$(dev_kit_sync_hooks_dir)"
+  if [ -d "$repo_dir/$(dev_kit_sync_default_hooks_dir)" ]; then
+    printf "%s" "$(dev_kit_sync_default_hooks_dir)"
     return 0
   fi
 
@@ -253,7 +253,7 @@ dev_kit_sync_hook_file() {
   local hook_name="$2"
   local hooks_dir=""
 
-  hooks_dir="$(dev_kit_sync_hooks_dir "$repo_dir")"
+  hooks_dir="$(dev_kit_sync_repo_hooks_dir "$repo_dir")"
   printf "%s/%s" "$repo_dir/$hooks_dir" "$hook_name"
 }
 

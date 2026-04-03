@@ -74,6 +74,7 @@ dev_kit_run_home() {
   local priority_refs=""
   local first_priority_ref=""
   local second_priority_ref=""
+  local next_git_action=""
 
   if [ -d "$DEV_KIT_HOME" ]; then
     state="installed"
@@ -91,6 +92,9 @@ dev_kit_run_home() {
     priority_refs="$(dev_kit_repo_priority_refs "$repo_root")"
     first_priority_ref="$(printf '%s\n' "$priority_refs" | awk 'NF { print; exit }')"
     second_priority_ref="$(printf '%s\n' "$priority_refs" | awk 'NF { count += 1; if (count == 2) { print; exit } }')"
+    if [ "$git_state" = "yes" ]; then
+      next_git_action="$(dev_kit_sync_next_hint "$repo_root")"
+    fi
   fi
 
   if [ "$format" = "json" ]; then
@@ -103,14 +107,16 @@ dev_kit_run_home() {
     printf '    "repo_detected": %s,\n' "$repo_detected"
     printf '    "kind": "%s"' "$(dev_kit_json_escape "$repo_kind")"
     if [ "$repo_detected" = "true" ]; then
-      printf ',\n    "repo": { "name": "%s", "root": "%s", "archetype": "%s", "profile": "%s", "git": %s, "markers": %s, "first_priority_ref": "%s" }\n' \
+      printf ',\n    "repo": { "name": "%s", "root": "%s", "archetype": "%s", "profile": "%s", "git": %s, "markers": %s, "priority_refs": %s, "entrypoints": %s, "next_git_action": %s }\n' \
         "$(dev_kit_json_escape "$(dev_kit_repo_name "$repo_root")")" \
         "$(dev_kit_json_escape "$repo_root")" \
         "$(dev_kit_json_escape "$archetype")" \
         "$(dev_kit_json_escape "$profile")" \
         "$([ "$git_state" = "yes" ] && printf 'true' || printf 'false')" \
         "$(dev_kit_repo_markers_json "$repo_root")" \
-        "$(dev_kit_json_escape "$first_priority_ref")"
+        "$(dev_kit_repo_priority_refs_json "$repo_root")" \
+        "$(dev_kit_repo_entrypoints_json "$repo_root")" \
+        "$(if [ -n "$next_git_action" ]; then printf '"%s"' "$(dev_kit_json_escape "$next_git_action")"; else printf 'null'; fi)"
     else
       printf '\n'
     fi
@@ -136,44 +142,27 @@ dev_kit_run_home() {
 
   if [ "$repo_detected" = "true" ]; then
     dev_kit_output_summary "$(dev_kit_repo_name "$repo_root") • ${archetype} • profile ${profile}"
-    dev_kit_output_section "workspace"
-    dev_kit_output_row "path" "$repo_dir"
-    dev_kit_output_row "repo root" "$repo_root"
-    dev_kit_output_row "markers" "$(dev_kit_repo_markers_text "$repo_root")"
-    if [ "$git_state" = "yes" ]; then
-      dev_kit_output_section "start here"
-      dev_kit_output_list_from_lines <<EOF
-$(dev_kit_sync_start_here_text "$repo_root")
-EOF
-    fi
     dev_kit_output_section "read first"
     [ -n "$first_priority_ref" ] && dev_kit_output_list_item "$first_priority_ref"
     [ -n "$second_priority_ref" ] && dev_kit_output_list_item "$second_priority_ref"
-    dev_kit_output_section "helpers"
-    dev_kit_output_row "explore" "dev.kit explore"
-    dev_kit_output_row "action" "dev.kit action"
-    dev_kit_output_row "learn" "dev.kit learn"
-    dev_kit_output_section "agent"
-    dev_kit_output_list_from_lines <<EOF
-$(dev_kit_repo_agent_contract_text "$repo_root" | dev_kit_output_first_lines 3)
+    dev_kit_output_section "do next"
+    if [ "$git_state" = "yes" ]; then
+      dev_kit_output_list_from_lines <<EOF
+$(dev_kit_sync_start_here_text "$repo_root" | dev_kit_output_first_lines 3)
 EOF
+    else
+      dev_kit_output_list_item "Run dev.kit explore for repo structure and refs."
+      dev_kit_output_list_item "Run dev.kit action for grounded next steps."
+    fi
+    dev_kit_output_row "more" "dev.kit explore | dev.kit action | dev.kit learn"
   else
     dev_kit_output_summary "No repository detected in the current directory"
-    dev_kit_output_section "workspace"
-    dev_kit_output_row "path" "$repo_dir"
-    dev_kit_output_row "guide" "navigate into a repo, then run dev.kit again"
-    dev_kit_output_row "common signals" "README.md, package.json, .github, docs/, .git, Makefile"
-    dev_kit_output_section "helpers"
-    dev_kit_output_row "explore" "cd /path/to/repo && dev.kit"
-    dev_kit_output_row "action" "cd /path/to/repo && dev.kit action"
-    dev_kit_output_row "learn" "cd /path/to/repo && dev.kit learn"
+    dev_kit_output_section "read first"
+    dev_kit_output_list_item "$repo_dir"
+    dev_kit_output_section "do next"
+    dev_kit_output_list_item "Navigate into a repo, then run dev.kit again."
+    dev_kit_output_list_item "Look for standard signals like README.md, package.json, .github, docs/, or .git."
   fi
-
-  dev_kit_output_section "localhost"
-  dev_kit_output_row "install" "$state"
-  dev_kit_output_kv_list_from_pipe <<EOF
-$(dev_kit_env_tool_lines)
-EOF
 }
 
 command_usage() {

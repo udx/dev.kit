@@ -165,7 +165,7 @@ EOF
 $(dev_kit_context_marker_group_ids)
 EOF
 
-  DEV_KIT_REPO_MARKERS_CACHE_VALUE="$(printf "%s" "$markers" | awk 'NF && !seen[$0]++')"
+  DEV_KIT_REPO_MARKERS_CACHE_VALUE="$(printf "%s" "$markers" | dev_kit_unique_lines_ci)"
   printf "%s" "$DEV_KIT_REPO_MARKERS_CACHE_VALUE"
 }
 

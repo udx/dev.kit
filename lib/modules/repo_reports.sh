@@ -17,7 +17,11 @@ dev_kit_repo_findings_json() {
     if [ "$emitted" -eq 1 ]; then
       printf ","
     fi
-    printf '\n    { "id": "%s", "factor": "%s", "status": "%s", "message": "%s" }' "$rule_id" "$factor" "$status" "$message"
+    printf '\n    { "id": "%s", "factor": "%s", "status": "%s", "message": "%s" }' \
+      "$(dev_kit_json_escape "$rule_id")" \
+      "$(dev_kit_json_escape "$factor")" \
+      "$(dev_kit_json_escape "$status")" \
+      "$(dev_kit_json_escape "$message")"
     emitted=1
   done <<EOF
 $(dev_kit_repo_factor_ids)
@@ -101,7 +105,7 @@ dev_kit_repo_agent_guidance_json() {
     if [ "$first" -eq 0 ]; then
       printf ", "
     fi
-    printf '"%s"' "$guidance"
+    printf '"%s"' "$(dev_kit_json_escape "$guidance")"
     first=0
   done <<EOF
 $(dev_kit_repo_agent_guidance_text "$repo_dir")

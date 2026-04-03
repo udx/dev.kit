@@ -1,5 +1,21 @@
 #!/usr/bin/env bash
 
+dev_kit_repo_entrypoints_json() {
+  local repo_dir="$1"
+  local verify_cmd=""
+  local build_cmd=""
+  local run_cmd=""
+
+  verify_cmd="$(dev_kit_repo_factor_entrypoint "$repo_dir" "verification" || true)"
+  build_cmd="$(dev_kit_repo_factor_entrypoint "$repo_dir" "build_release_run" || true)"
+  run_cmd="$(dev_kit_repo_factor_entrypoint "$repo_dir" "runtime" || true)"
+
+  printf '{ "verify": %s, "build": %s, "run": %s }' \
+    "$(if [ -n "$verify_cmd" ]; then printf '"%s"' "$(dev_kit_json_escape "$verify_cmd")"; else printf 'null'; fi)" \
+    "$(if [ -n "$build_cmd" ]; then printf '"%s"' "$(dev_kit_json_escape "$build_cmd")"; else printf 'null'; fi)" \
+    "$(if [ -n "$run_cmd" ]; then printf '"%s"' "$(dev_kit_json_escape "$run_cmd")"; else printf 'null'; fi)"
+}
+
 dev_kit_repo_workflow_steps() {
   local repo_dir="$1"
   local verify_cmd=""

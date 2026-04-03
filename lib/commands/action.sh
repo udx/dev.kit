@@ -15,6 +15,7 @@ dev_kit_cmd_action() {
   local findings_json=""
   local priority_refs_json=""
   local git_workflow_json='{ "available": false }'
+  local next_git_action=""
   local factor=""
 
   shift || true
@@ -46,11 +47,14 @@ dev_kit_cmd_action() {
     priority_refs_json="$(dev_kit_repo_priority_refs_json "$repo_dir")"
     if dev_kit_sync_has_git_repo "$repo_dir"; then
       git_workflow_json="$(dev_kit_action_git_workflow_json "$repo_dir" "$workflow_id")"
+      next_git_action="$(dev_kit_sync_next_hint "$repo_dir")"
     fi
     dev_kit_template_render "action.json" \
       "command=action" \
       "repo=$(dev_kit_json_escape "$repo_name")" \
       "path=$(dev_kit_json_escape "$repo_dir")" \
+      "entrypoints=$(dev_kit_repo_entrypoints_json "$repo_dir")" \
+      "next_git_action=$(dev_kit_json_escape "$next_git_action")" \
       "markers=$(dev_kit_repo_markers_json "$repo_dir")" \
       "behavior=$(dev_kit_json_escape "$(dev_kit_sync_behavior)")" \
       "archetype=$(dev_kit_json_escape "$(dev_kit_repo_primary_archetype "$repo_dir")")" \
@@ -74,56 +78,17 @@ dev_kit_cmd_action() {
 
   dev_kit_output_title "dev.kit action"
   dev_kit_output_summary "${repo_name} • $(dev_kit_repo_primary_archetype "$repo_dir") • grounded next actions"
-  dev_kit_output_section "summary"
-  dev_kit_output_row "path" "$repo_dir"
-  dev_kit_output_row "profile" "$(dev_kit_repo_primary_profile "$repo_dir")"
-  dev_kit_output_row "behavior" "$(dev_kit_sync_behavior)"
-  dev_kit_output_row "markers" "$(dev_kit_repo_markers_text "$repo_dir")"
-
-  dev_kit_output_section "top priorities"
-  dev_kit_output_list_from_lines <<EOF
-$(dev_kit_repo_findings_text "$repo_dir" | dev_kit_output_first_lines 5)
-EOF
-
-  if dev_kit_sync_has_git_repo "$repo_dir"; then
-    dev_kit_output_section "start here"
-    dev_kit_output_list_from_lines <<EOF
-$(dev_kit_sync_start_here_text "$repo_dir")
-EOF
-  fi
-
   dev_kit_output_section "read first"
   dev_kit_output_list_from_lines <<EOF
-$(dev_kit_repo_priority_refs "$repo_dir" | dev_kit_output_first_lines 5)
+$(dev_kit_repo_priority_refs "$repo_dir" | dev_kit_output_first_lines 4)
 EOF
 
-  if [ -n "$(dev_kit_repo_source_chain_text "$repo_dir")" ]; then
-    dev_kit_output_section "source chain"
-    dev_kit_repo_source_chain_text "$repo_dir" | dev_kit_output_first_lines 6
-  fi
-
+  dev_kit_output_section "do next"
   if dev_kit_sync_has_git_repo "$repo_dir"; then
-    dev_kit_output_section "git"
-    dev_kit_sync_repo_state_compact_text "$repo_dir"
-    dev_kit_output_row "workflow" "$(dev_kit_workflow_name "$workflow_id")"
-    dev_kit_output_row "next" "$(dev_kit_sync_next_hint "$repo_dir")"
-    dev_kit_sync_steps_text "$repo_dir" "$workflow_id" 3
-  else
-    dev_kit_output_section "git"
-    dev_kit_output_row "status" "unavailable"
+    dev_kit_output_list_item "$(dev_kit_sync_next_hint "$repo_dir")"
   fi
-
-  dev_kit_output_section "workflow guide"
-  dev_kit_repo_workflow_text "$repo_dir" | dev_kit_output_first_lines 10
-
-  dev_kit_output_section "agent"
   dev_kit_output_list_from_lines <<EOF
-$(dev_kit_repo_agent_contract_text "$repo_dir" | dev_kit_output_first_lines 4)
-EOF
-
-  dev_kit_output_section "guidance"
-  dev_kit_output_list_from_lines <<EOF
-$(dev_kit_repo_agent_guidance_text "$repo_dir" | dev_kit_output_first_lines 4)
+$(dev_kit_repo_findings_text "$repo_dir" | dev_kit_output_first_lines 3)
 EOF
 }
 

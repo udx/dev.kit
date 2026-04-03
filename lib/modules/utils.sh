@@ -38,10 +38,25 @@ dev_kit_lines_to_json_array() {
     if [ "$first" -eq 0 ]; then
       printf ", "
     fi
-    printf '"%s"' "$item"
+    printf '"%s"' "$(dev_kit_json_escape "$item")"
     first=0
   done
   printf "]"
+}
+
+dev_kit_unique_lines() {
+  awk 'NF && !seen[$0]++'
+}
+
+dev_kit_unique_lines_ci() {
+  awk '
+    NF {
+      lowered = tolower($0)
+      if (!seen[lowered]++) {
+        print
+      }
+    }
+  '
 }
 
 dev_kit_yaml_mapping_scalar() {
