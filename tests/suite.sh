@@ -15,6 +15,9 @@ SIMPLE_REPO="$REPO_DIR/tests/fixtures/simple-repo"
 DOCUMENTED_SHELL_REPO="$REPO_DIR/tests/fixtures/documented-shell-repo"
 DOCKER_REPO="$REPO_DIR/tests/fixtures/docker-repo"
 WORDPRESS_REPO="$REPO_DIR/tests/fixtures/wordpress-repo"
+CODEX_HOME_FIXTURE="$REPO_DIR/tests/fixtures/codex-home"
+LEARN_CODEX_HOME="$TEST_HOME/codex-home"
+LEARN_SESSION_ID="019d4f54-eddc-7350-a757-3bb578d24f99"
 SIMPLE_ACTION_REPO="$TEST_HOME/simple-action-repo"
 GIT_REPO="$TEST_HOME/git-repo"
 NESTED_REPO_DIR="$DOCUMENTED_SHELL_REPO/scripts"
@@ -103,10 +106,24 @@ while [ "$#" -gt 0 ]; do
 done
 
 mkdir -p "$TEST_HOME"
+mkdir -p "$LEARN_CODEX_HOME/sessions/2026/04/02"
 export HOME="$TEST_HOME"
 export PATH="$BASE_PATH"
 unset DEV_KIT_HOME
 unset DEV_KIT_BIN_DIR
+
+cat > "$LEARN_CODEX_HOME/sessions/2026/04/02/rollout-2026-04-02T20-54-19-${LEARN_SESSION_ID}.jsonl" <<EOF
+{"timestamp":"2026-04-02T17:54:23.549Z","type":"session_meta","payload":{"id":"${LEARN_SESSION_ID}","timestamp":"2026-04-02T17:54:19.235Z","cwd":"${DOCUMENTED_SHELL_REPO}","originator":"codex-tui","cli_version":"0.118.0","source":"cli","model_provider":"openai"}}
+{"timestamp":"2026-04-02T17:54:23.553Z","type":"response_item","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"https://github.com/icamiami/icamiami.org/issues/1897"}]}}
+{"timestamp":"2026-04-02T17:54:29.875Z","type":"response_item","payload":{"type":"message","role":"assistant","content":[{"type":"output_text","text":"I’m pulling the issue details first and checking whether this workspace matches that repository before making any changes. After that I’ll trace the affected code path and implement the fix locally if the code is here."}],"phase":"commentary"}}
+{"timestamp":"2026-04-02T17:56:56.484Z","type":"response_item","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"let's do make build and confirm build"}]}}
+{"timestamp":"2026-04-02T17:57:30.573Z","type":"response_item","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"also, use deploy.yml to deploy and see if tf really upgraded"}]}}
+{"timestamp":"2026-04-02T18:00:01.549Z","type":"response_item","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"let's create github branch and sync to remote"}]}}
+{"timestamp":"2026-04-02T18:48:40.260Z","type":"response_item","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"ok, let's prepare brief PR"}]}}
+{"timestamp":"2026-04-02T18:50:41.200Z","type":"response_item","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"let's add related github issue"}]}}
+{"timestamp":"2026-04-03T10:51:58.211Z","type":"response_item","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"nice, I merged and new release was completed, let's see if you can find related github action workflow and releases artifacts there were created, vulnerabilities reduce that happened and so on, so basically collect some data so we can plan brief update comment to related github issue, right?"}]}}
+{"timestamp":"2026-04-03T11:04:21.403Z","type":"event_msg","payload":{"type":"exec_command_end","aggregated_output":"{\"html_url\":\"https://github.com/icamiami/icamiami.org/issues/1897#issuecomment-4183019047\",\"body\":\"✅ Update: [udx/worker-tooling#57](https://github.com/udx/worker-tooling/pull/57) was merged and released as [\`0.19.0\`](https://github.com/udx/worker-tooling/releases/tag/0.19.0) on 2026-04-02. Findings improvement in code scanning. ⚠️ Next step: update rabbit-automation-action.\"}"}}
+EOF
 
 for profile in "${PROFILE_FILES[@]}"; do
   printf "# dev.kit test sentinel\n" > "$profile"
@@ -230,6 +247,14 @@ if should_run "learn"; then
   assert_contains "$learn_json" "\"destinations\": [" "learn json reports destinations"
   assert_contains "$learn_json" "\"name\": \"dev.learn pr\"" "learn json reports workflow name"
   assert_contains "$learn_json" "\"id\": \"gh_issue\"" "learn json reports github issue destination"
+
+  learn_session_json="$(cd "$DOCUMENTED_SHELL_REPO" && CODEX_HOME="$LEARN_CODEX_HOME" dev.kit learn --json)"
+  print_block "learn session json" "$learn_session_json"
+  assert_contains "$learn_session_json" "\"type\": \"local_agent_session\"" "learn session json reports discovered local agent session source"
+  assert_contains "$learn_session_json" "\"shared_context\": { \"mode\": \"issue-root\"" "learn session json reports issue-root shared context"
+  assert_contains "$learn_session_json" "\"id\": \"issue-scope\"" "learn session json reports workflow derived from the session"
+  assert_contains "$learn_session_json" "\"id\": \"source-backed-updates\"" "learn session json reports lessons derived from the session"
+  assert_contains "$learn_session_json" "https://github.com/icamiami/icamiami.org/issues/1897" "learn session json reports linked github issue"
 fi
 
 if should_run "help"; then

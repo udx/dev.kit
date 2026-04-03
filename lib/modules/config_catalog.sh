@@ -123,6 +123,46 @@ dev_kit_learning_workflow_destinations() {
   dev_kit_learning_workflow_list_values "$1" "destinations"
 }
 
+dev_kit_learning_source_discovery_scalar() {
+  dev_kit_yaml_mapping_scalar "$(dev_kit_learning_config_path)" "source_discovery" "$1"
+}
+
+dev_kit_learning_source_discovery_list() {
+  dev_kit_yaml_mapping_list "$(dev_kit_learning_config_path)" "source_discovery" "$1"
+}
+
+dev_kit_learning_session_rule_ids() {
+  dev_kit_yaml_named_block_ids "$(dev_kit_learning_config_path)" "session_rules"
+}
+
+dev_kit_learning_session_rule_message() {
+  dev_kit_yaml_named_block_scalar "$(dev_kit_learning_config_path)" "session_rules" "$1" "message"
+}
+
+dev_kit_learning_session_rule_threshold() {
+  dev_kit_yaml_named_block_scalar "$(dev_kit_learning_config_path)" "session_rules" "$1" "threshold"
+}
+
+dev_kit_learning_session_rule_patterns() {
+  dev_kit_yaml_named_block_list "$(dev_kit_learning_config_path)" "session_rules" "$1" "patterns"
+}
+
+dev_kit_learning_session_flow_ids() {
+  dev_kit_yaml_named_block_ids "$(dev_kit_learning_config_path)" "session_flow"
+}
+
+dev_kit_learning_session_flow_message() {
+  dev_kit_yaml_named_block_scalar "$(dev_kit_learning_config_path)" "session_flow" "$1" "message"
+}
+
+dev_kit_learning_session_flow_threshold() {
+  dev_kit_yaml_named_block_scalar "$(dev_kit_learning_config_path)" "session_flow" "$1" "threshold"
+}
+
+dev_kit_learning_session_flow_patterns() {
+  dev_kit_yaml_named_block_list "$(dev_kit_learning_config_path)" "session_flow" "$1" "patterns"
+}
+
 dev_kit_learning_destination_status() {
   local destination="$1"
 

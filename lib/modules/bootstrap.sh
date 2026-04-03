@@ -20,6 +20,7 @@ $REPO_DIR/lib/modules/repo_navigation.sh
 $REPO_DIR/lib/modules/repo_reports.sh
 $REPO_DIR/lib/modules/repo_workflows.sh
 $REPO_DIR/lib/modules/dev_sync.sh
+$REPO_DIR/lib/modules/learning_sources.sh
 EOF
 }
 

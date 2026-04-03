@@ -7,7 +7,11 @@
   },
   "description": "{{description}}",
   "sources": {{sources}},
+  "observed_sources": {{observed_sources}},
   "destinations": {{destinations}},
+  "session": {{session}},
+  "flow": {{flow}},
+  "shared_context": {{shared_context}},
   "knowledge_base": {{knowledge_base}},
   "knowledge_sources": {{knowledge_sources}}
 }

@@ -199,6 +199,7 @@ dev_kit_yaml_named_block_ids() {
   awk -v section="$section" '
     $1 == "config:" { in_config = 1; next }
     in_config && $0 ~ "^  " section ":" { in_section = 1; next }
+    in_section && $0 ~ /^  [A-Za-z0-9_-]+:/ && $0 !~ "^  " section ":" { exit }
     in_section && $0 ~ /^    [A-Za-z0-9_-]+:/ {
       current = $1
       sub(":", "", current)
@@ -216,6 +217,7 @@ dev_kit_yaml_named_block_scalar() {
   awk -v section="$section" -v block_id="$block_id" -v key="$key" '
     $1 == "config:" { in_config = 1; next }
     in_config && $0 ~ "^  " section ":" { in_section = 1; next }
+    in_section && $0 ~ /^  [A-Za-z0-9_-]+:/ && $0 !~ "^  " section ":" { exit }
     in_section && $0 ~ /^    [A-Za-z0-9_-]+:/ {
       current = $1
       sub(":", "", current)
@@ -239,6 +241,7 @@ dev_kit_yaml_named_block_list() {
   awk -v section="$section" -v block_id="$block_id" -v key="$key" '
     $1 == "config:" { in_config = 1; next }
     in_config && $0 ~ "^  " section ":" { in_section = 1; next }
+    in_section && $0 ~ /^  [A-Za-z0-9_-]+:/ && $0 !~ "^  " section ":" { exit }
     in_section && $0 ~ /^    [A-Za-z0-9_-]+:/ {
       current = $1
       sub(":", "", current)

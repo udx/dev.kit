@@ -187,6 +187,9 @@ command_usage() {
       ;;
     explore|learn)
       echo "  --json     Output machine-readable JSON"
+      if [ "$command_name" = "learn" ]; then
+        echo "  --workflow Override the configured learn workflow id"
+      fi
       ;;
     uninstall)
       echo "  --yes      Remove dev.kit without a confirmation prompt"
