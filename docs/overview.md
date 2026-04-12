@@ -2,41 +2,51 @@
 
 `dev.kit` is a repo-driven development tool.
 
-It works from standard repository evidence first:
-
-- `README` and docs
-- tests and verification entrypoints
-- manifests such as `package.json`, `composer.json`, and `Dockerfile`
-- workflow files, deploy config, and command layers
-
-It does not require custom repo metadata to be useful. If TODO, context, or refs files matter, they should live in the repo as ordinary files that both humans and programs can read.
-
-If a team wants a local, provider-agnostic agent note, `AGENTS.md` is supported as an optional override. It should stay small, remain secondary to repo-native sources, and can be kept untracked.
-
-When a repo depends on reusable internal tooling or workflows, `dev.kit` should also point humans and agents at the relevant upstream repos and refs, especially under `udx/*`.
-
 ## Goal
 
-The goal is context-driven engineering through repo-native mechanisms:
+Context-driven engineering through repo-native mechanisms:
 
-- 12-factor workflow boundaries
-- repo-centric operation instead of agent-centric operation
-- smoke-first, test-driven normalization
-- durable repo formats such as markdown, yaml, and mermaid
-- clear separation between deterministic repo logic and agent judgment
+- Develop without tribal knowledge. Verify changes predictably.
+- Let teammates and agents operate with less ambiguity.
+- Standardize how work moves from local changes to CI and deployment.
+- Keep deterministic logic in repo config and scripts. Reserve AI agents for judgment that can't be scripted.
+
+## Phases
+
+dev.kit operates in phases. Each phase builds on the previous and uses global context to gate what it can do.
+
+### 1. env — `dev.kit`
+
+Validates the local software environment and writes a global context file (`$DEV_KIT_HOME/context-env.txt`). This context determines what downstream phases can do:
+
+- `github_enrichment` — active only when `gh` is installed and authenticated
+- `yaml_parsing` — active only when `yq` is available
+- `json_parsing` — active only when `jq` is available
+- `cloud_aws/gcp/azure` — active only when respective CLI is available
+
+### 2. repo — `dev.kit repo`
+
+Builds a resolved view of the repository: docs, scripts, workflows, deploy config, Dockerfile chains, manifests. Identifies gaps against 12-factor principles. Writes `.dev-kit/manifest.json` and generates `AGENTS.md`.
+
+Can also scaffold missing structure with `--scaffold`.
+
+### 3. agent — `dev.kit agent`
+
+Reads the repo context manifest and outputs structured context for AI agents. Generates `AGENTS.md` if not already present.
 
 ## What `dev.kit` Does
 
-- `dev.kit explore` explains what a repo is, which refs matter, and which workflows are typical.
-- `dev.kit action` turns repo evidence into grounded next actions for developers and AI agents.
-- `dev.kit action --json` exposes the same contract for automation.
-- `dev.kit learn` evaluates lessons-learned workflows for recent pull requests.
+- `dev.kit` — validates env, writes global context, detects repo
+- `dev.kit repo` — analyzes repo, writes manifest and AGENTS.md, optionally scaffolds structure
+- `dev.kit agent` — reads manifest, outputs AI-ready context
+- `dev.kit learn` — evaluates lessons-learned workflow for recent agent sessions
 
-## Mental Model
+## Design Principles
 
-`dev.kit` should stay raw and composable:
+**Repo-centric**: works from standard repository evidence (README, docs, tests, manifests, workflows, deploy config). Does not require custom metadata files.
 
-- YAML catalogs and shell scripts own deterministic discovery and policy.
-- Templates own output shape.
-- Agents consume repo facts and add bounded judgment.
-- If behavior must be repeatable, it should move into the repo instead of living only in prompts.
+**Standard signals first**: markdown and YAML are durable working formats. Repo-native sources (README, docs, TODO, workflows) take precedence over custom overlays.
+
+**Strict separation**: config and scripts own deterministic discovery and policy. Templates own output shape. Agents consume repo facts and add bounded judgment. If behavior must be repeatable, it should move into the repo — not live only in prompts.
+
+**Optional overlays**: `AGENTS.md` and `CLAUDE.md` are supported as provider-agnostic agent notes. Keep them small and never let them replace repo-native sources.

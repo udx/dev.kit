@@ -2,75 +2,72 @@ kind: contextConfig
 version: udx.io/dev.kit/v1
 
 config:
-  lists:
-    repo_root_files:
-      - README.md
-      - readme.md
-      - package.json
-      - composer.json
-      - wp-config.php
-      - Dockerfile
-      - Makefile
-      - makefile
-      - deploy.yml
-      - deploy.yaml
-    repo_root_dirs:
-      - .git
-      - .github
-      - .rabbit
-    repo_note_files:
-      - CLAUDE.md
-      - AGENTS.md
-      - todo.md
-      - TODO.md
-      - context.md
-      - CONTEXT.md
-      - refs.md
-      - REFS.md
-    priority_paths:
-      - CLAUDE.md
-      - AGENTS.md
-      - README.md
-      - readme.md
-      - docs/lessons-learned.md
-      - docs/architecture.md
-      - TODO.md
-      - todo.md
-      - CONTEXT.md
-      - context.md
-      - REFS.md
-      - refs.md
-      - .rabbit/infra_configs
-      - docs
-      - .rabbit
-      - .github/workflows
-      - Makefile
-      - src/configs/development-practices.yaml
-      - package.json
-      - composer.json
-      - Dockerfile
-      - docker-compose.yml
-      - docker-compose.yaml
-      - deploy.yml
-      - deploy.yaml
-      - wp-config.php
-      - Chart.yaml
-      - helmfile.yaml
-      - k8s
-      - charts
-      - terraform
-      - lib
-      - src
-      - scripts
-      - tests
-    repo_doc_paths:
-      - CLAUDE.md
-      - AGENTS.md
-      - README.md
-      - readme.md
-      - docs/lessons-learned.md
-      - docs/architecture.md
-      - docs
+  repo_root_files:
+    - README.md
+    - readme.md
+    - package.json
+    - composer.json
+    - wp-config.php
+    - Dockerfile
+    - Makefile
+    - makefile
+  repo_root_dirs:
+    - .git
+    - .github
+    - .rabbit
+  repo_note_files:
+    - CLAUDE.md
+    - AGENTS.md
+    - todo.md
+    - TODO.md
+    - context.md
+    - CONTEXT.md
+    - refs.md
+    - REFS.md
+  priority_paths:
+    - CLAUDE.md
+    - AGENTS.md
+    - README.md
+    - readme.md
+    - docs/lessons-learned.md
+    - docs/architecture.md
+    - TODO.md
+    - todo.md
+    - CONTEXT.md
+    - context.md
+    - REFS.md
+    - refs.md
+    - .rabbit/infra_configs
+    - docs
+    - .rabbit
+    - .github/workflows
+    - Makefile
+    - src/configs/development-practices.yaml
+    - package.json
+    - composer.json
+    - Dockerfile
+    - docker-compose.yml
+    - docker-compose.yaml
+    - deploy.yml
+    - deploy.yaml
+    - wp-config.php
+    - Chart.yaml
+    - helmfile.yaml
+    - k8s
+    - charts
+    - terraform
+    - lib
+    - src
+    - scripts
+    - tests
+  repo_doc_paths:
+    - CLAUDE.md
+    - AGENTS.md
+    - README.md
+    - readme.md
+    - docs/lessons-learned.md
+    - docs/architecture.md
+    - docs
   marker_groups:
     git_root:
       prefix: git

@@ -1,127 +1,133 @@
 # dev.kit
 
-![dev.kit](assets/logo.svg)
+**A foundation for context-driven development.**
 
-`dev.kit` is a repo-driven development tool for UDX engineering workflows.
+`dev.kit` builds structured context from environment, repository, and accumulated experience — so development is grounded in what actually exists, not assumptions.
 
-It works from standard repository evidence first: `README`, docs, tests, manifests, workflow files, deploy config, command layers, and repo TODO or refs files when present. It does not require custom repo metadata. `dev.kit action` translates that repo evidence into grounded next steps for humans and AI agents.
+It resolves a repository into a working system — tracing dependencies and linking manifests to the tools they actually drive.
 
-The goal is to let humans and agents enter almost any repo, recover its operating model from the repo itself, and improve it without engineering drift.
+AI Agents can operate without knowledge drift or guesswork — developers orchestrate and validate.
+
+---
+
+## How it works
+
+`dev.kit` builds context in layers:
+
+- **Environment** → what actually works  
+- **Repo** → how the system is structured  
+- **Experience** → signals from real usage  
+
+This produces a resolved view of the system that can be used directly or by automation.
+
+Each layer reduces guesswork.
+
+---
+
+## Quick start
+
+```bash
+dev.kit
+dev.kit repo
+dev.kit agent
+```
+
+---
+
+## Commands
+
+### `dev.kit` — environment
+
+Validates your environment and records what’s available.
+
+Everything downstream relies only on tools that actually work.
+
+```bash
+dev.kit
+dev.kit --json
+```
+
+---
+
+### `dev.kit repo` — repo
+
+Builds a resolved view of your repository.
+
+On an **existing repo**:
+
+- reads docs, workflows, Dockerfiles, and manifests  
+- incorporates issues and PRs (if available)  
+- identifies gaps against 12-factor principles  
+
+On a **new repo**:
+
+- scaffolds missing structure  
+- creates `.gitignore`, `AGENTS.md`, and workflow stubs  
+
+```bash
+cd my-repo
+dev.kit repo
+```
+
+---
+
+### `dev.kit agent` — agent
+
+Executes tasks using the resolved context.
+
+- reads repo context  
+- updates `AGENTS.md`  
+- works against real constraints, not prompts  
+
+```bash
+dev.kit agent
+```
+
+Works with any agent that can read files.
+
+---
+
+## Without agents
+
+Use `dev.kit` directly to:
+
+- validate your environment  
+- understand repositories  
+- identify structural gaps  
+- scaffold and standardize projects  
+
+Context is the core output. Agents consume it.
+
+---
+
+## Why
+
+**Context over prompts**  
+Prompts provide intent. Context prevents drift.
+
+**Resolved systems**  
+Dependencies and tools are explicit and connected.
+
+**Incremental**  
+Each step adds value on its own.
+
+**Agent-compatible**  
+Plain files and structured output — no lock-in.
+
+---
 
 ## Install
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/udx/dev.kit/main/bin/scripts/install.sh | bash
-dev.kit
 ```
 
-This installs `dev.kit` into `~/.udx/dev.kit` and adds `dev.kit` to `~/.local/bin/dev.kit`. If `~/.local/bin` is not already on `PATH`, the installer prints the exact command to export it manually.
-
-It is designed to keep repo work grounded in explicit contracts:
-
-- what the repo is
-- how humans and agents should work in it
-- how local `git/udx` repos relate to remote `github.com/udx/*` knowledge
-- which tools and formats define the working surface: `git`, `gh`, `npm`, `docker`, `yml`
-- which dependency and tooling repos should be read when repo workflows depend on them
-
-The design goal is context-driven engineering through repo-driven mechanisms:
-
-- 12-factor by default
-- repo-centric instead of agent-centric
-- test-driven development with smoke-first verification
-- markdown/yaml/mmd as durable working formats
-- self-contained contracts that are easy to extend without overengineering
-
-There is also a strict separation of responsibilities:
-
-- config plus scripts own deterministic workflow logic, discovery, and policy
-- agents consume repo context and command output instead of inventing behavior
-- anything critical to repeatability should live in the repo, not only in prompts
-
-## Command Surface
-
-`dev.kit explore`
-
-- Reports what a repo is, which workflows matter, and which refs to read first.
-- Surfaces the knowledgebase hierarchy and repo-native sources used across UDX repos.
-- Emits a concrete workflow contract from repo facts.
-
-`dev.kit action`
-
-- Audits the repo as an engineering contract and turns that into concrete next actions.
-- Combines factor findings, agent guidance, and git workflow evaluation in one place.
-- `--json` returns the same model in machine-readable form.
-
-`dev.kit learn`
-
-- Evaluates the configured lessons-learned workflow for recent pull requests.
-- Keeps the output lightweight and schema-driven so it can later feed GitHub issues, wiki pages, or Slack summaries without adding hidden logic.
-
-## Quick Start
-
-```bash
-dev.kit explore
-dev.kit action
-dev.kit action --json
-dev.kit learn
-```
-
-## Why It Matters
-
-Run `dev.kit explore` and `dev.kit action` when a repo is new, drifting, hard to onboard into, or inconsistent across environments.
-
-The value is operational clarity:
-
-- develop without tribal knowledge
-- verify changes predictably
-- automate build and runtime workflows
-- let teammates and agents operate with less ambiguity
-- standardize how work moves from local changes to CI and deployment
-
-## Uninstall
-
-```bash
-dev.kit uninstall
-```
-
-Removes the local install from `~/.udx/dev.kit` and the `~/.local/bin/dev.kit` symlink.
+---
 
 ## Docs
 
-Start here:
-
-- [Overview](/Users/jonyfq/git/udx/dev.kit/docs/overview.md)
-- [Commands](/Users/jonyfq/git/udx/dev.kit/docs/commands.md)
-- [Workflow Model](/Users/jonyfq/git/udx/dev.kit/docs/workflow.md)
-
-Contributor and repo guidance:
-
-- [Engineering Guide](/Users/jonyfq/git/udx/dev.kit/docs/engineering-guide.md)
-- [Development](/Users/jonyfq/git/udx/dev.kit/docs/development.md)
-- [Pull Requests](/Users/jonyfq/git/udx/dev.kit/docs/pull-requests.md)
-
-Reference:
-
-- [Detection Facets](/Users/jonyfq/git/udx/dev.kit/docs/detection-facets.md)
-
-## Tests
-
-Use focused checks during development:
-
-```bash
-bash tests/smoke.sh --only home,explore
-bash tests/smoke.sh --only action,learn
-bash tests/full.sh --only repo-family
-```
-
-Run only the slices you are changing during local work. Reserve broader `tests/full.sh` runs for repo-family regression coverage and CI-style verification. Keep new tests lightweight by default so agents can verify command contracts without pulling in heavy environment setup.
-
-For prompt validation against agent workflows, the repo also includes a minimal Promptfoo harness:
-
-```bash
-bash tests/promptfoo.sh
-bash bin/scripts/promptfoo-dev-kit.sh eval --repo .
-```
-
-The first command verifies the harness offline with a local mock provider. The second uses the same flow and can be pointed at a real Promptfoo provider with `DEV_KIT_PROMPTFOO_PROVIDER=...`.
+- [Overview](docs/overview.md)
+- [Commands](docs/commands.md)
+- [Workflow Model](docs/workflow.md)
+- [Architecture](docs/architecture.md)
+- [Detection Facets](docs/detection-facets.md)

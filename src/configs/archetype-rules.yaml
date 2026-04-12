@@ -2,22 +2,6 @@ kind: archetypeRules
 version: udx.io/dev.kit/v1
 
 config:
-  lists:
-    precedence:
-      - wordpress-site
-      - kubernetes-infra
-      - worker-automation
-      - workflow-repo
-      - runtime-image
-      - application
-      - infra-config
-      - library-cli
-      - unknown
-    configured:
-      - wordpress-site
-      - kubernetes-infra
-      - worker-automation
-      - workflow-repo
   archetypes:
     wordpress-site:
       required:
@@ -27,23 +11,29 @@ config:
         - package:node
         - package:composer
         - workflow:github
-    kubernetes-infra:
-      required:
-        - platform:kubernetes
-      supporting:
-        - lifecycle:deploy
-        - workflow:github
-        - deploy:kubernetes-manifests
-        - deploy:terraform
-    worker-automation:
-      required:
-        - workload:automation
-      supporting:
-        - runtime:container
-        - lifecycle:deploy
-        - deploy:worker-config
-        - package:node
     workflow-repo:
       required:
         - workflow:github
         - repo:workflow-primary
+    infra-pipeline:
+      required:
+        - workflow:github
+        - deploy:terraform
+      supporting:
+        - repo:workflow-primary
+        - deploy:kubernetes-manifests
+        - lifecycle:deploy
+        - runtime:container
+    runtime-image:
+      required:
+        - runtime:container
+      supporting:
+        - lifecycle:build
+        - lifecycle:runtime
+        - lifecycle:deploy
+    library-cli:
+      # No required facets — catch-all for code repos without a stronger match
+      supporting:
+        - package:node
+        - package:composer
+        - lifecycle:build

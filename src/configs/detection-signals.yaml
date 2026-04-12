@@ -2,182 +2,172 @@ kind: detectionSignals
 version: udx.io/dev.kit/v1
 
 config:
-  lists:
-    documentation_files:
-      - README.md
-      - README
-      - readme.md
-    documentation_hub_files:
-      - docs/README.md
-      - docs/readme.md
-    markdown_file_globs:
-      - README*
-      - docs/*.md
-      - docs/**/*.md
-    prune_dirs:
-      - .git
-      - wp-admin
-      - wp-content
-      - wp-includes
-      - node_modules
-      - vendor
-      - .venv
-      - venv
-      - .terraform
-      - dist
-      - build
-      - coverage
-      - .next
-      - .nuxt
-      - .turbo
-      - .cache
-      - target
-      - out
-      - tmp
-      - artifacts
-    makefiles:
-      - Makefile
-      - makefile
-      - GNUmakefile
-    node_files:
-      - package.json
-    php_files:
-      - composer.json
-      - phpunit.xml
-      - phpunit.xml.dist
-    container_files:
-      - Dockerfile
-      - docker-compose.yml
-      - docker-compose.yaml
-    container_globs:
-      - Dockerfile.*
-    dependency_manifest_files:
-      - package.json
-      - composer.json
-      - requirements.txt
-      - pyproject.toml
-      - go.mod
-      - Cargo.toml
-      - Gemfile
-    dependency_partial_files:
-      - Dockerfile
-    config_contract_files:
-      - .env.example
-      - .env.sample
-      - .env.template
-      - docker-compose.yml
-      - docker-compose.yaml
-      - deploy.yml
-      - deploy.yaml
-    runtime_files:
-      - Dockerfile
-      - Procfile
-    shell_dirs:
-      - bin
-      - scripts
-      - lib
-    shell_globs:
-      - *.sh
-    test_dirs:
-      - tests
-      - test
-      - spec
-    example_dirs:
-      - examples
-      - fixtures
-    workflow_globs:
-      - .github/workflows/*.yml
-      - .github/workflows/*.yaml
-    workflow_primary_files:
-      - action.yml
-      - action.yaml
-    deploy_files:
-      - deploy.yml
-      - deploy.yaml
-      - docker-compose.yml
-      - docker-compose.yaml
-    worker_deploy_files:
-      - deploy.yml
-      - deploy.yaml
-    worker_deploy_globs:
-      - test/deploy*.yml
-      - test/deploy*.yaml
-      - tests/deploy*.yml
-      - tests/deploy*.yaml
-    infra_dirs:
-      - terraform
-      - k8s
-      - cd
-    architecture_layer_dirs:
-      - lib/commands
-      - lib/modules
-      - src/templates
-      - src/configs
-      - app/controllers
-      - app/models
-      - app/views
-      - app/services
-      - src/controllers
-      - src/models
-      - src/views
-      - src/services
-      - internal
-      - cmd
-      - templates
-      - configs
-    architecture_partial_dirs:
-      - lib
-      - src
-      - app
-      - modules
-      - services
-      - controllers
-      - models
-      - views
-      - templates
-      - configs
-      - docs
-    architecture_command_dirs:
-      - lib/commands
-      - app/controllers
-      - src/controllers
-      - cmd
-    architecture_logic_dirs:
-      - lib/modules
-      - app/models
-      - app/services
-      - src/models
-      - src/services
-      - internal
-      - modules
-      - services
-    architecture_view_dirs:
-      - src/templates
-      - app/views
-      - src/views
-      - templates
-    architecture_config_dirs:
-      - src/configs
-      - config
-      - configs
-    architecture_source_globs:
-      - *.sh
-      - *.js
-      - *.cjs
-      - *.mjs
-      - *.ts
-      - *.tsx
-      - *.php
-      - *.py
-      - *.rb
-    verification_files:
-      - phpunit.xml
-      - phpunit.xml.dist
-    verification_globs:
-      - *.bats
-      - *test*.sh
-  scalars:
-    architecture_command_max_lines: 120
-    architecture_module_max_lines: 400
-    architecture_present_category_min: 3
-    architecture_partial_category_min: 2
+  documentation_files:
+    - README.md
+    - README
+    - readme.md
+  documentation_hub_files:
+    - docs/README.md
+    - docs/readme.md
+  markdown_file_globs:
+    - README*
+    - docs/*.md
+    - docs/**/*.md
+  prune_dirs:
+    - .git
+    - wp-admin
+    - wp-content
+    - wp-includes
+    - node_modules
+    - vendor
+    - .venv
+    - venv
+    - .terraform
+    - dist
+    - build
+    - coverage
+    - .next
+    - .nuxt
+    - .turbo
+    - .cache
+    - target
+    - out
+    - tmp
+    - artifacts
+  makefiles:
+    - Makefile
+    - makefile
+    - GNUmakefile
+  node_files:
+    - package.json
+  php_files:
+    - composer.json
+    - phpunit.xml
+    - phpunit.xml.dist
+  container_files:
+    - Dockerfile
+    - docker-compose.yml
+    - docker-compose.yaml
+  container_globs:
+    - Dockerfile.*
+  dependency_manifest_files:
+    - package.json
+    - composer.json
+    - requirements.txt
+    - pyproject.toml
+    - go.mod
+    - Cargo.toml
+    - Gemfile
+  dependency_partial_files:
+    - Dockerfile
+  config_contract_files:
+    - .env.example
+    - .env.sample
+    - .env.template
+    - docker-compose.yml
+    - docker-compose.yaml
+    - deploy.yml
+    - deploy.yaml
+  runtime_files:
+    - Dockerfile
+    - Procfile
+  shell_dirs:
+    - bin
+    - scripts
+    - lib
+  shell_globs:
+    - *.sh
+  test_dirs:
+    - tests
+    - test
+    - spec
+  example_dirs:
+    - examples
+    - fixtures
+  workflow_globs:
+    - .github/workflows/*.yml
+    - .github/workflows/*.yaml
+  workflow_primary_files:
+    - action.yml
+    - action.yaml
+  deploy_files:
+    - deploy.yml
+    - deploy.yaml
+    - docker-compose.yml
+    - docker-compose.yaml
+  infra_dirs:
+    - terraform
+    - k8s
+    - cd
+  architecture_layer_dirs:
+    - lib/commands
+    - lib/modules
+    - src/templates
+    - src/configs
+    - app/controllers
+    - app/models
+    - app/views
+    - app/services
+    - src/controllers
+    - src/models
+    - src/views
+    - src/services
+    - internal
+    - cmd
+    - templates
+    - configs
+  architecture_partial_dirs:
+    - lib
+    - src
+    - app
+    - modules
+    - services
+    - controllers
+    - models
+    - views
+    - templates
+    - configs
+    - docs
+  architecture_command_dirs:
+    - lib/commands
+    - app/controllers
+    - src/controllers
+    - cmd
+  architecture_logic_dirs:
+    - lib/modules
+    - app/models
+    - app/services
+    - src/models
+    - src/services
+    - internal
+    - modules
+    - services
+  architecture_view_dirs:
+    - src/templates
+    - app/views
+    - src/views
+    - templates
+  architecture_config_dirs:
+    - src/configs
+    - config
+    - configs
+  architecture_source_globs:
+    - *.sh
+    - *.js
+    - *.cjs
+    - *.mjs
+    - *.ts
+    - *.tsx
+    - *.php
+    - *.py
+    - *.rb
+  verification_files:
+    - phpunit.xml
+    - phpunit.xml.dist
+  verification_globs:
+    - *.bats
+    - *test*.sh
+  architecture_command_max_lines: 120
+  architecture_module_max_lines: 400
+  architecture_present_category_min: 3
+  architecture_partial_category_min: 2

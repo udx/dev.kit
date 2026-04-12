@@ -22,13 +22,13 @@ dev_kit_detection_pattern() {
 dev_kit_detection_list() {
   local list_name="$1"
 
-  dev_kit_yaml_mapping_list "$(dev_kit_detection_signals_path)" "lists" "$list_name"
+  dev_kit_yaml_config_list "$(dev_kit_detection_signals_path)" "$list_name"
 }
 
 dev_kit_detection_scalar() {
   local key="$1"
 
-  dev_kit_yaml_mapping_scalar "$(dev_kit_detection_signals_path)" "scalars" "$key"
+  dev_kit_yaml_config_scalar "$(dev_kit_detection_signals_path)" "$key"
 }
 
 dev_kit_repo_name() {
@@ -372,30 +372,6 @@ dev_kit_repo_file_has_all_patterns() {
   return 0
 }
 
-dev_kit_repo_has_worker_deploy_config() {
-  local repo_dir="$1"
-  local file_path=""
-
-  while IFS= read -r file_path; do
-    [ -n "$file_path" ] || continue
-    if dev_kit_repo_file_has_all_patterns "$repo_dir/$file_path" "worker_deploy_config_kind" "worker_deploy_config_version"; then
-      return 0
-    fi
-  done <<EOF
-$(dev_kit_detection_list "worker_deploy_files")
-EOF
-
-  while IFS= read -r file_path; do
-    [ -n "$file_path" ] || continue
-    if dev_kit_repo_file_has_all_patterns "$file_path" "worker_deploy_config_kind" "worker_deploy_config_version"; then
-      return 0
-    fi
-  done <<EOF
-$(dev_kit_repo_find_from_glob_list "$repo_dir" "worker_deploy_globs")
-EOF
-
-  return 1
-}
 
 dev_kit_repo_documented_command() {
   local repo_dir="$1"

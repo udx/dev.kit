@@ -23,6 +23,7 @@ dev_kit_sync_nearest_base_branch() {
 
   while IFS= read -r candidate; do
     [ -n "$candidate" ] || continue
+    [ "$candidate" = "$branch" ] && continue  # never pick the current branch as its own base
     if git -C "$repo_dir" show-ref --verify --quiet "refs/remotes/origin/$candidate"; then
       candidate_ref="origin/$candidate"
     elif git -C "$repo_dir" show-ref --verify --quiet "refs/heads/$candidate"; then
@@ -64,16 +65,6 @@ dev_kit_sync_default_branch() {
   fi
 
   branch="$(dev_kit_sync_current_branch "$repo_dir")"
-  while IFS= read -r candidate; do
-    [ -n "$candidate" ] || continue
-    if [ "$branch" = "$candidate" ] && git -C "$repo_dir" show-ref --verify --quiet "refs/remotes/origin/$candidate"; then
-      printf "%s" "$candidate"
-      return 0
-    fi
-  done <<EOF
-$(dev_kit_sync_base_branch_names)
-EOF
-
   nearest_branch="$(dev_kit_sync_nearest_base_branch "$repo_dir" "$branch")"
   if [ -n "$nearest_branch" ]; then
     printf "%s" "$nearest_branch"

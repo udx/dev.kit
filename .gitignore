@@ -1,3 +1,13 @@
 .DS_Store
 .tmp/
+context-env.txt
+
+# dev.kit repo manifest (local artifact, not for VCS)
+.dev-kit/
+
+# agent
+.claude/
+.codex/
+.copilot/
+.devin/
 AGENTS.md

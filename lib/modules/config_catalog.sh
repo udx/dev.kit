@@ -19,11 +19,11 @@ dev_kit_archetype_rules_path() {
 }
 
 dev_kit_archetype_signal_list() {
-  dev_kit_yaml_mapping_list "$(dev_kit_archetype_signals_path)" "lists" "$1"
+  dev_kit_yaml_config_list "$(dev_kit_archetype_signals_path)" "$1"
 }
 
-dev_kit_archetype_rule_list() {
-  dev_kit_yaml_mapping_list "$(dev_kit_archetype_rules_path)" "lists" "$1"
+dev_kit_archetype_rule_ids() {
+  dev_kit_yaml_named_block_ids "$(dev_kit_archetype_rules_path)" "archetypes"
 }
 
 dev_kit_archetype_facets() {
@@ -35,7 +35,7 @@ dev_kit_context_config_path() {
 }
 
 dev_kit_context_list() {
-  dev_kit_yaml_mapping_list "$(dev_kit_context_config_path)" "lists" "$1"
+  dev_kit_yaml_config_list "$(dev_kit_context_config_path)" "$1"
 }
 
 dev_kit_context_marker_group_ids() {

@@ -78,7 +78,6 @@ dev_kit_repo_facets() {
   local has_wordpress=0
   local has_kubernetes=0
   local has_container=0
-  local has_worker_deploy=0
 
   if [ "$DEV_KIT_REPO_FACETS_CACHE_REPO" = "$repo_dir" ]; then
     printf "%s" "$DEV_KIT_REPO_FACETS_CACHE_VALUE"
@@ -106,20 +105,22 @@ framework:wp-config.php
 "
   fi
 
+  # K8s: only actual manifests or Helm charts — Terraform alone does not imply platform:kubernetes
   if dev_kit_repo_has_any_file_from_signal_list "$repo_dir" "kubernetes_files" || \
      dev_kit_repo_has_any_dir_from_signal_list "$repo_dir" "kubernetes_dirs" || \
      dev_kit_repo_has_any_glob_from_signal_list "$repo_dir" "kubernetes_globs"; then
     has_kubernetes=1
     facets="${facets}platform:kubernetes
+deploy:kubernetes-manifests
 "
-    if dev_kit_repo_has_any_dir_from_signal_list "$repo_dir" "kubernetes_dirs"; then
-      facets="${facets}deploy:kubernetes-manifests
+  fi
+
+  # Terraform: standalone detection independent of K8s
+  if dev_kit_repo_has_any_file_from_signal_list "$repo_dir" "terraform_files" || \
+     dev_kit_repo_has_any_dir_from_signal_list "$repo_dir" "terraform_dirs" || \
+     dev_kit_repo_has_any_glob_from_signal_list "$repo_dir" "terraform_globs"; then
+    facets="${facets}deploy:terraform
 "
-    fi
-    if dev_kit_repo_has_dir "$repo_dir" "terraform" || dev_kit_repo_has_glob "$repo_dir" "*.tf"; then
-      facets="${facets}deploy:terraform
-"
-    fi
   fi
 
   case "
@@ -173,12 +174,6 @@ manifest:composer.json
 "
   fi
 
-  if dev_kit_repo_has_worker_deploy_config "$repo_dir"; then
-    has_worker_deploy=1
-    facets="${facets}deploy:worker-config
-"
-  fi
-
   if dev_kit_repo_has_build_signals "$repo_dir"; then
     facets="${facets}lifecycle:build
 "
@@ -191,7 +186,8 @@ manifest:composer.json
 
   if dev_kit_repo_has_any_file_from_list "$repo_dir" "deploy_files" || \
      dev_kit_repo_has_any_dir_from_list "$repo_dir" "infra_dirs" || \
-     [ "$has_worker_deploy" -eq 1 ]; then
+     dev_kit_repo_has_facet_in_text "$facets" "deploy:terraform" || \
+     dev_kit_repo_has_facet_in_text "$facets" "deploy:kubernetes-manifests"; then
     facets="${facets}lifecycle:deploy
 "
   fi
@@ -204,20 +200,12 @@ manifest:composer.json
        { [ "$has_wordpress" -eq 0 ] && \
          [ "$has_kubernetes" -eq 0 ] && \
          [ "$has_container" -eq 0 ] && \
-         [ "$has_worker_deploy" -eq 0 ] && \
          ! dev_kit_has_file "$repo_dir" "package.json" && \
          ! dev_kit_has_file "$repo_dir" "composer.json" && \
          ! dev_kit_repo_has_any_file_from_list "$repo_dir" "deploy_files"; }; then
       facets="${facets}repo:workflow-primary
 "
     fi
-  fi
-
-  if dev_kit_has_file "$repo_dir" "package.json" && \
-     { [ "$has_container" -eq 1 ] || [ "$has_worker_deploy" -eq 1 ] || dev_kit_repo_has_any_file_from_list "$repo_dir" "deploy_files"; } && \
-     dev_kit_repo_has_any_dir_from_signal_list "$repo_dir" "automation_dirs"; then
-    facets="${facets}workload:automation
-"
   fi
 
   if [ -z "$facets" ]; then
@@ -270,86 +258,8 @@ dev_kit_repo_configured_archetypes() {
       printf "%s\n" "$archetype"
     fi
   done <<EOF
-$(dev_kit_archetype_rule_list "configured")
+$(dev_kit_archetype_rule_ids)
 EOF
-}
-
-dev_kit_repo_legacy_archetypes() {
-  local repo_dir="$1"
-  local archetypes=""
-  local facets=""
-  local has_dependency_manifest=0
-  local has_runtime_signal=0
-  local has_build_signal=0
-  local has_shell_surface=0
-  local has_container=0
-  local has_deploy_signal=0
-  local has_workflow_signal=0
-
-  facets="$(dev_kit_repo_facets "$repo_dir")"
-
-  if dev_kit_repo_has_facet_in_text "$facets" "package:node" || \
-     dev_kit_repo_has_facet_in_text "$facets" "package:composer" || \
-     dev_kit_repo_has_any_file_from_list "$repo_dir" "dependency_manifest_files"; then
-    has_dependency_manifest=1
-  fi
-
-  if dev_kit_repo_has_facet_in_text "$facets" "lifecycle:runtime" || \
-     dev_kit_repo_has_any_file_from_list "$repo_dir" "runtime_files" || \
-     dev_kit_repo_has_make_target "$repo_dir" "run" || \
-     dev_kit_repo_documented_command "$repo_dir" "run" >/dev/null; then
-    has_runtime_signal=1
-  fi
-
-  if dev_kit_repo_has_facet_in_text "$facets" "lifecycle:build" || \
-     dev_kit_repo_has_any_file_from_list "$repo_dir" "dependency_partial_files" || \
-     dev_kit_repo_has_make_target "$repo_dir" "build" || \
-     dev_kit_repo_documented_command "$repo_dir" "build" >/dev/null; then
-    has_build_signal=1
-  fi
-
-  if dev_kit_repo_has_any_dir_from_list "$repo_dir" "shell_dirs" || dev_kit_repo_has_any_glob_from_list "$repo_dir" "shell_globs"; then
-    has_shell_surface=1
-  fi
-
-  if dev_kit_repo_has_facet_in_text "$facets" "runtime:container"; then
-    has_container=1
-  fi
-
-  if dev_kit_repo_has_facet_in_text "$facets" "lifecycle:deploy"; then
-    has_deploy_signal=1
-  fi
-
-  if dev_kit_repo_has_facet_in_text "$facets" "workflow:github"; then
-    has_workflow_signal=1
-  fi
-
-  if [ "$has_container" -eq 1 ] && { [ "$has_runtime_signal" -eq 1 ] || [ "$has_build_signal" -eq 1 ] || [ "$has_deploy_signal" -eq 1 ]; }; then
-    archetypes="${archetypes}runtime-image
-"
-  fi
-
-  if [ "$has_dependency_manifest" -eq 1 ] && { [ "$has_runtime_signal" -eq 1 ] || [ "$has_build_signal" -eq 1 ] || [ "$has_deploy_signal" -eq 1 ]; }; then
-    archetypes="${archetypes}application
-"
-  fi
-
-  if [ "$has_dependency_manifest" -eq 1 ] && [ "$has_runtime_signal" -eq 0 ] && [ "$has_build_signal" -eq 0 ]; then
-    archetypes="${archetypes}library-cli
-"
-  fi
-
-  if [ "$has_dependency_manifest" -eq 0 ] && [ "$has_shell_surface" -eq 1 ] && [ "$has_runtime_signal" -eq 0 ] && [ "$has_workflow_signal" -eq 0 ]; then
-    archetypes="${archetypes}library-cli
-"
-  fi
-
-  if [ "$has_deploy_signal" -eq 1 ] || dev_kit_repo_has_any_dir_from_list "$repo_dir" "infra_dirs"; then
-    archetypes="${archetypes}infra-config
-"
-  fi
-
-  printf "%s" "$archetypes" | awk 'NF && !seen[$0]++'
 }
 
 dev_kit_repo_archetypes() {
@@ -361,7 +271,7 @@ dev_kit_repo_archetypes() {
     return 0
   fi
 
-  archetypes="$(printf '%s\n%s\n' "$(dev_kit_repo_configured_archetypes "$repo_dir")" "$(dev_kit_repo_legacy_archetypes "$repo_dir")" | awk 'NF && !seen[$0]++')"
+  archetypes="$(dev_kit_repo_configured_archetypes "$repo_dir")"
 
   if [ -z "$archetypes" ]; then
     DEV_KIT_REPO_ARCHETYPES_CACHE_REPO="$repo_dir"
@@ -407,7 +317,7 @@ $archetype
 "*) printf "%s" "$archetype"; return 0 ;;
     esac
   done <<EOF
-$(dev_kit_archetype_rule_list "precedence")
+$(dev_kit_archetype_rule_ids)
 EOF
 
   printf "%s" "unknown"

@@ -1,0 +1,13 @@
+{
+  "command": "repo",
+  "repo": "{{repo}}",
+  "path": "{{path}}",
+  "mode": "{{mode}}",
+  "archetype": "{{archetype}}",
+  "profile": "{{profile}}",
+  "markers": {{markers}},
+  "factors": {{factors}},
+  "gaps": {{gaps}},
+  "actions": {{actions}},
+  "manifest": "{{manifest}}"
+}

@@ -122,6 +122,7 @@ dev_kit_run_home() {
     fi
     printf '  },\n'
     printf '  "localhost_tools": %s,\n' "$(dev_kit_env_tools_json)"
+    printf '  "global_context": { "capabilities": %s },\n' "$(dev_kit_global_context_capabilities_json)"
     if [ "$repo_detected" = "true" ] && [ "$git_state" = "yes" ]; then
       printf '  "start_here": %s,\n' "$(dev_kit_sync_start_here_json "$repo_root")"
       printf '  "agent_contract": %s,\n' "$(dev_kit_repo_agent_contract_json "$repo_root")"
@@ -130,8 +131,8 @@ dev_kit_run_home() {
       printf '  "agent_contract": [],\n'
     fi
     printf '  "helpers": [\n'
-    printf '    { "id": "explore", "label": "Read the repo summary and refs", "command": "dev.kit explore" },\n'
-    printf '    { "id": "action", "label": "Review grounded next steps", "command": "dev.kit action" },\n'
+    printf '    { "id": "repo", "label": "Analyse repo structure and factors", "command": "dev.kit repo" },\n'
+    printf '    { "id": "agent", "label": "Start an AI session with repo context", "command": "dev.kit agent" },\n'
     printf '    { "id": "learn", "label": "Review lessons-learned workflow", "command": "dev.kit learn" }\n'
     printf '  ]\n'
     printf '}\n'
@@ -139,6 +140,15 @@ dev_kit_run_home() {
   fi
 
   dev_kit_output_title "dev.kit"
+
+  local missing_base=""
+  missing_base="$(dev_kit_env_missing_base_tools)"
+  dev_kit_output_section "env"
+  if [ -n "$missing_base" ]; then
+    dev_kit_output_list_item "base tools missing: ${missing_base}"
+  else
+    dev_kit_output_list_item "base tools ok"
+  fi
 
   if [ "$repo_detected" = "true" ]; then
     dev_kit_output_summary "$(dev_kit_repo_name "$repo_root") • ${archetype} • profile ${profile}"
@@ -151,10 +161,10 @@ dev_kit_run_home() {
 $(dev_kit_sync_start_here_text "$repo_root" | dev_kit_output_first_lines 3)
 EOF
     else
-      dev_kit_output_list_item "Run dev.kit explore for repo structure and refs."
-      dev_kit_output_list_item "Run dev.kit action for grounded next steps."
+      dev_kit_output_list_item "Run dev.kit repo to analyse the repo."
+      dev_kit_output_list_item "Run dev.kit agent to start an AI session."
     fi
-    dev_kit_output_row "more" "dev.kit explore | dev.kit action | dev.kit learn"
+    dev_kit_output_row "more" "dev.kit repo | dev.kit agent | dev.kit learn"
   else
     dev_kit_output_summary "No repository detected in the current directory"
     dev_kit_output_section "read first"
@@ -171,14 +181,17 @@ command_usage() {
   echo
   echo "Options:"
   case "$command_name" in
-    action)
+    repo)
+      echo "  --json       Output machine-readable JSON"
+      echo "  --scaffold   Create missing dirs and files"
+      echo "  --check      Report gaps without making changes"
+      ;;
+    agent)
       echo "  --json     Output machine-readable JSON"
       ;;
-    explore|learn)
+    learn)
       echo "  --json     Output machine-readable JSON"
-      if [ "$command_name" = "learn" ]; then
-        echo "  --workflow Override the configured learn workflow id"
-      fi
+      echo "  --workflow Override the configured learn workflow id"
       ;;
     uninstall)
       echo "  --yes      Remove dev.kit without a confirmation prompt"

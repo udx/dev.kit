@@ -6,7 +6,7 @@ DEV_KIT_BIN="${DEV_KIT_BIN:-$REPO_DIR/bin/dev-kit}"
 LOCAL_ROOT="${DEV_KIT_LOCAL_REPOS_ROOT:-$HOME/git/udx}"
 MAX_REPOS="${DEV_KIT_LOCAL_REPOS_MAX:-0}"
 ONLY_REPOS="${DEV_KIT_LOCAL_REPOS_ONLY:-}"
-COMMANDS="${DEV_KIT_LOCAL_REPOS_COMMANDS:-explore,action,learn}"
+COMMANDS="${DEV_KIT_LOCAL_REPOS_COMMANDS:-explore,action}"
 FAIL_ON_WEAK="${DEV_KIT_LOCAL_REPOS_FAIL_ON_WEAK:-0}"
 
 REPO_COUNT=0
@@ -23,7 +23,8 @@ Environment:
   DEV_KIT_LOCAL_REPOS_ROOT       Root to scan for repos (default: $HOME/git/udx)
   DEV_KIT_LOCAL_REPOS_MAX        Limit the number of repos checked
   DEV_KIT_LOCAL_REPOS_ONLY       Comma-separated repo names to check
-  DEV_KIT_LOCAL_REPOS_COMMANDS   Comma-separated commands: explore,action,learn
+  DEV_KIT_LOCAL_REPOS_COMMANDS   Comma-separated commands: explore,action[,learn]
+                               learn requires CODEX_HOME or agent session source
   DEV_KIT_LOCAL_REPOS_FAIL_ON_WEAK  Exit non-zero when weak findings exist (default: 0)
 EOF
 }

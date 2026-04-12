@@ -1,95 +1,100 @@
-# Workflow
+# Workflow Model
 
-This document explains the workflow model behind `dev.kit`, not the full user guide. For the product summary, start with [docs/overview.md](/Users/jonyfq/git/udx/dev.kit/docs/overview.md). For command-by-command reference, use [docs/commands.md](/Users/jonyfq/git/udx/dev.kit/docs/commands.md).
+For the product summary see [docs/overview.md](overview.md). For command reference see [docs/commands.md](commands.md).
 
-## Context-Driven Engineering
+## Phases
 
-`dev.kit` treats the repository as the primary source of truth. The goal is not agent-specific cleverness. The goal is a repo-driven mechanism that lets any human or agent recover the same operating context from the same evidence:
+dev.kit operates as a pipeline. Each phase builds on the previous — global context from the env phase gates what subsequent phases can do.
 
-- 12-factor workflow boundaries
-- repo-centric commands and refs
-- test-driven development with lightweight smoke suites first
-- durable formats such as markdown, yaml, and mermaid
-- self-contained docs, config, tests, and repo-native task tracking
+```
+dev.kit          →  dev.kit repo       →  dev.kit agent
+─────────────────   ─────────────────    ─────────────────
+validate tools      learn repo           read manifest
+write context       scan docs/workflows  generate AGENTS.md
+detect repo         write manifest       output AI context
+                    update AGENTS.md
+```
 
-## Standard Repo First
+### Phase 1 — env (`dev.kit`)
 
-`dev.kit` should not require custom files to understand a repository. It is expected to read standard engineering signals first:
+Validates the local software environment, writes `$DEV_KIT_HOME/context-env.txt`, detects the current repo, and shows a brief summary.
 
-- `README` and docs
-- manifests such as `package.json`, `composer.json`, and `Dockerfile`
-- `.github/workflows/*`, deploy config, and command layers
-- `tests/`, documented verification entrypoints, and runtime/build commands
+Global context capabilities that gate downstream phases:
 
-If TODOs, refs, or context notes are valuable, keep them in the repo as normal files so humans and programs read the same source. The main job of `dev.kit action` is to translate ordinary repo signals into a better working contract for humans and AI agents.
+| Capability | Requires | If missing |
+|---|---|---|
+| `github_enrichment` | `gh` authenticated | GH API enrichment skipped |
+| `yaml_parsing` | `yq` | Fallback to worker image |
+| `json_parsing` | `jq` | Fallback parsing |
+| `cloud_aws/gcp/azure` | respective CLI | Cloud context skipped |
 
-At UDX, this often means:
+### Phase 2 — repo (`dev.kit repo`)
 
-- WordPress repos are mostly conventional, and the most important differences are often under `.rabbit/` and `.github/`.
-- Non-WordPress repos still follow the same repo-first rule, but the key distinguishing refs may instead be `package.json`, `deploy.yml`, `Makefile`, `docs/`, or other standard top-level contracts.
-- In every case, `README.md` remains one of the highest-value files to read first.
-- If the repo leans on shared workflow or delivery tooling, humans and agents should also inspect the relevant dependency repos, especially under `udx/*`.
+Builds a resolved view of the repository: docs, scripts, workflows, Dockerfile chains, manifests, version signals. Writes `.dev-kit/manifest.json` and generates `AGENTS.md`.
+
+Three modes:
+
+- **learn** (default): analyze and write manifest + AGENTS.md
+- **--scaffold**: also create missing directories and baseline files
+- **--check**: report gaps without writing anything
+
+### Phase 3 — agent (`dev.kit agent`)
+
+Reads `.dev-kit/manifest.json` via `jq` and outputs structured context for AI agents. No recomputation — the manifest is the handoff. Generates `AGENTS.md` only if not already present.
+
+## Pipeline Usage
+
+The intended flow for starting a development session:
+
+```bash
+cd <repo>
+dev.kit
+dev.kit repo
+dev.kit agent
+```
+
+Agents use `dev.kit agent --json` as the machine-readable context contract. `AGENTS.md` is the provider-agnostic summary.
 
 ## Separation of Responsibilities
 
-To avoid engineering drift, `dev.kit` keeps a hard boundary between deterministic repo behavior and agent behavior:
+- **Config and scripts** own deterministic workflow logic: discovery, detection, validation, policy
+- **AI agents** consume the output contract and add judgment for non-deterministic work
+- **Anything repeatable** should live in the repo — not only in a prompt
 
-- YAML catalogs and shell scripts define what can be discovered, evaluated, rendered, and tested mechanically.
-- AI agents read those contracts, docs, tests, TODOs, and refs to decide how to work within the repo.
-- If a rule needs to be repeatable, it should move into config, templates, tests, or scripts rather than staying implicit in an agent prompt.
+## Standard Repo First
 
-## When to Use `dev.kit`
+dev.kit works from standard repository evidence without requiring custom metadata:
 
-Use `dev.kit` when you need to understand or normalize how a repository should be worked on.
+- `README` and docs
+- manifests: `package.json`, `composer.json`, `Dockerfile`
+- `.github/workflows/*`, `deploy.yml`, command layers
+- `tests/`, verified entrypoints, runtime and build commands
 
-Common cases:
+Custom overlays (`AGENTS.md`, `CLAUDE.md`) are optional and secondary to repo-native sources.
 
-- a new repo has unclear build, test, or runtime conventions
-- a mature repo has drifted across teams or environments
-- an agent needs grounded repo context before making changes
-- you want one reproducible way to verify and operate the service
+## `dev.kit learn`
 
-## What `dev.kit` Looks For
+`dev.kit learn` evaluates lessons from recent agent sessions and routes follow-ups to durable repo artifacts (GitHub issues, wiki pages, Slack summaries).
 
-The current action model focuses on practical 12-factor workflow boundaries:
+It activates when an agent session source is configured:
 
-- `documentation`
-- `architecture`
-- `dependencies`
-- `config`
-- `verification`
-- `runtime`
-- `build_release_run`
+- Codex: set `CODEX_HOME` to point at session logs
+- Other agents: additional sources coming
 
-Each factor is reported as `present`, `partial`, or `missing`, with evidence and improvement advice.
+Without a session source, learn reports the configured workflow destinations but has no session data to evaluate.
 
-## Human Workflow
+## 12-Factor Factors
 
-1. Run `dev.kit explore` or just `dev.kit`.
-2. Run `dev.kit action`.
-3. Read the missing or partial factors and the generated next actions.
-4. Normalize the repo around one clear way to configure, verify, build, and run it.
-5. Re-run `dev.kit action` to confirm the repo model is improving.
+The repo model evaluates repo health across seven practical dimensions:
 
-## Agent Workflow
+| Factor | Checks |
+|---|---|
+| `documentation` | README, docs/, documentation sections |
+| `architecture` | command/logic/view/config layer separation, line limits |
+| `dependencies` | package.json, composer.json, requirements.txt, go.mod, etc. |
+| `config` | .env files, documented environment variables |
+| `verification` | test runner, test directory, bats files |
+| `runtime` | Dockerfile, Procfile, documented run command |
+| `build_release_run` | build + runtime both present |
 
-1. Run `dev.kit explore` or `dev.kit action --json`.
-2. Use the reported factor model and entrypoints as the working contract.
-3. Prefer discovered commands over inferred ones.
-4. If `AGENTS.md` exists, treat it as a local override after README, docs, manifests, workflows, and tests.
-5. Improve partial or missing factors as part of the change when appropriate.
-
-## Knowledgebase Hierarchy
-
-UDX development work usually spans two related knowledge roots:
-
-- local repos under `git/udx`
-- remote repos and pull requests under `github.com/udx/*`
-
-`dev.kit` keeps those roots explicit so repo work stays grounded in the same local and remote context instead of drifting into agent-specific assumptions.
-
-## Current Scope
-
-The detector currently recognizes common signals from Node, PHP, shell, and container-oriented repos. The scan policy is config-driven from [src/configs](/Users/jonyfq/git/udx/dev.kit/src/configs), so supported signals can grow without changing the CLI model.
-
-Broader repo working rules and engineering expectations live in [docs/engineering-guide.md](/Users/jonyfq/git/udx/dev.kit/docs/engineering-guide.md).
+Each factor is reported as `present`, `partial`, or `missing` with evidence and improvement guidance.

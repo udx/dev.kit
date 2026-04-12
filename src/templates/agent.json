@@ -1,0 +1,16 @@
+{
+  "command": "agent",
+  "repo": "{{repo}}",
+  "path": "{{path}}",
+  "archetype": "{{archetype}}",
+  "profile": "{{profile}}",
+  "agents_md": "{{agents_md}}",
+  "manifest": "{{manifest}}",
+  "context": {
+    "priority_refs": {{priority_refs}},
+    "entrypoints": {{entrypoints}},
+    "workflow_contract": {{workflow_contract}},
+    "factors": {{factors}}
+  },
+  "task": "{{task}}"
+}
