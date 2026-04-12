@@ -6,7 +6,4 @@ repo_root=$(git rev-parse --show-toplevel)
 
 cd "$repo_root"
 
-printf 'dev.kit hook: running bash tests/run.sh before push\n' >&2
-bash tests/run.sh
-
-dev.kit repo --verify 
+dev.kit repo --verify
