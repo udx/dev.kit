@@ -4,7 +4,7 @@
 
 dev_kit_cmd_repo() {
   local format="${1:-text}"
-  local repo_dir="${2:-$(pwd)}"
+  local repo_dir="$(pwd)"
   local mode="learn"
   local repo_root=""
   local repo_name=""
@@ -12,10 +12,8 @@ dev_kit_cmd_repo() {
   local actions_json="[]"
   local manifest_path=""
 
-  # Parse flags from remaining args (skip format and repo_dir already captured)
-  if [ "$#" -ge 2 ]; then
-    shift 2
-  elif [ "$#" -ge 1 ]; then
+  # Parse flags from remaining args (skip format which is first arg)
+  if [ "$#" -ge 1 ]; then
     shift
   fi
   while [ "$#" -gt 0 ]; do
@@ -32,24 +30,20 @@ dev_kit_cmd_repo() {
   repo_name="$(dev_kit_repo_name "$repo_dir")"
   manifest_path="$(dev_kit_scaffold_manifest_path "$repo_dir")"
 
-  gaps_json="$(dev_kit_scaffold_gaps_json "$repo_dir")"
-
-  # learn/scaffold: write manifest and generate AGENTS.md
-  if [ "$mode" = "learn" ] || [ "$mode" = "scaffold" ]; then
-    mkdir -p "$(dirname "$manifest_path")"
-    dev_kit_scaffold_manifest_write "$repo_dir" > "$manifest_path"
-    dev_kit_agent_write_agents_md "$manifest_path" "${repo_dir}/AGENTS.md"
-  fi
-
-  # scaffold: apply missing dirs and files based on archetype + gap analysis
-  if [ "$mode" = "scaffold" ]; then
-    local archetype plan
-    archetype="$(dev_kit_repo_primary_archetype "$repo_dir")"
-    plan="$(dev_kit_scaffold_plan_dirs "$repo_dir" "$archetype")"
-    actions_json="$(dev_kit_scaffold_apply "$repo_dir" "$plan")"
-  fi
-
+  # JSON mode: compute everything up front then emit template
   if [ "$format" = "json" ]; then
+    gaps_json="$(dev_kit_scaffold_gaps_json "$repo_dir")"
+    if [ "$mode" = "learn" ] || [ "$mode" = "scaffold" ]; then
+      mkdir -p "$(dirname "$manifest_path")"
+      dev_kit_scaffold_manifest_write "$repo_dir" > "$manifest_path"
+      dev_kit_agent_write_agents_md "$manifest_path" "${repo_dir}/AGENTS.md"
+    fi
+    if [ "$mode" = "scaffold" ]; then
+      local archetype plan
+      archetype="$(dev_kit_repo_primary_archetype "$repo_dir")"
+      plan="$(dev_kit_scaffold_plan_dirs "$repo_dir" "$archetype")"
+      actions_json="$(dev_kit_scaffold_apply "$repo_dir" "$plan")"
+    fi
     dev_kit_template_render "repo.json" \
       "command=repo" \
       "repo=$(dev_kit_json_escape "$repo_name")" \
@@ -65,8 +59,21 @@ dev_kit_cmd_repo() {
     return 0
   fi
 
+  # Text mode: print title immediately, then compute and display progressively.
+  # Manifest write is deferred to after output so the user sees analysis first.
   dev_kit_output_title "dev.kit repo"
-  dev_kit_output_summary "${repo_name} • $(dev_kit_repo_primary_archetype "$repo_dir") • mode: ${mode}"
+
+  # Archetype is needed for summary + scaffold plan (cached after first call)
+  local archetype scaffold_plan
+  archetype="$(dev_kit_repo_primary_archetype "$repo_dir")"
+  scaffold_plan="$(dev_kit_scaffold_plan_dirs "$repo_dir" "$archetype")"
+
+  # scaffold mode: apply the plan now (before output so result shows correctly)
+  if [ "$mode" = "scaffold" ]; then
+    actions_json="$(dev_kit_scaffold_apply "$repo_dir" "$scaffold_plan")"
+  fi
+
+  dev_kit_output_summary "${repo_name} • ${archetype} • mode: ${mode}"
 
   dev_kit_output_section "factors"
   local factor status
@@ -75,6 +82,8 @@ dev_kit_cmd_repo() {
     dev_kit_output_row "$factor" "$status"
   done
 
+  # Gaps: factor statuses are now cached — this pass is fast
+  gaps_json="$(dev_kit_scaffold_gaps_json "$repo_dir")"
   local gap_count
   gap_count="$(printf '%s\n' "$gaps_json" | grep -c '"factor"' 2>/dev/null || printf '0')"
   if [ "$gap_count" -gt 0 ]; then
@@ -88,6 +97,21 @@ dev_kit_cmd_repo() {
   if [ "$mode" = "scaffold" ]; then
     dev_kit_output_section "scaffold"
     dev_kit_output_list_item "actions applied — see ${manifest_path}"
+  elif [ -n "$scaffold_plan" ]; then
+    dev_kit_output_section "scaffold preview"
+    while IFS='|' read -r action rel_path; do
+      [ -n "$action" ] || continue
+      dev_kit_output_list_item "would ${action}: ${rel_path}"
+    done <<EOF
+$scaffold_plan
+EOF
+  fi
+
+  # Write manifest after output (slow ~20s; user already sees analysis above)
+  if [ "$mode" = "learn" ] || [ "$mode" = "scaffold" ]; then
+    mkdir -p "$(dirname "$manifest_path")"
+    dev_kit_scaffold_manifest_write "$repo_dir" > "$manifest_path"
+    dev_kit_agent_write_agents_md "$manifest_path" "${repo_dir}/AGENTS.md"
   fi
 
   dev_kit_output_section "manifest"

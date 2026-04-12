@@ -17,6 +17,9 @@ REPO_DIR="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)"
 . "$REPO_DIR/lib/modules/bootstrap.sh"
 dev_kit_bootstrap
 
+# Clean up per-process temp cache on exit
+trap 'rm -f "${TMPDIR:-/tmp}/dev-kit-${$}.cache" 2>/dev/null' EXIT
+
 while IFS= read -r module_file; do
   [ -n "$module_file" ] || continue
   [ "$module_file" = "$REPO_DIR/lib/modules/bootstrap.sh" ] && continue
@@ -65,35 +68,30 @@ dev_kit_run_home() {
   local format="${1:-text}"
   local state="not installed"
   local repo_dir="$(pwd)"
-  local repo_root=""
-  local repo_detected="false"
-  local repo_kind="workspace"
-  local archetype="n/a"
-  local profile="n/a"
-  local git_state="no"
-  local priority_refs=""
-  local first_priority_ref=""
-  local second_priority_ref=""
-  local next_git_action=""
 
   if [ -d "$DEV_KIT_HOME" ]; then
     state="installed"
   fi
 
-  repo_root="$(dev_kit_repo_root "$repo_dir")"
-  if [ -n "$repo_root" ]; then
-    repo_detected="true"
-    repo_kind="repo"
-    archetype="$(dev_kit_repo_primary_archetype "$repo_root")"
-    profile="$(dev_kit_repo_primary_profile "$repo_root")"
-    if dev_kit_sync_has_git_repo "$repo_root"; then
-      git_state="yes"
-    fi
-    priority_refs="$(dev_kit_repo_priority_refs "$repo_root")"
-    first_priority_ref="$(printf '%s\n' "$priority_refs" | awk 'NF { print; exit }')"
-    second_priority_ref="$(printf '%s\n' "$priority_refs" | awk 'NF { count += 1; if (count == 2) { print; exit } }')"
-    if [ "$git_state" = "yes" ]; then
-      next_git_action="$(dev_kit_sync_next_hint "$repo_root")"
+  # JSON mode: compute everything up front then emit
+  if [ "$format" = "json" ]; then
+    local repo_root="" repo_detected="false" repo_kind="workspace"
+    local archetype="n/a" profile="n/a" git_state="no"
+    local priority_refs="" next_git_action=""
+
+    repo_root="$(dev_kit_repo_root "$repo_dir")"
+    if [ -n "$repo_root" ]; then
+      repo_detected="true"
+      repo_kind="repo"
+      archetype="$(dev_kit_repo_primary_archetype "$repo_root")"
+      profile="$(dev_kit_repo_primary_profile "$repo_root")"
+      if dev_kit_sync_has_git_repo "$repo_root"; then
+        git_state="yes"
+      fi
+      priority_refs="$(dev_kit_repo_priority_refs "$repo_root")"
+      if [ "$git_state" = "yes" ]; then
+        next_git_action="$(dev_kit_sync_next_hint "$repo_root")"
+      fi
     fi
   fi
 
@@ -139,6 +137,7 @@ dev_kit_run_home() {
     return 0
   fi
 
+  # Text mode: print title immediately, then compute and print progressively
   dev_kit_output_title "dev.kit"
 
   local missing_base=""
@@ -150,11 +149,28 @@ dev_kit_run_home() {
     dev_kit_output_list_item "base tools ok"
   fi
 
-  if [ "$repo_detected" = "true" ]; then
+  local repo_root=""
+  repo_root="$(dev_kit_repo_root "$repo_dir")"
+
+  if [ -n "$repo_root" ]; then
+    local archetype profile git_state priority_refs first_ref second_ref
+    archetype="$(dev_kit_repo_primary_archetype "$repo_root")"
+    profile="$(dev_kit_repo_primary_profile "$repo_root")"
+    git_state="no"
+    if dev_kit_sync_has_git_repo "$repo_root"; then
+      git_state="yes"
+    fi
+
     dev_kit_output_summary "$(dev_kit_repo_name "$repo_root") • ${archetype} • profile ${profile}"
+
+    priority_refs="$(dev_kit_repo_priority_refs "$repo_root")"
+    first_ref="$(printf '%s\n' "$priority_refs" | awk 'NF { print; exit }')"
+    second_ref="$(printf '%s\n' "$priority_refs" | awk 'NF { count += 1; if (count == 2) { print; exit } }')"
+
     dev_kit_output_section "read first"
-    [ -n "$first_priority_ref" ] && dev_kit_output_list_item "$first_priority_ref"
-    [ -n "$second_priority_ref" ] && dev_kit_output_list_item "$second_priority_ref"
+    [ -n "$first_ref" ] && dev_kit_output_list_item "$first_ref"
+    [ -n "$second_ref" ] && dev_kit_output_list_item "$second_ref"
+
     dev_kit_output_section "do next"
     if [ "$git_state" = "yes" ]; then
       dev_kit_output_list_from_lines <<EOF

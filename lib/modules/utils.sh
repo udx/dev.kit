@@ -1,5 +1,25 @@
 #!/usr/bin/env bash
 
+# Per-process file cache: survives subshell boundaries because it uses a temp file.
+# Global variable caches don't survive $(subshell) calls — each subshell gets a copy
+# of the parent's env and any writes are discarded when the subshell exits.
+# Using $$ (parent PID, stable across all subshells) means all subshells share one file.
+_DEV_KIT_PROC_CACHE="${TMPDIR:-/tmp}/dev-kit-${$}.cache"
+
+dev_kit_cache_get() {
+  local key="$1"
+  [ -f "$_DEV_KIT_PROC_CACHE" ] || return 1
+  local line
+  line="$(awk -v k="${key}=" 'substr($0,1,length(k))==k{print substr($0,length(k)+1);exit}' \
+    "$_DEV_KIT_PROC_CACHE" 2>/dev/null)"
+  [ -n "$line" ] || return 1
+  printf '%s' "$line"
+}
+
+dev_kit_cache_set() {
+  printf '%s=%s\n' "$1" "$2" >> "$_DEV_KIT_PROC_CACHE"
+}
+
 dev_kit_lines_to_csv() {
   awk '
     NF {

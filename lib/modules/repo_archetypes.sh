@@ -264,25 +264,33 @@ EOF
 
 dev_kit_repo_archetypes() {
   local repo_dir="$1"
-  local archetypes=""
+  local _ck="archetypes:${repo_dir}"
+  local _cv
 
+  # File cache (survives subshell boundaries)
+  if _cv="$(dev_kit_cache_get "$_ck")"; then
+    printf '%s' "$_cv"; return 0
+  fi
+
+  # Global variable cache (fast within same process, lost across subshells)
   if [ "$DEV_KIT_REPO_ARCHETYPES_CACHE_REPO" = "$repo_dir" ]; then
+    dev_kit_cache_set "$_ck" "$DEV_KIT_REPO_ARCHETYPES_CACHE_VALUE"
     printf "%s" "$DEV_KIT_REPO_ARCHETYPES_CACHE_VALUE"
     return 0
   fi
 
+  local archetypes=""
   archetypes="$(dev_kit_repo_configured_archetypes "$repo_dir")"
 
-  if [ -z "$archetypes" ]; then
-    DEV_KIT_REPO_ARCHETYPES_CACHE_REPO="$repo_dir"
-    DEV_KIT_REPO_ARCHETYPES_CACHE_VALUE="unknown"
-    printf "%s\n" "unknown"
-    return 0
+  local result="unknown"
+  if [ -n "$archetypes" ]; then
+    result="$(printf "%s" "$archetypes" | awk '!seen[$0]++')"
   fi
 
   DEV_KIT_REPO_ARCHETYPES_CACHE_REPO="$repo_dir"
-  DEV_KIT_REPO_ARCHETYPES_CACHE_VALUE="$(printf "%s" "$archetypes" | awk '!seen[$0]++')"
-  printf "%s" "$DEV_KIT_REPO_ARCHETYPES_CACHE_VALUE"
+  DEV_KIT_REPO_ARCHETYPES_CACHE_VALUE="$result"
+  dev_kit_cache_set "$_ck" "$result"
+  printf '%s' "$result"
 }
 
 dev_kit_repo_has_archetype() {
@@ -302,11 +310,14 @@ $archetype
 
 dev_kit_repo_primary_archetype() {
   local repo_dir="$1"
-  local archetypes=""
-  local archetype=""
+  local _ck="archetype:${repo_dir}"
+  local _cv
+  if _cv="$(dev_kit_cache_get "$_ck")"; then
+    printf '%s' "$_cv"; return 0
+  fi
 
+  local archetypes="" archetype="" _result="unknown"
   archetypes="$(dev_kit_repo_archetypes "$repo_dir")"
-
   while IFS= read -r archetype; do
     [ -n "$archetype" ] || continue
     case "
@@ -314,13 +325,14 @@ $archetypes
 " in
       *"
 $archetype
-"*) printf "%s" "$archetype"; return 0 ;;
+"*) _result="$archetype"; break ;;
     esac
   done <<EOF
 $(dev_kit_archetype_rule_ids)
 EOF
 
-  printf "%s" "unknown"
+  dev_kit_cache_set "$_ck" "$_result"
+  printf '%s' "$_result"
 }
 
 dev_kit_repo_archetypes_text() {

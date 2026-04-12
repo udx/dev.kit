@@ -62,10 +62,28 @@ dev_kit_repo_workflow_json() {
     if [ "$first" -eq 0 ]; then
       printf ", "
     fi
-    printf '{ "id": "%s", "label": "%s", "command": "%s" }' \
-      "$(dev_kit_json_escape "$step_id")" \
-      "$(dev_kit_json_escape "$label")" \
-      "$(dev_kit_json_escape "$command")"
+    if [ "$step_id" = "read_repo" ]; then
+      # refs is a CSV of file paths — emit as JSON array, not a runnable command
+      local refs_json
+      refs_json="$(printf '%s' "$command" | awk '{
+        n = split($0, a, ", ");
+        printf "[";
+        for (i = 1; i <= n; i++) {
+          if (i > 1) printf ", ";
+          printf "\"%s\"", a[i];
+        }
+        printf "]";
+      }')"
+      printf '{ "id": "%s", "label": "%s", "refs": %s }' \
+        "$(dev_kit_json_escape "$step_id")" \
+        "$(dev_kit_json_escape "$label")" \
+        "$refs_json"
+    else
+      printf '{ "id": "%s", "label": "%s", "command": "%s" }' \
+        "$(dev_kit_json_escape "$step_id")" \
+        "$(dev_kit_json_escape "$label")" \
+        "$(dev_kit_json_escape "$command")"
+    fi
     first=0
   done <<EOF
 $(dev_kit_repo_workflow_steps "$repo_dir")
