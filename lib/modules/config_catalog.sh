@@ -139,6 +139,14 @@ dev_kit_learning_source_discovery_list() {
   dev_kit_yaml_mapping_list "$(dev_kit_learning_config_path)" "source_discovery" "$1"
 }
 
+dev_kit_learning_claude_projects_root() {
+  dev_kit_learning_source_discovery_scalar "claude_projects_root"
+}
+
+dev_kit_learning_config_enabled_sources() {
+  dev_kit_learning_source_discovery_list "enabled_sources"
+}
+
 dev_kit_learning_session_rule_ids() {
   dev_kit_yaml_named_block_ids "$(dev_kit_learning_config_path)" "session_rules"
 }

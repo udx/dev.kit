@@ -5,8 +5,11 @@ config:
   source_discovery:
     local_session_roots:
       - $CODEX_HOME/sessions
-      - ~/.codex/sessions
-    max_recent_sessions: 12
+    claude_projects_root: ~/.claude/projects
+    enabled_sources:
+      - claude
+      - codex
+    max_recent_sessions: 6
   workflows:
     pr-lessons:
       name: dev.learn pr

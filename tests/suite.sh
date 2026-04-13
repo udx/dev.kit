@@ -12,7 +12,7 @@ DOCUMENTED_SHELL_REPO="$REPO_DIR/tests/fixtures/documented-shell-repo"
 DOCKER_REPO="$REPO_DIR/tests/fixtures/docker-repo"
 WORDPRESS_REPO="$REPO_DIR/tests/fixtures/wordpress-repo"
 SIMPLE_ACTION_REPO="$TEST_HOME/simple-action-repo"
-AVAILABLE_TEST_GROUPS="core archetypes install"
+AVAILABLE_TEST_GROUPS="core archetypes learn install"
 TEST_ONLY="${DEV_KIT_TEST_ONLY:-}"
 
 cleanup() {
@@ -120,6 +120,79 @@ if should_run "archetypes"; then
 
   docker_json="$(cd "$DOCKER_REPO" && dev.kit repo --json)"
   assert_contains "$docker_json" "\"archetype\": \"runtime-image\""      "archetype: docker fixture"
+fi
+
+# ── learn ──────────────────────────────────────────────────────────────────────
+
+if should_run "learn"; then
+  LEARN_REPO="$TEST_HOME/learn-test-repo"
+  cp -R "$DOCUMENTED_SHELL_REPO" "$LEARN_REPO"
+  rm -rf "$LEARN_REPO/.dev-kit"
+  mkdir -p "$LEARN_REPO/.dev-kit"
+  LEARN_REPO="$(cd "$LEARN_REPO" && pwd)"  # normalize: macOS TMPDIR has trailing slash → // in paths
+
+  # -- codex fixture (points at LEARN_REPO) --
+  TEST_CODEX_HOME="$TEST_HOME/.codex"
+  CODEX_UUID="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+  mkdir -p "$TEST_CODEX_HOME/sessions/2026/04/12"
+  cat > "$TEST_CODEX_HOME/sessions/2026/04/12/rollout-2026-04-12T10-00-00-${CODEX_UUID}.jsonl" <<EOF
+{"type":"session_meta","payload":{"id":"$CODEX_UUID","cwd":"$LEARN_REPO","originator":"codex-tui"}}
+{"type":"response_item","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"check deploy.yml and github actions workflow security gaps"}]}}
+{"type":"response_item","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"https://github.com/test/repo/issues/42 related issue"}]}}
+EOF
+
+  # -- claude fixture (project dir derived from LEARN_REPO path) --
+  CLAUDE_UUID="11111111-2222-3333-4444-555555555555"
+  CLAUDE_PROJECT_ID="$(printf "%s" "$LEARN_REPO" | sed 's|/|-|g')"
+  TEST_CLAUDE_PROJECTS="$TEST_HOME/.claude-projects"
+  mkdir -p "$TEST_CLAUDE_PROJECTS/$CLAUDE_PROJECT_ID"
+  cat > "$TEST_CLAUDE_PROJECTS/$CLAUDE_PROJECT_ID/${CLAUDE_UUID}.jsonl" <<EOF
+{"type":"user","message":{"role":"user","content":"review .github/workflows and deploy.yml security configuration"},"promptId":"p-001","isMeta":false,"cwd":"$LEARN_REPO","sessionId":"$CLAUDE_UUID"}
+{"type":"user","message":{"role":"user","content":"https://github.com/test/repo/pull/5 check workflow gaps"},"promptId":"p-002","isMeta":false,"cwd":"$LEARN_REPO","sessionId":"$CLAUDE_UUID"}
+EOF
+
+  export CODEX_HOME="$TEST_CODEX_HOME"
+  export CLAUDE_PROJECTS_ROOT="$TEST_CLAUDE_PROJECTS"
+
+  # 1. codex-only source
+  learn_codex="$(cd "$LEARN_REPO" && DEV_KIT_LEARN_SOURCES=codex dev.kit learn --json)"
+  assert_contains     "$learn_codex" "\"codex\""    "learn: codex source in observed"
+  assert_contains     "$learn_codex" "$CODEX_UUID"  "learn: codex session ID present"
+  assert_not_contains "$learn_codex" "\"claude\""   "learn: codex-only excludes claude"
+
+  # 2. claude-only source
+  learn_claude="$(cd "$LEARN_REPO" && DEV_KIT_LEARN_SOURCES=claude dev.kit learn --json)"
+  assert_contains     "$learn_claude" "\"claude\""   "learn: claude source in observed"
+  assert_contains     "$learn_claude" "$CLAUDE_UUID" "learn: claude session ID present"
+  assert_not_contains "$learn_claude" "\"codex\""    "learn: claude-only excludes codex"
+
+  # 3. multi-source default (both)
+  learn_multi="$(cd "$LEARN_REPO" && dev.kit learn --json)"
+  assert_contains "$learn_multi" "\"claude\""          "learn: multi-source includes claude"
+  assert_contains "$learn_multi" "\"codex\""           "learn: multi-source includes codex"
+  assert_contains "$learn_multi" "\"observed_sources\"" "learn: observed_sources array present"
+
+  # 4. artifact written (text mode)
+  (cd "$LEARN_REPO" && dev.kit learn) >/dev/null 2>&1
+  artifact="$(ls "$LEARN_REPO/.dev-kit/lessons-"*.md 2>/dev/null | head -1)"
+  assert_file_exists "$artifact"                             "learn: artifact file written"
+  assert_contains "$(cat "$artifact")" "## Session prompts" "learn: artifact has session prompts section"
+  assert_contains "$(cat "$artifact")" "github.com"         "learn: artifact includes referenced URLs"
+
+  # 5. incremental: sessions older than last-run are skipped
+  touch -t 203001010000 "$LEARN_REPO/.dev-kit/learn-last-run"
+  learn_incr="$(cd "$LEARN_REPO" && dev.kit learn --json)"
+  assert_not_contains "$learn_incr" "$CODEX_UUID"  "learn: incremental skips old codex session"
+  assert_not_contains "$learn_incr" "$CLAUDE_UUID" "learn: incremental skips old claude session"
+  rm -f "$LEARN_REPO/.dev-kit/learn-last-run"
+
+  # 6. no sessions — use env to ensure override reaches the subprocess
+  learn_empty="$(cd "$LEARN_REPO" && \
+    env CODEX_HOME="$TEST_HOME/no-codex" CLAUDE_PROJECTS_ROOT="$TEST_HOME/no-claude" \
+    dev.kit learn)"
+  assert_contains "$learn_empty" "no agent sessions" "learn: handles no sessions gracefully"
+
+  unset CODEX_HOME CLAUDE_PROJECTS_ROOT
 fi
 
 # ── install ────────────────────────────────────────────────────────────────────
