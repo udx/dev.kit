@@ -30,6 +30,10 @@ dev_kit_archetype_facets() {
   dev_kit_yaml_nested_mapping_list "$(dev_kit_archetype_rules_path)" "archetypes" "$1" "$2"
 }
 
+dev_kit_archetype_description() {
+  dev_kit_yaml_named_block_scalar "$(dev_kit_archetype_rules_path)" "archetypes" "$1" "description"
+}
+
 dev_kit_context_config_path() {
   dev_kit_config_path "src/configs/context-config.yaml"
 }

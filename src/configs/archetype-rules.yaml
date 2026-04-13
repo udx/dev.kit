@@ -4,6 +4,7 @@ version: udx.io/dev.kit/v1
 config:
   archetypes:
     wordpress-site:
+      description: WordPress website — application code, theme, and plugin assets deployed to a WordPress host
       required:
         - framework:wordpress
       supporting:
@@ -12,10 +13,12 @@ config:
         - package:composer
         - workflow:github
     workflow-repo:
+      description: GitHub Actions reusable workflow repository — shared CI/CD automation consumed by other repositories
       required:
         - workflow:github
         - repo:workflow-primary
     infra-pipeline:
+      description: Infrastructure-as-code pipeline — Terraform or Kubernetes manifests managed through a CI/CD workflow
       required:
         - workflow:github
         - deploy:terraform
@@ -25,6 +28,7 @@ config:
         - lifecycle:deploy
         - runtime:container
     runtime-image:
+      description: Container image — a Dockerfile-based service built and published as a container image
       required:
         - runtime:container
       supporting:
@@ -32,6 +36,7 @@ config:
         - lifecycle:runtime
         - lifecycle:deploy
     library-cli:
+      description: Library or CLI tool — reusable code published as a package or standalone command-line tool
       # No required facets — catch-all for code repos without a stronger match
       supporting:
         - package:node

@@ -16,6 +16,14 @@ dev_kit_repo_factor_summary_json() {
     printf '\n      "status": "%s",' "$status"
     printf '\n      "evidence": '
     dev_kit_repo_factor_evidence_json "$repo_dir" "$factor"
+    if [ "$status" = "missing" ] || [ "$status" = "partial" ]; then
+      local _rule_id _msg
+      _rule_id="$(dev_kit_repo_factor_rule_id "$factor" "$status" 2>/dev/null || true)"
+      if [ -n "$_rule_id" ]; then
+        _msg="$(dev_kit_rule_message "$_rule_id" 2>/dev/null || true)"
+        [ -n "$_msg" ] && printf ',\n      "message": "%s"' "$(dev_kit_json_escape "$_msg")"
+      fi
+    fi
     if dev_kit_repo_factor_entrypoint "$repo_dir" "$factor" >/dev/null 2>&1; then
       printf ',\n      "entrypoint": "%s"\n    }' "$(dev_kit_repo_factor_entrypoint "$repo_dir" "$factor")"
     else

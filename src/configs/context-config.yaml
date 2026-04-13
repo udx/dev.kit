@@ -31,8 +31,6 @@ config:
     - readme.md
     - docs/lessons-learned.md
     - docs/architecture.md
-    - TODO.md
-    - todo.md
     - CONTEXT.md
     - context.md
     - REFS.md

@@ -47,8 +47,13 @@ dev_kit_scaffold_manifest_write() {
   printf '{\n'
   printf '  "repo": "%s",\n'       "$(dev_kit_json_escape "$(dev_kit_repo_name "$repo_root")")"
   printf '  "path": "%s",\n'       "$(dev_kit_json_escape "$repo_root")"
-  printf '  "archetype": "%s",\n'  "$(dev_kit_json_escape "$(dev_kit_repo_primary_archetype "$repo_root")")"
-  printf '  "profile": "%s",\n'    "$(dev_kit_json_escape "$(dev_kit_repo_primary_profile "$repo_root")")"
+  local _archetype _archetype_desc
+  _archetype="$(dev_kit_repo_primary_archetype "$repo_root")"
+  _archetype_desc="$(dev_kit_archetype_description "$_archetype")"
+  printf '  "archetype": "%s",\n'             "$(dev_kit_json_escape "$_archetype")"
+  [ -n "$_archetype_desc" ] && \
+    printf '  "archetype_description": "%s",\n' "$(dev_kit_json_escape "$_archetype_desc")"
+  printf '  "profile": "%s",\n'               "$(dev_kit_json_escape "$(dev_kit_repo_primary_profile "$repo_root")")"
   printf '  "priority_refs": %s,\n' "$(dev_kit_repo_priority_refs_json "$repo_root")"
   printf '  "entrypoints": %s,\n'   "$(dev_kit_repo_entrypoints_json "$repo_root")"
   printf '  "workflow_contract": %s,\n' "$(dev_kit_repo_workflow_json "$repo_root")"
