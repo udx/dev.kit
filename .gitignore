@@ -11,3 +11,4 @@ context-env.txt
 .copilot/
 .devin/
 AGENTS.md
+tests/fixtures/tmp-bin/
