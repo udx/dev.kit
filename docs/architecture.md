@@ -39,7 +39,7 @@ lib/modules/
   template_renderer.sh  — mustache-style template rendering
 
 lib/commands/
-  repo.sh               — learn/scaffold/check modes, writes manifest
+  repo.sh               — learn/scaffold/check modes, writes context.yaml
   agent.sh              — reads manifest, outputs AI context
   learn.sh              — lessons-learned from agent sessions
   uninstall.sh          — removes dev.kit installation
@@ -65,20 +65,20 @@ bin/dev-kit
     │       ├─ repo_workflows.sh → entrypoints, workflow contract
     │       └─ repo_scaffold.sh  → manifest write, AGENTS.md
     │
-    ├─ dev_kit_cmd_agent()       ← Phase 3: AI context from manifest
+    ├─ dev_kit_cmd_agent()       ← Phase 3: AI context + AGENTS.md
     │   └─ agent.sh              → renders agent.json template
-    │       └─ reads .dev-kit/manifest.json via jq (no module calls)
+    │       └─ auto-generates .rabbit/context.yaml if missing, writes AGENTS.md
     │
     └─ dev_kit_cmd_learn()       ← Phase 4: lessons from agent sessions
         └─ learn.sh              → renders learn.json template
             └─ learning_sources.sh → session discovery + flow scoring
 ```
 
-## Manifest
+## Context Artifact
 
-`.dev-kit/manifest.json` is the handoff artifact between `dev.kit repo` and `dev.kit agent`. Written by `repo_scaffold.sh`, read by `agent.sh` directly via `jq`. No recomputation on the agent side.
+`.rabbit/context.yaml` is the handoff artifact between `dev.kit repo` and `dev.kit agent`. Written by `repo_scaffold.sh`, read by `agent.sh` via awk. If missing, `dev.kit agent` auto-generates it.
 
-Fields: `repo`, `path`, `archetype`, `profile`, `priority_refs`, `entrypoints`, `workflow_contract`, `factors`.
+Fields: `repo` (name, archetype, profile), `refs`, `commands`, `gaps`, `practices`, `workflow`, `manifests`, `lessons`.
 
 ## Global Context
 

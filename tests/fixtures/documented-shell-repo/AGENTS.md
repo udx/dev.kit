@@ -29,8 +29,8 @@ Read these for full context. Do not explore beyond them.
   - ./.rabbit
   - ./scripts
   - ./tests
-  - /Users/jonyfq/.udx/dev.kit/src/configs/github-issues.yaml
-  - /Users/jonyfq/.udx/dev.kit/src/configs/github-prs.yaml
+  - https://raw.githubusercontent.com/udx/dev.kit/main/src/configs/github-issues.yaml
+  - https://raw.githubusercontent.com/udx/dev.kit/main/src/configs/github-prs.yaml
   - https://raw.githubusercontent.com/udx/dev.kit/main/.github/ISSUE_TEMPLATE
   - https://raw.githubusercontent.com/udx/dev.kit/main/.github/PULL_REQUEST_TEMPLATE.md
 

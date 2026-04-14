@@ -9,15 +9,20 @@ _DEV_KIT_PROC_CACHE="${TMPDIR:-/tmp}/dev-kit-${$}.cache"
 dev_kit_cache_get() {
   local key="$1"
   [ -f "$_DEV_KIT_PROC_CACHE" ] || return 1
-  local line
-  line="$(awk -v k="${key}=" 'substr($0,1,length(k))==k{print substr($0,length(k)+1);exit}' \
+  local val
+  # Return last match so re-sets for the same key return fresh data
+  val="$(awk -v k="${key}=" 'substr($0,1,length(k))==k{v=substr($0,length(k)+1)} END{if(v!="") print v}' \
     "$_DEV_KIT_PROC_CACHE" 2>/dev/null)"
-  [ -n "$line" ] || return 1
-  printf '%s' "$line"
+  [ -n "$val" ] || return 1
+  # Decode unit-separator back to newlines (multi-line values)
+  printf '%s' "$val" | tr '\037' '\n'
 }
 
 dev_kit_cache_set() {
-  printf '%s=%s\n' "$1" "$2" >> "$_DEV_KIT_PROC_CACHE"
+  # Encode newlines as unit-separator (0x1f) so multi-line values stay on one line
+  local encoded
+  encoded="$(printf '%s' "$2" | tr '\n' '\037')"
+  printf '%s=%s\n' "$1" "$encoded" >> "$_DEV_KIT_PROC_CACHE"
 }
 
 dev_kit_lines_to_csv() {

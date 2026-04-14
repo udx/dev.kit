@@ -2,10 +2,6 @@ kind: repoScaffold
 version: udx.io/dev.kit/v1
 config:
 
-  # Written to <repo>/.dev-kit/manifest.json after a successful learn
-  manifest:
-    path: .dev-kit/manifest.json
-
   # Scaffold applied to every repo regardless of archetype
   baseline:
     dirs:

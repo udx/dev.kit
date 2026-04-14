@@ -6,7 +6,7 @@ DEV_KIT_BIN="${DEV_KIT_BIN:-$REPO_DIR/bin/dev-kit}"
 LOCAL_ROOT="${DEV_KIT_LOCAL_REPOS_ROOT:-$HOME/git/udx}"
 MAX_REPOS="${DEV_KIT_LOCAL_REPOS_MAX:-0}"
 ONLY_REPOS="${DEV_KIT_LOCAL_REPOS_ONLY:-}"
-COMMANDS="${DEV_KIT_LOCAL_REPOS_COMMANDS:-explore,action}"
+COMMANDS="${DEV_KIT_LOCAL_REPOS_COMMANDS:-repo,agent}"
 FAIL_ON_WEAK="${DEV_KIT_LOCAL_REPOS_FAIL_ON_WEAK:-0}"
 
 REPO_COUNT=0
@@ -23,7 +23,7 @@ Environment:
   DEV_KIT_LOCAL_REPOS_ROOT       Root to scan for repos (default: $HOME/git/udx)
   DEV_KIT_LOCAL_REPOS_MAX        Limit the number of repos checked
   DEV_KIT_LOCAL_REPOS_ONLY       Comma-separated repo names to check
-  DEV_KIT_LOCAL_REPOS_COMMANDS   Comma-separated commands: explore,action[,learn]
+  DEV_KIT_LOCAL_REPOS_COMMANDS   Comma-separated commands: repo,agent[,learn]
                                learn requires CODEX_HOME or agent session source
   DEV_KIT_LOCAL_REPOS_FAIL_ON_WEAK  Exit non-zero when weak findings exist (default: 0)
 EOF
@@ -148,34 +148,30 @@ check_json_contract() {
     "fail"
 
   case "$command_name" in
-    explore)
+    repo)
       check_json_field "$repo_name" "$command_name" "$json" '.markers | type == "array" and length > 0' \
         "markers detected" \
         "no repo markers detected"
-      check_json_field "$repo_name" "$command_name" "$json" '.model.archetype | type == "string" and length > 0' \
+      check_json_field "$repo_name" "$command_name" "$json" '.archetype | type == "string" and length > 0' \
+        "archetype classified" \
+        "archetype missing"
+      check_json_field "$repo_name" "$command_name" "$json" '.factors | type == "object"' \
+        "factors emitted" \
+        "factors missing"
+      ;;
+    agent)
+      check_json_field "$repo_name" "$command_name" "$json" '.archetype | type == "string" and length > 0' \
         "archetype classified" \
         "archetype missing"
       check_json_field "$repo_name" "$command_name" "$json" '.workflow_contract | type == "array" and length > 0' \
         "workflow contract emitted" \
         "workflow contract missing"
-      check_json_field "$repo_name" "$command_name" "$json" '.source_chain | type == "array" and length > 0' \
-        "source chain emitted" \
-        "source chain is empty"
-      ;;
-    action)
-      check_json_field "$repo_name" "$command_name" "$json" '.behavior == "evaluation-only"' \
-        "behavior stays evaluation-only" \
-        "behavior changed from evaluation-only" \
-        "fail"
-      check_json_field "$repo_name" "$command_name" "$json" '.model.guidance | type == "array" and length > 0' \
-        "guidance emitted" \
-        "guidance is empty"
-      check_json_field "$repo_name" "$command_name" "$json" '.workflow_contract | type == "array" and length > 0' \
-        "workflow contract emitted" \
-        "workflow contract missing"
-      check_json_field "$repo_name" "$command_name" "$json" '.git_workflow | type == "object"' \
-        "git workflow section emitted" \
-        "git workflow section missing"
+      check_json_field "$repo_name" "$command_name" "$json" '.priority_refs | type == "array" and length > 0' \
+        "priority refs emitted" \
+        "priority refs missing"
+      check_json_field "$repo_name" "$command_name" "$json" '.entrypoints | type == "object"' \
+        "entrypoints emitted" \
+        "entrypoints missing"
       ;;
     learn)
       check_json_field "$repo_name" "$command_name" "$json" '.workflow.id | type == "string" and length > 0' \
@@ -242,12 +238,12 @@ run_repo_checks() {
 
   printf '\n# %s\n' "$repo_path"
 
-  if has_command "explore"; then
-    run_repo_command "$repo_path" "$repo_name" "explore"
+  if has_command "repo"; then
+    run_repo_command "$repo_path" "$repo_name" "repo"
   fi
 
-  if has_command "action"; then
-    run_repo_command "$repo_path" "$repo_name" "action"
+  if has_command "agent"; then
+    run_repo_command "$repo_path" "$repo_name" "agent"
   fi
 
   if has_command "learn"; then
