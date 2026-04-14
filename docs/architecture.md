@@ -35,7 +35,7 @@ lib/modules/
   repo_factors.sh       — 12-factor analysis (present/partial/missing)
   repo_reports.sh       — factor summary JSON, agent contract
   repo_workflows.sh     — entrypoints JSON, workflow contract
-  repo_scaffold.sh      — context.yaml generation, gaps analysis
+  repo_scaffold.sh      — context.yaml generation, dependency resolution, gaps analysis
   dev_sync.sh           — git state, gh auth, branch analysis, next hint
   learning_sources.sh   — agent session discovery and flow scoring
   template_renderer.sh  — mustache-style template rendering
@@ -80,7 +80,7 @@ bin/dev-kit
 
 `.rabbit/context.yaml` is the handoff artifact between `dev.kit repo` and `dev.kit agent`. Written by `repo_scaffold.sh`, read by `agent.sh` via awk. If missing, `dev.kit agent` auto-generates it.
 
-Fields: `repo` (name, archetype, profile), `refs`, `commands`, `github` (open issues, recent PRs, security alerts via `gh api`), `gaps`, `practices`, `workflow`, `manifests`, `lessons`.
+Fields: `repo` (name, archetype, profile), `refs`, `commands`, `github` (open issues, recent PRs, security alerts via `gh api`), `gaps`, `dependencies` (structured cross-repo tracing with resolution), `practices`, `workflow`, `manifests`, `lessons`.
 
 ## Environment Detection
 
@@ -103,8 +103,8 @@ cloud_aws/gcp/az  = respective CLI available
 
 Every command supports `--json` for machine-readable output. The JSON schemas are defined in `src/templates/`:
 
-- `repo.json` — archetype, profile, markers, factors, gaps, manifest path
-- `agent.json` — repo context, priority refs, entrypoints, workflow contract, factors
+- `repo.json` — archetype, profile, markers, factors, gaps, dependencies, manifest path
+- `agent.json` — repo context, priority refs, entrypoints, workflow contract, dependencies
 - `learn.json` — session, flow, destinations, shared context
 
 These templates are the stable contract for agents and automation. Shell output (no `--json`) is for humans only and may change freely.

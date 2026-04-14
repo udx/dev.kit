@@ -31,10 +31,11 @@ Capabilities that gate downstream phases:
 
 Analyzes the repository against 7 engineering factors. Detects config manifests (YAML files that define workflow and tooling). Writes `.rabbit/context.yaml`.
 
-Two modes:
+Three modes:
 
-- **learn** (default): analyze, pull GitHub context, and write `.rabbit/context.yaml`
+- **learn** (default): analyze, trace dependencies, pull GitHub context, and write `.rabbit/context.yaml`
 - **--check**: report gaps without writing anything
+- **--force**: re-resolve all dependency repos from scratch
 
 ### Phase 3 — agent (`dev.kit agent`)
 

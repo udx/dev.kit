@@ -38,7 +38,25 @@ dev.kit repo --force
 dev.kit repo --json
 ```
 
-Output includes: archetype, profile, factors (✓ present / ◦ partial / ✗ missing), gaps, and context path.
+Output includes: archetype, profile, factors (✓ present / ◦ partial / ✗ missing), gaps, dependencies, and context path.
+
+### Dependency tracing
+
+`dev.kit repo` traces dependencies from 6 sources (all config-driven from `detection-signals.yaml`):
+
+1. **Reusable workflows** — `uses: org/repo/.github/workflows/...@ref`
+2. **GitHub actions** — `uses: org/repo@ref` (direct action references)
+3. **Docker images** — `FROM` in Dockerfiles, `image:` in Compose and workflow files, `uses: docker://`
+4. **Versioned YAML configs** — `version: domain/repo/module/v1` URIs in `.rabbit/`
+5. **GitHub URLs** — `github.com/org/repo` patterns in YAML and markdown
+6. **npm packages** — `dependencies` and `devDependencies` from `package.json`
+
+Resolution:
+- **Same-org repos**: resolved via `gh api` (primary) then sibling directory lookup. Returns archetype, profile, description.
+- **Docker images**: if the Docker Hub org differs from the GitHub org, the image name is matched against same-org repos (e.g., `usabilitydynamics/udx-worker-tooling` → `udx/worker-tooling`).
+- **External deps**: listed with `resolved: false` for agent reference. No nested scanning.
+
+Each dependency includes `used_by` — the specific files in the current repo that reference it.
 
 ## `dev.kit agent` — execution contract
 
