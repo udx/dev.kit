@@ -361,10 +361,13 @@ dev_kit_context_yaml_write() {
     local _dep_triples_file
     _dep_triples_file="$(mktemp)" || return 1
 
-    # Source 1: Reusable workflows — uses: org/repo/.github/workflows/...@ref
+    # Source 1: Workflow references — uses: org/repo/...@ref and uses: docker://...
+    # Catches reusable workflows, direct actions, and Docker actions.
+    # Also scans image: fields in workflow files for container job images.
     local _dep_dir
     while IFS= read -r _dep_dir; do
       [ -n "$_dep_dir" ] && [ -d "${repo_root}/${_dep_dir}" ] || continue
+      # 1a: uses: references
       while IFS= read -r _match; do
         [ -n "$_match" ] || continue
         local _src_file="${_match%%:*}"
@@ -372,17 +375,48 @@ dev_kit_context_yaml_write() {
         local _content="${_match#*:}"
         case "$_content" in
           *uses:*/*/.github/workflows/*)
+            # Reusable workflow: uses: org/repo/.github/workflows/file@ref
             local _dep_repo
             _dep_repo="$(printf '%s' "$_content" | awk '{
-              sub(/.*uses:[[:space:]]*/, ""); sub(/@.*/, "")
+              sub(/.*uses:[[:space:]]*/, ""); gsub(/"/, ""); sub(/@.*/, "")
               n = split($0, a, "/")
               if (n >= 2 && a[1] != "" && a[2] != "") printf "%s/%s", a[1], a[2]
             }')"
             [ -n "$_dep_repo" ] && printf '%s|reusable workflow|%s\n' "$_dep_repo" "$_src_rel" >> "$_dep_triples_file"
             ;;
+          *uses:*docker://*|*uses:*Docker://*)
+            # Docker action: uses: docker://image
+            local _dep_img
+            _dep_img="$(printf '%s' "$_content" | awk '{sub(/.*uses:[[:space:]]*[Dd]ocker:\/\//, ""); sub(/@.*/, ""); print}')"
+            [ -n "$_dep_img" ] && printf '%s|docker action|%s\n' "$_dep_img" "$_src_rel" >> "$_dep_triples_file"
+            ;;
+          *uses:*/*/*@*|*uses:*./*) ;;  # skip local refs and deeply-pathed refs already caught
+          *uses:*/*@*)
+            # Direct action: uses: org/repo@ref (not a reusable workflow, not actions/*)
+            local _dep_repo
+            _dep_repo="$(printf '%s' "$_content" | awk '{
+              sub(/.*uses:[[:space:]]*/, ""); gsub(/"/, ""); sub(/@.*/, "")
+              if ($0 !~ /^\./ && $0 ~ /\//) print
+            }')"
+            [ -n "$_dep_repo" ] && printf '%s|github action|%s\n' "$_dep_repo" "$_src_rel" >> "$_dep_triples_file"
+            ;;
         esac
       done <<EOF
 $(grep -r 'uses:' "${repo_root}/${_dep_dir}/" 2>/dev/null || true)
+EOF
+      # 1b: image: fields in workflow files (container job images)
+      while IFS= read -r _wf; do
+        [ -f "$_wf" ] || continue
+        local _wf_rel="${_wf#"${repo_root}/"}"
+        awk -v src="$_wf_rel" '
+          /^[[:space:]]*image:[[:space:]]/{
+            img=$2; gsub(/["'"'"']/, "", img)
+            if (img != "" && img !~ /\$/ && img !~ /\{/)
+              printf "%s|workflow image|%s\n", img, src
+          }
+        ' "$_wf" >> "$_dep_triples_file"
+      done <<EOF
+$(find "${repo_root}/${_dep_dir}" -maxdepth 1 \( -name '*.yml' -o -name '*.yaml' \) 2>/dev/null)
 EOF
     done <<EOF
 $(dev_kit_detection_list "dependency_trace_workflow_dirs")
