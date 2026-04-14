@@ -1,5 +1,11 @@
 # Changes
 
+### 0.2.1
+
+- Fix release workflow trigger to match reusable-workflows pattern
+- Add `workflow_dispatch` for manual re-triggers
+- Enable OIDC provenance for npm publishing
+
 ### 0.2.0
 
 - npm release workflow with OIDC provenance via `udx/reusable-workflows`
