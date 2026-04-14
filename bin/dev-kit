@@ -136,61 +136,49 @@ dev_kit_run_home() {
   # Text mode: print title immediately, then compute and print progressively
   dev_kit_output_title "dev.kit"
 
-  local missing_base=""
-  missing_base="$(dev_kit_env_missing_base_tools)"
-  dev_kit_output_section "env"
-  if [ -n "$missing_base" ]; then
-    dev_kit_output_list_item "base tools missing: ${missing_base}"
-  else
-    dev_kit_output_list_item "base tools ok"
-  fi
+  # ── Environment: list tools by category with what they enable ───────────────
+  local _env_line _env_cat _env_val _prev_cat=""
+  while IFS= read -r _env_line; do
+    [ -n "$_env_line" ] || continue
+    _env_cat="${_env_line%%|*}"
+    _env_val="${_env_line#*|}"
+    if [ "$_env_cat" != "$_prev_cat" ]; then
+      dev_kit_output_section "$_env_cat"
+      _prev_cat="$_env_cat"
+    fi
+    dev_kit_output_list_item "$_env_val"
+  done <<EOF
+$(dev_kit_env_tools_text)
+EOF
 
+  # ── Repo detection ──────────────────────────────────────────────────────────
   local repo_root=""
   repo_root="$(dev_kit_repo_root "$repo_dir")"
 
   if [ -n "$repo_root" ]; then
     dev_kit_spinner_start "detecting repo"
-    local archetype profile git_state priority_refs first_ref second_ref
+    local archetype profile
     archetype="$(dev_kit_repo_primary_archetype "$repo_root")"
     profile="$(dev_kit_repo_primary_profile "$repo_root")"
     dev_kit_spinner_stop ""
-    git_state="no"
-    if dev_kit_sync_has_git_repo "$repo_root"; then
-      git_state="yes"
-    fi
 
     dev_kit_output_summary "$(dev_kit_repo_name "$repo_root") • ${archetype} • profile ${profile}"
 
-    priority_refs="$(dev_kit_repo_priority_refs "$repo_root")"
-    first_ref="$(printf '%s\n' "$priority_refs" | awk 'NF { print; exit }')"
-    second_ref="$(printf '%s\n' "$priority_refs" | awk 'NF { count += 1; if (count == 2) { print; exit } }')"
-
-    dev_kit_output_section "read first"
-    [ -n "$first_ref" ] && dev_kit_output_list_item "$first_ref"
-    [ -n "$second_ref" ] && dev_kit_output_list_item "$second_ref"
-
     dev_kit_output_section "do next"
-    # Always guide through the dev.kit pipeline first
+    # Guide to the next required step in the pipeline
     local _context_yaml="${repo_root}/.rabbit/context.yaml"
     local _agents_md="${repo_root}/AGENTS.md"
-    if [ ! -f "$_context_yaml" ] || [ ! -f "$_agents_md" ]; then
-      dev_kit_output_list_item "Run dev.kit repo to generate context."
-      dev_kit_output_list_item "Run dev.kit agent to generate AGENTS.md."
+    if [ ! -f "$_context_yaml" ]; then
+      dev_kit_output_row "required" "dev.kit repo  — analyse repo and write context.yaml"
+    elif [ ! -f "$_agents_md" ]; then
+      dev_kit_output_row "required" "dev.kit agent — generate AGENTS.md from context"
     else
-      dev_kit_output_row "refresh context" "dev.kit repo && dev.kit agent"
-    fi
-    if [ "$git_state" = "yes" ]; then
-      dev_kit_output_list_from_lines <<EOF
-$(dev_kit_sync_start_here_text "$repo_root" | dev_kit_output_first_lines 3)
-EOF
+      dev_kit_output_row "required" "dev.kit repo  — refresh context before starting work"
     fi
   else
-    dev_kit_output_summary "No repository detected in the current directory"
-    dev_kit_output_section "read first"
-    dev_kit_output_list_item "$repo_dir"
+    dev_kit_output_summary "no repo detected at ${repo_dir}"
     dev_kit_output_section "do next"
     dev_kit_output_list_item "Navigate into a repo, then run dev.kit again."
-    dev_kit_output_list_item "Look for standard signals like README.md, package.json, .github, docs/, or .git."
   fi
 }
 

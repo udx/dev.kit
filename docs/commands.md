@@ -2,15 +2,15 @@
 
 ## `dev.kit` — environment
 
-Run from any directory. Validates the local software environment, writes global context, and shows a repo summary if a repo is detected.
+Run from any directory. Validates the local software environment, detects the repo, and guides to the next pipeline step.
 
 **What it checks:**
 
-- Base tools: `git`, `gh`, `npm`, `docker`, `yq`, `jq`
+- Required: `git`, `gh`, `npm`, `docker`, `yq`, `jq` — each shown with what it enables
 - Cloud CLIs: `aws`, `gcloud`, `az` (optional)
-- Recommended packages: `@udx/worker-deployment`, `@udx/mcurl` (optional)
+- Recommended: `@udx/worker-deployment`, `@udx/mcurl` (optional)
 
-**Global context** is cached to `$DEV_KIT_HOME/context-env.txt` (1-hour TTL). Clear it with `rm $DEV_KIT_HOME/context-env.txt` to force a refresh. Capabilities derived from tool state:
+Capabilities derived from tool availability:
 
 | Capability | Requires |
 |---|---|
@@ -50,7 +50,7 @@ dev.kit agent --json
 ```
 
 AGENTS.md includes:
-- **Contract** — 7 rules: no scanning, strict boundaries, manifests before code, context over memory, verify locally, follow workflow, reuse over invention
+- **Contract** — 8 rules: no scanning, strict boundaries, manifests before code, context over memory, verify locally, follow workflow, reuse over invention, remember context
 - **Config manifests** — traceable YAML dependencies with kind labels
 - **GitHub context** — open issues, recent PRs, security alerts (via `gh api`)
 - **Full workflow** — execution sequence with operational notes

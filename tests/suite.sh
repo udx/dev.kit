@@ -90,11 +90,11 @@ if should_run "core"; then
   assert_contains "$home_json" "\"helpers\": ["            "home: reports helpers"
 
   home_text="$(cd "$DOCUMENTED_SHELL_REPO" && dev.kit)"
-  assert_contains "$home_text" "[read first]"              "home text: renders read-first"
+  assert_contains "$home_text" "[required]"                 "home text: renders env tools"
   assert_contains "$home_text" "[do next]"                 "home text: renders do-next"
 
   norepo="$(cd "$TEST_HOME" && dev.kit)"
-  assert_contains "$norepo" "No repository detected"       "home: handles non-repo dir"
+  assert_contains "$norepo" "no repo detected"             "home: handles non-repo dir"
 
   repo_json="$(cd "$DOCUMENTED_SHELL_REPO" && dev.kit repo --json)"
   assert_contains "$repo_json" "\"archetype\":"            "repo: reports archetype"

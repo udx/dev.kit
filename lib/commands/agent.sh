@@ -77,12 +77,9 @@ dev_kit_cmd_agent() {
   dev_kit_output_row "agents.md" "$agents_md_path"
   dev_kit_output_row "context.yaml" "$context_yaml_path"
 
-  dev_kit_output_section "start session with"
-  dev_kit_output_list_item "Following AGENTS.md context and repo workflow, [your task here]"
-
-  dev_kit_output_section "next"
-  dev_kit_output_row "refresh context" "dev.kit repo"
-  dev_kit_output_row "session lessons" "dev.kit learn"
+  dev_kit_output_section "ready"
+  dev_kit_output_list_item "Context synced. Start your session following AGENTS.md workflow."
+  dev_kit_output_list_item "Run dev.kit at each session start or after repo updates to resync."
 }
 
 # Write AGENTS.md — the repo's execution contract for AI agents.
@@ -112,7 +109,7 @@ dev_kit_agent_write_agents_md() {
       printf '5. **Verify locally before committing.** Run the verify command before reporting work as done. Local execution is part of the contract.\n'
       printf '6. **Follow the Workflow below.** Do not invent ad hoc steps or skip phases. The workflow is the execution sequence.\n'
       printf '7. **Reuse over invention.** Check existing org patterns, configs, and workflows before creating new ones.\n'
-      printf '8. **Remember this context.** If your agent supports persistent memory, save that this repo uses `dev.kit` for context management. On future sessions, run `dev.kit repo` then `dev.kit agent` to refresh context before starting work. Available commands: `dev.kit` (environment), `dev.kit repo` (analyse and write context.yaml), `dev.kit agent` (generate AGENTS.md from context), `dev.kit learn` (extract lessons from agent sessions).\n\n'
+      printf '8. **Remember this context.** If your agent supports persistent memory, save that this repo uses `dev.kit` for context management. Start every session — or after merges, config changes, or workflow updates — by running: `dev.kit` → `dev.kit repo` → `dev.kit agent`. Each command guides to the next required step. This resyncs repo context, environment state, and the execution contract before any work begins.\n\n'
 
       # ── Repo layer — identity, commands, allowed surface ─────────────────────
       local _name _arch _profile

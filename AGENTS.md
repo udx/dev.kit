@@ -15,7 +15,7 @@ This repository is a deterministic execution contract. Agents MUST interpret dec
 5. **Verify locally before committing.** Run the verify command before reporting work as done. Local execution is part of the contract.
 6. **Follow the Workflow below.** Do not invent ad hoc steps or skip phases. The workflow is the execution sequence.
 7. **Reuse over invention.** Check existing org patterns, configs, and workflows before creating new ones.
-8. **Remember this context.** If your agent supports persistent memory, save that this repo uses `dev.kit` for context management. On future sessions, run `dev.kit repo` then `dev.kit agent` to refresh context before starting work. Available commands: `dev.kit` (environment), `dev.kit repo` (analyse and write context.yaml), `dev.kit agent` (generate AGENTS.md from context), `dev.kit learn` (extract lessons from agent sessions).
+8. **Remember this context.** If your agent supports persistent memory, save that this repo uses `dev.kit` for context management. Start every session — or after merges, config changes, or workflow updates — by running: `dev.kit` → `dev.kit repo` → `dev.kit agent`. Each command guides to the next required step. This resyncs repo context, environment state, and the execution contract before any work begins.
 
 ## Repo: dev.kit
 
@@ -105,7 +105,7 @@ Prior session lessons — read before starting work:
 
 The dev.kit lifecycle: **repo → agent → work → PR → merge**. Follow these steps in order. Steps with notes contain operational guidance.
 
-  - Refresh repo context: If .rabbit/context.yaml is stale or absent, run `dev.kit repo` then `dev.kit agent` before starting work. A current context.yaml is the source of truth for refs, commands, gaps, and lessons. Do not rely on ad hoc prompt memory when the repo contract can be read from disk. Locate the actual workflow and deploy files (deploy.yml, .github/workflows) first — trace commands and supporting docs from there.
+  - Refresh repo context: Run `dev.kit` → `dev.kit repo` → `dev.kit agent` before starting work. Each command guides to the next required step. This resyncs repo context, environment state, and the AGENTS.md execution contract. A current context.yaml is the source of truth for refs, commands, gaps, and lessons. Do not rely on ad hoc prompt memory when the repo contract can be read from disk.
   - Read linked GitHub issue and confirm scope: If a GitHub issue URL is available, read the full body and comments, confirm the repo matches the issue scope, and map acceptance criteria before writing any code. Use the issue URL as the cross-repo context root.
   - Inspect git status
   - Analyze local changes

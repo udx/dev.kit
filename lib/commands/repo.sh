@@ -64,6 +64,18 @@ dev_kit_cmd_repo() {
 
   dev_kit_output_summary "${repo_name} • ${archetype} • mode: ${mode}"
 
+  # ── Priority refs — what to read first ─────────────────────────────────────
+  local priority_refs first_ref second_ref
+  priority_refs="$(dev_kit_repo_priority_refs "$repo_dir")"
+  first_ref="$(printf '%s\n' "$priority_refs" | awk 'NF { print; exit }')"
+  second_ref="$(printf '%s\n' "$priority_refs" | awk 'NF { count += 1; if (count == 2) { print; exit } }')"
+  if [ -n "$first_ref" ]; then
+    dev_kit_output_section "read first"
+    dev_kit_output_list_item "$first_ref"
+    [ -n "$second_ref" ] && dev_kit_output_list_item "$second_ref"
+  fi
+
+  # ── Factors ──────────────────────────────────────────────────────────────────
   dev_kit_output_section "factors"
   local factor status
   for factor in documentation architecture dependencies config verification runtime build_release_run; do
@@ -71,29 +83,33 @@ dev_kit_cmd_repo() {
     dev_kit_output_status_row "$factor" "$status"
   done
 
-  # Gaps: factor statuses are now cached — this pass is fast
+  # ── Gaps ─────────────────────────────────────────────────────────────────────
   gaps_json="$(dev_kit_scaffold_gaps_json "$repo_dir")"
   local gap_count
   gap_count="$(printf '%s\n' "$gaps_json" | grep -c '"factor"' 2>/dev/null || printf '0')"
   if [ "$gap_count" -gt 0 ]; then
     dev_kit_output_section "gaps"
     dev_kit_output_list_item "${gap_count} factor(s) missing or partial"
-  else
-    dev_kit_output_section "gaps"
-    dev_kit_output_list_item "no gaps detected"
   fi
 
-  # Write context.yaml after output — user already sees analysis above
+  # ── Git state — branch and sync hints ────────────────────────────────────────
+  if dev_kit_sync_has_git_repo "$repo_dir"; then
+    dev_kit_output_section "git"
+    dev_kit_output_list_from_lines <<EOF
+$(dev_kit_sync_start_here_text "$repo_dir" | dev_kit_output_first_lines 3)
+EOF
+  fi
+
+  # ── Write context.yaml ──────────────────────────────────────────────────────
   if [ "$mode" = "learn" ]; then
     dev_kit_spinner_start "writing context"
     dev_kit_context_yaml_write "$repo_dir" >/dev/null
-    dev_kit_spinner_stop "context refreshed"
+    dev_kit_spinner_stop ""
   fi
 
   dev_kit_output_section "context"
   dev_kit_output_list_item "$context_yaml_path"
 
   dev_kit_output_section "next"
-  dev_kit_output_row "agent context" "dev.kit agent"
-  dev_kit_output_row "session lessons" "dev.kit learn"
+  dev_kit_output_row "required" "dev.kit agent — generate AGENTS.md from this context"
 }

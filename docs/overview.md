@@ -17,7 +17,7 @@ dev.kit operates in phases. Each phase builds on the previous and uses global co
 
 ### 1. env — `dev.kit`
 
-Validates the local software environment and writes a global context file (`$DEV_KIT_HOME/context-env.txt`). This context determines what downstream phases can do:
+Validates the local software environment, listing each tool with what it enables. Capabilities determine what downstream phases can do:
 
 - `github_enrichment` — active only when `gh` is installed and authenticated
 - `yaml_parsing` — active only when `yq` is available
@@ -38,8 +38,8 @@ Scans recent Claude and Codex agent sessions, extracts workflow patterns and ope
 
 ## What `dev.kit` Does
 
-- `dev.kit` — validates env, writes global context, detects repo
-- `dev.kit repo` — analyzes repo, writes `.rabbit/context.yaml`, optionally scaffolds structure
+- `dev.kit` — validates env, detects repo, guides to next step
+- `dev.kit repo` — analyzes repo, writes `.rabbit/context.yaml`
 - `dev.kit agent` — generates `AGENTS.md` with full repo context and traceable YAML dependencies
 - `dev.kit learn` — extracts lessons from Claude and Codex sessions, writes durable artifact
 
