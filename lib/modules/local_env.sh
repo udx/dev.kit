@@ -93,7 +93,7 @@ dev_kit_env_tool_state() {
   esac
 }
 
-# Compute and write tool lines to cache. Called once per session on cache miss.
+# Compute tool detection lines. Recomputed on each run.
 _dev_kit_env_compute_tool_lines() {
   local tool=""
   for tool in git gh npm docker yq jq aws gcloud az "@udx/worker-deployment" "@udx/mcurl"; do
@@ -135,7 +135,7 @@ EOF
   printf ']'
 }
 
-# Derive capabilities from cached tool lines — no extra subprocess spawns.
+# Derive capabilities from tool lines — no extra subprocess spawns.
 dev_kit_global_context_capabilities_json() {
   local yaml_parsing=false
   local json_parsing=false
@@ -217,7 +217,7 @@ $(dev_kit_env_tool_lines)
 EOF
 }
 
-# Returns space-separated list of missing base tools. Derived from cached lines.
+# Returns space-separated list of missing required tools.
 dev_kit_env_missing_base_tools() {
   local line=""
   local tool=""

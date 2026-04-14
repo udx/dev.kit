@@ -81,12 +81,12 @@ dev_kit_dep_is_same_org() {
 }
 
 # Resolve a same-org dependency repo.
-# Outputs pipe-delimited: resolved|local_path|archetype|profile|description
+# Outputs tab-delimited: resolved\tarchetype\tprofile\tdescription
 # Strategy: gh api (primary when available) + sibling directory for local context.
 dev_kit_dep_resolve() {
   local dep_repo="$1" repo_root="$2" gh_auth="$3" force="$4"
   local dep_name="${dep_repo##*/}"
-  local resolved="false" local_path="" archetype="" profile="" description=""
+  local resolved="false" archetype="" profile="" description=""
 
   # Strategy 1: gh api for metadata (description)
   if [ "$gh_auth" = "available" ]; then
@@ -94,7 +94,8 @@ dev_kit_dep_resolve() {
     api_json="$(gh api "repos/${dep_repo}" 2>/dev/null || true)"
     if [ -n "$api_json" ] && printf '%s' "$api_json" | jq -e '.id' >/dev/null 2>&1; then
       resolved="true"
-      description="$(printf '%s' "$api_json" | jq -r '.description // empty' 2>/dev/null)"
+      # Sanitize description: strip newlines/tabs/backslashes for safe YAML embedding
+      description="$(printf '%s' "$api_json" | jq -r '(.description // empty) | gsub("[\\n\\r\\t]"; " ") | gsub("\\\\"; "") | gsub("\""; "")' 2>/dev/null)"
     fi
   fi
 
@@ -103,7 +104,6 @@ dev_kit_dep_resolve() {
   sibling_dir="$(dirname "$repo_root")/${dep_name}"
   if [ -d "$sibling_dir" ] && [ -d "${sibling_dir}/.git" ]; then
     resolved="true"
-    local_path="$sibling_dir"
     local dep_context="${sibling_dir}/.rabbit/context.yaml"
     if [ -f "$dep_context" ] && [ "$force" != "1" ]; then
       [ -z "$archetype" ] && archetype="$(awk '/^repo:/{f=1} f && /^  archetype:/{sub(/.*archetype:[[:space:]]*/,""); print; exit}' "$dep_context")"
@@ -114,7 +114,7 @@ dev_kit_dep_resolve() {
     [ -z "$profile" ]   && profile="$(dev_kit_repo_primary_profile "$sibling_dir" 2>/dev/null || true)"
   fi
 
-  printf '%s|%s|%s|%s|%s' "$resolved" "$local_path" "$archetype" "$profile" "$description"
+  printf '%s\t%s\t%s\t%s' "$resolved" "$archetype" "$profile" "$description"
 }
 
 # Read structured dependencies from context.yaml and emit JSON array.
@@ -125,6 +125,7 @@ dev_kit_deps_json() {
   [ -f "$context_yaml" ] || { printf '[]'; return; }
 
   awk '
+    function json_esc(s) { gsub(/\\/, "\\\\", s); gsub(/"/, "\\\"", s); gsub(/\t/, " ", s); return s }
     BEGIN { printf "["; open = 0 }
     /^dependencies:/ { in_d=1; next }
     in_d && /^[a-zA-Z#]/ { if (open) { printf "}"; open = 0 }; in_d=0 }
@@ -132,15 +133,13 @@ dev_kit_deps_json() {
     /^  - repo:/ {
       if (open) printf "},"
       sub(/.*repo:[[:space:]]*/, "")
-      gsub(/"/, "\\\"")
-      printf "\n    {\"repo\": \"%s\"", $0
+      printf "\n    {\"repo\": \"%s\"", json_esc($0)
       open = 1
       next
     }
     /^    type:/ {
       sub(/.*type:[[:space:]]*/, "")
-      gsub(/"/, "\\\"")
-      printf ", \"type\": \"%s\"", $0
+      printf ", \"type\": \"%s\"", json_esc($0)
       next
     }
     /^    resolved:/ {
@@ -148,29 +147,19 @@ dev_kit_deps_json() {
       printf ", \"resolved\": %s", $0
       next
     }
-    /^    local_path:/ {
-      sub(/.*local_path:[[:space:]]*/, "")
-      gsub(/"/, "\\\"")
-      printf ", \"local_path\": \"%s\"", $0
-      next
-    }
     /^    archetype:/ {
       sub(/.*archetype:[[:space:]]*/, "")
-      gsub(/"/, "\\\"")
-      printf ", \"archetype\": \"%s\"", $0
+      printf ", \"archetype\": \"%s\"", json_esc($0)
       next
     }
     /^    profile:/ {
       sub(/.*profile:[[:space:]]*/, "")
-      gsub(/"/, "\\\"")
-      printf ", \"profile\": \"%s\"", $0
+      printf ", \"profile\": \"%s\"", json_esc($0)
       next
     }
     /^    description:/ {
-      sub(/.*description:[[:space:]]*"?/, "")
-      sub(/"$/, "")
-      gsub(/"/, "\\\"")
-      printf ", \"description\": \"%s\"", $0
+      sub(/.*description:[[:space:]]*/, "")
+      printf ", \"description\": \"%s\"", json_esc($0)
       next
     }
     END { if (open) printf "}"; printf "\n  ]" }
@@ -507,14 +496,13 @@ EOF
 
         # Resolve same-org dependencies
         if dev_kit_dep_is_same_org "$_udep" "$_current_org"; then
-          local _resolve_out _r_resolved _r_local _r_arch _r_profile _r_desc
+          local _resolve_out _r_resolved _r_arch _r_profile _r_desc
           _resolve_out="$(dev_kit_dep_resolve "$_udep" "$repo_root" "$_gh_auth_state" "$force")"
-          IFS='|' read -r _r_resolved _r_local _r_arch _r_profile _r_desc <<< "$_resolve_out"
+          IFS=$'\t' read -r _r_resolved _r_arch _r_profile _r_desc <<< "$_resolve_out"
           printf '    resolved: %s\n' "$_r_resolved"
-          [ -n "$_r_local" ]   && printf '    local_path: %s\n' "$_r_local"
           [ -n "$_r_arch" ]    && printf '    archetype: %s\n' "$_r_arch"
           [ -n "$_r_profile" ] && printf '    profile: %s\n' "$_r_profile"
-          [ -n "$_r_desc" ]    && printf '    description: "%s"\n' "$(printf '%s' "$_r_desc" | sed 's/"/\\"/g')"
+          [ -n "$_r_desc" ]    && printf '    description: %s\n' "$_r_desc"
         else
           printf '    resolved: false\n'
         fi

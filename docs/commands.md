@@ -27,12 +27,14 @@ Analyzes the repository against 7 engineering factors and writes `.rabbit/contex
 
 Two modes:
 
-- **learn** (default): analyze repo, pull GitHub context, write `.rabbit/context.yaml`
+- **learn** (default): analyze repo, pull GitHub context, trace dependencies, write `.rabbit/context.yaml`
 - **--check**: report gaps without writing anything
+- **--force**: re-resolve all dependency repos from scratch (skip cached context.yaml in sibling repos)
 
 ```bash
 dev.kit repo
 dev.kit repo --check
+dev.kit repo --force
 dev.kit repo --json
 ```
 
