@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# @description: Analyse repo structure and factors
+# @description: Analyze repo structure and factors
 
 dev_kit_cmd_repo() {
   local format="${1:-text}"

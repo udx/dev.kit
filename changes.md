@@ -14,7 +14,7 @@
 ### 0.3.0
 
 - Restructure AGENTS.md as a deterministic execution contract with layered sections
-- Add 7 contract rules: no scanning, strict boundaries, manifests before code, context over memory, verify locally, follow workflow, reuse over invention
+- Add 8 contract rules: no scanning, strict boundaries, manifests before code, context over memory, verify locally, follow workflow, reuse over invention, remember context
 - Add GitHub context layer to `context.yaml` — open issues, recent PRs, security alerts via `gh api`
 - Add 10 engineering practices from lessons learned: context-over-memory, manifests-before-code, reuse-over-invention, localhost-first, delivery-chain-traceability, structured-outcome-reporting, docs-first-alignment, config-over-code, legacy-reduction, verification-scope
 - Add learning workflow patterns: docs-first-alignment, workflow-tracing, verification-scope, legacy-reduction, agent-handoff

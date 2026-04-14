@@ -115,7 +115,7 @@ dev.kit repo
 Generates AGENTS.md — a deterministic execution contract that gives any agent everything it needs to work without scanning the filesystem. Auto-generates `.rabbit/context.yaml` if missing.
 
 AGENTS.md includes:
-- **Contract** — 7 rules: no scanning, strict context boundaries, manifests before code, context over memory, verify locally, follow workflow, reuse over invention
+- **Contract** — 8 rules: no scanning, strict context boundaries, manifests before code, context over memory, verify locally, follow workflow, reuse over invention, remember context
 - **Commands** — verify, build, run entrypoints
 - **Priority refs** — the only files an agent should read
 - **Config manifests** — traceable YAML dependencies with kind labels
