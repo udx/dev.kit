@@ -21,13 +21,13 @@ Run from any directory. Validates the local software environment, writes global 
 
 Use `dev.kit --json` to inspect the full `localhost_tools` inventory and `global_context.capabilities` block.
 
-## `dev.kit repo` — repo analysis
+## `dev.kit repo` — repo context
 
-Builds a resolved view of the repository and writes a manifest to `.dev-kit/manifest.json`.
+Analyzes the repository against 7 engineering factors and writes `.rabbit/context.yaml` — the canonical context artifact. Detects config manifests (YAML files that define workflow and tooling).
 
 Three modes:
 
-- **learn** (default): read repo evidence, write manifest and `AGENTS.md`
+- **learn** (default): analyze repo, write `.rabbit/context.yaml`
 - **--scaffold**: also create missing directories and files
 - **--check**: report gaps without writing anything
 
@@ -38,30 +38,34 @@ dev.kit repo --check
 dev.kit repo --json
 ```
 
-Output includes: archetype, profile, markers, factors (present/partial/missing), gaps, and manifest path.
+Output includes: archetype, profile, factors (✓ present / ◦ partial / ✗ missing), gaps, config manifests, and context path.
 
-## `dev.kit agent` — agent context
+## `dev.kit agent` — agent instructions
 
-Reads the repo manifest (`.dev-kit/manifest.json`) and outputs a structured context for AI agents.
+Generates `AGENTS.md` — a comprehensive guide with anti-drift rules, commands, priority refs, config manifests, full workflow, engineering practices, and lessons from prior sessions.
 
-Requires `dev.kit repo` to have run first.
+Auto-generates `.rabbit/context.yaml` if missing — no manual `dev.kit repo` step required.
 
 ```bash
 dev.kit agent
 dev.kit agent --json
 ```
 
-Generates `AGENTS.md` only if not already present (it is created by `dev.kit repo`).
+AGENTS.md includes:
+- **Rules** — no filesystem scanning, verify before commit, follow the workflow
+- **Config manifests** — traceable YAML dependencies with kind labels
+- **Full workflow** — 15-step execution contract with operational notes
 
-## `dev.kit learn` — lessons learned
+## `dev.kit learn` — agent experience
 
-Evaluates the configured lessons-learned workflow from recent agent sessions.
+Scans recent Claude and Codex agent sessions, extracts workflow patterns and operational references, and writes a lessons artifact at `.rabbit/dev.kit/lessons-*.md`.
 
-Discovers recent agent sessions (Codex, etc.), scores them against flow patterns, and routes findings to configured destinations (GitHub issues, wiki, Slack).
+Lessons feed back into `.rabbit/context.yaml` on next `dev.kit repo` run and are referenced from `AGENTS.md`.
 
 ```bash
 dev.kit learn
 dev.kit learn --json
+dev.kit learn --sources claude
 ```
 
 ## `dev.kit uninstall`

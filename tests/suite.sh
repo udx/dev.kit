@@ -103,19 +103,17 @@ if should_run "core"; then
 
   cp -R "$SIMPLE_REPO" "$SIMPLE_ACTION_REPO"
   rm -rf "$SIMPLE_ACTION_REPO/.dev-kit" "$SIMPLE_ACTION_REPO/.rabbit"
-  agent_no_manifest="$(cd "$SIMPLE_ACTION_REPO" && dev.kit agent --json 2>&1 || true)"
-  assert_contains "$agent_no_manifest" "\"error\":"        "agent: reports error without context"
 
-  (cd "$SIMPLE_ACTION_REPO" && dev.kit repo) >/dev/null 2>&1
+  # agent auto-generates context when missing — no manual dev.kit repo step needed
   agent_json="$(cd "$SIMPLE_ACTION_REPO" && dev.kit agent --json)"
-  assert_contains "$agent_json" "\"archetype\":"           "agent: reports archetype"
+  assert_contains "$agent_json" "\"archetype\":"           "agent: auto-generates context on demand"
   assert_contains "$agent_json" "\"workflow_contract\":"   "agent: reports workflow contract"
 
   context_yaml="${SIMPLE_ACTION_REPO}/.rabbit/context.yaml"
-  assert_file_exists "$context_yaml"                                   "repo: generates .rabbit/context.yaml"
-  assert_contains "$(cat "$context_yaml")" "kind: repoContext"         "repo: context.yaml has kind header"
-  assert_contains "$(cat "$context_yaml")" "version: udx.io/dev.kit"  "repo: context.yaml has version"
-  assert_contains "$(cat "$context_yaml")" "refs:"                     "repo: context.yaml has refs section"
+  assert_file_exists "$context_yaml"                                   "agent: creates .rabbit/context.yaml"
+  assert_contains "$(cat "$context_yaml")" "kind: repoContext"         "agent: context.yaml has kind header"
+  assert_contains "$(cat "$context_yaml")" "version: udx.io/dev.kit"  "agent: context.yaml has version"
+  assert_contains "$(cat "$context_yaml")" "refs:"                     "agent: context.yaml has refs section"
 fi
 
 # ── archetypes ─────────────────────────────────────────────────────────────────

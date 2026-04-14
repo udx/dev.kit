@@ -58,4 +58,7 @@ Sources: claude (1 session(s)), codex (0 session(s))
 - [claude] before running test we need to ensure perfomance and make sure it's not running too long, also, I see you haven't updated Readme fully, let's loop once again readme/docs, tests feel free to cleanup/consolidate/whatever, it's a first version so nobody using it so no back-compability needed
 - [claude] when I said about perfomance I particularly meant tests
 - [claude] so, do we understand "happy path" for refactor to new concept? [Pasted text #1 +69 lines]
+- [claude] [Pasted text #1 +131 lines]
+- [claude] make sure to explore lessons and overall flow, I want - dev.kit - dev.kit repo (generate repo context + experienced knowledge and dev workflow(s)) - dev.kit agent (generate correct flexible agent instructions based on context) - dev.kit learn (generate analyzed agents sessions) use learned lessons to improve dev.kit...
+- [claude] before make changes would be useful to sync uncommited to git
 

@@ -62,3 +62,61 @@ dev_kit_output_first_lines() {
     fi
   done
 }
+
+# ── Spinner ───────────────────────────────────────────────────────────────────
+# Background Braille spinner for long-running operations.
+# Writes to stdout; auto-skips when stdout is not a terminal (tests, pipes).
+
+_DEV_KIT_SPINNER_PID=""
+
+dev_kit_spinner_start() {
+  local msg="${1:-}"
+  [ -t 1 ] || return 0
+  (
+    trap 'exit 0' TERM
+    while true; do
+      for c in '⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏'; do
+        printf '\r  %s %s' "$c" "$msg"
+        sleep 0.08 2>/dev/null || sleep 1
+      done
+    done
+  ) &
+  _DEV_KIT_SPINNER_PID=$!
+}
+
+dev_kit_spinner_stop() {
+  local result="${1:-}"
+  if [ -n "${_DEV_KIT_SPINNER_PID:-}" ]; then
+    kill "$_DEV_KIT_SPINNER_PID" 2>/dev/null
+    wait "$_DEV_KIT_SPINNER_PID" 2>/dev/null || true
+    _DEV_KIT_SPINNER_PID=""
+  fi
+  [ -t 1 ] || return 0
+  if [ -n "$result" ]; then
+    printf '\r  ✓ %-40s\n' "$result"
+  else
+    printf '\r%-50s\r' ''
+  fi
+}
+
+# ── Status-aware factor row ───────────────────────────────────────────────────
+
+dev_kit_output_status_row() {
+  local label="$1"
+  local status="$2"
+  local icon=""
+  case "$status" in
+    present)        icon="✓" ;;
+    partial)        icon="◦" ;;
+    missing)        icon="✗" ;;
+    not_applicable) icon="·" ; status="n/a" ;;
+    *)              icon=" " ;;
+  esac
+  printf '  %-*s %s %s\n' "$DEV_KIT_OUTPUT_LABEL_WIDTH" "${label}:" "$icon" "$status"
+}
+
+# ── Navigation hint ───────────────────────────────────────────────────────────
+
+dev_kit_output_hint() {
+  printf '  %s %s\n' "→" "$1"
+}

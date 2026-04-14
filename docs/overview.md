@@ -26,20 +26,24 @@ Validates the local software environment and writes a global context file (`$DEV
 
 ### 2. repo — `dev.kit repo`
 
-Builds a resolved view of the repository: docs, scripts, workflows, deploy config, Dockerfile chains, manifests. Identifies gaps against 12-factor principles. Writes `.dev-kit/manifest.json` and generates `AGENTS.md`.
+Builds a resolved view of the repository: docs, scripts, workflows, deploy config, Dockerfile chains, manifests. Identifies gaps against 7 engineering factors. Detects config manifests (YAML files that define workflow and tooling). Writes `.rabbit/context.yaml`.
 
 Can also scaffold missing structure with `--scaffold`.
 
 ### 3. agent — `dev.kit agent`
 
-Reads the repo context manifest and outputs structured context for AI agents. Generates `AGENTS.md` if not already present.
+Generates `AGENTS.md` — a comprehensive agent guide with rules, refs, config manifests, full workflow, and lessons. Auto-generates `.rabbit/context.yaml` if missing.
+
+### 4. learn — `dev.kit learn`
+
+Scans recent Claude and Codex agent sessions, extracts workflow patterns and operational references, and writes a lessons artifact at `.rabbit/dev.kit/lessons-*.md`. Lessons feed back into context.yaml on next `dev.kit repo` run.
 
 ## What `dev.kit` Does
 
 - `dev.kit` — validates env, writes global context, detects repo
-- `dev.kit repo` — analyzes repo, writes manifest and AGENTS.md, optionally scaffolds structure
-- `dev.kit agent` — reads manifest, outputs AI-ready context
-- `dev.kit learn` — evaluates lessons-learned workflow for recent agent sessions
+- `dev.kit repo` — analyzes repo, writes `.rabbit/context.yaml`, optionally scaffolds structure
+- `dev.kit agent` — generates `AGENTS.md` with full repo context and traceable YAML dependencies
+- `dev.kit learn` — extracts lessons from Claude and Codex sessions, writes durable artifact
 
 ## Design Principles
 
@@ -49,4 +53,4 @@ Reads the repo context manifest and outputs structured context for AI agents. Ge
 
 **Strict separation**: config and scripts own deterministic discovery and policy. Templates own output shape. Agents consume repo facts and add bounded judgment. If behavior must be repeatable, it should move into the repo — not live only in prompts.
 
-**Optional overlays**: `AGENTS.md` and `CLAUDE.md` are supported as provider-agnostic agent notes. Keep them small and never let them replace repo-native sources.
+**Traceable dependencies**: YAML manifests define workflow and tooling behavior. Agents trace dependencies to config manifests, not shell code. Config manifests are listed in `.rabbit/context.yaml` and inlined into `AGENTS.md`.

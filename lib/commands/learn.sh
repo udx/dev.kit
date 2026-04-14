@@ -162,8 +162,11 @@ EOF
   fi
 
   # write artifact and update last-run
+  dev_kit_spinner_start "writing lessons artifact"
   local artifact_path
   artifact_path="$(dev_kit_learning_write_artifact "$repo_dir" "$session_refs" "$latest_artifact")"
+  dev_kit_spinner_stop "artifact saved"
+
   if [ -n "$artifact_path" ]; then
     dev_kit_output_section "artifact"
     dev_kit_output_list_item "$artifact_path"
@@ -174,6 +177,10 @@ EOF
 
   dev_kit_output_section "send to"
   dev_kit_learning_destinations_text "$workflow_id"
+
+  dev_kit_output_section "next"
+  dev_kit_output_row "refresh context" "dev.kit repo"
+  dev_kit_output_row "update agent" "dev.kit agent"
 }
 
 dev_kit_learning_latest_artifact_path() {

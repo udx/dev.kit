@@ -7,12 +7,11 @@ For the product summary see [docs/overview.md](overview.md). For command referen
 dev.kit operates as a pipeline. Each phase builds on the previous — global context from the env phase gates what subsequent phases can do.
 
 ```
-dev.kit          →  dev.kit repo       →  dev.kit agent
-─────────────────   ─────────────────    ─────────────────
-validate tools      learn repo           read manifest
-write context       scan docs/workflows  generate AGENTS.md
-detect repo         write manifest       output AI context
-                    update AGENTS.md
+dev.kit          →  dev.kit repo       →  dev.kit agent     →  dev.kit learn
+─────────────────   ─────────────────    ─────────────────    ─────────────────
+validate env        analyze factors      write AGENTS.md      scan agent sessions
+detect repo         detect manifests     auto-generate        extract patterns
+show next steps     write context.yaml   context if needed    write lessons artifact
 ```
 
 ### Phase 1 — env (`dev.kit`)
@@ -24,23 +23,27 @@ Global context capabilities that gate downstream phases:
 | Capability | Requires | If missing |
 |---|---|---|
 | `github_enrichment` | `gh` authenticated | GH API enrichment skipped |
-| `yaml_parsing` | `yq` | Fallback to worker image |
+| `yaml_parsing` | `yq` | Fallback to awk parsing |
 | `json_parsing` | `jq` | Fallback parsing |
 | `cloud_aws/gcp/azure` | respective CLI | Cloud context skipped |
 
 ### Phase 2 — repo (`dev.kit repo`)
 
-Builds a resolved view of the repository: docs, scripts, workflows, Dockerfile chains, manifests, version signals. Writes `.dev-kit/manifest.json` and generates `AGENTS.md`.
+Analyzes the repository against 7 engineering factors. Detects config manifests (YAML files that define workflow and tooling). Writes `.rabbit/context.yaml`.
 
 Three modes:
 
-- **learn** (default): analyze and write manifest + AGENTS.md
+- **learn** (default): analyze and write `.rabbit/context.yaml`
 - **--scaffold**: also create missing directories and baseline files
 - **--check**: report gaps without writing anything
 
 ### Phase 3 — agent (`dev.kit agent`)
 
-Reads `.dev-kit/manifest.json` via `jq` and outputs structured context for AI agents. No recomputation — the manifest is the handoff. Generates `AGENTS.md` only if not already present.
+Generates `AGENTS.md` — a comprehensive agent guide with anti-drift rules, commands, priority refs, config manifests, full workflow, and lessons. Auto-generates `.rabbit/context.yaml` if missing.
+
+### Phase 4 — learn (`dev.kit learn`)
+
+Scans recent Claude and Codex agent sessions, extracts workflow patterns, and writes a lessons artifact at `.rabbit/dev.kit/lessons-*.md`. Lessons feed back into context.yaml on next `dev.kit repo` run.
 
 ## Pipeline Usage
 
@@ -51,9 +54,11 @@ cd <repo>
 dev.kit
 dev.kit repo
 dev.kit agent
+# ... do work ...
+dev.kit learn
 ```
 
-Agents use `dev.kit agent --json` as the machine-readable context contract. `AGENTS.md` is the provider-agnostic summary.
+`dev.kit agent` auto-generates context if `.rabbit/context.yaml` is absent — `dev.kit repo` is not a hard prerequisite. Agents use `dev.kit agent --json` as the machine-readable contract. `AGENTS.md` is the provider-agnostic guide.
 
 ## Separation of Responsibilities
 
@@ -74,14 +79,14 @@ Custom overlays (`AGENTS.md`, `CLAUDE.md`) are optional and secondary to repo-na
 
 ## `dev.kit learn`
 
-`dev.kit learn` evaluates lessons from recent agent sessions and routes follow-ups to durable repo artifacts (GitHub issues, wiki pages, Slack summaries).
+`dev.kit learn` scans recent Claude and Codex agent sessions, extracts workflow patterns and operational references, and writes a durable lessons artifact.
 
-It activates when an agent session source is configured:
+Supported sources:
 
-- Codex: set `CODEX_HOME` to point at session logs
-- Other agents: additional sources coming
+- Claude: auto-discovered from `~/.claude/projects/` and `~/.claude/history.jsonl`
+- Codex: auto-discovered from `$CODEX_HOME/sessions/`
 
-Without a session source, learn reports the configured workflow destinations but has no session data to evaluate.
+Use `--sources claude` or `--sources codex` to limit to one source. Without agent sessions, learn reports the configured workflow destinations but has no data to evaluate.
 
 ## 12-Factor Factors
 

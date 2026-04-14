@@ -186,6 +186,45 @@ dev_kit_context_yaml_write() {
       fi
     fi
 
+    # Config manifests — traceable YAML dependencies for workflows and tooling
+    local _manifests_yaml=""
+    local _yaml_file _yaml_rel _yaml_kind
+    # dev.kit-style config catalog
+    if [ -d "${repo_root}/src/configs" ]; then
+      while IFS= read -r _yaml_file; do
+        [ -n "$_yaml_file" ] && [ -f "$_yaml_file" ] || continue
+        _yaml_rel="${_yaml_file#"${repo_root}/"}"
+        _yaml_kind="$(awk '/^kind:/ { sub(/^kind:[[:space:]]*/, ""); print; exit }' "$_yaml_file")"
+        if [ -n "$_yaml_kind" ]; then
+          _manifests_yaml="${_manifests_yaml}  - ${_yaml_rel} (${_yaml_kind})\n"
+        else
+          _manifests_yaml="${_manifests_yaml}  - ${_yaml_rel}\n"
+        fi
+      done <<EOF
+$(find "${repo_root}/src/configs" -maxdepth 1 -name '*.yaml' -o -name '*.yml' 2>/dev/null | sort)
+EOF
+    fi
+    # GitHub Actions workflows
+    if [ -d "${repo_root}/.github/workflows" ]; then
+      while IFS= read -r _yaml_file; do
+        [ -n "$_yaml_file" ] && [ -f "$_yaml_file" ] || continue
+        _yaml_rel="${_yaml_file#"${repo_root}/"}"
+        _manifests_yaml="${_manifests_yaml}  - ${_yaml_rel}\n"
+      done <<EOF
+$(find "${repo_root}/.github/workflows" -maxdepth 1 \( -name '*.yaml' -o -name '*.yml' \) 2>/dev/null | sort)
+EOF
+    fi
+    # Standalone workflow/config files at repo root
+    for _yaml_rel in deploy.yml deploy.yaml docker-compose.yml docker-compose.yaml Chart.yaml helmfile.yaml; do
+      [ -f "${repo_root}/${_yaml_rel}" ] || continue
+      _manifests_yaml="${_manifests_yaml}  - ${_yaml_rel}\n"
+    done
+    if [ -n "$_manifests_yaml" ]; then
+      printf '# Config manifests — traceable workflow and tooling dependencies\n'
+      printf 'manifests:\n'
+      printf '%b\n' "$_manifests_yaml"
+    fi
+
     # Lessons from .rabbit/dev.kit/
     local lessons_dir="${repo_root}/.rabbit/dev.kit"
     if [ -d "$lessons_dir" ]; then
