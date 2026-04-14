@@ -6,6 +6,13 @@ DEV_KIT_HOME="${DEV_KIT_HOME:-$HOME/.udx/dev.kit}"
 DEV_KIT_INSTALL_REPO="${DEV_KIT_INSTALL_REPO:-udx/dev.kit}"
 DEV_KIT_INSTALL_REF="${DEV_KIT_INSTALL_REF:-main}"
 DEV_KIT_INSTALL_ARCHIVE_URL="${DEV_KIT_INSTALL_ARCHIVE_URL:-https://codeload.github.com/${DEV_KIT_INSTALL_REPO}/tar.gz/refs/heads/${DEV_KIT_INSTALL_REF}}"
+DEV_KIT_INSTALL_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DEV_KIT_INSTALL_REPO_DIR="$(cd "${DEV_KIT_INSTALL_SCRIPT_DIR}/../.." 2>/dev/null && pwd || true)"
+
+if [ -f "$DEV_KIT_INSTALL_REPO_DIR/lib/modules/output.sh" ]; then
+  # shellcheck disable=SC1090
+  . "$DEV_KIT_INSTALL_REPO_DIR/lib/modules/output.sh"
+fi
 
 dev_kit_install_usage() {
   cat <<'EOF'
@@ -117,16 +124,37 @@ main() {
   find "$DEV_KIT_HOME/bin" -type f -exec chmod +x {} \;
   ln -sfn "$DEV_KIT_HOME/bin/dev-kit" "$target"
 
-  echo "Installed dev.kit"
-  echo "binary: $target"
-  echo "home:   $DEV_KIT_HOME"
-  if dev_kit_install_path_contains_bin_dir; then
-    echo "shell:  PATH already includes $DEV_KIT_BIN_DIR"
-    echo "next:   run dev.kit"
+  if command -v dev_kit_output_title >/dev/null 2>&1; then
+    dev_kit_output_title "Installed dev.kit"
+    dev_kit_output_summary "Human-first raw output, stable JSON for agents"
+    dev_kit_output_section "install"
+    dev_kit_output_row "binary" "$target"
+    dev_kit_output_row "home" "$DEV_KIT_HOME"
   else
-    echo "shell:  unchanged"
-    echo "next:   export PATH=\"$DEV_KIT_BIN_DIR:\$PATH\""
-    echo "then:   dev.kit"
+    echo "Installed dev.kit"
+    echo "binary: $target"
+    echo "home:   $DEV_KIT_HOME"
+  fi
+  if dev_kit_install_path_contains_bin_dir; then
+    if command -v dev_kit_output_row >/dev/null 2>&1; then
+      dev_kit_output_section "next"
+      dev_kit_output_list_item "PATH already includes $DEV_KIT_BIN_DIR"
+      dev_kit_output_list_item "run dev.kit"
+    else
+      echo "shell:  PATH already includes $DEV_KIT_BIN_DIR"
+      echo "next:   run dev.kit"
+    fi
+  else
+    if command -v dev_kit_output_row >/dev/null 2>&1; then
+      dev_kit_output_section "next"
+      dev_kit_output_list_item "shell profiles were left unchanged"
+      dev_kit_output_list_item "export PATH=\"$DEV_KIT_BIN_DIR:\$PATH\""
+      dev_kit_output_list_item "run dev.kit"
+    else
+      echo "shell:  unchanged"
+      echo "next:   export PATH=\"$DEV_KIT_BIN_DIR:\$PATH\""
+      echo "then:   dev.kit"
+    fi
   fi
 }
 

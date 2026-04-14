@@ -1,7 +1,198 @@
 #!/usr/bin/env bash
 
+DEV_KIT_REPO_ROOT_CACHE_INPUT=""
+DEV_KIT_REPO_ROOT_CACHE_VALUE=""
+DEV_KIT_REPO_MARKERS_CACHE_REPO=""
+DEV_KIT_REPO_MARKERS_CACHE_VALUE=""
+
+dev_kit_detection_catalog_path() {
+  printf "%s" "$REPO_DIR/src/configs/detection-patterns.yaml"
+}
+
+dev_kit_detection_signals_path() {
+  printf "%s" "$REPO_DIR/src/configs/detection-signals.yaml"
+}
+
+dev_kit_detection_pattern() {
+  local kind="$1"
+
+  dev_kit_yaml_mapping_scalar "$(dev_kit_detection_catalog_path)" "command_patterns" "$kind"
+}
+
+dev_kit_detection_list() {
+  local list_name="$1"
+
+  dev_kit_yaml_config_list "$(dev_kit_detection_signals_path)" "$list_name"
+}
+
+dev_kit_detection_scalar() {
+  local key="$1"
+
+  dev_kit_yaml_config_scalar "$(dev_kit_detection_signals_path)" "$key"
+}
+
 dev_kit_repo_name() {
   basename "${1:-$(pwd)}"
+}
+
+dev_kit_repo_has_root_file_marker() {
+  local repo_dir="$1"
+  local path=""
+
+  while IFS= read -r path; do
+    [ -n "$path" ] || continue
+    if dev_kit_has_file "$repo_dir" "$path"; then
+      return 0
+    fi
+  done <<EOF
+$(dev_kit_context_list "repo_root_files")
+EOF
+
+  return 1
+}
+
+dev_kit_repo_has_root_dir_marker() {
+  local repo_dir="$1"
+  local path=""
+
+  while IFS= read -r path; do
+    [ -n "$path" ] || continue
+    if dev_kit_repo_has_dir "$repo_dir" "$path"; then
+      return 0
+    fi
+  done <<EOF
+$(dev_kit_context_list "repo_root_dirs")
+EOF
+
+  return 1
+}
+
+dev_kit_repo_has_root_marker() {
+  local repo_dir="${1:-$(pwd)}"
+
+  if [ -d "$repo_dir/.git" ]; then
+    return 0
+  fi
+
+  if dev_kit_repo_has_root_file_marker "$repo_dir"; then
+    return 0
+  fi
+
+  if dev_kit_repo_has_root_dir_marker "$repo_dir"; then
+    return 0
+  fi
+
+  if dev_kit_has_file "$repo_dir" ".github/workflows" || dev_kit_repo_has_dir "$repo_dir" ".github/workflows"; then
+    return 0
+  fi
+
+  return 1
+}
+
+dev_kit_repo_root() {
+  local input_dir="${1:-$(pwd)}"
+  local repo_dir=""
+  local parent_dir=""
+
+  repo_dir="$(cd "$input_dir" 2>/dev/null && pwd || printf '%s' "$input_dir")"
+
+  if [ "$DEV_KIT_REPO_ROOT_CACHE_INPUT" = "$repo_dir" ]; then
+    printf "%s" "$DEV_KIT_REPO_ROOT_CACHE_VALUE"
+    return 0
+  fi
+
+  while [ -n "$repo_dir" ] && [ "$repo_dir" != "/" ]; do
+    if dev_kit_repo_has_root_marker "$repo_dir"; then
+      DEV_KIT_REPO_ROOT_CACHE_INPUT="$input_dir"
+      DEV_KIT_REPO_ROOT_CACHE_VALUE="$repo_dir"
+      printf "%s" "$repo_dir"
+      return 0
+    fi
+    parent_dir="$(dirname "$repo_dir")"
+    [ "$parent_dir" = "$repo_dir" ] && break
+    repo_dir="$parent_dir"
+  done
+
+  DEV_KIT_REPO_ROOT_CACHE_INPUT="$input_dir"
+  DEV_KIT_REPO_ROOT_CACHE_VALUE=""
+}
+
+dev_kit_repo_looks_like_repo() {
+  [ -n "$(dev_kit_repo_root "${1:-$(pwd)}")" ]
+}
+
+dev_kit_repo_marker_lines() {
+  local repo_dir="${1:-$(pwd)}"
+  local marker_group=""
+  local marker_kind=""
+  local marker_prefix=""
+  local path=""
+  local markers=""
+
+  if [ "$DEV_KIT_REPO_MARKERS_CACHE_REPO" = "$repo_dir" ]; then
+    printf "%s" "$DEV_KIT_REPO_MARKERS_CACHE_VALUE"
+    return 0
+  fi
+
+  DEV_KIT_REPO_MARKERS_CACHE_REPO="$repo_dir"
+  while IFS= read -r marker_group; do
+    [ -n "$marker_group" ] || continue
+    marker_kind="$(dev_kit_context_marker_group_field "$marker_group" "kind")"
+    marker_prefix="$(dev_kit_context_marker_group_field "$marker_group" "prefix")"
+    [ -n "$marker_kind" ] || continue
+    [ -n "$marker_prefix" ] || continue
+
+    while IFS= read -r path; do
+      [ -n "$path" ] || continue
+      case "$marker_kind" in
+        file)
+          if dev_kit_has_file "$repo_dir" "$path"; then
+            markers="${markers}${marker_prefix}:${path}
+"
+          fi
+          ;;
+        dir)
+          if dev_kit_repo_has_dir "$repo_dir" "$path"; then
+            markers="${markers}${marker_prefix}:${path}
+"
+          fi
+          ;;
+      esac
+    done <<EOF
+$(dev_kit_context_marker_group_paths "$marker_group")
+EOF
+  done <<EOF
+$(dev_kit_context_marker_group_ids)
+EOF
+
+  DEV_KIT_REPO_MARKERS_CACHE_VALUE="$(printf "%s" "$markers" | dev_kit_unique_lines_ci)"
+  printf "%s" "$DEV_KIT_REPO_MARKERS_CACHE_VALUE"
+}
+
+dev_kit_repo_markers_text() {
+  local repo_dir="${1:-$(pwd)}"
+  local markers=""
+
+  markers="$(dev_kit_repo_marker_lines "$repo_dir")"
+  if [ -z "$markers" ]; then
+    printf "%s" "none"
+    return 0
+  fi
+
+  printf "%s" "$markers" | dev_kit_lines_to_csv
+}
+
+dev_kit_repo_markers_json() {
+  local repo_dir="${1:-$(pwd)}"
+  local markers=""
+
+  markers="$(dev_kit_repo_marker_lines "$repo_dir")"
+  if [ -z "$markers" ]; then
+    printf "%s" "[]"
+    return 0
+  fi
+
+  printf "%s" "$markers" | dev_kit_lines_to_json_array
 }
 
 dev_kit_has_file() {
@@ -18,11 +209,27 @@ dev_kit_repo_has_dir() {
 
 dev_kit_repo_find() {
   local repo_dir="$1"
+  local prune_path=""
+  local prune_args=()
+  local last_index=0
   shift
 
-  find "$repo_dir" \
-    \( -path "$repo_dir/.git" -o -path "$repo_dir/node_modules" -o -path "$repo_dir/vendor" \) -prune -o \
-    "$@"
+  while IFS= read -r prune_path; do
+    [ -n "$prune_path" ] || continue
+    prune_args+=(-name "$prune_path" -o)
+  done <<EOF
+$(dev_kit_detection_list "prune_dirs")
+EOF
+
+  if [ "${#prune_args[@]}" -eq 0 ]; then
+    find "$repo_dir" "$@"
+    return 0
+  fi
+
+  last_index=$((${#prune_args[@]} - 1))
+  unset "prune_args[$last_index]"
+
+  find "$repo_dir" "(" "${prune_args[@]}" ")" -prune -o "$@"
 }
 
 dev_kit_repo_has_glob() {
@@ -145,6 +352,26 @@ EOF
 
   return 1
 }
+
+dev_kit_repo_file_has_all_patterns() {
+  local file_path="$1"
+  shift
+  local pattern_name=""
+  local regex=""
+
+  [ -f "$file_path" ] || return 1
+
+  for pattern_name in "$@"; do
+    regex="$(dev_kit_detection_pattern "$pattern_name")"
+    [ -n "$regex" ] || return 1
+    if ! dev_kit_repo_pattern_in_file "$file_path" "$regex"; then
+      return 1
+    fi
+  done
+
+  return 0
+}
+
 
 dev_kit_repo_documented_command() {
   local repo_dir="$1"

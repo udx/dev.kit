@@ -5,30 +5,23 @@ dev_kit_bootstrap() {
   export DEV_KIT_HOME="${DEV_KIT_HOME:-$HOME/.udx/dev.kit}"
 }
 
-dev_kit_path_contains_bin_dir() {
-  case ":$PATH:" in
-    *":${DEV_KIT_BIN_DIR}:"*) return 0 ;;
-    *) return 1 ;;
-  esac
-}
-
-dev_kit_copy_file() {
-  local src="$1"
-  local dst="$2"
-  mkdir -p "$(dirname "$dst")"
-  cp "$src" "$dst"
-}
-
-dev_kit_copy_tree() {
-  local src="$1"
-  local dst="$2"
-  mkdir -p "$dst"
-  cp -R "$src/." "$dst/"
-}
-
-dev_kit_command_name_from_file() {
-  local file="$1"
-  basename "$file" .sh | tr '_' '-'
+dev_kit_module_paths() {
+  cat <<EOF
+$REPO_DIR/lib/modules/bootstrap.sh
+$REPO_DIR/lib/modules/utils.sh
+$REPO_DIR/lib/modules/config_catalog.sh
+$REPO_DIR/lib/modules/output.sh
+$REPO_DIR/lib/modules/template_renderer.sh
+$REPO_DIR/lib/modules/local_env.sh
+$REPO_DIR/lib/modules/repo_signals.sh
+$REPO_DIR/lib/modules/repo_archetypes.sh
+$REPO_DIR/lib/modules/repo_factors.sh
+$REPO_DIR/lib/modules/repo_reports.sh
+$REPO_DIR/lib/modules/repo_workflows.sh
+$REPO_DIR/lib/modules/dev_sync.sh
+$REPO_DIR/lib/modules/learning_sources.sh
+$REPO_DIR/lib/modules/repo_scaffold.sh
+EOF
 }
 
 dev_kit_command_description() {
@@ -36,7 +29,13 @@ dev_kit_command_description() {
   awk -F': ' '/^# @description:/ { print $2; exit }' "$file"
 }
 
-dev_kit_list_command_files() {
+dev_kit_public_command_names() {
+  printf '%s\n' repo agent learn uninstall
+}
+
+dev_kit_command_file_path() {
   local root_dir="$1"
-  find "$root_dir/lib/commands" -maxdepth 1 -type f -name '*.sh' | sort
+  local command_name="$2"
+
+  printf "%s/lib/commands/%s.sh" "$root_dir" "${command_name//-/_}"
 }

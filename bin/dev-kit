@@ -17,17 +17,17 @@ REPO_DIR="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)"
 . "$REPO_DIR/lib/modules/bootstrap.sh"
 dev_kit_bootstrap
 
-if [ -f "$REPO_DIR/lib/modules/utils.sh" ]; then
-  # shellcheck disable=SC1090
-  . "$REPO_DIR/lib/modules/utils.sh"
-fi
+# Clean up per-process temp cache on exit
+trap 'rm -f "${TMPDIR:-/tmp}/dev-kit-${$}.cache" 2>/dev/null' EXIT
 
-for module_file in "$REPO_DIR"/lib/modules/*.sh; do
+while IFS= read -r module_file; do
+  [ -n "$module_file" ] || continue
   [ "$module_file" = "$REPO_DIR/lib/modules/bootstrap.sh" ] && continue
-  [ "$module_file" = "$REPO_DIR/lib/modules/utils.sh" ] && continue
   # shellcheck disable=SC1090
   . "$module_file"
-done
+done <<EOF
+$(dev_kit_module_paths)
+EOF
 
 for command_file in "$REPO_DIR"/lib/commands/*.sh; do
   # shellcheck disable=SC1090
@@ -35,7 +35,6 @@ for command_file in "$REPO_DIR"/lib/commands/*.sh; do
 done
 
 usage() {
-  local command_file=""
   local command_name=""
   local description=""
   cat <<'EOF'
@@ -44,11 +43,12 @@ Usage: dev.kit <command>
 Commands:
 EOF
 
-  for command_file in $(dev_kit_list_command_files "$REPO_DIR"); do
-    command_name="$(dev_kit_command_name_from_file "$command_file")"
-    description="$(dev_kit_command_description "$command_file")"
+  while IFS= read -r command_name; do
+    description="$(dev_kit_command_description "$(dev_kit_command_file_path "$REPO_DIR" "$command_name")")"
     printf "  %-10s %s\n" "$command_name" "$description"
-  done
+  done <<EOF
+$(dev_kit_public_command_names)
+EOF
 
   cat <<'EOF'
   help       Show this help message
@@ -58,14 +58,158 @@ Options:
 EOF
 }
 
+home_usage() {
+  echo "Usage: dev.kit [--json]"
+  echo
+  echo "Shows repo-aware landing output for the current directory."
+}
+
+dev_kit_run_home() {
+  local format="${1:-text}"
+  local state="not installed"
+  local repo_dir="$(pwd)"
+
+  if [ -d "$DEV_KIT_HOME" ]; then
+    state="installed"
+  fi
+
+  # JSON mode: compute everything up front then emit
+  if [ "$format" = "json" ]; then
+    local repo_root="" repo_detected="false" repo_kind="workspace"
+    local archetype="n/a" profile="n/a" git_state="no"
+    local priority_refs="" next_git_action=""
+
+    repo_root="$(dev_kit_repo_root "$repo_dir")"
+    if [ -n "$repo_root" ]; then
+      repo_detected="true"
+      repo_kind="repo"
+      archetype="$(dev_kit_repo_primary_archetype "$repo_root")"
+      profile="$(dev_kit_repo_primary_profile "$repo_root")"
+      if dev_kit_sync_has_git_repo "$repo_root"; then
+        git_state="yes"
+      fi
+      priority_refs="$(dev_kit_repo_priority_refs "$repo_root")"
+      if [ "$git_state" = "yes" ]; then
+        next_git_action="$(dev_kit_sync_next_hint "$repo_root")"
+      fi
+    fi
+  fi
+
+  if [ "$format" = "json" ]; then
+    printf '{\n'
+    printf '  "name": "dev.kit",\n'
+    printf '  "home": "%s",\n' "$(dev_kit_json_escape "$DEV_KIT_HOME")"
+    printf '  "state": "%s",\n' "$(dev_kit_json_escape "$state")"
+    printf '  "workspace": {\n'
+    printf '    "path": "%s",\n' "$(dev_kit_json_escape "$repo_dir")"
+    printf '    "repo_detected": %s,\n' "$repo_detected"
+    printf '    "kind": "%s"' "$(dev_kit_json_escape "$repo_kind")"
+    if [ "$repo_detected" = "true" ]; then
+      printf ',\n    "repo": { "name": "%s", "root": "%s", "archetype": "%s", "profile": "%s", "git": %s, "markers": %s, "priority_refs": %s, "entrypoints": %s, "next_git_action": %s }\n' \
+        "$(dev_kit_json_escape "$(dev_kit_repo_name "$repo_root")")" \
+        "$(dev_kit_json_escape "$repo_root")" \
+        "$(dev_kit_json_escape "$archetype")" \
+        "$(dev_kit_json_escape "$profile")" \
+        "$([ "$git_state" = "yes" ] && printf 'true' || printf 'false')" \
+        "$(dev_kit_repo_markers_json "$repo_root")" \
+        "$(dev_kit_repo_priority_refs_json "$repo_root")" \
+        "$(dev_kit_repo_entrypoints_json "$repo_root")" \
+        "$(if [ -n "$next_git_action" ]; then printf '"%s"' "$(dev_kit_json_escape "$next_git_action")"; else printf 'null'; fi)"
+    else
+      printf '\n'
+    fi
+    printf '  },\n'
+    printf '  "localhost_tools": %s,\n' "$(dev_kit_env_tools_json)"
+    printf '  "global_context": { "capabilities": %s },\n' "$(dev_kit_global_context_capabilities_json)"
+    if [ "$repo_detected" = "true" ] && [ "$git_state" = "yes" ]; then
+      printf '  "start_here": %s,\n' "$(dev_kit_sync_start_here_json "$repo_root")"
+      printf '  "agent_contract": %s,\n' "$(dev_kit_repo_agent_contract_json "$repo_root")"
+    else
+      printf '  "start_here": [],\n'
+      printf '  "agent_contract": [],\n'
+    fi
+    printf '  "helpers": [\n'
+    printf '    { "id": "repo", "label": "Analyse repo structure and factors", "command": "dev.kit repo" },\n'
+    printf '    { "id": "agent", "label": "Start an AI session with repo context", "command": "dev.kit agent" },\n'
+    printf '    { "id": "learn", "label": "Review lessons-learned workflow", "command": "dev.kit learn" }\n'
+    printf '  ]\n'
+    printf '}\n'
+    return 0
+  fi
+
+  # Text mode: print title immediately, then compute and print progressively
+  dev_kit_output_title "dev.kit"
+
+  local missing_base=""
+  missing_base="$(dev_kit_env_missing_base_tools)"
+  dev_kit_output_section "env"
+  if [ -n "$missing_base" ]; then
+    dev_kit_output_list_item "base tools missing: ${missing_base}"
+  else
+    dev_kit_output_list_item "base tools ok"
+  fi
+
+  local repo_root=""
+  repo_root="$(dev_kit_repo_root "$repo_dir")"
+
+  if [ -n "$repo_root" ]; then
+    dev_kit_spinner_start "detecting repo"
+    local archetype profile git_state priority_refs first_ref second_ref
+    archetype="$(dev_kit_repo_primary_archetype "$repo_root")"
+    profile="$(dev_kit_repo_primary_profile "$repo_root")"
+    dev_kit_spinner_stop ""
+    git_state="no"
+    if dev_kit_sync_has_git_repo "$repo_root"; then
+      git_state="yes"
+    fi
+
+    dev_kit_output_summary "$(dev_kit_repo_name "$repo_root") • ${archetype} • profile ${profile}"
+
+    priority_refs="$(dev_kit_repo_priority_refs "$repo_root")"
+    first_ref="$(printf '%s\n' "$priority_refs" | awk 'NF { print; exit }')"
+    second_ref="$(printf '%s\n' "$priority_refs" | awk 'NF { count += 1; if (count == 2) { print; exit } }')"
+
+    dev_kit_output_section "read first"
+    [ -n "$first_ref" ] && dev_kit_output_list_item "$first_ref"
+    [ -n "$second_ref" ] && dev_kit_output_list_item "$second_ref"
+
+    dev_kit_output_section "do next"
+    if [ "$git_state" = "yes" ]; then
+      dev_kit_output_list_from_lines <<EOF
+$(dev_kit_sync_start_here_text "$repo_root" | dev_kit_output_first_lines 3)
+EOF
+    else
+      dev_kit_output_list_item "Run dev.kit repo to analyse the repo."
+      dev_kit_output_list_item "Run dev.kit agent to start an AI session."
+    fi
+    dev_kit_output_row "more" "dev.kit repo | dev.kit agent | dev.kit learn"
+  else
+    dev_kit_output_summary "No repository detected in the current directory"
+    dev_kit_output_section "read first"
+    dev_kit_output_list_item "$repo_dir"
+    dev_kit_output_section "do next"
+    dev_kit_output_list_item "Navigate into a repo, then run dev.kit again."
+    dev_kit_output_list_item "Look for standard signals like README.md, package.json, .github, docs/, or .git."
+  fi
+}
+
 command_usage() {
   local command_name="$1"
   echo "Usage: dev.kit ${command_name} [options]"
   echo
   echo "Options:"
   case "$command_name" in
-    audit|bridge|status)
+    repo)
+      echo "  --json       Output machine-readable JSON"
+      echo "  --scaffold   Create missing dirs and files"
+      echo "  --check      Report gaps without making changes"
+      ;;
+    agent)
       echo "  --json     Output machine-readable JSON"
+      ;;
+    learn)
+      echo "  --json     Output machine-readable JSON"
+      echo "  --workflow Override the configured learn workflow id"
       ;;
     uninstall)
       echo "  --yes      Remove dev.kit without a confirmation prompt"
@@ -73,7 +217,7 @@ command_usage() {
   esac
 }
 
-command="${1:-audit}"
+command="${1:-home}"
 format="text"
 command_args=()
 
@@ -94,13 +238,20 @@ while [ "$#" -gt 0 ]; do
 done
 
 if [ "$command" = "--json" ]; then
-  command="audit"
+  command="home"
   format="json"
 fi
 
 case "$command" in
   help|-h|--help)
     usage
+    ;;
+  home)
+    if [ "${command_args[0]:-}" = "-h" ] || [ "${command_args[0]:-}" = "--help" ]; then
+      home_usage
+      exit 0
+    fi
+    dev_kit_run_home "$format" "${command_args[@]}"
     ;;
   *)
     fn="dev_kit_cmd_${command//-/_}"

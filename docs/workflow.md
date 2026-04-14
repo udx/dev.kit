@@ -1,46 +1,105 @@
-# Workflow
+# Workflow Model
 
-## When to Use `dev.kit`
+For the product summary see [docs/overview.md](overview.md). For command reference see [docs/commands.md](commands.md).
 
-Use `dev.kit` when you need to understand or normalize how a repository should be worked on.
+## Phases
 
-Common cases:
+dev.kit operates as a pipeline. Each phase builds on the previous — global context from the env phase gates what subsequent phases can do.
 
-- a new repo has unclear build, test, or runtime conventions
-- a mature repo has drifted across teams or environments
-- an agent needs grounded repo context before making changes
-- you want one reproducible way to verify and operate the service
+```
+dev.kit          →  dev.kit repo       →  dev.kit agent     →  dev.kit learn
+─────────────────   ─────────────────    ─────────────────    ─────────────────
+validate env        analyze factors      write AGENTS.md      scan agent sessions
+detect repo         detect manifests     auto-generate        extract patterns
+show next steps     write context.yaml   context if needed    write lessons artifact
+```
 
-## What `dev.kit` Looks For
+### Phase 1 — env (`dev.kit`)
 
-The current audit focuses on practical 12-factor workflow boundaries:
+Validates the local software environment, writes `$DEV_KIT_HOME/context-env.txt`, detects the current repo, and shows a brief summary.
 
-- `documentation`
-- `architecture`
-- `dependencies`
-- `config`
-- `verification`
-- `runtime`
-- `build_release_run`
+Global context capabilities that gate downstream phases:
 
-Each factor is reported as `present`, `partial`, or `missing`, with evidence and improvement advice.
+| Capability | Requires | If missing |
+|---|---|---|
+| `github_enrichment` | `gh` authenticated | GH API enrichment skipped |
+| `yaml_parsing` | `yq` | Fallback to awk parsing |
+| `json_parsing` | `jq` | Fallback parsing |
+| `cloud_aws/gcp/azure` | respective CLI | Cloud context skipped |
 
-## Human Workflow
+### Phase 2 — repo (`dev.kit repo`)
 
-1. Run `dev.kit`.
-2. Read the missing or partial factors.
-3. Normalize the repo around one clear way to configure, verify, build, and run it.
-4. Re-run `dev.kit` to confirm the repo model is improving.
+Analyzes the repository against 7 engineering factors. Detects config manifests (YAML files that define workflow and tooling). Writes `.rabbit/context.yaml`.
 
-## Agent Workflow
+Three modes:
 
-1. Run `dev.kit bridge --json`.
-2. Use the reported factor model and entrypoints as the working contract.
-3. Prefer discovered commands over inferred ones.
-4. Improve partial or missing factors as part of the change when appropriate.
+- **learn** (default): analyze and write `.rabbit/context.yaml`
+- **--scaffold**: also create missing directories and baseline files
+- **--check**: report gaps without writing anything
 
-## Current Scope
+### Phase 3 — agent (`dev.kit agent`)
 
-The detector currently recognizes common signals from Node, PHP, shell, and container-oriented repos. The scan policy is config-driven from [src/configs](/Users/jonyfq/git/udx/dev.kit/src/configs), so supported signals can grow without changing the CLI model.
+Generates `AGENTS.md` — a comprehensive agent guide with anti-drift rules, commands, priority refs, config manifests, full workflow, and lessons. Auto-generates `.rabbit/context.yaml` if missing.
 
-Broader repo working rules and engineering expectations live in [docs/engineering-guide.md](/Users/jonyfq/git/udx/dev.kit/docs/engineering-guide.md).
+### Phase 4 — learn (`dev.kit learn`)
+
+Scans recent Claude and Codex agent sessions, extracts workflow patterns, and writes a lessons artifact at `.rabbit/dev.kit/lessons-*.md`. Lessons feed back into context.yaml on next `dev.kit repo` run.
+
+## Pipeline Usage
+
+The intended flow for starting a development session:
+
+```bash
+cd <repo>
+dev.kit
+dev.kit repo
+dev.kit agent
+# ... do work ...
+dev.kit learn
+```
+
+`dev.kit agent` auto-generates context if `.rabbit/context.yaml` is absent — `dev.kit repo` is not a hard prerequisite. Agents use `dev.kit agent --json` as the machine-readable contract. `AGENTS.md` is the provider-agnostic guide.
+
+## Separation of Responsibilities
+
+- **Config and scripts** own deterministic workflow logic: discovery, detection, validation, policy
+- **AI agents** consume the output contract and add judgment for non-deterministic work
+- **Anything repeatable** should live in the repo — not only in a prompt
+
+## Standard Repo First
+
+dev.kit works from standard repository evidence without requiring custom metadata:
+
+- `README` and docs
+- manifests: `package.json`, `composer.json`, `Dockerfile`
+- `.github/workflows/*`, `deploy.yml`, command layers
+- `tests/`, verified entrypoints, runtime and build commands
+
+Custom overlays (`AGENTS.md`, `CLAUDE.md`) are optional and secondary to repo-native sources.
+
+## `dev.kit learn`
+
+`dev.kit learn` scans recent Claude and Codex agent sessions, extracts workflow patterns and operational references, and writes a durable lessons artifact.
+
+Supported sources:
+
+- Claude: auto-discovered from `~/.claude/projects/` and `~/.claude/history.jsonl`
+- Codex: auto-discovered from `$CODEX_HOME/sessions/`
+
+Use `--sources claude` or `--sources codex` to limit to one source. Without agent sessions, learn reports the configured workflow destinations but has no data to evaluate.
+
+## 12-Factor Factors
+
+The repo model evaluates repo health across seven practical dimensions:
+
+| Factor | Checks |
+|---|---|
+| `documentation` | README, docs/, documentation sections |
+| `architecture` | command/logic/view/config layer separation, line limits |
+| `dependencies` | package.json, composer.json, requirements.txt, go.mod, etc. |
+| `config` | .env files, documented environment variables |
+| `verification` | test runner, test directory, bats files |
+| `runtime` | Dockerfile, Procfile, documented run command |
+| `build_release_run` | build + runtime both present |
+
+Each factor is reported as `present`, `partial`, or `missing` with evidence and improvement guidance.

@@ -1,0 +1,94 @@
+kind: learningWorkflows
+version: udx.io/dev.kit/v1
+
+config:
+  source_discovery:
+    local_session_roots:
+      - $CODEX_HOME/sessions
+    claude_projects_root: ~/.claude/projects
+    enabled_sources:
+      - claude
+      - codex
+    max_recent_sessions: 6
+  workflows:
+    pr-lessons:
+      name: dev.learn pr
+      description: Generate lightweight lessons-learned from recent pull requests and route follow-ups into durable repo artifacts
+      sources:
+        - recent pull requests
+        - docs/pull-requests.md
+        - docs/engineering-guide.md
+        - TODO.md
+        - refs.md
+      destinations:
+        - lessons_report
+        - gh_issue
+        - wiki
+        - slack
+  session_flow:
+    issue-scope:
+      threshold: 2
+      message: Read the linked GitHub issue, verify the repo/workspace match, and lock the scope before changing code.
+      patterns:
+        - /issues/
+        - issue details
+        - affected code path
+    workflow-source:
+      threshold: 2
+      message: Locate the repo workflow source that actually drives execution, such as deploy.yml or an explicit workflow file.
+      patterns:
+        - deploy.yml
+        - workflow
+        - what deploy.yml actually does
+    verify-before-sync:
+      threshold: 2
+      message: Run local verification before syncing or reporting completion.
+      patterns:
+        - make build
+        - confirm build
+        - verify
+    pr-chain:
+      threshold: 2
+      message: Commit or sync the branch, prepare the PR in the repo’s style, and link the related issue.
+      patterns:
+        - sync to remote
+        - brief pr
+        - related github issue
+    post-follow-up:
+      threshold: 2
+      message: After merge or release, collect workflow and artifact evidence, then post a concise linked update with next steps.
+      patterns:
+        - merged
+        - release
+        - artifacts
+        - update comment
+  session_rules:
+    verify-before-deploy:
+      threshold: 2
+      message: Verify the build or runtime locally before running deploy-oriented workflow assets or reporting the change as complete.
+      patterns:
+        - make build
+        - confirm build
+        - deploy.yml
+    workflow-file-first:
+      threshold: 2
+      message: Use repo workflow assets like deploy.yml, workflow files, and repo docs as the execution contract instead of inventing an ad hoc deploy path.
+      patterns:
+        - deploy.yml
+        - workflow
+        - readme.md
+    sync-pr-issue-chain:
+      threshold: 2
+      message: Keep the delivery chain explicit: create or sync the branch, prepare the PR, and connect the related GitHub issue before close-out.
+      patterns:
+        - sync to remote
+        - brief pr
+        - related github issue
+    source-backed-updates:
+      threshold: 3
+      message: Report outcomes with exact URLs, versions, findings deltas, and next steps so the follow-up can be reused by humans and agents without drift.
+      patterns:
+        - release
+        - findings
+        - next step
+        - add url

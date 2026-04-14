@@ -1,0 +1,365 @@
+#!/usr/bin/env bash
+
+# Scaffold module — all write operations for dev.kit repo.
+# Analysis (what's missing) stays in repo_factors.sh and repo_signals.sh.
+# This module only handles creating or updating files and dirs.
+
+# Map config manifest kind to a one-line description.
+# Agents use this to know WHAT each YAML controls before reading it.
+dev_kit_manifest_kind_description() {
+  case "$1" in
+    archetypeRules)       printf 'archetype definitions and matching rules' ;;
+    archetypeSignals)     printf 'file/dir signals for framework and platform detection' ;;
+    auditRules)           printf 'factor gap messages and improvement guidance' ;;
+    contextConfig)        printf 'repo root markers and priority paths' ;;
+    detectionPatterns)    printf 'regex patterns for build/verify/run command detection' ;;
+    detectionSignals)     printf 'file/dir/glob patterns for factor analysis' ;;
+    developmentPractices) printf 'engineering principles inlined into repo context' ;;
+    developmentWorkflows) printf 'git workflow steps, PR process, and operational notes' ;;
+    githubIssues)         printf 'issue templates, labels, and agent issue workflow' ;;
+    githubPullRequests)   printf 'PR templates, bot reviewers, and post-merge checklist' ;;
+    knowledgeBase)        printf 'org hierarchy and preferred knowledge sources' ;;
+    learningWorkflows)    printf 'agent session discovery and lesson extraction rules' ;;
+    repoScaffold)         printf 'baseline dirs/files per archetype and factor' ;;
+    *)                    printf '' ;;
+  esac
+}
+
+# Path of the canonical context file
+dev_kit_context_yaml_path() {
+  local repo_root="$1"
+  printf '%s/.rabbit/context.yaml\n' "$repo_root"
+}
+
+# Report gaps as JSON array [{factor, status, message}]
+# Reads from existing factor analysis — no new detection here
+dev_kit_scaffold_gaps_json() {
+  local repo_root="$1"
+  local factor=""
+  local status=""
+  local first=1
+
+  printf '[\n'
+  for factor in documentation architecture dependencies config verification runtime build_release_run; do
+    status="$(dev_kit_repo_factor_status "$repo_root" "$factor")"
+    [ "$status" = "missing" ] || [ "$status" = "partial" ] || continue
+    local rule_id message
+    rule_id="$(dev_kit_repo_factor_rule_id "$factor" "$status" 2>/dev/null || true)"
+    message="$([ -n "$rule_id" ] && dev_kit_rule_message "$rule_id" || printf '%s is %s' "$factor" "$status")"
+    [ "$first" -eq 0 ] && printf ',\n'
+    printf '  { "factor": "%s", "status": "%s", "message": "%s" }' \
+      "$factor" \
+      "$status" \
+      "$(dev_kit_json_escape "$message")"
+    first=0
+  done
+  printf '\n]\n'
+}
+
+# Build scaffold plan from repo-scaffold.yaml: baseline + archetype + factor gaps.
+# Emits lines: mkdir|<path> or create|<path>
+dev_kit_scaffold_plan() {
+  local repo_root="$1"
+  local archetype="$2"
+  local scaffold_config
+  scaffold_config="$(dev_kit_config_path "src/configs/repo-scaffold.yaml")"
+  [ -f "$scaffold_config" ] || return 0
+
+  local dir file
+
+  # Baseline dirs (config > baseline > dirs > - items)
+  while IFS= read -r dir; do
+    [ -n "$dir" ] || continue
+    [ -d "${repo_root}/${dir}" ] && continue
+    printf 'mkdir|%s\n' "$dir"
+  done <<EOF
+$(dev_kit_yaml_mapping_list "$scaffold_config" "baseline" "dirs" 2>/dev/null)
+EOF
+
+  # Baseline files (skip AGENTS.md — managed by dev.kit agent)
+  while IFS= read -r file; do
+    [ -n "$file" ] || continue
+    [ "$file" = "AGENTS.md" ] && continue
+    [ -f "${repo_root}/${file}" ] && continue
+    printf 'create|%s\n' "$file"
+  done <<EOF
+$(dev_kit_yaml_mapping_list "$scaffold_config" "baseline" "files" 2>/dev/null)
+EOF
+
+  # Archetype-specific dirs and files — map archetype to scaffold key
+  local scaffold_key=""
+  case "$archetype" in
+    library-cli)    scaffold_key="shell-cli" ;;
+    runtime-image)  scaffold_key="runtime-image" ;;
+    wordpress-site) scaffold_key="wordpress-site" ;;
+    infra-pipeline) scaffold_key="infra-pipeline" ;;
+    *)              scaffold_key="" ;;
+  esac
+  if [ -n "$scaffold_key" ]; then
+    while IFS= read -r dir; do
+      [ -n "$dir" ] || continue
+      [ -d "${repo_root}/${dir}" ] && continue
+      printf 'mkdir|%s\n' "$dir"
+    done <<EOF
+$(dev_kit_yaml_nested_mapping_list "$scaffold_config" "archetypes" "$scaffold_key" "dirs" 2>/dev/null)
+EOF
+    while IFS= read -r file; do
+      [ -n "$file" ] || continue
+      [ -f "${repo_root}/${file}" ] && continue
+      printf 'create|%s\n' "$file"
+    done <<EOF
+$(dev_kit_yaml_nested_mapping_list "$scaffold_config" "archetypes" "$scaffold_key" "files" 2>/dev/null)
+EOF
+  fi
+
+  # Factor-driven scaffold: create files/dirs for missing or partial factors
+  local factor status
+  for factor in documentation verification runtime config build_release_run; do
+    status="$(dev_kit_repo_factor_status "$repo_root" "$factor")"
+    [ "$status" = "missing" ] || [ "$status" = "partial" ] || continue
+    while IFS= read -r dir; do
+      [ -n "$dir" ] || continue
+      [ -d "${repo_root}/${dir}" ] && continue
+      printf 'mkdir|%s\n' "$dir"
+    done <<EOF
+$(dev_kit_yaml_nested_mapping_list "$scaffold_config" "factors" "$factor" "dirs" 2>/dev/null)
+EOF
+    while IFS= read -r file; do
+      [ -n "$file" ] || continue
+      [ -f "${repo_root}/${file}" ] && continue
+      printf 'create|%s\n' "$file"
+    done <<EOF
+$(dev_kit_yaml_nested_mapping_list "$scaffold_config" "factors" "$factor" "files" 2>/dev/null)
+EOF
+  done
+}
+
+# Write .rabbit/context.yaml — single canonical artifact for repo + agent context.
+# Computes everything directly from analysis functions; no intermediate JSON file.
+dev_kit_context_yaml_write() {
+  local repo_root="$1"
+  local context_path="${repo_root}/.rabbit/context.yaml"
+  mkdir -p "${repo_root}/.rabbit" 2>/dev/null || true
+
+  local _repo _arch _arch_desc _profile
+  _repo="$(dev_kit_repo_name "$repo_root")"
+  _arch="$(dev_kit_repo_primary_archetype "$repo_root")"
+  _arch_desc="$(dev_kit_archetype_description "$_arch")"
+  _profile="$(dev_kit_repo_primary_profile "$repo_root")"
+
+  {
+    printf '# Generated by dev.kit repo — do not edit manually.\n'
+    printf '# Run `dev.kit repo` to refresh.\n'
+    printf 'kind: repoContext\n'
+    printf 'version: udx.io/dev.kit/v1\n'
+    printf 'generated: %s\n\n' "$(date +%Y-%m-%d)"
+
+    printf 'repo:\n'
+    printf '  name: %s\n'      "$_repo"
+    printf '  archetype: %s\n' "$_arch"
+    printf '  profile: %s\n'   "$_profile"
+    printf '\n'
+
+    # Refs — only files/dirs that must be read directly; metadata is inlined below
+    local _refs
+    _refs="$(dev_kit_repo_priority_refs "$repo_root")"
+    if [ -n "$_refs" ]; then
+      printf 'refs:\n'
+      printf '%s\n' "$_refs" | while IFS= read -r ref; do
+        [ -n "$ref" ] || continue
+        printf '  - %s\n' "$ref"
+      done
+      printf '\n'
+    fi
+
+    # Commands
+    local _ep_json _verify _build _run
+    _ep_json="$(dev_kit_repo_entrypoints_json "$repo_root")"
+    _verify="$(printf '%s' "$_ep_json" | jq -r '.verify // empty' 2>/dev/null)"
+    _build="$(printf '%s' "$_ep_json" | jq -r '.build  // empty' 2>/dev/null)"
+    _run="$(printf '%s' "$_ep_json"   | jq -r '.run    // empty' 2>/dev/null)"
+    if [ -n "$_verify" ] || [ -n "$_build" ] || [ -n "$_run" ]; then
+      printf 'commands:\n'
+      [ -n "$_verify" ] && printf '  verify: %s\n' "$_verify"
+      [ -n "$_build"  ] && printf '  build: %s\n'  "$_build"
+      [ -n "$_run"    ] && printf '  run: %s\n'    "$_run"
+      printf '\n'
+    fi
+
+    # Factor gaps
+    local _gaps_yaml
+    _gaps_yaml="$(dev_kit_repo_factor_summary_json "$repo_root" | jq -r '
+      to_entries[] |
+      select(.value.status == "missing" or .value.status == "partial") |
+      "  - " + .key + " (" + .value.status + ")"
+    ' 2>/dev/null)"
+    if [ -n "$_gaps_yaml" ]; then
+      printf '# Gaps — run `dev.kit repo --scaffold` to apply fixes\n'
+      printf 'gaps:\n'
+      printf '%s\n\n' "$_gaps_yaml"
+    fi
+
+    # Practices — inlined from dev.kit development-practices.yaml
+    local _practices_file _practices_yaml
+    _practices_file="$(dev_kit_config_path "$DEV_KIT_PRACTICES_CONFIG_FILE")"
+    if [ -f "$_practices_file" ]; then
+      _practices_yaml="$(awk '
+        /^  practices:/ { in_p=1; next }
+        in_p && /^  [a-zA-Z]/ { in_p=0 }
+        in_p && /^      message:/ {
+          sub(/^[[:space:]]*message:[[:space:]]*/, "", $0)
+          printf "  - %s\n", $0
+        }
+      ' "$_practices_file")"
+      if [ -n "$_practices_yaml" ]; then
+        printf '# Engineering practices\n'
+        printf 'practices:\n'
+        printf '%s\n\n' "$_practices_yaml"
+      fi
+    fi
+
+    # Workflow — inlined from dev.kit development-workflows.yaml with operational notes
+    local _workflow_file _workflow_yaml
+    _workflow_file="$(dev_kit_config_path "$DEV_KIT_WORKFLOW_CONFIG_FILE")"
+    if [ -f "$_workflow_file" ]; then
+      _workflow_yaml="$(awk '
+        /^        - id:/ { flush(); label=""; note=""; in_note=0 }
+        /^          label:/ { sub(/^[[:space:]]*label:[[:space:]]*/, "", $0); label=$0 }
+        /^          note:[[:space:]]*>/ { in_note=1; next }
+        in_note && /^            / {
+          sub(/^[[:space:]]+/, "", $0)
+          note = (note == "") ? $0 : note " " $0
+          next
+        }
+        in_note { flush(); in_note=0 }
+        function flush() {
+          if (label != "") {
+            if (note != "") printf "  - %s: %s\n", label, note
+            else            printf "  - %s\n", label
+          }
+        }
+        END { flush() }
+      ' "$_workflow_file")"
+      if [ -n "$_workflow_yaml" ]; then
+        printf '# Canonical agent workflow\n'
+        printf 'workflow:\n'
+        printf '%s\n\n' "$_workflow_yaml"
+      fi
+    else
+      # Fallback to repo-derived steps when dev.kit workflow config is absent
+      local _fallback_yaml
+      _fallback_yaml="$(dev_kit_repo_workflow_json "$repo_root" | jq -r '.[]? | "  - " + .label' 2>/dev/null)"
+      if [ -n "$_fallback_yaml" ]; then
+        printf 'workflow:\n'
+        printf '%s\n\n' "$_fallback_yaml"
+      fi
+    fi
+
+    # Config manifests — traceable YAML dependencies for workflows and tooling
+    # Batch: extract kind from all YAML configs in one awk pass per directory
+    local _manifests_yaml=""
+    local _yaml_file _yaml_rel _yaml_kind _yaml_desc
+    if [ -d "${repo_root}/src/configs" ]; then
+      while IFS='|' read -r _yaml_rel _yaml_kind; do
+        [ -n "$_yaml_rel" ] || continue
+        _yaml_desc="$(dev_kit_manifest_kind_description "$_yaml_kind")"
+        if [ -n "$_yaml_desc" ]; then
+          _manifests_yaml="${_manifests_yaml}  - ${_yaml_rel} — ${_yaml_desc}\n"
+        elif [ -n "$_yaml_kind" ]; then
+          _manifests_yaml="${_manifests_yaml}  - ${_yaml_rel} (${_yaml_kind})\n"
+        else
+          _manifests_yaml="${_manifests_yaml}  - ${_yaml_rel}\n"
+        fi
+      done <<EOF
+$(find "${repo_root}/src/configs" -maxdepth 1 \( -name '*.yaml' -o -name '*.yml' \) -print 2>/dev/null | sort | while IFS= read -r f; do
+  [ -f "$f" ] || continue
+  rel="${f#"${repo_root}/"}"
+  kind="$(awk '/^kind:/ { sub(/^kind:[[:space:]]*/, ""); print; exit }' "$f")"
+  printf '%s|%s\n' "$rel" "$kind"
+done)
+EOF
+    fi
+    # GitHub Actions workflows
+    if [ -d "${repo_root}/.github/workflows" ]; then
+      while IFS= read -r _yaml_file; do
+        [ -n "$_yaml_file" ] && [ -f "$_yaml_file" ] || continue
+        _yaml_rel="${_yaml_file#"${repo_root}/"}"
+        _manifests_yaml="${_manifests_yaml}  - ${_yaml_rel}\n"
+      done <<EOF
+$(find "${repo_root}/.github/workflows" -maxdepth 1 \( -name '*.yaml' -o -name '*.yml' \) 2>/dev/null | sort)
+EOF
+    fi
+    # Standalone workflow/config files at repo root
+    for _yaml_rel in deploy.yml deploy.yaml docker-compose.yml docker-compose.yaml Chart.yaml helmfile.yaml; do
+      [ -f "${repo_root}/${_yaml_rel}" ] || continue
+      _manifests_yaml="${_manifests_yaml}  - ${_yaml_rel}\n"
+    done
+    if [ -n "$_manifests_yaml" ]; then
+      printf '# Config manifests — traceable workflow and tooling dependencies\n'
+      printf '# Read these to understand what controls repo behavior before reading shell code.\n'
+      printf 'manifests:\n'
+      printf '%b\n' "$_manifests_yaml"
+    fi
+
+    # Lessons from .rabbit/dev.kit/
+    local lessons_dir="${repo_root}/.rabbit/dev.kit"
+    if [ -d "$lessons_dir" ]; then
+      local first_lesson=1
+      while IFS= read -r lesson_path; do
+        [ -n "$lesson_path" ] || continue
+        [ -f "$lesson_path" ] || continue
+        if [ "$first_lesson" -eq 1 ]; then
+          printf '# Lessons from agent sessions\n'
+          printf 'lessons:\n'
+          first_lesson=0
+        fi
+        printf '  - .rabbit/dev.kit/%s\n' "$(basename "$lesson_path")"
+      done <<EOF
+$(find "$lessons_dir" -maxdepth 1 -type f -name 'lessons-*.md' 2>/dev/null | sort -r | head -3)
+EOF
+      [ "$first_lesson" -eq 0 ] && printf '\n'
+    fi
+
+  } > "$context_path"
+
+  printf "%s" "$context_path"
+}
+
+# Apply scaffold plan lines (from plan_dirs / plan_files)
+# Each line is: <action>|<relative_path>
+# Returns JSON array of {type, path, status}
+dev_kit_scaffold_apply() {
+  local repo_root="$1"
+  local plan="$2"
+  local first=1
+  local action=""
+  local rel_path=""
+  local abs_path=""
+  local result=""
+
+  printf '[\n'
+  while IFS='|' read -r action rel_path; do
+    [ -n "$action" ] || continue
+    abs_path="${repo_root}/${rel_path}"
+    result="ok"
+
+    case "$action" in
+      mkdir)
+        mkdir -p "$abs_path" 2>/dev/null || result="error"
+        ;;
+      create)
+        mkdir -p "$(dirname "$abs_path")" 2>/dev/null
+        # Write an empty stub only — content generation is handled by dev.kit agent
+        printf '' > "$abs_path" 2>/dev/null || result="error"
+        ;;
+    esac
+
+    [ "$first" -eq 0 ] && printf ',\n'
+    printf '  { "type": "%s", "path": "%s", "status": "%s" }' \
+      "$action" "$(dev_kit_json_escape "$rel_path")" "$result"
+    first=0
+  done <<EOF
+$plan
+EOF
+  printf '\n]\n'
+}

@@ -9,11 +9,14 @@ dev_kit_repo_factor_applicable() {
       return 0
       ;;
     dependencies)
-      if dev_kit_repo_has_any_file_from_list "$repo_dir" "dependency_manifest_files" || \
-         dev_kit_repo_has_any_file_from_list "$repo_dir" "dependency_partial_files" || \
-         dev_kit_repo_has_archetype "$repo_dir" "application" || \
-         dev_kit_repo_has_archetype "$repo_dir" "library-cli" || \
+      # Always applicable for archetypes that must have dependency manifests
+      if dev_kit_repo_has_archetype "$repo_dir" "application" || \
          dev_kit_repo_has_archetype "$repo_dir" "runtime-image"; then
+        return 0
+      fi
+      # For all other archetypes (library-cli, etc.): only applicable if manifest files exist
+      if dev_kit_repo_has_any_file_from_list "$repo_dir" "dependency_manifest_files" || \
+         dev_kit_repo_has_any_file_from_list "$repo_dir" "dependency_partial_files"; then
         return 0
       fi
       return 1
@@ -44,6 +47,20 @@ dev_kit_repo_factor_applicable() {
 dev_kit_repo_factor_status() {
   local repo_dir="$1"
   local factor="$2"
+  local _ck="fstatus:${repo_dir}:${factor}"
+  local _cv
+  if _cv="$(dev_kit_cache_get "$_ck")"; then
+    printf '%s' "$_cv"; return 0
+  fi
+  local _result
+  _result="$(_dev_kit_repo_factor_status_compute "$repo_dir" "$factor")"
+  dev_kit_cache_set "$_ck" "$_result"
+  printf '%s' "$_result"
+}
+
+_dev_kit_repo_factor_status_compute() {
+  local repo_dir="$1"
+  local factor="$2"
   local present_threshold=""
   local partial_threshold=""
 
@@ -56,6 +73,9 @@ dev_kit_repo_factor_status() {
     documentation)
       if dev_kit_repo_has_any_file_from_list "$repo_dir" "documentation_files"; then
         printf "%s" "present"
+      elif dev_kit_repo_has_any_file_from_list "$repo_dir" "documentation_hub_files" || \
+           dev_kit_repo_has_documentation_sections "$repo_dir"; then
+        printf "%s" "partial"
       else
         printf "%s" "missing"
       fi

@@ -33,6 +33,11 @@ _dev_kit_complete() {
     return 0
   fi
 
+  if [ "$COMP_CWORD" -eq 2 ] && [ "$cmd" = "action" ]; then
+    COMPREPLY=( $(compgen -W "--json" -- "$cur") )
+    return 0
+  fi
+
   if [[ "$cur" == -* ]]; then
     COMPREPLY=( $(compgen -W "$(_dev_kit_list_options "$cmd")" -- "$cur") )
     return 0

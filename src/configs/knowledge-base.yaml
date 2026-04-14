@@ -1,0 +1,15 @@
+kind: knowledgeBase
+version: udx.io/dev.kit/v1
+
+config:
+  hierarchy:
+    local_repos_root: git/udx
+    remote_org_root: github.com/udx
+  sources:
+    preferred:
+      items:
+        - repo docs, configs, templates, and tests
+        - repo TODO, context, and refs files when present
+        - local repos under git/udx
+        - remote repos and pull requests under github.com/udx/*
+        - codex sessions under ~/.codex/sessions when available
