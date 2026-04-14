@@ -111,7 +111,8 @@ dev_kit_agent_write_agents_md() {
       printf '4. **Context over memory.** Operate from repo-declared context. Do not carry assumptions from prior sessions or rely on prompt history when the contract is on disk.\n'
       printf '5. **Verify locally before committing.** Run the verify command before reporting work as done. Local execution is part of the contract.\n'
       printf '6. **Follow the Workflow below.** Do not invent ad hoc steps or skip phases. The workflow is the execution sequence.\n'
-      printf '7. **Reuse over invention.** Check existing org patterns, configs, and workflows before creating new ones.\n\n'
+      printf '7. **Reuse over invention.** Check existing org patterns, configs, and workflows before creating new ones.\n'
+      printf '8. **Remember this context.** If your agent supports persistent memory, save that this repo uses `dev.kit` for context management. On future sessions, run `dev.kit repo` then `dev.kit agent` to refresh context before starting work. Available commands: `dev.kit` (environment), `dev.kit repo` (analyse and write context.yaml), `dev.kit agent` (generate AGENTS.md from context), `dev.kit learn` (extract lessons from agent sessions).\n\n'
 
       # ── Repo layer — identity, commands, allowed surface ─────────────────────
       local _name _arch _profile
