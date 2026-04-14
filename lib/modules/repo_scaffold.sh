@@ -235,10 +235,82 @@ dev_kit_context_yaml_write() {
       fi
     fi
 
-    # Config manifests — traceable YAML dependencies for workflows and tooling
-    # Batch: extract kind from all YAML configs in one awk pass per directory
+    # External dependencies — cross-repo references traced from workflows and configs.
+    # Sources read from detection-signals.yaml: dependency_trace_* lists.
+    local _deps_yaml="" _dep_seen="" _dep_dir _dep_file _dep_line
+    # Reusable workflows: scan dirs from config for uses: org/repo/...@ref
+    while IFS= read -r _dep_dir; do
+      [ -n "$_dep_dir" ] && [ -d "${repo_root}/${_dep_dir}" ] || continue
+      while IFS= read -r _dep_line; do
+        [ -n "$_dep_line" ] || continue
+        case "$_dep_seen" in *"|${_dep_line}|"*) continue ;; esac
+        _dep_seen="${_dep_seen}|${_dep_line}|"
+        _deps_yaml="${_deps_yaml}  - ${_dep_line}\n"
+      done <<EOF
+$(grep -rh 'uses:' "${repo_root}/${_dep_dir}/" 2>/dev/null | \
+  awk '/uses:.*\/.*\/.github\/workflows\//{
+    sub(/.*uses:[[:space:]]*/, ""); sub(/@.*/, "")
+    split($0, a, "/")
+    if (a[1] != "" && a[2] != "") print a[1] "/" a[2] " (reusable workflow)"
+  }' | sort -u)
+EOF
+    done <<EOF
+$(dev_kit_detection_list "dependency_trace_workflow_dirs")
+EOF
+    # Container base images: scan files from config for FROM directives
+    while IFS= read -r _dep_file; do
+      [ -n "$_dep_file" ] && [ -f "${repo_root}/${_dep_file}" ] || continue
+      while IFS= read -r _dep_line; do
+        [ -n "$_dep_line" ] || continue
+        _deps_yaml="${_deps_yaml}  - ${_dep_line}\n"
+      done <<EOF
+$(awk '/^FROM[[:space:]]/{img=$2; sub(/ [Aa][Ss] .*/, "", img); if (img !~ /^\$/ && img != "scratch") print img " (base image)"}' "${repo_root}/${_dep_file}" 2>/dev/null | sort -u)
+EOF
+    done <<EOF
+$(dev_kit_detection_list "dependency_trace_container_files")
+EOF
+    # Versioned YAML configs: scan dirs from config for kind/version headers.
+    # version URI format: udx.dev/<repo>/<module>/v1 → traces to source repo.
+    while IFS= read -r _dep_dir; do
+      [ -n "$_dep_dir" ] && [ -d "${repo_root}/${_dep_dir}" ] || continue
+      while IFS= read -r _dep_line; do
+        [ -n "$_dep_line" ] || continue
+        case "$_dep_seen" in *"|${_dep_line}|"*) continue ;; esac
+        _dep_seen="${_dep_seen}|${_dep_line}|"
+        _deps_yaml="${_deps_yaml}  - ${_dep_line}\n"
+      done <<EOF
+$(find "${repo_root}/${_dep_dir}" -type f \( -name '*.yaml' -o -name '*.yml' \) 2>/dev/null | while IFS= read -r _vf; do
+  [ -f "$_vf" ] || continue
+  # Skip context.yaml — that's dev.kit's own output, not an external dependency
+  case "$_vf" in */context.yaml) continue ;; esac
+  awk '/^version:/{
+    v=$2
+    # Parse: domain/repo/module/version or domain/repo/version
+    n=split(v, p, "/")
+    if (n >= 3 && p[1] ~ /\./) {
+      repo=p[2]
+      if (n >= 4) printf "%s (%s)\n", repo, p[3]
+      else printf "%s\n", repo
+    }
+    exit
+  }' "$_vf"
+done | sort -u)
+EOF
+    done <<EOF
+$(dev_kit_detection_list "dependency_trace_versioned_dirs")
+EOF
+    if [ -n "$_deps_yaml" ]; then
+      printf '# External dependencies — cross-repo and upstream references\n'
+      printf '# Trace these to find infrastructure, deployment, and build logic outside this repo.\n'
+      printf 'dependencies:\n'
+      printf '%b\n' "$_deps_yaml"
+    fi
+
+    # Config manifests — traceable workflow and tooling dependencies.
+    # Sources read from detection-signals.yaml: manifest_workflow_dirs, manifest_root_files.
     local _manifests_yaml=""
     local _yaml_file _yaml_rel _yaml_kind _yaml_desc
+    # src/configs — dev.kit's own config catalog (only present in dev.kit repos)
     if [ -d "${repo_root}/src/configs" ]; then
       while IFS='|' read -r _yaml_rel _yaml_kind; do
         [ -n "$_yaml_rel" ] || continue
@@ -259,21 +331,26 @@ $(find "${repo_root}/src/configs" -maxdepth 1 \( -name '*.yaml' -o -name '*.yml'
 done)
 EOF
     fi
-    # GitHub Actions workflows
-    if [ -d "${repo_root}/.github/workflows" ]; then
+    # Workflow dirs from config (e.g. .github/workflows)
+    while IFS= read -r _dep_dir; do
+      [ -n "$_dep_dir" ] && [ -d "${repo_root}/${_dep_dir}" ] || continue
       while IFS= read -r _yaml_file; do
         [ -n "$_yaml_file" ] && [ -f "$_yaml_file" ] || continue
         _yaml_rel="${_yaml_file#"${repo_root}/"}"
         _manifests_yaml="${_manifests_yaml}  - ${_yaml_rel}\n"
       done <<EOF
-$(find "${repo_root}/.github/workflows" -maxdepth 1 \( -name '*.yaml' -o -name '*.yml' \) 2>/dev/null | sort)
+$(find "${repo_root}/${_dep_dir}" -maxdepth 1 \( -name '*.yaml' -o -name '*.yml' \) 2>/dev/null | sort)
 EOF
-    fi
-    # Standalone workflow/config files at repo root
-    for _yaml_rel in deploy.yml deploy.yaml docker-compose.yml docker-compose.yaml Chart.yaml helmfile.yaml; do
-      [ -f "${repo_root}/${_yaml_rel}" ] || continue
+    done <<EOF
+$(dev_kit_detection_list "manifest_workflow_dirs")
+EOF
+    # Standalone manifest files from config (deploy.yml, docker-compose.yml, etc.)
+    while IFS= read -r _yaml_rel; do
+      [ -n "$_yaml_rel" ] && [ -f "${repo_root}/${_yaml_rel}" ] || continue
       _manifests_yaml="${_manifests_yaml}  - ${_yaml_rel}\n"
-    done
+    done <<EOF
+$(dev_kit_detection_list "manifest_root_files")
+EOF
     if [ -n "$_manifests_yaml" ]; then
       printf '# Config manifests — traceable workflow and tooling dependencies\n'
       printf '# Read these to understand what controls repo behavior before reading shell code.\n'

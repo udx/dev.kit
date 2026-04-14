@@ -146,6 +146,15 @@ dev_kit_agent_write_agents_md() {
         printf '%s\n\n' "$_manifests"
       fi
 
+      # ── external dependencies ──────────────────────────────────────────────
+      local _deps
+      _deps="$(awk '/^dependencies:/{f=1;next} f && /^[a-zA-Z#]/{f=0} f && /^  - /' "$context_yaml")"
+      if [ -n "$_deps" ]; then
+        printf '### External dependencies\n\n'
+        printf 'Cross-repo and upstream references. Trace these to find infrastructure, deployment, and build logic outside this repo.\n\n'
+        printf '%s\n\n' "$_deps"
+      fi
+
       # ── GitHub context ─────────────────────────────────────────────────────
       # Items in context.yaml are 4-space indented under github subsections.
       # Strip 4 leading spaces when emitting into markdown.
