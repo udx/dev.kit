@@ -9,5 +9,6 @@
   "factors": {{factors}},
   "gaps": {{gaps}},
   "actions": {{actions}},
-  "context": "{{context}}"
+  "context": "{{context}}",
+  "dependencies": {{dependencies}}
 }

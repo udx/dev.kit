@@ -1,5 +1,16 @@
 # Changes
 
+### 0.4.0
+
+- Add structured dependency resolution with cross-repo tracing
+- Resolve same-org dependencies via `gh api` and sibling directory lookup
+- Track file-level relationships (`used_by`) mapping current repo files to their dependencies
+- Trace 6 dependency sources: workflow reuse, Docker images, Compose images, versioned YAML configs, GitHub URLs, npm packages
+- Add `--force` flag to `dev.kit repo` for full dependency re-resolution
+- Include structured dependencies in JSON output (`repo.json`, `agent.json`)
+- Render dependency relationships in AGENTS.md with resolved metadata and source file mappings
+- Add `dependency_trace_compose_files` and `dependency_trace_url_globs` to detection-signals.yaml
+
 ### 0.3.0
 
 - Restructure AGENTS.md as a deterministic execution contract with layered sections

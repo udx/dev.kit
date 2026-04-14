@@ -54,7 +54,8 @@ dev_kit_cmd_agent() {
       "context=$(dev_kit_json_escape "$context_yaml_path")" \
       "priority_refs=$(dev_kit_repo_priority_refs_json "$repo_dir")" \
       "entrypoints=$(dev_kit_repo_entrypoints_json "$repo_dir")" \
-      "workflow_contract=$(dev_kit_repo_workflow_json "$repo_dir")"
+      "workflow_contract=$(dev_kit_repo_workflow_json "$repo_dir")" \
+      "dependencies=$(dev_kit_deps_json "$repo_dir")"
     return 0
   fi
 
@@ -147,12 +148,44 @@ dev_kit_agent_write_agents_md() {
       fi
 
       # ── external dependencies ──────────────────────────────────────────────
-      local _deps
-      _deps="$(awk '/^dependencies:/{f=1;next} f && /^[a-zA-Z#]/{f=0} f && /^  - /' "$context_yaml")"
-      if [ -n "$_deps" ]; then
+      local _deps_block
+      _deps_block="$(awk '/^dependencies:/{f=1;next} f && /^[a-zA-Z#]/{f=0} f{print}' "$context_yaml")"
+      if [ -n "$_deps_block" ]; then
         printf '### External dependencies\n\n'
-        printf 'Cross-repo and upstream references. Trace these to find infrastructure, deployment, and build logic outside this repo.\n\n'
-        printf '%s\n\n' "$_deps"
+        printf 'Cross-repo and upstream references. Same-org repos are resolved with metadata. Trace these for infrastructure, deployment, and build logic.\n\n'
+        # Parse structured dependency blocks into markdown
+        printf '%s\n' "$_deps_block" | awk '
+          /^  - repo:/ {
+            if (repo != "") flush()
+            sub(/.*repo:[[:space:]]*/, "")
+            repo = $0; type = ""; resolved = ""; arch = ""; desc = ""; local_p = ""
+            ub_count = 0; in_ub = 0
+            next
+          }
+          /^    type:/        { sub(/.*type:[[:space:]]*/, "");        type = $0;     next }
+          /^    resolved:/    { sub(/.*resolved:[[:space:]]*/, "");    resolved = $0; next }
+          /^    archetype:/   { sub(/.*archetype:[[:space:]]*/, "");   arch = $0;     next }
+          /^    description:/ { sub(/.*description:[[:space:]]*"?/, ""); sub(/"$/, ""); desc = $0; next }
+          /^    local_path:/  { sub(/.*local_path:[[:space:]]*/, "");  local_p = $0;  next }
+          /^    used_by:/     { in_ub = 1; next }
+          in_ub && /^      - / { ub_count++; sub(/^[[:space:]]*- /, ""); ub[ub_count] = $0; next }
+          in_ub && !/^      /  { in_ub = 0 }
+
+          function flush() {
+            printf "- **%s**", repo
+            if (type != "") printf " (%s)", type
+            if (resolved == "true" && arch != "") printf " — %s", arch
+            if (desc != "") printf " — %s", desc
+            printf "\n"
+            if (ub_count > 0) {
+              for (i = 1; i <= ub_count; i++)
+                printf "  - `%s`\n", ub[i]
+            }
+            printf "\n"
+          }
+
+          END { if (repo != "") flush() }
+        '
       fi
 
       # ── GitHub context ─────────────────────────────────────────────────────

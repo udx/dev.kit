@@ -83,6 +83,21 @@ workflow:
   - "Post close-out comment on linked issue: After PR is created, post a brief comment on the linked issue with the PR URL, what changed, and any follow-up items. GitHub auto-closes the issue on merge when \"Closes #N\" is in the PR body — do not close manually."
   - "Post-merge close-out and backlog: After merge: verify issue auto-closed, post close-out comment, open issues for any backlog items from the PR, verify monitoring changes are live. See post_merge steps in github-prs.yaml."
 
+# External dependencies — cross-repo and upstream references
+# Trace these to find infrastructure, deployment, and build logic outside this repo.
+# Same-org deps are resolved with metadata. External deps listed for agent reference.
+dependencies:
+  - repo: udx/reusable-workflows
+    type: reusable workflow
+    resolved: true
+    local_path: /Users/jonyfq/git/udx/reusable-workflows
+    archetype: workflow-repo
+    profile: unknown
+    description: "Reusable GitHub Actions workflow templates for CI/CD"
+    used_by:
+      - .github/workflows/context7-ops.yml
+      - .github/workflows/npm-release-ops.yml
+
 # Config manifests — traceable workflow and tooling dependencies
 # Read these to understand what controls repo behavior before reading shell code.
 manifests:

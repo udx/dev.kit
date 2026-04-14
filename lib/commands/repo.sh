@@ -11,6 +11,8 @@ dev_kit_cmd_repo() {
   local gaps_json=""
   local context_yaml_path=""
 
+  local force_resolve=0
+
   # Parse flags from remaining args (skip format which is first arg)
   if [ "$#" -ge 1 ]; then
     shift
@@ -18,9 +20,10 @@ dev_kit_cmd_repo() {
   while [ "$#" -gt 0 ]; do
     case "$1" in
       --check) mode="check" ;;
+      --force) force_resolve=1 ;;
       --*)
         printf 'Unknown flag: %s\n' "$1" >&2
-        printf 'Usage: dev.kit repo [--json] [--check]\n' >&2
+        printf 'Usage: dev.kit repo [--json] [--check] [--force]\n' >&2
         return 1
         ;;
       *)       repo_dir="$1" ;;
@@ -37,7 +40,7 @@ dev_kit_cmd_repo() {
   if [ "$format" = "json" ]; then
     gaps_json="$(dev_kit_scaffold_gaps_json "$repo_dir")"
     if [ "$mode" = "learn" ]; then
-      dev_kit_context_yaml_write "$repo_dir" >/dev/null
+      dev_kit_context_yaml_write "$repo_dir" "$force_resolve" >/dev/null
     fi
     dev_kit_template_render "repo.json" \
       "command=repo" \
@@ -50,7 +53,8 @@ dev_kit_cmd_repo() {
       "factors=$(dev_kit_repo_factor_summary_json "$repo_dir")" \
       "gaps=$gaps_json" \
       "actions=[]" \
-      "context=$(dev_kit_json_escape "$context_yaml_path")"
+      "context=$(dev_kit_json_escape "$context_yaml_path")" \
+      "dependencies=$(dev_kit_deps_json "$repo_dir")"
     return 0
   fi
 
@@ -103,7 +107,7 @@ EOF
   # ── Write context.yaml ──────────────────────────────────────────────────────
   if [ "$mode" = "learn" ]; then
     dev_kit_spinner_start "writing context"
-    dev_kit_context_yaml_write "$repo_dir" >/dev/null
+    dev_kit_context_yaml_write "$repo_dir" "$force_resolve" >/dev/null
     dev_kit_spinner_stop ""
   fi
 

@@ -187,6 +187,16 @@ config:
   # mechanism — repos declare their infrastructure provider in the version field.
   dependency_trace_versioned_dirs:
     - .rabbit
+  # Docker Compose files scanned for image: references.
+  dependency_trace_compose_files:
+    - docker-compose.yml
+    - docker-compose.yaml
+  # File globs scanned for GitHub URL references (github.com/org/repo patterns).
+  # Applied within priority ref dirs and repo root config files.
+  dependency_trace_url_globs:
+    - "*.yaml"
+    - "*.yml"
+    - "*.md"
   # Manifest files that define where this repo is hosted/deployed.
   # Listed as config manifests in context.yaml output.
   manifest_workflow_dirs:

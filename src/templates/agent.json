@@ -8,5 +8,6 @@
   "context": "{{context}}",
   "priority_refs": {{priority_refs}},
   "entrypoints": {{entrypoints}},
-  "workflow_contract": {{workflow_contract}}
+  "workflow_contract": {{workflow_contract}},
+  "dependencies": {{dependencies}}
 }
