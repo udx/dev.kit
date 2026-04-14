@@ -1,54 +1,63 @@
 # Overview
 
-`dev.kit` is a repo-driven development tool.
+`dev.kit` produces dynamic repo context. Developers and AI agents consume the same output — no separate workflows.
 
-## Goal
+## The split
 
-Context-driven engineering through repo-native mechanisms:
+dev.kit handles deterministic work that should be repeatable:
+- Tool detection and environment validation
+- Repo factor analysis (docs, architecture, dependencies, config, verification, runtime, build)
+- Cross-repo dependency tracing and resolution
+- GitHub signal collection (issues, PRs, security alerts)
+- Context artifact generation
 
-- Develop without tribal knowledge. Verify changes predictably.
-- Let teammates and agents operate with less ambiguity.
-- Standardize how work moves from local changes to CI and deployment.
-- Keep deterministic logic in repo config and scripts. Reserve AI agents for judgment that can't be scripted.
+Agents and developers handle judgment:
+- Code changes, refactoring, feature implementation
+- PR creation and review
+- Architecture decisions
+- Gap prioritization
 
 ## Phases
 
-dev.kit operates in phases. Each phase builds on the previous and uses global context to gate what it can do.
+```
+dev.kit          →  dev.kit repo        →  dev.kit agent        →  dev.kit learn
+─────────────────   ──────────────────    ──────────────────     ──────────────────
+check environment   analyze factors       generate AGENTS.md     scan agent sessions
+detect archetype    trace dependencies    write execution         extract patterns
+guide to next       write context.yaml    contract               write lessons
+```
 
 ### 1. env — `dev.kit`
 
-Validates the local software environment, listing each tool with what it enables. Capabilities determine what downstream phases can do:
+Validates the local software environment. Each tool is shown with what it enables. Capabilities gate downstream features:
 
-- `github_enrichment` — active only when `gh` is installed and authenticated
-- `yaml_parsing` — active only when `yq` is available
-- `json_parsing` — active only when `jq` is available
-- `cloud_aws/gcp/azure` — active only when respective CLI is available
+| Capability | Requires | If missing |
+|---|---|---|
+| `github_enrichment` | `gh` authenticated | GitHub API enrichment skipped |
+| `yaml_parsing` | `yq` | Fallback to awk parsing |
+| `json_parsing` | `jq` | Fallback parsing |
+| `cloud_aws/gcp/azure` | respective CLI | Cloud context skipped |
 
 ### 2. repo — `dev.kit repo`
 
-Builds a resolved view of the repository: docs, scripts, workflows, deploy config, Dockerfile chains, manifests. Identifies gaps against 7 engineering factors. Detects config manifests (YAML files that define workflow and tooling). Pulls GitHub context via `gh api`. Writes `.rabbit/context.yaml`.
+Analyzes the repository against 7 engineering factors. Traces cross-repo dependencies from 6 sources. Pulls live GitHub signals. Writes `.rabbit/context.yaml`.
+
+Flags: `--check` (read-only), `--force` (re-resolve dependencies).
 
 ### 3. agent — `dev.kit agent`
 
-Generates `AGENTS.md` — a comprehensive agent guide with rules, refs, config manifests, full workflow, and lessons. Auto-generates `.rabbit/context.yaml` if missing.
+Generates `AGENTS.md` — a deterministic execution contract with 8 rules, commands, refs, dependencies, workflow, and practices. Auto-generates `.rabbit/context.yaml` if missing.
 
 ### 4. learn — `dev.kit learn`
 
-Scans recent Claude and Codex agent sessions, extracts workflow patterns and operational references, and writes a lessons artifact at `.rabbit/dev.kit/lessons-*.md`. Lessons feed back into context.yaml on next `dev.kit repo` run.
+Scans recent Claude and Codex agent sessions, extracts workflow patterns and operational references, writes a lessons artifact at `.rabbit/dev.kit/lessons-*.md`. Lessons feed back into context.yaml on next run.
 
-## What `dev.kit` Does
+## Design principles
 
-- `dev.kit` — validates env, detects repo, guides to next step
-- `dev.kit repo` — analyzes repo, writes `.rabbit/context.yaml`
-- `dev.kit agent` — generates `AGENTS.md` with full repo context and traceable YAML dependencies
-- `dev.kit learn` — extracts lessons from Claude and Codex sessions, writes durable artifact
+**Standard signals first** — README, docs, tests, manifests, workflows, deploy config. No custom metadata files required.
 
-## Design Principles
+**Config over code** — detection patterns, archetype rules, workflow steps all defined in YAML. Shell is thin glue.
 
-**Repo-centric**: works from standard repository evidence (README, docs, tests, manifests, workflows, deploy config). Does not require custom metadata files.
+**Deterministic scanning** — dev.kit produces the same context from the same repo state. No randomness, no LLM calls.
 
-**Standard signals first**: markdown and YAML are durable working formats. Repo-native sources (README, docs, TODO, workflows) take precedence over custom overlays.
-
-**Strict separation**: config and scripts own deterministic discovery and policy. Templates own output shape. Agents consume repo facts and add bounded judgment. If behavior must be repeatable, it should move into the repo — not live only in prompts.
-
-**Traceable dependencies**: YAML manifests define workflow and tooling behavior. Agents trace dependencies to config manifests, not shell code. Config manifests are listed in `.rabbit/context.yaml` and inlined into `AGENTS.md`.
+**One file handoff** — `.rabbit/context.yaml` is the single artifact between dev.kit and everything downstream.

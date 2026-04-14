@@ -4,7 +4,7 @@
 
 **Dynamic repo context for developers and AI agents.**
 
-dev.kit handles what agents can't do reliably — deterministic scanning, tool detection, dependency tracing, cross-repo resolution. Agents handle what dev.kit can't — judgment, code changes, PR creation. Developers get the same context without agents. The split is clean: dev.kit produces the context, humans and agents consume it.
+dev.kit scans what humans and agents shouldn't scan manually — tools, factors, dependencies, cross-repo relationships. It produces one context file. Developers read it. Agents execute from it.
 
 ```bash
 npm install -g @udx/dev-kit
@@ -14,8 +14,6 @@ npm install -g @udx/dev-kit
 
 ## How it works
 
-Three commands. Each one enriches context and guides to the next.
-
 ```
 dev.kit          →  dev.kit repo        →  dev.kit agent
 ─────────────────   ──────────────────    ──────────────────
@@ -24,7 +22,7 @@ detect archetype    trace dependencies    write execution contract
 guide to next       write context.yaml    from context.yaml
 ```
 
-Run at every session start. The core loop: **repo → agent → work → PR → merge**.
+Each command enriches context and guides to the next. Run at every session start.
 
 ---
 
@@ -41,7 +39,7 @@ dev.kit agent      # generate AGENTS.md execution contract
 
 ## What gets generated
 
-**`.rabbit/context.yaml`** — everything an agent needs in one file:
+**`.rabbit/context.yaml`** — one file, complete repo context:
 
 ```yaml
 repo:
@@ -65,9 +63,13 @@ dependencies:
     archetype: workflow-repo
     used_by:
       - .github/workflows/npm-release-ops.yml
+
+gaps:
+  - architecture (partial)
+  - config (partial)
 ```
 
-**`AGENTS.md`** — deterministic execution contract. 8 rules, commands, refs, deps, workflow, practices. Works with Claude, Codex, Gemini, Copilot.
+**`AGENTS.md`** — execution contract with 8 rules, commands, refs, dependencies, workflow, practices. Works with Claude, Codex, Gemini, Copilot — any agent that reads files.
 
 ---
 
@@ -87,12 +89,12 @@ All commands support `--json` for machine-readable output.
 
 ## Cross-repo tracing
 
-6 dependency sources: workflow reuse, Docker images, Compose, versioned YAML configs, GitHub URLs, npm packages.
+Traces dependencies from 6 sources: workflow reuse, GitHub actions, Docker images, versioned YAML, GitHub URLs, npm packages.
 
 Same-org repos resolved via `gh api` + sibling directory. Docker images mapped to source repos automatically.
 
 ```yaml
-# udx/rabbit-automation-action traces to:
+# udx/rabbit-automation-action
 dependencies:
   - repo: udx/gh-workflows
     type: reusable workflow
@@ -121,7 +123,6 @@ curl -fsSL https://raw.githubusercontent.com/udx/dev.kit/main/bin/scripts/instal
 ## Docs
 
 - [Overview](docs/overview.md) — design principles and phases
-- [Commands](docs/commands.md) — full command reference with flags and output details
-- [Workflow Model](docs/workflow.md) — pipeline phases, factors, session flow
+- [Commands](docs/commands.md) — full command reference with output details
+- [Workflow](docs/workflow.md) — pipeline phases, factors, session flow
 - [Architecture](docs/architecture.md) — config catalog, module map, data flow
-- [Detection Facets](docs/detection-facets.md) — archetype and factor detection rules
