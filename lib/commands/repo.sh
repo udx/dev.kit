@@ -39,7 +39,7 @@ dev_kit_cmd_repo() {
     if [ "$mode" = "scaffold" ]; then
       local archetype plan
       archetype="$(dev_kit_repo_primary_archetype "$repo_dir")"
-      plan="$(dev_kit_scaffold_plan_dirs "$repo_dir" "$archetype")"
+      plan="$(dev_kit_scaffold_plan "$repo_dir" "$archetype")"
       actions_json="$(dev_kit_scaffold_apply "$repo_dir" "$plan")"
     fi
     dev_kit_template_render "repo.json" \
@@ -64,7 +64,7 @@ dev_kit_cmd_repo() {
   # Archetype is needed for summary + scaffold plan (cached after first call)
   local archetype scaffold_plan
   archetype="$(dev_kit_repo_primary_archetype "$repo_dir")"
-  scaffold_plan="$(dev_kit_scaffold_plan_dirs "$repo_dir" "$archetype")"
+  scaffold_plan="$(dev_kit_scaffold_plan "$repo_dir" "$archetype")"
 
   # scaffold mode: apply the plan now (before output so result shows correctly)
   if [ "$mode" = "scaffold" ]; then

@@ -4,6 +4,27 @@
 # Analysis (what's missing) stays in repo_factors.sh and repo_signals.sh.
 # This module only handles creating or updating files and dirs.
 
+# Map config manifest kind to a one-line description.
+# Agents use this to know WHAT each YAML controls before reading it.
+dev_kit_manifest_kind_description() {
+  case "$1" in
+    archetypeRules)       printf 'archetype definitions and matching rules' ;;
+    archetypeSignals)     printf 'file/dir signals for framework and platform detection' ;;
+    auditRules)           printf 'factor gap messages and improvement guidance' ;;
+    contextConfig)        printf 'repo root markers and priority paths' ;;
+    detectionPatterns)    printf 'regex patterns for build/verify/run command detection' ;;
+    detectionSignals)     printf 'file/dir/glob patterns for factor analysis' ;;
+    developmentPractices) printf 'engineering principles inlined into repo context' ;;
+    developmentWorkflows) printf 'git workflow steps, PR process, and operational notes' ;;
+    githubIssues)         printf 'issue templates, labels, and agent issue workflow' ;;
+    githubPullRequests)   printf 'PR templates, bot reviewers, and post-merge checklist' ;;
+    knowledgeBase)        printf 'org hierarchy and preferred knowledge sources' ;;
+    learningWorkflows)    printf 'agent session discovery and lesson extraction rules' ;;
+    repoScaffold)         printf 'baseline dirs/files per archetype and factor' ;;
+    *)                    printf '' ;;
+  esac
+}
+
 # Path of the canonical context file
 dev_kit_context_yaml_path() {
   local repo_root="$1"
@@ -35,33 +56,81 @@ dev_kit_scaffold_gaps_json() {
   printf '\n]\n'
 }
 
-# Create missing directories defined for a given archetype in repo-scaffold.yaml
-# Currently emits planned actions as lines; writing is gated by --scaffold flag
-dev_kit_scaffold_plan_dirs() {
+# Build scaffold plan from repo-scaffold.yaml: baseline + archetype + factor gaps.
+# Emits lines: mkdir|<path> or create|<path>
+dev_kit_scaffold_plan() {
   local repo_root="$1"
   local archetype="$2"
-  # Additional dir names can be passed as extra args
-  shift 2
-  local extra_dirs=("$@")
-  local dir=""
+  local scaffold_config
+  scaffold_config="$(dev_kit_config_path "src/configs/repo-scaffold.yaml")"
+  [ -f "$scaffold_config" ] || return 0
 
-  for dir in docs "${extra_dirs[@]}"; do
+  local dir file
+
+  # Baseline dirs (config > baseline > dirs > - items)
+  while IFS= read -r dir; do
+    [ -n "$dir" ] || continue
     [ -d "${repo_root}/${dir}" ] && continue
     printf 'mkdir|%s\n' "$dir"
-  done
-}
+  done <<EOF
+$(dev_kit_yaml_mapping_list "$scaffold_config" "baseline" "dirs" 2>/dev/null)
+EOF
 
-# Create missing files listed in the scaffold plan
-# Returns lines: create|<relative_path>
-dev_kit_scaffold_plan_files() {
-  local repo_root="$1"
-  shift
-  local files=("$@")
-  local file=""
-
-  for file in "${files[@]}"; do
+  # Baseline files (skip AGENTS.md — managed by dev.kit agent)
+  while IFS= read -r file; do
+    [ -n "$file" ] || continue
+    [ "$file" = "AGENTS.md" ] && continue
     [ -f "${repo_root}/${file}" ] && continue
     printf 'create|%s\n' "$file"
+  done <<EOF
+$(dev_kit_yaml_mapping_list "$scaffold_config" "baseline" "files" 2>/dev/null)
+EOF
+
+  # Archetype-specific dirs and files — map archetype to scaffold key
+  local scaffold_key=""
+  case "$archetype" in
+    library-cli)    scaffold_key="shell-cli" ;;
+    runtime-image)  scaffold_key="runtime-image" ;;
+    wordpress-site) scaffold_key="wordpress-site" ;;
+    infra-pipeline) scaffold_key="infra-pipeline" ;;
+    *)              scaffold_key="" ;;
+  esac
+  if [ -n "$scaffold_key" ]; then
+    while IFS= read -r dir; do
+      [ -n "$dir" ] || continue
+      [ -d "${repo_root}/${dir}" ] && continue
+      printf 'mkdir|%s\n' "$dir"
+    done <<EOF
+$(dev_kit_yaml_nested_mapping_list "$scaffold_config" "archetypes" "$scaffold_key" "dirs" 2>/dev/null)
+EOF
+    while IFS= read -r file; do
+      [ -n "$file" ] || continue
+      [ -f "${repo_root}/${file}" ] && continue
+      printf 'create|%s\n' "$file"
+    done <<EOF
+$(dev_kit_yaml_nested_mapping_list "$scaffold_config" "archetypes" "$scaffold_key" "files" 2>/dev/null)
+EOF
+  fi
+
+  # Factor-driven scaffold: create files/dirs for missing or partial factors
+  local factor status
+  for factor in documentation verification runtime config build_release_run; do
+    status="$(dev_kit_repo_factor_status "$repo_root" "$factor")"
+    [ "$status" = "missing" ] || [ "$status" = "partial" ] || continue
+    while IFS= read -r dir; do
+      [ -n "$dir" ] || continue
+      [ -d "${repo_root}/${dir}" ] && continue
+      printf 'mkdir|%s\n' "$dir"
+    done <<EOF
+$(dev_kit_yaml_nested_mapping_list "$scaffold_config" "factors" "$factor" "dirs" 2>/dev/null)
+EOF
+    while IFS= read -r file; do
+      [ -n "$file" ] || continue
+      [ -f "${repo_root}/${file}" ] && continue
+      printf 'create|%s\n' "$file"
+    done <<EOF
+$(dev_kit_yaml_nested_mapping_list "$scaffold_config" "factors" "$factor" "files" 2>/dev/null)
+EOF
   done
 }
 
@@ -187,21 +256,27 @@ dev_kit_context_yaml_write() {
     fi
 
     # Config manifests — traceable YAML dependencies for workflows and tooling
+    # Batch: extract kind from all YAML configs in one awk pass per directory
     local _manifests_yaml=""
-    local _yaml_file _yaml_rel _yaml_kind
-    # dev.kit-style config catalog
+    local _yaml_file _yaml_rel _yaml_kind _yaml_desc
     if [ -d "${repo_root}/src/configs" ]; then
-      while IFS= read -r _yaml_file; do
-        [ -n "$_yaml_file" ] && [ -f "$_yaml_file" ] || continue
-        _yaml_rel="${_yaml_file#"${repo_root}/"}"
-        _yaml_kind="$(awk '/^kind:/ { sub(/^kind:[[:space:]]*/, ""); print; exit }' "$_yaml_file")"
-        if [ -n "$_yaml_kind" ]; then
+      while IFS='|' read -r _yaml_rel _yaml_kind; do
+        [ -n "$_yaml_rel" ] || continue
+        _yaml_desc="$(dev_kit_manifest_kind_description "$_yaml_kind")"
+        if [ -n "$_yaml_desc" ]; then
+          _manifests_yaml="${_manifests_yaml}  - ${_yaml_rel} — ${_yaml_desc}\n"
+        elif [ -n "$_yaml_kind" ]; then
           _manifests_yaml="${_manifests_yaml}  - ${_yaml_rel} (${_yaml_kind})\n"
         else
           _manifests_yaml="${_manifests_yaml}  - ${_yaml_rel}\n"
         fi
       done <<EOF
-$(find "${repo_root}/src/configs" -maxdepth 1 -name '*.yaml' -o -name '*.yml' 2>/dev/null | sort)
+$(find "${repo_root}/src/configs" -maxdepth 1 \( -name '*.yaml' -o -name '*.yml' \) -print 2>/dev/null | sort | while IFS= read -r f; do
+  [ -f "$f" ] || continue
+  rel="${f#"${repo_root}/"}"
+  kind="$(awk '/^kind:/ { sub(/^kind:[[:space:]]*/, ""); print; exit }' "$f")"
+  printf '%s|%s\n' "$rel" "$kind"
+done)
 EOF
     fi
     # GitHub Actions workflows
@@ -221,6 +296,7 @@ EOF
     done
     if [ -n "$_manifests_yaml" ]; then
       printf '# Config manifests — traceable workflow and tooling dependencies\n'
+      printf '# Read these to understand what controls repo behavior before reading shell code.\n'
       printf 'manifests:\n'
       printf '%b\n' "$_manifests_yaml"
     fi

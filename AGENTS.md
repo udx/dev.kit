@@ -42,19 +42,19 @@ Read these for full context. Do not explore beyond them.
 
 These YAML files define the project workflow, tooling, and behavior. Trace dependencies here before reading shell code.
 
-  - src/configs/archetype-rules.yaml (archetypeRules)
-  - src/configs/archetype-signals.yaml (archetypeSignals)
-  - src/configs/audit-rules.yaml (auditRules)
-  - src/configs/context-config.yaml (contextConfig)
-  - src/configs/detection-patterns.yaml (detectionPatterns)
-  - src/configs/detection-signals.yaml (detectionSignals)
-  - src/configs/development-practices.yaml (developmentPractices)
-  - src/configs/development-workflows.yaml (developmentWorkflows)
-  - src/configs/github-issues.yaml (githubIssues)
-  - src/configs/github-prs.yaml (githubPullRequests)
-  - src/configs/knowledge-base.yaml (knowledgeBase)
-  - src/configs/learning-workflows.yaml (learningWorkflows)
-  - src/configs/repo-scaffold.yaml (repoScaffold)
+  - src/configs/archetype-rules.yaml — archetype definitions and matching rules
+  - src/configs/archetype-signals.yaml — file/dir signals for framework and platform detection
+  - src/configs/audit-rules.yaml — factor gap messages and improvement guidance
+  - src/configs/context-config.yaml — repo root markers and priority paths
+  - src/configs/detection-patterns.yaml — regex patterns for build/verify/run command detection
+  - src/configs/detection-signals.yaml — file/dir/glob patterns for factor analysis
+  - src/configs/development-practices.yaml — engineering principles inlined into repo context
+  - src/configs/development-workflows.yaml — git workflow steps, PR process, and operational notes
+  - src/configs/github-issues.yaml — issue templates, labels, and agent issue workflow
+  - src/configs/github-prs.yaml — PR templates, bot reviewers, and post-merge checklist
+  - src/configs/knowledge-base.yaml — org hierarchy and preferred knowledge sources
+  - src/configs/learning-workflows.yaml — agent session discovery and lesson extraction rules
+  - src/configs/repo-scaffold.yaml — baseline dirs/files per archetype and factor
   - .github/workflows/context7-ops.yml
   - deploy.yml
 
