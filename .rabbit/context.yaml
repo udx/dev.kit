@@ -7,7 +7,7 @@ generated: 2026-04-14
 repo:
   name: dev.kit
   archetype: library-cli
-  profile: shell
+  profile: node
 
 refs:
   - ./README.md
@@ -16,6 +16,7 @@ refs:
   - ./.rabbit
   - ./.github/workflows
   - ./Makefile
+  - ./package.json
   - ./deploy.yml
   - ./lib
   - ./src
@@ -25,6 +26,16 @@ commands:
   verify: make test
   build: make build
   run: make run
+
+# GitHub context — development signals from repo history
+github:
+  repo: udx/dev.kit
+  recent_prs:
+  - #15 bump version to 0.2.1
+  - #14 fix release workflow trigger
+  - #13 add package-lock.json for CI cache
+  - #12 add npm release workflow, versioning, and changelog
+  - #11 redesign dev.kit: context.yaml pipeline, AGENTS.md with rules + manifests, promptfoo eval
 
 # Gaps — run `dev.kit repo --scaffold` to apply fixes
 gaps:
@@ -38,13 +49,23 @@ practices:
   - Prefer repo-centric mechanisms that discover workflows, tools, formats, and refs dynamically instead of hardcoding per-agent assumptions.
   - Keep markdown, yaml, diagrams, tests, and command contracts self-contained in the repo so local and remote UDX workflows stay aligned.
   - Keep deterministic workflow logic in repo config and scripts, and reserve AI agents for reading that contract, generating grounded summaries, and handling non-deterministic judgment without inventing hidden rules.
+  - Operate from repo-declared context at all times. Do not carry assumptions across sessions or rely on prompt history when the repo contract is available on disk.
+  - When understanding behavior, read the YAML manifest that defines it before reading the code that implements it. Manifests are the interface — code is the mechanism.
+  - Check existing org patterns, configs, workflows, and templates before creating new ones. Reuse declared patterns instead of inventing alternatives.
+  - Execute verification, builds, and tests locally before any remote operation. Local execution is part of the reproducible repo contract, not a preference.
+  - Keep the delivery chain explicit — branch, PR, and issue must be connected before close-out. Do not treat any step as done until the link to the next step is visible.
+  - Report outcomes with exact URLs, versions, findings deltas, and next steps so follow-up can be reused by humans and agents without drift.
+  - Use README, docs, and tests as the first alignment surface before broad refactors. Read the declared workflow before changing the implementation.
   - Do not require custom repo files for dev.kit to work. Prefer standard engineering signals such as README, docs, tests, manifests, workflows, and deployment config, with dev.kit-owned continuity treated as optional acceleration only.
+  - Express repo rules in YAML manifests first, then keep shell glue thin and composable. Policy belongs in config, not buried in imperative scripts.
+  - When a new direction is accepted, archive or delete conflicting old modules and configs instead of carrying both models forward.
+  - Run the smallest local check that proves the current change. Defer heavyweight coverage to CI and call that tradeoff out explicitly.
   - Make sure to develop and test incrementally, so it is easier to detect problems early and build on verified behavior.
   - Make sure to protect development executions with scoped and limited tasks, so failures are easier to isolate and blast radius stays low.
 
 # Canonical agent workflow
 workflow:
-  - Refresh repo context: If .rabbit/context.yaml is stale or absent, run `dev.kit repo` then `dev.kit agent` before starting work. A current context.yaml is the source of truth for refs, commands, gaps, and lessons. Do not rely on ad hoc prompt memory when the repo contract can be read from disk.
+  - Refresh repo context: If .rabbit/context.yaml is stale or absent, run `dev.kit repo` then `dev.kit agent` before starting work. A current context.yaml is the source of truth for refs, commands, gaps, and lessons. Do not rely on ad hoc prompt memory when the repo contract can be read from disk. Locate the actual workflow and deploy files (deploy.yml, .github/workflows) first — trace commands and supporting docs from there.
   - Read linked GitHub issue and confirm scope: If a GitHub issue URL is available, read the full body and comments, confirm the repo matches the issue scope, and map acceptance criteria before writing any code. Use the issue URL as the cross-repo context root.
   - Inspect git status
   - Analyze local changes
@@ -77,6 +98,7 @@ manifests:
   - src/configs/learning-workflows.yaml — agent session discovery and lesson extraction rules
   - src/configs/repo-scaffold.yaml — baseline dirs/files per archetype and factor
   - .github/workflows/context7-ops.yml
+  - .github/workflows/npm-release-ops.yml
   - deploy.yml
 
 # Lessons from agent sessions

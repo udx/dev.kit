@@ -186,6 +186,51 @@ dev_kit_context_yaml_write() {
       printf '\n'
     fi
 
+    # GitHub context — development signals from the repo's GitHub history
+    # Only collected when gh CLI is available and repo has a remote.
+    # All gh calls are guarded (|| true) since repos may have issues disabled,
+    # no PRs, or restricted API access.
+    if command -v gh >/dev/null 2>&1 && dev_kit_sync_has_git_repo "$repo_root"; then
+      local _gh_owner_repo _gh_context=""
+      _gh_owner_repo="$(git -C "$repo_root" remote get-url origin 2>/dev/null | sed -E 's|.*github\.com[:/]||; s|\.git$||')"
+      if [ -n "$_gh_owner_repo" ]; then
+        # Open issues (up to 10, most recent)
+        local _gh_issues
+        _gh_issues="$(gh api "repos/${_gh_owner_repo}/issues?state=open&per_page=10&sort=updated&direction=desc" 2>/dev/null | jq -r '.[]? | select(.pull_request == null) | "  - #\(.number) \(.title)\(if (.labels | length) > 0 then " [" + ([.labels[].name] | join(", ")) + "]" else "" end)"' 2>/dev/null || true)"
+        if [ -n "$_gh_issues" ]; then
+          _gh_context="${_gh_context}  open_issues:\n${_gh_issues}\n"
+        fi
+
+        # Recent merged PRs (last 5)
+        local _gh_prs
+        _gh_prs="$(gh api "repos/${_gh_owner_repo}/pulls?state=closed&sort=updated&direction=desc&per_page=10" 2>/dev/null | jq -r '[.[]? | select(.merged_at != null)] | sort_by(.merged_at) | reverse | .[:5][] | "  - #\(.number) \(.title)"' 2>/dev/null || true)"
+        if [ -n "$_gh_prs" ]; then
+          _gh_context="${_gh_context}  recent_prs:\n${_gh_prs}\n"
+        fi
+
+        # Open PRs
+        local _gh_open_prs
+        _gh_open_prs="$(gh api "repos/${_gh_owner_repo}/pulls?state=open&per_page=5&sort=updated&direction=desc" 2>/dev/null | jq -r '.[]? | "  - #\(.number) \(.title)\(if .draft then " (draft)" else "" end)"' 2>/dev/null || true)"
+        if [ -n "$_gh_open_prs" ]; then
+          _gh_context="${_gh_context}  open_prs:\n${_gh_open_prs}\n"
+        fi
+
+        # Security alerts (Dependabot)
+        local _gh_alerts
+        _gh_alerts="$(gh api "repos/${_gh_owner_repo}/dependabot/alerts?state=open&per_page=5" 2>/dev/null | jq -r '.[]? | "  - \(.security_advisory.severity): \(.security_advisory.summary // .dependency.package.name)"' 2>/dev/null || true)"
+        if [ -n "$_gh_alerts" ]; then
+          _gh_context="${_gh_context}  security_alerts:\n${_gh_alerts}\n"
+        fi
+
+        if [ -n "$_gh_context" ]; then
+          printf '# GitHub context — development signals from repo history\n'
+          printf 'github:\n'
+          printf '  repo: %s\n' "$_gh_owner_repo"
+          printf '%b\n' "$_gh_context"
+        fi
+      fi
+    fi
+
     # Factor gaps
     local _gaps_yaml
     _gaps_yaml="$(dev_kit_repo_factor_summary_json "$repo_root" | jq -r '

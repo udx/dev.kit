@@ -62,6 +62,46 @@ config:
         - release
         - artifacts
         - update comment
+    docs-first-alignment:
+      threshold: 2
+      message: Review README, docs, and tests before refactoring. Restate the target workflow, then simplify code and remove mismatched legacy paths.
+      patterns:
+        - readme
+        - docs
+        - refactor
+        - cleanup
+    workflow-tracing:
+      threshold: 2
+      message: Locate the actual workflow or deploy file first, then trace the commands and supporting docs that drive execution.
+      patterns:
+        - deploy.yml
+        - workflow file
+        - what actually runs
+        - trace
+    verification-scope:
+      threshold: 2
+      message: Run the smallest local check that proves the current change, defer heavyweight coverage to CI, and call the tradeoff out explicitly.
+      patterns:
+        - make test
+        - local check
+        - CI
+        - defer
+    legacy-reduction:
+      threshold: 2
+      message: When a new direction is accepted, archive or delete conflicting old modules/configs instead of carrying both models forward.
+      patterns:
+        - cleanup
+        - legacy
+        - remove
+        - consolidate
+    agent-handoff:
+      threshold: 2
+      message: Refresh repo context, manifests, and AGENTS.md before deeper agent work so the repo contract is the source of truth.
+      patterns:
+        - dev.kit repo
+        - dev.kit agent
+        - refresh context
+        - agents.md
   session_rules:
     verify-before-deploy:
       threshold: 2
@@ -92,3 +132,19 @@ config:
         - findings
         - next step
         - add url
+    config-over-code:
+      threshold: 2
+      message: Express repo rules in YAML/manifests first, then keep shell glue thin and composable.
+      patterns:
+        - yaml
+        - manifest
+        - config
+        - thin wrapper
+    agent-context-refresh:
+      threshold: 2
+      message: Refresh repo context and AGENTS.md from repo artifacts before deeper agent work so the workflow stays repo-centric.
+      patterns:
+        - dev.kit
+        - context.yaml
+        - agents.md
+        - refresh

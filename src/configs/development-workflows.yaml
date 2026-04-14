@@ -35,6 +35,8 @@ config:
             `dev.kit agent` before starting work. A current context.yaml is the
             source of truth for refs, commands, gaps, and lessons. Do not rely on
             ad hoc prompt memory when the repo contract can be read from disk.
+            Locate the actual workflow and deploy files (deploy.yml, .github/workflows)
+            first — trace commands and supporting docs from there.
         - id: issue_scope
           label: Read linked GitHub issue and confirm scope
           check: issue_scope

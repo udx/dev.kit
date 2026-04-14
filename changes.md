@@ -1,5 +1,17 @@
 # Changes
 
+### 0.3.0
+
+- Restructure AGENTS.md as a deterministic execution contract with layered sections
+- Add 7 contract rules: no scanning, strict boundaries, manifests before code, context over memory, verify locally, follow workflow, reuse over invention
+- Add GitHub context layer to `context.yaml` — open issues, recent PRs, security alerts via `gh api`
+- Add 10 engineering practices from lessons learned: context-over-memory, manifests-before-code, reuse-over-invention, localhost-first, delivery-chain-traceability, structured-outcome-reporting, docs-first-alignment, config-over-code, legacy-reduction, verification-scope
+- Add learning workflow patterns: docs-first-alignment, workflow-tracing, verification-scope, legacy-reduction, agent-handoff
+- Enrich knowledge-base.yaml with GitHub as a context source
+- Strengthen post-merge close-out reporting (exact URLs, versions, deltas)
+- Fix package name to `@udx/dev-kit` (matches npm registry)
+- npm install support (`npm install -g @udx/dev-kit`)
+
 ### 0.2.1
 
 - Fix release workflow trigger to match reusable-workflows pattern

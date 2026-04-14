@@ -13,3 +13,13 @@ config:
         - local repos under git/udx
         - remote repos and pull requests under github.com/udx/*
         - codex sessions under ~/.codex/sessions when available
+    github:
+      description: GitHub experience history enriches repo context with development signals beyond code
+      method: gh api (prefer REST API via gh api over gh subcommands for consistency and reliability)
+      items:
+        - open issues (scope, labels, assignees)
+        - recent pull requests (merged, open, review state)
+        - security alerts (Dependabot, CodeQL, secret scanning)
+        - active branches and staleness
+        - release history and deployment tags
+        - commit activity and contributor patterns

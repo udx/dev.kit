@@ -13,7 +13,9 @@ The `src/configs/` directory is the knowledge library that drives all detection,
 | `archetype-rules.yaml` | archetypeRules | Precedence order, required + supporting facets per archetype |
 | `development-workflows.yaml` | developmentWorkflows | Git workflow steps and capabilities |
 | `development-practices.yaml` | developmentPractices | Engineering principles surfaced in guidance output |
-| `knowledge-base.yaml` | knowledgeBase | Local and remote repo hierarchy roots |
+| `github-issues.yaml` | githubIssues | Issue templates, labels, and agent issue workflow |
+| `github-prs.yaml` | githubPullRequests | PR templates, bot reviewers, and post-merge checklist |
+| `knowledge-base.yaml` | knowledgeBase | Local and remote repo hierarchy roots, GitHub context sources |
 | `learning-workflows.yaml` | learningWorkflows | Agent session flow patterns and routing rules |
 | `repo-scaffold.yaml` | repoScaffold | Baseline dirs/files and per-archetype scaffold definitions |
 
@@ -78,7 +80,7 @@ bin/dev-kit
 
 `.rabbit/context.yaml` is the handoff artifact between `dev.kit repo` and `dev.kit agent`. Written by `repo_scaffold.sh`, read by `agent.sh` via awk. If missing, `dev.kit agent` auto-generates it.
 
-Fields: `repo` (name, archetype, profile), `refs`, `commands`, `gaps`, `practices`, `workflow`, `manifests`, `lessons`.
+Fields: `repo` (name, archetype, profile), `refs`, `commands`, `github` (open issues, recent PRs, security alerts via `gh api`), `gaps`, `practices`, `workflow`, `manifests`, `lessons`.
 
 ## Global Context
 

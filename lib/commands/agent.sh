@@ -87,8 +87,9 @@ dev_kit_cmd_agent() {
   dev_kit_output_row "session lessons" "dev.kit learn"
 }
 
-# Write AGENTS.md — inlines full context from context.yaml so agents have
-# everything they need without scanning the filesystem.
+# Write AGENTS.md — the repo's execution contract for AI agents.
+# All content is derived from context.yaml. Agents operate from this file,
+# not from filesystem discovery.
 dev_kit_agent_write_agents_md() {
   local repo_dir="$1"
   local agents_md_path="$2"
@@ -101,15 +102,20 @@ dev_kit_agent_write_agents_md() {
     if [ ! -f "$context_yaml" ]; then
       printf 'Run `dev.kit repo` to generate context.\n'
     else
-      # ── Rules — anti-drift, anti-scanning ────────────────────────────────────
-      printf '## Rules\n\n'
-      printf '1. **Do NOT scan the filesystem.** No `find`, `ls -R`, `glob`, or recursive directory walks. All paths you need are listed in this file.\n'
-      printf '2. **Read only files listed in Priority refs and Config manifests.** If a file is not listed, do not read it unless a listed file explicitly references it.\n'
-      printf '3. **Verify locally before committing.** Run the verify command below before reporting work as done. Do not skip this step.\n'
-      printf '4. **Follow the Workflow below as your execution contract.** Do not invent ad hoc steps or skip workflow phases.\n'
-      printf '5. **Use config manifests as traceable dependencies.** When you need to understand how something works, check the YAML manifest that defines it — not the code that reads it.\n\n'
+      # ── Contract — deterministic execution rules ─────────────────────────────
+      printf '## Contract\n\n'
+      printf 'This repository is a deterministic execution contract. Agents MUST interpret declared context — no scanning, no guesswork, no invention.\n\n'
 
-      # ── repo identity ────────────────────────────────────────────────────────
+      printf '### Rules\n\n'
+      printf '1. **Do NOT scan the filesystem.** No `find`, `ls -R`, `glob`, or recursive directory walks. All paths you need are listed below.\n'
+      printf '2. **Context boundaries are strict.** Read only files in Priority refs and Config manifests. If a file is not listed, do not read it unless a listed file explicitly references it.\n'
+      printf '3. **Manifests before code.** When you need to understand behavior, read the YAML manifest that defines it — not the code that implements it. Manifests are the interface.\n'
+      printf '4. **Context over memory.** Operate from repo-declared context. Do not carry assumptions from prior sessions or rely on prompt history when the contract is on disk.\n'
+      printf '5. **Verify locally before committing.** Run the verify command before reporting work as done. Local execution is part of the contract.\n'
+      printf '6. **Follow the Workflow below.** Do not invent ad hoc steps or skip phases. The workflow is the execution sequence.\n'
+      printf '7. **Reuse over invention.** Check existing org patterns, configs, and workflows before creating new ones.\n\n'
+
+      # ── Repo layer — identity, commands, allowed surface ─────────────────────
       local _name _arch _profile
       _name="$(awk    '/^repo:/{f=1} f && /^  name:/     {sub(/.*name:[[:space:]]*/,""); print; exit}' "$context_yaml")"
       _arch="$(awk    '/^repo:/{f=1} f && /^  archetype:/{sub(/.*archetype:[[:space:]]*/,""); print; exit}' "$context_yaml")"
@@ -123,15 +129,15 @@ dev_kit_agent_write_agents_md() {
       local _cmds
       _cmds="$(awk '/^commands:/{f=1;next} f && /^[a-zA-Z#]/{f=0} f' "$context_yaml")"
       if [ -n "$_cmds" ]; then
-        printf '## Commands\n\n```\n%s\n```\n\n' "$_cmds"
+        printf '### Commands\n\n```\n%s\n```\n\n' "$_cmds"
       fi
 
       # ── priority refs ────────────────────────────────────────────────────────
       local _refs
       _refs="$(awk '/^refs:/{f=1;next} f && /^[a-zA-Z#]/{f=0} f && /^  - /' "$context_yaml")"
       if [ -n "$_refs" ]; then
-        printf '## Priority refs\n\n'
-        printf 'Read these for full context. Do not explore beyond them.\n\n'
+        printf '### Priority refs\n\n'
+        printf 'These files plus config manifests define the complete allowed surface. Do not explore beyond them.\n\n'
         printf '%s\n\n' "$_refs"
       fi
 
@@ -139,41 +145,75 @@ dev_kit_agent_write_agents_md() {
       local _manifests
       _manifests="$(awk '/^manifests:/{f=1;next} f && /^[a-zA-Z#]/{f=0} f && /^  - /' "$context_yaml")"
       if [ -n "$_manifests" ]; then
-        printf '## Config manifests\n\n'
-        printf 'These YAML files define the project workflow, tooling, and behavior. Trace dependencies here before reading shell code.\n\n'
+        printf '### Config manifests\n\n'
+        printf 'YAML definitions are first-class interfaces. They control repo behavior — trace dependencies here, not in implementation code.\n\n'
         printf '%s\n\n' "$_manifests"
       fi
 
-      # ── gaps (actionable next steps) ─────────────────────────────────────────
+      # ── GitHub context ─────────────────────────────────────────────────────
+      # Awk stop conditions: top-level key (^[a-zA-Z#]) OR sibling subsection (^  [a-z])
+      local _gh_repo _gh_section
+      _gh_repo="$(awk '/^github:/{f=1} f && /^  repo:/{sub(/.*repo:[[:space:]]*/,""); print; exit}' "$context_yaml")"
+      if [ -n "$_gh_repo" ]; then
+        printf '### GitHub context\n\n'
+        printf 'Development signals from [%s](https://github.com/%s).\n\n' "$_gh_repo" "$_gh_repo"
+
+        _gh_section="$(awk '/^  open_issues:/{f=1;next} f && /^[a-zA-Z#]/{f=0} f && /^  [a-z]/{f=0} f && /^  - /' "$context_yaml")"
+        if [ -n "$_gh_section" ]; then
+          printf '**Open issues:**\n\n%s\n\n' "$_gh_section"
+        fi
+
+        _gh_section="$(awk '/^  open_prs:/{f=1;next} f && /^[a-zA-Z#]/{f=0} f && /^  [a-z]/{f=0} f && /^  - /' "$context_yaml")"
+        if [ -n "$_gh_section" ]; then
+          printf '**Open PRs:**\n\n%s\n\n' "$_gh_section"
+        fi
+
+        _gh_section="$(awk '/^  recent_prs:/{f=1;next} f && /^[a-zA-Z#]/{f=0} f && /^  [a-z]/{f=0} f && /^  - /' "$context_yaml")"
+        if [ -n "$_gh_section" ]; then
+          printf '**Recent PRs:**\n\n%s\n\n' "$_gh_section"
+        fi
+
+        _gh_section="$(awk '/^  security_alerts:/{f=1;next} f && /^[a-zA-Z#]/{f=0} f && /^  [a-z]/{f=0} f && /^  - /' "$context_yaml")"
+        if [ -n "$_gh_section" ]; then
+          printf '**Security alerts:**\n\n%s\n\n' "$_gh_section"
+        fi
+      fi
+
+      # ── gaps ─────────────────────────────────────────────────────────────────
       local _gaps
       _gaps="$(awk '/^gaps:/{f=1;next} f && /^[a-zA-Z#]/{f=0} f && /^  - /' "$context_yaml")"
       if [ -n "$_gaps" ]; then
-        printf '## Gaps\n\n%s\n\n' "$_gaps"
+        printf '### Gaps\n\n'
+        printf 'Incomplete factors. Address within the workflow, not as separate tasks.\n\n'
+        printf '%s\n\n' "$_gaps"
       fi
 
-      # ── workflow (full, with operational notes) ──────────────────────────────
+      # ── Versioned workflow artifacts ─────────────────────────────────────────
+      local _lessons
+      _lessons="$(awk '/^lessons:/{f=1;next} f && /^[a-zA-Z#]/{f=0} f && /^  - /' "$context_yaml")"
+      printf '## Versioned workflow artifacts\n\n'
+      printf '`.rabbit/` contains generated context downstream of repo signals. These are versioned artifacts, not primary sources.\n\n'
+      printf '  - `.rabbit/context.yaml` — generated execution contract (source of truth for this file)\n'
+      if [ -n "$_lessons" ]; then
+        printf '\nPrior session lessons — read before starting work:\n\n'
+        printf '%s\n' "$_lessons"
+      fi
+      printf '\n'
+
+      # ── Execution — workflow ─────────────────────────────────────────────────
       local _workflow
       _workflow="$(awk '/^workflow:/{f=1;next} f && /^[a-zA-Z#]/{f=0} f && /^  - /' "$context_yaml")"
       if [ -n "$_workflow" ]; then
         printf '## Workflow\n\n'
-        printf 'Follow these steps in order. Steps with notes contain operational guidance — read them.\n\n'
+        printf 'The dev.kit lifecycle: **repo → agent → work → PR → merge**. Follow these steps in order. Steps with notes contain operational guidance.\n\n'
         printf '%s\n\n' "$_workflow"
       fi
 
-      # ── engineering practices ────────────────────────────────────────────────
+      # ── Principles — engineering practices ───────────────────────────────────
       local _practices
       _practices="$(awk '/^practices:/{f=1;next} f && /^[a-zA-Z#]/{f=0} f && /^  - /' "$context_yaml")"
       if [ -n "$_practices" ]; then
         printf '## Engineering practices\n\n%s\n\n' "$_practices"
-      fi
-
-      # ── lessons ───────────────────────────────────────────────────────────────
-      local _lessons
-      _lessons="$(awk '/^lessons:/{f=1;next} f && /^[a-zA-Z#]/{f=0} f && /^  - /' "$context_yaml")"
-      if [ -n "$_lessons" ]; then
-        printf '## Lessons from prior sessions\n\n'
-        printf 'Read these before starting work. They contain workflow rules and operational patterns learned from real agent sessions.\n\n'
-        printf '%s\n\n' "$_lessons"
       fi
     fi
   } > "$agents_md_path"

@@ -11,8 +11,28 @@ config:
       message: Keep markdown, yaml, diagrams, tests, and command contracts self-contained in the repo so local and remote UDX workflows stay aligned.
     - id: strict-agent-boundary
       message: Keep deterministic workflow logic in repo config and scripts, and reserve AI agents for reading that contract, generating grounded summaries, and handling non-deterministic judgment without inventing hidden rules.
+    - id: context-over-memory
+      message: Operate from repo-declared context at all times. Do not carry assumptions across sessions or rely on prompt history when the repo contract is available on disk.
+    - id: manifests-before-code
+      message: When understanding behavior, read the YAML manifest that defines it before reading the code that implements it. Manifests are the interface — code is the mechanism.
+    - id: reuse-over-invention
+      message: Check existing org patterns, configs, workflows, and templates before creating new ones. Reuse declared patterns instead of inventing alternatives.
+    - id: localhost-first
+      message: Execute verification, builds, and tests locally before any remote operation. Local execution is part of the reproducible repo contract, not a preference.
+    - id: delivery-chain-traceability
+      message: Keep the delivery chain explicit — branch, PR, and issue must be connected before close-out. Do not treat any step as done until the link to the next step is visible.
+    - id: structured-outcome-reporting
+      message: Report outcomes with exact URLs, versions, findings deltas, and next steps so follow-up can be reused by humans and agents without drift.
+    - id: docs-first-alignment
+      message: Use README, docs, and tests as the first alignment surface before broad refactors. Read the declared workflow before changing the implementation.
     - id: standard-repo-first
       message: Do not require custom repo files for dev.kit to work. Prefer standard engineering signals such as README, docs, tests, manifests, workflows, and deployment config, with dev.kit-owned continuity treated as optional acceleration only.
+    - id: config-over-code
+      message: Express repo rules in YAML manifests first, then keep shell glue thin and composable. Policy belongs in config, not buried in imperative scripts.
+    - id: legacy-reduction
+      message: When a new direction is accepted, archive or delete conflicting old modules and configs instead of carrying both models forward.
+    - id: verification-scope
+      message: Run the smallest local check that proves the current change. Defer heavyweight coverage to CI and call that tradeoff out explicitly.
     - id: incremental-development
       message: Make sure to develop and test incrementally, so it is easier to detect problems early and build on verified behavior.
     - id: scoped-execution

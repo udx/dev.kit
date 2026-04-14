@@ -40,9 +40,9 @@ dev.kit repo --json
 
 Output includes: archetype, profile, factors (✓ present / ◦ partial / ✗ missing), gaps, config manifests, and context path.
 
-## `dev.kit agent` — agent instructions
+## `dev.kit agent` — execution contract
 
-Generates `AGENTS.md` — a comprehensive guide with anti-drift rules, commands, priority refs, config manifests, full workflow, engineering practices, and lessons from prior sessions.
+Generates `AGENTS.md` — a deterministic execution contract with strict rules, commands, priority refs, config manifests, GitHub context, full workflow, engineering practices, and versioned workflow artifacts.
 
 Auto-generates `.rabbit/context.yaml` if missing — no manual `dev.kit repo` step required.
 
@@ -52,9 +52,11 @@ dev.kit agent --json
 ```
 
 AGENTS.md includes:
-- **Rules** — no filesystem scanning, verify before commit, follow the workflow
+- **Contract** — 7 rules: no scanning, strict boundaries, manifests before code, context over memory, verify locally, follow workflow, reuse over invention
 - **Config manifests** — traceable YAML dependencies with kind labels
-- **Full workflow** — 15-step execution contract with operational notes
+- **GitHub context** — open issues, recent PRs, security alerts (via `gh api`)
+- **Full workflow** — execution sequence with operational notes
+- **Engineering practices** — 17 principles from lessons learned
 
 ## `dev.kit learn` — agent experience
 

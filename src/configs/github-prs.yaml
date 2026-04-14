@@ -161,9 +161,10 @@ config:
         linking the merged PR and a brief summary of what shipped.
     - id: close-out-comment
       message: >
-        Post a close-out comment on the linked issue (if not auto-closed by GitHub)
-        with the merged PR URL, a one-line summary of what shipped, and any
-        outstanding follow-up items as linked issues.
+        Post a close-out comment on the linked issue with the merged PR URL,
+        exact versions or release tags, a one-line summary of what shipped,
+        findings delta (what changed vs. what was expected), and any outstanding
+        follow-up items as linked issues. Use exact URLs — not descriptions.
     - id: backlog-issues
       message: >
         For each item listed under "Backlog from this investigation", verify a GitHub
