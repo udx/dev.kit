@@ -71,11 +71,10 @@ _dev_kit_repo_factor_status_compute() {
 
   case "$factor" in
     documentation)
-      if dev_kit_repo_has_any_file_from_list "$repo_dir" "documentation_files"; then
+      # README or docs/ is enough — no deep validation needed
+      if dev_kit_repo_has_any_file_from_list "$repo_dir" "documentation_files" || \
+         dev_kit_repo_has_any_file_from_list "$repo_dir" "documentation_hub_files"; then
         printf "%s" "present"
-      elif dev_kit_repo_has_any_file_from_list "$repo_dir" "documentation_hub_files" || \
-           dev_kit_repo_has_documentation_sections "$repo_dir"; then
-        printf "%s" "partial"
       else
         printf "%s" "missing"
       fi

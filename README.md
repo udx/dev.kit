@@ -2,7 +2,9 @@
 
 <https://udx.dev/kit>
 
-**Repo context for AI agents. One file. Every agent. Zero drift.**
+**Dynamic repo context for developers and AI agents.**
+
+dev.kit handles what agents can't do reliably — deterministic scanning, tool detection, dependency tracing, cross-repo resolution. Agents handle what dev.kit can't — judgment, code changes, PR creation. Developers get the same context without agents. The split is clean: dev.kit produces the context, humans and agents consume it.
 
 ```bash
 npm install -g @udx/dev-kit
