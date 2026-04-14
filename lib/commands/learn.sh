@@ -40,6 +40,7 @@ dev_kit_cmd_learn() {
   local lastrun_file="${repo_dir}/.rabbit/dev.kit/learn-last-run"
   local latest_artifact
   latest_artifact="$(dev_kit_learning_latest_artifact_path "$repo_dir")"
+  dev_kit_spinner_start "scanning agent sessions"
   local session_refs
   if [ -n "$latest_artifact" ] && [ -f "$latest_artifact" ]; then
     session_refs="$(dev_kit_learning_all_session_refs "$repo_dir" "$lastrun_file")"
@@ -47,6 +48,7 @@ dev_kit_cmd_learn() {
     # No durable lessons artifact means there is no incremental baseline yet.
     session_refs="$(dev_kit_learning_all_session_refs "$repo_dir" "")"
   fi
+  dev_kit_spinner_stop ""
 
   if [ "$format" = "json" ]; then
     local observed_json flow_json shared_context_json

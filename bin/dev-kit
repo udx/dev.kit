@@ -153,9 +153,11 @@ dev_kit_run_home() {
   repo_root="$(dev_kit_repo_root "$repo_dir")"
 
   if [ -n "$repo_root" ]; then
+    dev_kit_spinner_start "detecting repo"
     local archetype profile git_state priority_refs first_ref second_ref
     archetype="$(dev_kit_repo_primary_archetype "$repo_root")"
     profile="$(dev_kit_repo_primary_profile "$repo_root")"
+    dev_kit_spinner_stop ""
     git_state="no"
     if dev_kit_sync_has_git_repo "$repo_root"; then
       git_state="yes"

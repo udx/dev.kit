@@ -58,13 +58,14 @@ dev_kit_cmd_repo() {
   fi
 
   # Text mode: print title immediately, then compute and display progressively.
-  # Manifest write is deferred to after output so the user sees analysis first.
   dev_kit_output_title "dev.kit repo"
 
-  # Archetype is needed for summary + scaffold plan (cached after first call)
+  # Archetype detection + scaffold plan — show spinner during analysis
+  dev_kit_spinner_start "analyzing repo"
   local archetype scaffold_plan
   archetype="$(dev_kit_repo_primary_archetype "$repo_dir")"
   scaffold_plan="$(dev_kit_scaffold_plan "$repo_dir" "$archetype")"
+  dev_kit_spinner_stop ""
 
   # scaffold mode: apply the plan now (before output so result shows correctly)
   if [ "$mode" = "scaffold" ]; then

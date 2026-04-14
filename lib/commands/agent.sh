@@ -18,9 +18,9 @@ dev_kit_cmd_agent() {
 
   # Auto-generate context if missing — no manual repo step required
   if [ ! -f "$context_yaml_path" ]; then
-    [ "$format" = "text" ] && dev_kit_spinner_start "generating repo context"
+    dev_kit_spinner_start "generating repo context"
     dev_kit_context_yaml_write "$repo_dir" >/dev/null
-    [ "$format" = "text" ] && dev_kit_spinner_stop "context ready"
+    dev_kit_spinner_stop "context ready"
   fi
 
   # If generation still failed, report error
@@ -35,11 +35,13 @@ dev_kit_cmd_agent() {
     return 1
   fi
 
+  dev_kit_spinner_start "writing agents.md"
   dev_kit_agent_write_agents_md "$repo_dir" "$agents_md_path"
 
   local archetype profile
   archetype="$(dev_kit_repo_primary_archetype "$repo_dir")"
   profile="$(dev_kit_repo_primary_profile "$repo_dir")"
+  dev_kit_spinner_stop ""
 
   if [ "$format" = "json" ]; then
     dev_kit_template_render "agent.json" \
