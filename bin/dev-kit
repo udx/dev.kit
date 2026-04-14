@@ -170,15 +170,20 @@ dev_kit_run_home() {
     [ -n "$second_ref" ] && dev_kit_output_list_item "$second_ref"
 
     dev_kit_output_section "do next"
+    # Always guide through the dev.kit pipeline first
+    local _context_yaml="${repo_root}/.rabbit/context.yaml"
+    local _agents_md="${repo_root}/AGENTS.md"
+    if [ ! -f "$_context_yaml" ] || [ ! -f "$_agents_md" ]; then
+      dev_kit_output_list_item "Run dev.kit repo to generate context."
+      dev_kit_output_list_item "Run dev.kit agent to generate AGENTS.md."
+    else
+      dev_kit_output_row "refresh context" "dev.kit repo && dev.kit agent"
+    fi
     if [ "$git_state" = "yes" ]; then
       dev_kit_output_list_from_lines <<EOF
 $(dev_kit_sync_start_here_text "$repo_root" | dev_kit_output_first_lines 3)
 EOF
-    else
-      dev_kit_output_list_item "Run dev.kit repo to analyse the repo."
-      dev_kit_output_list_item "Run dev.kit agent to start an AI session."
     fi
-    dev_kit_output_row "more" "dev.kit repo | dev.kit agent | dev.kit learn"
   else
     dev_kit_output_summary "No repository detected in the current directory"
     dev_kit_output_section "read first"
