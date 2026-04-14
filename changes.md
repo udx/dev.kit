@@ -1,5 +1,12 @@
 # Changes
 
+### 0.2.0
+
+- npm release workflow with OIDC provenance via `udx/reusable-workflows`
+- GitHub releases created automatically on merge to main
+- `dev.kit --version` flag
+- Copilot review feedback fixes (JSON escaping, cache multi-line values, fixture portability)
+
 ### 0.1.0
 
 Initial release.
