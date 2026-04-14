@@ -65,18 +65,22 @@ dev_kit_output_first_lines() {
 
 # ── Spinner ───────────────────────────────────────────────────────────────────
 # Background Braille spinner for long-running operations.
-# Writes to stdout; auto-skips when stdout is not a terminal (tests, pipes).
+# Writes directly to /dev/tty so it works even when stdout is redirected.
+# Auto-skips in non-interactive environments (CI, pipes, tests).
 
 _DEV_KIT_SPINNER_PID=""
 
 dev_kit_spinner_start() {
   local msg="${1:-}"
-  [ -t 1 ] || return 0
+  [ -e /dev/tty ] || return 0
+  # Verify terminal is interactive (not CI or piped)
+  [ -t 2 ] || return 0
   (
-    trap 'exit 0' TERM
+    set +e
+    trap 'exit 0' TERM INT
     while true; do
       for c in '⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏'; do
-        printf '\r  %s %s' "$c" "$msg"
+        printf '\r  %s %s' "$c" "$msg" > /dev/tty
         sleep 0.08 2>/dev/null || sleep 1
       done
     done
@@ -91,11 +95,11 @@ dev_kit_spinner_stop() {
     wait "$_DEV_KIT_SPINNER_PID" 2>/dev/null || true
     _DEV_KIT_SPINNER_PID=""
   fi
-  [ -t 1 ] || return 0
+  [ -e /dev/tty ] && [ -t 2 ] || return 0
   if [ -n "$result" ]; then
-    printf '\r  ✓ %-40s\n' "$result"
+    printf '\r  ✓ %-40s\n' "$result" > /dev/tty
   else
-    printf '\r%-50s\r' ''
+    printf '\r%-50s\r' '' > /dev/tty
   fi
 }
 
