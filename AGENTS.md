@@ -70,6 +70,10 @@ YAML definitions are first-class interfaces. They control repo behavior — trac
 
 Development signals from [udx/dev.kit](https://github.com/udx/dev.kit).
 
+**Open PRs:**
+
+  - #16 restructure AGENTS.md as execution contract, add GitHub context
+
 **Recent PRs:**
 
   - #15 bump version to 0.2.1
@@ -109,11 +113,11 @@ The dev.kit lifecycle: **repo → agent → work → PR → merge**. Follow thes
   - Bump version and changelog if supported
   - Create or validate feature branch
   - Push branch to remote
-  - Generate pull request description: Pick the PR template type from src/configs/github-prs.yaml (feature, deployment, ops, hotfix). Fill every required section. Include "Closes #N" for linked issues. Add a "Backlog from this investigation" section for any new gaps found. Use .github/PULL_REQUEST_TEMPLATE.md as the base form.
+  - Generate pull request description: Pick the PR template type from src/configs/github-prs.yaml (feature, deployment, ops, hotfix). Fill every required section. Include \"Closes #N\" for linked issues. Add a \"Backlog from this investigation\" section for any new gaps found. Use .github/PULL_REQUEST_TEMPLATE.md as the base form.
   - Create pull request
   - Read and respond to automated reviews: After PR creation, wait for Copilot, Devin, and CodeQL reviews. Read each review from github-prs.yaml bot guidance. Address actionable findings — reply to each bot comment. Do not request human review while bot findings are unaddressed.
   - Verify required status checks: All required checks must pass before requesting human review. For infra PRs, open check details and review the Terraform plan output. For CodeQL, review findings in the Security tab.
-  - Post close-out comment on linked issue: After PR is created, post a brief comment on the linked issue with the PR URL, what changed, and any follow-up items. GitHub auto-closes the issue on merge when "Closes #N" is in the PR body — do not close manually.
+  - Post close-out comment on linked issue: After PR is created, post a brief comment on the linked issue with the PR URL, what changed, and any follow-up items. GitHub auto-closes the issue on merge when \"Closes #N\" is in the PR body — do not close manually.
   - Post-merge close-out and backlog: After merge: verify issue auto-closed, post close-out comment, open issues for any backlog items from the PR, verify monitoring changes are live. See post_merge steps in github-prs.yaml.
 
 ## Engineering practices

@@ -186,47 +186,57 @@ dev_kit_context_yaml_write() {
       printf '\n'
     fi
 
-    # GitHub context — development signals from the repo's GitHub history
-    # Only collected when gh CLI is available and repo has a remote.
+    # GitHub context — development signals from the repo's GitHub history.
+    # Only collected when gh CLI is available and remote is github.com.
     # All gh calls are guarded (|| true) since repos may have issues disabled,
-    # no PRs, or restricted API access.
+    # no PRs, or restricted API access. Titles are sanitized to prevent
+    # YAML injection from untrusted PR/issue names.
     if command -v gh >/dev/null 2>&1 && dev_kit_sync_has_git_repo "$repo_root"; then
-      local _gh_owner_repo _gh_context=""
-      _gh_owner_repo="$(git -C "$repo_root" remote get-url origin 2>/dev/null | sed -E 's|.*github\.com[:/]||; s|\.git$||')"
+      local _gh_origin_url _gh_owner_repo=""
+      _gh_origin_url="$(git -C "$repo_root" remote get-url origin 2>/dev/null || true)"
+      if [[ "$_gh_origin_url" =~ github\.com[:/]([^/]+/[^/]+)(\.git)?$ ]]; then
+        _gh_owner_repo="${BASH_REMATCH[1]}"
+        _gh_owner_repo="${_gh_owner_repo%.git}"
+      fi
       if [ -n "$_gh_owner_repo" ]; then
+        # jq yaml_safe: strip newlines/carriage returns, escape inner quotes
+        local _jq_safe='def yaml_safe: gsub("\\r"; " ") | gsub("\\n"; " ") | gsub("\""; "\\\"");'
+
         # Open issues (up to 10, most recent)
         local _gh_issues
-        _gh_issues="$(gh api "repos/${_gh_owner_repo}/issues?state=open&per_page=10&sort=updated&direction=desc" 2>/dev/null | jq -r '.[]? | select(.pull_request == null) | "  - #\(.number) \(.title)\(if (.labels | length) > 0 then " [" + ([.labels[].name] | join(", ")) + "]" else "" end)"' 2>/dev/null || true)"
-        if [ -n "$_gh_issues" ]; then
-          _gh_context="${_gh_context}  open_issues:\n${_gh_issues}\n"
-        fi
+        _gh_issues="$(gh api "repos/${_gh_owner_repo}/issues?state=open&per_page=10&sort=updated&direction=desc" 2>/dev/null | jq -r "${_jq_safe}"'
+          .[]? | select(.pull_request == null) |
+          "    - \"#\(.number) \(.title | yaml_safe)\(if (.labels | length) > 0 then " [" + ([.labels[].name | yaml_safe] | join(", ")) + "]" else "" end)\""
+        ' 2>/dev/null || true)"
 
         # Recent merged PRs (last 5)
         local _gh_prs
-        _gh_prs="$(gh api "repos/${_gh_owner_repo}/pulls?state=closed&sort=updated&direction=desc&per_page=10" 2>/dev/null | jq -r '[.[]? | select(.merged_at != null)] | sort_by(.merged_at) | reverse | .[:5][] | "  - #\(.number) \(.title)"' 2>/dev/null || true)"
-        if [ -n "$_gh_prs" ]; then
-          _gh_context="${_gh_context}  recent_prs:\n${_gh_prs}\n"
-        fi
+        _gh_prs="$(gh api "repos/${_gh_owner_repo}/pulls?state=closed&sort=updated&direction=desc&per_page=10" 2>/dev/null | jq -r "${_jq_safe}"'
+          [.[]? | select(.merged_at != null)] | sort_by(.merged_at) | reverse | .[:5][] |
+          "    - \"#\(.number) \(.title | yaml_safe)\""
+        ' 2>/dev/null || true)"
 
         # Open PRs
         local _gh_open_prs
-        _gh_open_prs="$(gh api "repos/${_gh_owner_repo}/pulls?state=open&per_page=5&sort=updated&direction=desc" 2>/dev/null | jq -r '.[]? | "  - #\(.number) \(.title)\(if .draft then " (draft)" else "" end)"' 2>/dev/null || true)"
-        if [ -n "$_gh_open_prs" ]; then
-          _gh_context="${_gh_context}  open_prs:\n${_gh_open_prs}\n"
-        fi
+        _gh_open_prs="$(gh api "repos/${_gh_owner_repo}/pulls?state=open&per_page=5&sort=updated&direction=desc" 2>/dev/null | jq -r "${_jq_safe}"'
+          .[]? | "    - \"#\(.number) \(.title | yaml_safe)\(if .draft then " (draft)" else "" end)\""
+        ' 2>/dev/null || true)"
 
         # Security alerts (Dependabot)
         local _gh_alerts
-        _gh_alerts="$(gh api "repos/${_gh_owner_repo}/dependabot/alerts?state=open&per_page=5" 2>/dev/null | jq -r '.[]? | "  - \(.security_advisory.severity): \(.security_advisory.summary // .dependency.package.name)"' 2>/dev/null || true)"
-        if [ -n "$_gh_alerts" ]; then
-          _gh_context="${_gh_context}  security_alerts:\n${_gh_alerts}\n"
-        fi
+        _gh_alerts="$(gh api "repos/${_gh_owner_repo}/dependabot/alerts?state=open&per_page=5" 2>/dev/null | jq -r "${_jq_safe}"'
+          .[]? | "    - \"\(.security_advisory.severity | yaml_safe): \((.security_advisory.summary // .dependency.package.name) | yaml_safe)\""
+        ' 2>/dev/null || true)"
 
-        if [ -n "$_gh_context" ]; then
+        if [ -n "$_gh_issues" ] || [ -n "$_gh_prs" ] || [ -n "$_gh_open_prs" ] || [ -n "$_gh_alerts" ]; then
           printf '# GitHub context — development signals from repo history\n'
           printf 'github:\n'
           printf '  repo: %s\n' "$_gh_owner_repo"
-          printf '%b\n' "$_gh_context"
+          [ -n "$_gh_issues" ]   && printf '  open_issues:\n%s\n' "$_gh_issues"
+          [ -n "$_gh_prs" ]      && printf '  recent_prs:\n%s\n' "$_gh_prs"
+          [ -n "$_gh_open_prs" ] && printf '  open_prs:\n%s\n' "$_gh_open_prs"
+          [ -n "$_gh_alerts" ]   && printf '  security_alerts:\n%s\n' "$_gh_alerts"
+          printf '\n'
         fi
       fi
     fi
@@ -239,7 +249,7 @@ dev_kit_context_yaml_write() {
       "  - " + .key + " (" + .value.status + ")"
     ' 2>/dev/null)"
     if [ -n "$_gaps_yaml" ]; then
-      printf '# Gaps — run `dev.kit repo --scaffold` to apply fixes\n'
+      printf '# Gaps — factors that are missing or partial\n'
       printf 'gaps:\n'
       printf '%s\n\n' "$_gaps_yaml"
     fi
@@ -253,7 +263,8 @@ dev_kit_context_yaml_write() {
         in_p && /^  [a-zA-Z]/ { in_p=0 }
         in_p && /^      message:/ {
           sub(/^[[:space:]]*message:[[:space:]]*/, "", $0)
-          printf "  - %s\n", $0
+          gsub(/"/, "\\\"", $0)
+          printf "  - \"%s\"\n", $0
         }
       ' "$_practices_file")"
       if [ -n "$_practices_yaml" ]; then
@@ -279,8 +290,10 @@ dev_kit_context_yaml_write() {
         in_note { flush(); in_note=0 }
         function flush() {
           if (label != "") {
-            if (note != "") printf "  - %s: %s\n", label, note
-            else            printf "  - %s\n", label
+            gsub(/"/, "\\\"", label)
+            gsub(/"/, "\\\"", note)
+            if (note != "") printf "  - \"%s: %s\"\n", label, note
+            else            printf "  - \"%s\"\n", label
           }
         }
         END { flush() }

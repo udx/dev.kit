@@ -149,32 +149,30 @@ dev_kit_agent_write_agents_md() {
       fi
 
       # ── GitHub context ─────────────────────────────────────────────────────
-      # Awk stop conditions: top-level key (^[a-zA-Z#]) OR sibling subsection (^  [a-z])
+      # Items in context.yaml are 4-space indented under github subsections.
+      # Strip 4 leading spaces when emitting into markdown.
       local _gh_repo _gh_section
       _gh_repo="$(awk '/^github:/{f=1} f && /^  repo:/{sub(/.*repo:[[:space:]]*/,""); print; exit}' "$context_yaml")"
       if [ -n "$_gh_repo" ]; then
         printf '### GitHub context\n\n'
         printf 'Development signals from [%s](https://github.com/%s).\n\n' "$_gh_repo" "$_gh_repo"
 
-        _gh_section="$(awk '/^  open_issues:/{f=1;next} f && /^[a-zA-Z#]/{f=0} f && /^  [a-z]/{f=0} f && /^  - /' "$context_yaml")"
-        if [ -n "$_gh_section" ]; then
-          printf '**Open issues:**\n\n%s\n\n' "$_gh_section"
-        fi
+        # Helper: extract github subsection, strip indent and YAML quotes for markdown
+        _gh_extract() {
+          awk -v key="^  ${1}:" '$0 ~ key {f=1;next} f && /^    - /{sub(/^    - "?/, "  - "); sub(/"$/, ""); print; next} f && /^[^ ]|^  [a-z]/{f=0}' "$context_yaml"
+        }
 
-        _gh_section="$(awk '/^  open_prs:/{f=1;next} f && /^[a-zA-Z#]/{f=0} f && /^  [a-z]/{f=0} f && /^  - /' "$context_yaml")"
-        if [ -n "$_gh_section" ]; then
-          printf '**Open PRs:**\n\n%s\n\n' "$_gh_section"
-        fi
+        _gh_section="$(_gh_extract open_issues)"
+        [ -n "$_gh_section" ] && printf '**Open issues:**\n\n%s\n\n' "$_gh_section"
 
-        _gh_section="$(awk '/^  recent_prs:/{f=1;next} f && /^[a-zA-Z#]/{f=0} f && /^  [a-z]/{f=0} f && /^  - /' "$context_yaml")"
-        if [ -n "$_gh_section" ]; then
-          printf '**Recent PRs:**\n\n%s\n\n' "$_gh_section"
-        fi
+        _gh_section="$(_gh_extract open_prs)"
+        [ -n "$_gh_section" ] && printf '**Open PRs:**\n\n%s\n\n' "$_gh_section"
 
-        _gh_section="$(awk '/^  security_alerts:/{f=1;next} f && /^[a-zA-Z#]/{f=0} f && /^  [a-z]/{f=0} f && /^  - /' "$context_yaml")"
-        if [ -n "$_gh_section" ]; then
-          printf '**Security alerts:**\n\n%s\n\n' "$_gh_section"
-        fi
+        _gh_section="$(_gh_extract recent_prs)"
+        [ -n "$_gh_section" ] && printf '**Recent PRs:**\n\n%s\n\n' "$_gh_section"
+
+        _gh_section="$(_gh_extract security_alerts)"
+        [ -n "$_gh_section" ] && printf '**Security alerts:**\n\n%s\n\n' "$_gh_section"
       fi
 
       # ── gaps ─────────────────────────────────────────────────────────────────
@@ -200,7 +198,7 @@ dev_kit_agent_write_agents_md() {
 
       # ── Execution — workflow ─────────────────────────────────────────────────
       local _workflow
-      _workflow="$(awk '/^workflow:/{f=1;next} f && /^[a-zA-Z#]/{f=0} f && /^  - /' "$context_yaml")"
+      _workflow="$(awk '/^workflow:/{f=1;next} f && /^[a-zA-Z#]/{f=0} f && /^  - /{gsub(/^  - "/, "  - "); sub(/"$/, ""); print}' "$context_yaml")"
       if [ -n "$_workflow" ]; then
         printf '## Workflow\n\n'
         printf 'The dev.kit lifecycle: **repo → agent → work → PR → merge**. Follow these steps in order. Steps with notes contain operational guidance.\n\n'
@@ -209,7 +207,7 @@ dev_kit_agent_write_agents_md() {
 
       # ── Principles — engineering practices ───────────────────────────────────
       local _practices
-      _practices="$(awk '/^practices:/{f=1;next} f && /^[a-zA-Z#]/{f=0} f && /^  - /' "$context_yaml")"
+      _practices="$(awk '/^practices:/{f=1;next} f && /^[a-zA-Z#]/{f=0} f && /^  - /{gsub(/^  - "/, "  - "); sub(/"$/, ""); print}' "$context_yaml")"
       if [ -n "$_practices" ]; then
         printf '## Engineering practices\n\n%s\n\n' "$_practices"
       fi
