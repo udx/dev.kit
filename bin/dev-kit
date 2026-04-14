@@ -242,6 +242,11 @@ if [ "$command" = "--json" ]; then
   format="json"
 fi
 
+if [ "$command" = "--version" ] || [ "$command" = "-v" ]; then
+  awk -F'"' '/"version"/{print $4}' "$REPO_DIR/package.json"
+  exit 0
+fi
+
 case "$command" in
   help|-h|--help)
     usage

@@ -1,0 +1,32 @@
+{
+  "name": "@udx/dev.kit",
+  "version": "0.1.0",
+  "description": "Context-driven engineering toolkit for AI agents and developers",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/udx/dev.kit.git"
+  },
+  "homepage": "https://github.com/udx/dev.kit",
+  "bugs": "https://github.com/udx/dev.kit/issues",
+  "bin": {
+    "dev.kit": "bin/dev-kit",
+    "dev-kit": "bin/dev-kit"
+  },
+  "files": [
+    "bin/",
+    "lib/",
+    "src/",
+    "changes.md"
+  ],
+  "keywords": [
+    "dev-kit",
+    "developer-tools",
+    "ai-agents",
+    "repo-context",
+    "cli"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}
