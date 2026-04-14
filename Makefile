@@ -1,6 +1,6 @@
 WORKER_IMAGE := usabilitydynamics/udx-worker:latest
 
-.PHONY: test test-docker test-docker-pull test-shell
+.PHONY: test test-docker test-docker-pull test-shell eval eval-view
 
 # Run tests locally
 test:
@@ -18,3 +18,11 @@ test-shell:
 # Pull the worker image explicitly
 test-docker-pull:
 	docker pull $(WORKER_IMAGE)
+
+# Run promptfoo eval — measures agent accuracy with vs without dev.kit context
+eval:
+	promptfoo eval -c evals/promptfooconfig.yaml
+
+# View eval results in browser
+eval-view:
+	promptfoo view

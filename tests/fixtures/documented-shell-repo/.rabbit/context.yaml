@@ -14,10 +14,10 @@ refs:
   - ./.rabbit
   - ./scripts
   - ./tests
-  - /Users/jonyfq/git/udx/dev.kit/src/configs/github-issues.yaml
-  - /Users/jonyfq/git/udx/dev.kit/src/configs/github-prs.yaml
-  - /Users/jonyfq/git/udx/dev.kit/.github/ISSUE_TEMPLATE
-  - /Users/jonyfq/git/udx/dev.kit/.github/PULL_REQUEST_TEMPLATE.md
+  - /Users/jonyfq/.udx/dev.kit/src/configs/github-issues.yaml
+  - /Users/jonyfq/.udx/dev.kit/src/configs/github-prs.yaml
+  - https://raw.githubusercontent.com/udx/dev.kit/main/.github/ISSUE_TEMPLATE
+  - https://raw.githubusercontent.com/udx/dev.kit/main/.github/PULL_REQUEST_TEMPLATE.md
 
 commands:
   verify: bash tests/run.sh
