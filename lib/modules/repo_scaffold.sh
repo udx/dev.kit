@@ -40,7 +40,7 @@ dev_kit_scaffold_gaps_json() {
   local first=1
 
   printf '[\n'
-  for factor in documentation architecture dependencies config verification runtime build_release_run; do
+  for factor in documentation dependencies config pipeline; do
     status="$(dev_kit_repo_factor_status "$repo_root" "$factor")"
     [ "$status" = "missing" ] || [ "$status" = "partial" ] || continue
     local rule_id message
@@ -78,6 +78,53 @@ dev_kit_dep_is_same_org() {
     "${current_org}/"*) return 0 ;;
     *)                  return 1 ;;
   esac
+}
+
+# Try to match a Docker image name to a same-org GitHub repo.
+# For images like "usabilitydynamics/udx-worker-tooling:0.19.0",
+# the Docker Hub org differs from the GitHub org. Extract the image name
+# and check if a matching repo exists in the current GitHub org.
+# Returns org/repo if found, empty string otherwise.
+dev_kit_dep_match_image_to_org() {
+  local dep_id="$1" current_org="$2" repo_root="$3" gh_auth="$4"
+  [ -n "$current_org" ] || return 0
+
+  # Extract image name: strip org prefix, tag, and digest
+  local img_name="${dep_id##*/}"
+  img_name="${img_name%%:*}"
+  img_name="${img_name%%@*}"
+  [ -n "$img_name" ] || return 0
+
+  local parent_dir
+  parent_dir="$(dirname "$repo_root")"
+
+  # Try exact match: org/image-name
+  if [ -d "${parent_dir}/${img_name}/.git" ]; then
+    printf '%s/%s' "$current_org" "$img_name"
+    return 0
+  fi
+
+  # Try stripping org prefix: "udx-worker-tooling" → "worker-tooling"
+  local stripped="${img_name#"${current_org}-"}"
+  if [ "$stripped" != "$img_name" ] && [ -d "${parent_dir}/${stripped}/.git" ]; then
+    printf '%s/%s' "$current_org" "$stripped"
+    return 0
+  fi
+
+  # Try via gh api if available
+  if [ "$gh_auth" = "available" ]; then
+    if gh api "repos/${current_org}/${img_name}" --silent 2>/dev/null; then
+      printf '%s/%s' "$current_org" "$img_name"
+      return 0
+    fi
+    if [ "$stripped" != "$img_name" ]; then
+      if gh api "repos/${current_org}/${stripped}" --silent 2>/dev/null; then
+        printf '%s/%s' "$current_org" "$stripped"
+        return 0
+      fi
+    fi
+  fi
+  return 0
 }
 
 # Resolve a same-org dependency repo.
@@ -126,43 +173,37 @@ dev_kit_deps_json() {
 
   awk '
     function json_esc(s) { gsub(/\\/, "\\\\", s); gsub(/"/, "\\\"", s); gsub(/\t/, " ", s); return s }
-    BEGIN { printf "["; open = 0 }
+    function flush_ub() {
+      if (ub_count > 0) {
+        printf ", \"used_by\": ["
+        for (i = 1; i <= ub_count; i++) {
+          if (i > 1) printf ", "
+          printf "\"%s\"", json_esc(ub[i])
+        }
+        printf "]"
+      }
+    }
+    BEGIN { printf "["; open = 0; ub_count = 0; in_ub = 0 }
     /^dependencies:/ { in_d=1; next }
-    in_d && /^[a-zA-Z#]/ { if (open) { printf "}"; open = 0 }; in_d=0 }
+    in_d && /^[a-zA-Z#]/ { if (open) { flush_ub(); printf "}"; open = 0 }; in_d=0 }
     !in_d { next }
     /^  - repo:/ {
-      if (open) printf "},"
+      if (open) { flush_ub(); printf "}," }
       sub(/.*repo:[[:space:]]*/, "")
       printf "\n    {\"repo\": \"%s\"", json_esc($0)
-      open = 1
+      open = 1; ub_count = 0; in_ub = 0
       next
     }
-    /^    type:/ {
-      sub(/.*type:[[:space:]]*/, "")
-      printf ", \"type\": \"%s\"", json_esc($0)
-      next
-    }
-    /^    resolved:/ {
-      sub(/.*resolved:[[:space:]]*/, "")
-      printf ", \"resolved\": %s", $0
-      next
-    }
-    /^    archetype:/ {
-      sub(/.*archetype:[[:space:]]*/, "")
-      printf ", \"archetype\": \"%s\"", json_esc($0)
-      next
-    }
-    /^    profile:/ {
-      sub(/.*profile:[[:space:]]*/, "")
-      printf ", \"profile\": \"%s\"", json_esc($0)
-      next
-    }
-    /^    description:/ {
-      sub(/.*description:[[:space:]]*/, "")
-      printf ", \"description\": \"%s\"", json_esc($0)
-      next
-    }
-    END { if (open) printf "}"; printf "\n  ]" }
+    /^    type:/        { sub(/.*type:[[:space:]]*/, "");        printf ", \"type\": \"%s\"", json_esc($0);        in_ub=0; next }
+    /^    resolved:/    { sub(/.*resolved:[[:space:]]*/, "");    printf ", \"resolved\": %s", $0;                  in_ub=0; next }
+    /^    archetype:/   { sub(/.*archetype:[[:space:]]*/, "");   printf ", \"archetype\": \"%s\"", json_esc($0);   in_ub=0; next }
+    /^    profile:/     { sub(/.*profile:[[:space:]]*/, "");     printf ", \"profile\": \"%s\"", json_esc($0);     in_ub=0; next }
+    /^    source_repo:/ { sub(/.*source_repo:[[:space:]]*/, ""); printf ", \"source_repo\": \"%s\"", json_esc($0); in_ub=0; next }
+    /^    description:/ { sub(/.*description:[[:space:]]*/, ""); printf ", \"description\": \"%s\"", json_esc($0); in_ub=0; next }
+    /^    used_by:/     { in_ub = 1; next }
+    in_ub && /^      - / { ub_count++; sub(/^[[:space:]]*- /, ""); ub[ub_count] = $0; next }
+    in_ub && !/^      /  { in_ub = 0 }
+    END { if (open) { flush_ub(); printf "}" }; printf "\n  ]" }
   ' "$context_yaml"
 }
 
@@ -361,10 +402,13 @@ dev_kit_context_yaml_write() {
     local _dep_triples_file
     _dep_triples_file="$(mktemp)" || return 1
 
-    # Source 1: Reusable workflows — uses: org/repo/.github/workflows/...@ref
+    # Source 1: Workflow references — uses: org/repo/...@ref and uses: docker://...
+    # Catches reusable workflows, direct actions, and Docker actions.
+    # Also scans image: fields in workflow files for container job images.
     local _dep_dir
     while IFS= read -r _dep_dir; do
       [ -n "$_dep_dir" ] && [ -d "${repo_root}/${_dep_dir}" ] || continue
+      # 1a: uses: references
       while IFS= read -r _match; do
         [ -n "$_match" ] || continue
         local _src_file="${_match%%:*}"
@@ -372,17 +416,48 @@ dev_kit_context_yaml_write() {
         local _content="${_match#*:}"
         case "$_content" in
           *uses:*/*/.github/workflows/*)
+            # Reusable workflow: uses: org/repo/.github/workflows/file@ref
             local _dep_repo
             _dep_repo="$(printf '%s' "$_content" | awk '{
-              sub(/.*uses:[[:space:]]*/, ""); sub(/@.*/, "")
+              sub(/.*uses:[[:space:]]*/, ""); gsub(/"/, ""); sub(/@.*/, "")
               n = split($0, a, "/")
               if (n >= 2 && a[1] != "" && a[2] != "") printf "%s/%s", a[1], a[2]
             }')"
             [ -n "$_dep_repo" ] && printf '%s|reusable workflow|%s\n' "$_dep_repo" "$_src_rel" >> "$_dep_triples_file"
             ;;
+          *uses:*docker://*|*uses:*Docker://*)
+            # Docker action: uses: docker://image
+            local _dep_img
+            _dep_img="$(printf '%s' "$_content" | awk '{sub(/.*uses:[[:space:]]*[Dd]ocker:\/\//, ""); gsub(/["'"'"']/, ""); sub(/@.*/, ""); print}')"
+            [ -n "$_dep_img" ] && printf '%s|docker action|%s\n' "$_dep_img" "$_src_rel" >> "$_dep_triples_file"
+            ;;
+          *uses:*/*/*@*|*uses:*./*) ;;  # skip local refs and deeply-pathed refs already caught
+          *uses:*/*@*)
+            # Direct action: uses: org/repo@ref (not a reusable workflow, not actions/*)
+            local _dep_repo
+            _dep_repo="$(printf '%s' "$_content" | awk '{
+              sub(/.*uses:[[:space:]]*/, ""); gsub(/"/, ""); sub(/@.*/, "")
+              if ($0 !~ /^\./ && $0 ~ /\//) print
+            }')"
+            [ -n "$_dep_repo" ] && printf '%s|github action|%s\n' "$_dep_repo" "$_src_rel" >> "$_dep_triples_file"
+            ;;
         esac
       done <<EOF
 $(grep -r 'uses:' "${repo_root}/${_dep_dir}/" 2>/dev/null || true)
+EOF
+      # 1b: image: fields in workflow files (container job images)
+      while IFS= read -r _wf; do
+        [ -f "$_wf" ] || continue
+        local _wf_rel="${_wf#"${repo_root}/"}"
+        awk -v src="$_wf_rel" '
+          /^[[:space:]]*image:[[:space:]]/{
+            img=$2; gsub(/["'"'"']/, "", img)
+            if (img != "" && img !~ /\$/ && img !~ /\{/)
+              printf "%s|workflow image|%s\n", img, src
+          }
+        ' "$_wf" >> "$_dep_triples_file"
+      done <<EOF
+$(find "${repo_root}/${_dep_dir}" -maxdepth 1 \( -name '*.yml' -o -name '*.yaml' \) 2>/dev/null)
 EOF
     done <<EOF
 $(dev_kit_detection_list "dependency_trace_workflow_dirs")
@@ -495,11 +570,24 @@ EOF
         printf '    type: %s\n' "$_dep_type"
 
         # Resolve same-org dependencies
+        local _resolve_target=""
         if dev_kit_dep_is_same_org "$_udep" "$_current_org"; then
+          _resolve_target="$_udep"
+        else
+          # For Docker images: try matching image name to a same-org repo
+          case "$_dep_type" in
+            *image*|*docker*)
+              _resolve_target="$(dev_kit_dep_match_image_to_org "$_udep" "$_current_org" "$repo_root" "$_gh_auth_state")"
+              ;;
+          esac
+        fi
+
+        if [ -n "$_resolve_target" ]; then
           local _resolve_out _r_resolved _r_arch _r_profile _r_desc
-          _resolve_out="$(dev_kit_dep_resolve "$_udep" "$repo_root" "$_gh_auth_state" "$force")"
+          _resolve_out="$(dev_kit_dep_resolve "$_resolve_target" "$repo_root" "$_gh_auth_state" "$force")"
           IFS=$'\t' read -r _r_resolved _r_arch _r_profile _r_desc <<< "$_resolve_out"
           printf '    resolved: %s\n' "$_r_resolved"
+          [ -n "$_resolve_target" ] && [ "$_resolve_target" != "$_udep" ] && printf '    source_repo: %s\n' "$_resolve_target"
           [ -n "$_r_arch" ]    && printf '    archetype: %s\n' "$_r_arch"
           [ -n "$_r_profile" ] && printf '    profile: %s\n' "$_r_profile"
           [ -n "$_r_desc" ]    && printf '    description: %s\n' "$_r_desc"

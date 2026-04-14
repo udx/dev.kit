@@ -29,12 +29,13 @@ Capabilities that gate downstream phases:
 
 ### Phase 2 — repo (`dev.kit repo`)
 
-Analyzes the repository against 7 engineering factors. Detects config manifests (YAML files that define workflow and tooling). Writes `.rabbit/context.yaml`.
+Analyzes the repository against 4 factors (documentation, dependencies, config, pipeline). Detects config manifests (YAML files that define workflow and tooling). Writes `.rabbit/context.yaml`.
 
-Two modes:
+Three modes:
 
-- **learn** (default): analyze, pull GitHub context, and write `.rabbit/context.yaml`
+- **learn** (default): analyze, trace dependencies, pull GitHub context, and write `.rabbit/context.yaml`
 - **--check**: report gaps without writing anything
+- **--force**: re-resolve all dependency repos from scratch
 
 ### Phase 3 — agent (`dev.kit agent`)
 
@@ -87,18 +88,15 @@ Supported sources:
 
 Use `--sources claude` or `--sources codex` to limit to one source. Without agent sessions, learn reports the configured workflow destinations but has no data to evaluate.
 
-## 12-Factor Factors
+## Factors
 
-The repo model evaluates repo health across seven practical dimensions:
+dev.kit evaluates what it can detect and advise on programmatically. App architecture and runtime are left to agents and developers.
 
-| Factor | Checks |
+| Factor | Detects |
 |---|---|
-| `documentation` | README, docs/, documentation sections |
-| `architecture` | command/logic/view/config layer separation, line limits |
+| `documentation` | README, docs/ |
 | `dependencies` | package.json, composer.json, requirements.txt, go.mod, etc. |
 | `config` | .env files, documented environment variables |
-| `verification` | test runner, test directory, bats files |
-| `runtime` | Dockerfile, Procfile, documented run command |
-| `build_release_run` | build + runtime both present |
+| `pipeline` | CI workflows, test commands, deploy configs, infra dirs |
 
 Each factor is reported as `present`, `partial`, or `missing` with evidence and improvement guidance.

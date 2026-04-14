@@ -2,7 +2,7 @@
 # Run `dev.kit repo` to refresh.
 kind: repoContext
 version: udx.io/dev.kit/v1
-generated: 2026-04-14
+generated: 2026-04-15
 
 repo:
   name: dev.kit
@@ -31,19 +31,17 @@ commands:
 github:
   repo: udx/dev.kit
   recent_prs:
+    - "#16 restructure AGENTS.md as execution contract, add GitHub context"
     - "#15 bump version to 0.2.1"
     - "#14 fix release workflow trigger"
     - "#13 add package-lock.json for CI cache"
     - "#12 add npm release workflow, versioning, and changelog"
-    - "#11 redesign dev.kit: context.yaml pipeline, AGENTS.md with rules + manifests, promptfoo eval"
   open_prs:
-    - "#16 restructure AGENTS.md as execution contract, add GitHub context"
+    - "#17 slim factors, widen tracing, bump to 0.5.0"
 
 # Gaps — factors that are missing or partial
 gaps:
-  - architecture (partial)
   - config (partial)
-  - runtime (partial)
 
 # Engineering practices
 practices:
@@ -90,10 +88,9 @@ dependencies:
   - repo: udx/reusable-workflows
     type: reusable workflow
     resolved: true
-    local_path: /Users/jonyfq/git/udx/reusable-workflows
     archetype: workflow-repo
     profile: unknown
-    description: "Reusable GitHub Actions workflow templates for CI/CD"
+    description: Reusable GitHub Actions workflow templates for CI/CD
     used_by:
       - .github/workflows/context7-ops.yml
       - .github/workflows/npm-release-ops.yml

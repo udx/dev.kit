@@ -5,7 +5,7 @@ dev_kit_repo_factor_applicable() {
   local factor="$2"
 
   case "$factor" in
-    documentation|architecture|config|verification)
+    documentation|config|pipeline)
       return 0
       ;;
     dependencies)
@@ -14,26 +14,9 @@ dev_kit_repo_factor_applicable() {
          dev_kit_repo_has_archetype "$repo_dir" "runtime-image"; then
         return 0
       fi
-      # For all other archetypes (library-cli, etc.): only applicable if manifest files exist
+      # For all other archetypes: only applicable if manifest files exist
       if dev_kit_repo_has_any_file_from_list "$repo_dir" "dependency_manifest_files" || \
          dev_kit_repo_has_any_file_from_list "$repo_dir" "dependency_partial_files"; then
-        return 0
-      fi
-      return 1
-      ;;
-    runtime)
-      if dev_kit_repo_has_runtime_signals "$repo_dir" || \
-         dev_kit_repo_has_archetype "$repo_dir" "application" || \
-         dev_kit_repo_has_archetype "$repo_dir" "runtime-image"; then
-        return 0
-      fi
-      return 1
-      ;;
-    build_release_run)
-      if dev_kit_repo_has_build_signals "$repo_dir" || \
-         dev_kit_repo_has_runtime_signals "$repo_dir" || \
-         dev_kit_repo_has_archetype "$repo_dir" "application" || \
-         dev_kit_repo_has_archetype "$repo_dir" "runtime-image"; then
         return 0
       fi
       return 1
@@ -71,28 +54,10 @@ _dev_kit_repo_factor_status_compute() {
 
   case "$factor" in
     documentation)
-      if dev_kit_repo_has_any_file_from_list "$repo_dir" "documentation_files"; then
+      # README or docs/ is enough — no deep validation needed
+      if dev_kit_repo_has_any_file_from_list "$repo_dir" "documentation_files" || \
+         dev_kit_repo_has_any_file_from_list "$repo_dir" "documentation_hub_files"; then
         printf "%s" "present"
-      elif dev_kit_repo_has_any_file_from_list "$repo_dir" "documentation_hub_files" || \
-           dev_kit_repo_has_documentation_sections "$repo_dir"; then
-        printf "%s" "partial"
-      else
-        printf "%s" "missing"
-      fi
-      ;;
-    architecture)
-      present_threshold="$(dev_kit_detection_scalar "architecture_present_category_min")"
-      partial_threshold="$(dev_kit_detection_scalar "architecture_partial_category_min")"
-      [ -n "$present_threshold" ] || present_threshold=3
-      [ -n "$partial_threshold" ] || partial_threshold=2
-      if [ "$(dev_kit_repo_count_category_hits "$repo_dir")" -ge "$present_threshold" ] && \
-         dev_kit_repo_has_thin_command_layer "$repo_dir" && \
-         ! dev_kit_repo_has_oversized_module "$repo_dir"; then
-        printf "%s" "present"
-      elif [ "$(dev_kit_repo_count_category_hits "$repo_dir")" -ge "$partial_threshold" ] || \
-           [ "$(dev_kit_repo_count_dir_hits_from_list "$repo_dir" "architecture_partial_dirs")" -ge 2 ] || \
-           dev_kit_repo_has_architecture_sections "$repo_dir"; then
-        printf "%s" "partial"
       else
         printf "%s" "missing"
       fi
@@ -115,35 +80,19 @@ _dev_kit_repo_factor_status_compute() {
         printf "%s" "missing"
       fi
       ;;
-    verification)
-      if dev_kit_repo_has_make_target "$repo_dir" "test" || \
-         dev_kit_repo_has_node_test_script "$repo_dir" || \
-         dev_kit_repo_has_composer_test_script "$repo_dir" || \
-         dev_kit_repo_documented_command "$repo_dir" "verification" >/dev/null; then
+    pipeline)
+      # CI/CD pipeline: workflows, test commands, deploy configs are all the same signal.
+      if dev_kit_repo_has_any_glob_from_list "$repo_dir" "workflow_globs" && \
+         (dev_kit_repo_has_make_target "$repo_dir" "test" || \
+          dev_kit_repo_has_node_test_script "$repo_dir" || \
+          dev_kit_repo_has_composer_test_script "$repo_dir" || \
+          dev_kit_repo_has_any_file_from_list "$repo_dir" "deploy_files" || \
+          dev_kit_repo_has_any_dir_from_list "$repo_dir" "infra_dirs"); then
         printf "%s" "present"
-      elif dev_kit_repo_has_any_dir_from_list "$repo_dir" "test_dirs" || \
-           dev_kit_repo_has_any_file_from_list "$repo_dir" "verification_files" || \
-           dev_kit_repo_has_any_glob_from_list "$repo_dir" "verification_globs" || \
-           dev_kit_repo_has_any_glob_from_list "$repo_dir" "workflow_globs"; then
-        printf "%s" "partial"
-      else
-        printf "%s" "missing"
-      fi
-      ;;
-    runtime)
-      if dev_kit_repo_has_any_file_from_list "$repo_dir" "runtime_files" && \
-         (dev_kit_repo_has_make_target "$repo_dir" "run" || dev_kit_repo_documented_command "$repo_dir" "run" >/dev/null || dev_kit_has_file "$repo_dir" "Procfile"); then
-        printf "%s" "present"
-      elif dev_kit_repo_has_runtime_signals "$repo_dir" || dev_kit_repo_has_any_dir_from_list "$repo_dir" "shell_dirs"; then
-        printf "%s" "partial"
-      else
-        printf "%s" "missing"
-      fi
-      ;;
-    build_release_run)
-      if dev_kit_repo_has_build_signals "$repo_dir" && dev_kit_repo_has_runtime_signals "$repo_dir"; then
-        printf "%s" "present"
-      elif dev_kit_repo_has_build_signals "$repo_dir" || dev_kit_repo_has_runtime_signals "$repo_dir"; then
+      elif dev_kit_repo_has_any_glob_from_list "$repo_dir" "workflow_globs" || \
+           dev_kit_repo_has_any_dir_from_list "$repo_dir" "test_dirs" || \
+           dev_kit_repo_has_any_file_from_list "$repo_dir" "deploy_files" || \
+           dev_kit_repo_has_any_file_from_list "$repo_dir" "container_files"; then
         printf "%s" "partial"
       else
         printf "%s" "missing"
@@ -193,29 +142,6 @@ EOF
 "
       fi
       ;;
-    architecture)
-      while IFS= read -r path; do
-        [ -n "$path" ] || continue
-        if dev_kit_repo_has_dir "$repo_dir" "$path"; then
-          evidence="${evidence}${path}/
-"
-        fi
-      done <<EOF
-$(printf '%s\n%s\n' "$(dev_kit_detection_list "architecture_layer_dirs")" "$(dev_kit_detection_list "architecture_partial_dirs")")
-EOF
-      if dev_kit_repo_has_architecture_sections "$repo_dir"; then
-        evidence="${evidence}documented architecture sections
-"
-      fi
-      if dev_kit_repo_has_thin_command_layer "$repo_dir"; then
-        evidence="${evidence}thin command layer
-"
-      fi
-      if dev_kit_repo_has_oversized_module "$repo_dir"; then
-        evidence="${evidence}oversized module detected
-"
-      fi
-      ;;
     dependencies)
       while IFS= read -r path; do
         [ -n "$path" ] || continue
@@ -242,7 +168,8 @@ EOF
 "
       fi
       ;;
-    verification)
+    pipeline)
+      # Test signals
       if dev_kit_repo_has_make_target "$repo_dir" "test"; then
         evidence="${evidence}Makefile:test
 "
@@ -255,11 +182,6 @@ EOF
         evidence="${evidence}composer.json scripts.test
 "
       fi
-      documented="$(dev_kit_repo_documented_command "$repo_dir" "verification" || true)"
-      if [ -n "$documented" ]; then
-        evidence="${evidence}docs: ${documented}
-"
-      fi
       while IFS= read -r path; do
         [ -n "$path" ] || continue
         if dev_kit_has_file "$repo_dir" "$path" || dev_kit_repo_has_dir "$repo_dir" "$path"; then
@@ -267,7 +189,26 @@ EOF
 "
         fi
       done <<EOF
-$(printf '%s\n%s\n' "$(dev_kit_detection_list "test_dirs")" "$(dev_kit_detection_list "verification_files")")
+$(dev_kit_detection_list "test_dirs")
+EOF
+      # Deploy/CI signals
+      while IFS= read -r path; do
+        [ -n "$path" ] || continue
+        if dev_kit_has_file "$repo_dir" "$path"; then
+          evidence="${evidence}${path}
+"
+        fi
+      done <<EOF
+$(dev_kit_detection_list "deploy_files")
+EOF
+      while IFS= read -r path; do
+        [ -n "$path" ] || continue
+        if dev_kit_repo_has_dir "$repo_dir" "$path"; then
+          evidence="${evidence}${path}/
+"
+        fi
+      done <<EOF
+$(dev_kit_detection_list "infra_dirs")
 EOF
       while IFS= read -r pattern; do
         [ -n "$pattern" ] || continue
@@ -276,65 +217,7 @@ EOF
 "
         fi
       done <<EOF
-$(printf '%s\n%s\n' "$(dev_kit_detection_list "verification_globs")" "$(dev_kit_detection_list "workflow_globs")")
-EOF
-      ;;
-    runtime)
-      while IFS= read -r path; do
-        [ -n "$path" ] || continue
-        if dev_kit_has_file "$repo_dir" "$path"; then
-          evidence="${evidence}${path}
-"
-        fi
-      done <<EOF
-$(dev_kit_detection_list "runtime_files")
-EOF
-      if dev_kit_repo_has_make_target "$repo_dir" "run"; then
-        evidence="${evidence}Makefile:run
-"
-      fi
-      documented="$(dev_kit_repo_documented_command "$repo_dir" "run" || true)"
-      if [ -n "$documented" ]; then
-        evidence="${evidence}docs: ${documented}
-"
-      fi
-      while IFS= read -r path; do
-        [ -n "$path" ] || continue
-        if dev_kit_repo_has_dir "$repo_dir" "$path"; then
-          evidence="${evidence}${path}/
-"
-        fi
-      done <<EOF
-$(dev_kit_detection_list "shell_dirs")
-EOF
-      ;;
-    build_release_run)
-      if dev_kit_repo_has_make_target "$repo_dir" "build"; then
-        evidence="${evidence}Makefile:build
-"
-      fi
-      if dev_kit_repo_has_make_target "$repo_dir" "run"; then
-        evidence="${evidence}Makefile:run
-"
-      fi
-      documented="$(dev_kit_repo_documented_command "$repo_dir" "build" || true)"
-      if [ -n "$documented" ]; then
-        evidence="${evidence}docs build: ${documented}
-"
-      fi
-      documented="$(dev_kit_repo_documented_command "$repo_dir" "run" || true)"
-      if [ -n "$documented" ]; then
-        evidence="${evidence}docs run: ${documented}
-"
-      fi
-      while IFS= read -r path; do
-        [ -n "$path" ] || continue
-        if dev_kit_has_file "$repo_dir" "$path"; then
-          evidence="${evidence}${path}
-"
-        fi
-      done <<EOF
-$(printf '%s\n%s\n' "$(dev_kit_detection_list "dependency_partial_files")" "$(dev_kit_detection_list "runtime_files")")
+$(dev_kit_detection_list "workflow_globs")
 EOF
       ;;
     *)
@@ -359,38 +242,33 @@ dev_kit_repo_factor_evidence_json() {
 
 dev_kit_repo_factor_entrypoint() {
   local repo_dir="$1"
-  local factor="$2"
+  local kind="$2"
   local command=""
 
-  case "$factor" in
-    verification)
+  case "$kind" in
+    pipeline|verify|verification)
       if dev_kit_repo_has_make_target "$repo_dir" "test"; then
-        printf "%s" "make test"
-        return 0
+        printf "%s" "make test"; return 0
       fi
       if dev_kit_repo_has_node_test_script "$repo_dir"; then
-        printf "%s" "npm test"
-        return 0
+        printf "%s" "npm test"; return 0
       fi
       if dev_kit_repo_has_composer_test_script "$repo_dir"; then
-        printf "%s" "composer test"
-        return 0
+        printf "%s" "composer test"; return 0
       fi
       command="$(dev_kit_repo_documented_command "$repo_dir" "verification" || true)"
       ;;
-    runtime)
-      if dev_kit_repo_has_make_target "$repo_dir" "run"; then
-        printf "%s" "make run"
-        return 0
-      fi
-      command="$(dev_kit_repo_documented_command "$repo_dir" "run" || true)"
-      ;;
-    build_release_run)
+    build|build_release_run)
       if dev_kit_repo_has_make_target "$repo_dir" "build"; then
-        printf "%s" "make build"
-        return 0
+        printf "%s" "make build"; return 0
       fi
       command="$(dev_kit_repo_documented_command "$repo_dir" "build" || true)"
+      ;;
+    run|runtime)
+      if dev_kit_repo_has_make_target "$repo_dir" "run"; then
+        printf "%s" "make run"; return 0
+      fi
+      command="$(dev_kit_repo_documented_command "$repo_dir" "run" || true)"
       ;;
     *)
       command=""
@@ -406,7 +284,7 @@ dev_kit_repo_factor_entrypoint() {
 }
 
 dev_kit_repo_factor_ids() {
-  printf '%s\n' documentation architecture dependencies config verification runtime build_release_run
+  printf '%s\n' documentation dependencies config pipeline
 }
 
 dev_kit_repo_factor_rule_id() {
@@ -415,18 +293,12 @@ dev_kit_repo_factor_rule_id() {
 
   case "${factor}:${status}" in
     documentation:missing) printf "%s" "missing-documentation" ;;
-    architecture:missing) printf "%s" "missing-architecture-contract" ;;
-    architecture:partial) printf "%s" "partial-architecture-contract" ;;
     dependencies:missing) printf "%s" "missing-dependency-manifest" ;;
     dependencies:partial) printf "%s" "partial-dependency-contract" ;;
     config:missing) printf "%s" "missing-config-contract" ;;
     config:partial) printf "%s" "partial-config-contract" ;;
-    verification:missing) printf "%s" "missing-verification-entrypoint" ;;
-    verification:partial) printf "%s" "partial-verification-entrypoint" ;;
-    runtime:missing) printf "%s" "missing-runtime-entrypoint" ;;
-    runtime:partial) printf "%s" "partial-runtime-entrypoint" ;;
-    build_release_run:missing) printf "%s" "missing-build-release-run" ;;
-    build_release_run:partial) printf "%s" "partial-build-release-run" ;;
+    pipeline:missing) printf "%s" "missing-pipeline" ;;
+    pipeline:partial) printf "%s" "partial-pipeline" ;;
     *) return 1 ;;
   esac
 }

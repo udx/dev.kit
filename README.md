@@ -2,221 +2,108 @@
 
 <https://udx.dev/kit>
 
-**A foundation for context-driven development.**
+**Dynamic repo context for developers and AI agents.**
 
-Simple. Repo-centric. Agent-agnostic.
+dev.kit scans what humans and agents shouldn't scan manually — tools, factors, dependencies, cross-repo relationships. It produces one context file. Developers read it. Agents execute from it.
 
-`dev.kit` converts a repository into a deterministic execution contract by building context in three layers:
-
-1. **Repo context** — what actually exists: docs, configs, manifests, tests, workflows, GitHub history
-2. **Dev environment** — what tools and auth are available: git, gh, docker, npm, cloud CLIs
-3. **UDX ecosystem** — shared resources: `github.com/udx/*` repos, `@udx/*` npm packages, Docker Hub images
-
-Each layer reduces guesswork. AI agents operate from declared repo context — no scanning, no drift, no invention.
+```bash
+npm install -g @udx/dev-kit
+```
 
 ---
 
-## Flow
+## How it works
 
 ```
-dev.kit          →  dev.kit repo       →  dev.kit agent
-─────────────────   ─────────────────    ─────────────────
-validate env        analyze factors      write AGENTS.md
-detect repo         detect manifests     generate contract
-show next steps     pull GitHub context  from context.yaml
-                    write context.yaml
+dev.kit          →  dev.kit repo        →  dev.kit agent
+─────────────────   ──────────────────    ──────────────────
+check environment   analyze repo          generate AGENTS.md
+detect archetype    trace dependencies    write execution contract
+guide to next       write context.yaml    from context.yaml
 ```
 
-The core loop is **repo → agent → work → PR → merge**. `dev.kit agent` auto-generates context if `.rabbit/context.yaml` is absent — no manual steps required. `dev.kit learn` optionally extracts patterns from agent sessions to feed back into future context.
+Each command enriches context and guides to the next. Run at every session start.
 
 ---
 
 ## Quick start
 
 ```bash
-npm install -g @udx/dev-kit
-
 cd my-repo
-dev.kit
-dev.kit repo
-dev.kit agent
+dev.kit            # check tools, detect repo
+dev.kit repo       # analyze factors, trace deps, write .rabbit/context.yaml
+dev.kit agent      # generate AGENTS.md execution contract
 ```
+
+---
+
+## What gets generated
+
+**`.rabbit/context.yaml`** — one file, complete repo context:
+
+```yaml
+repo:
+  name: dev.kit
+  archetype: library-cli
+  profile: node
+
+refs:
+  - ./README.md
+  - ./docs/architecture.md
+  - ./package.json
+
+commands:
+  verify: make test
+  build: make build
+
+dependencies:
+  - repo: udx/reusable-workflows
+    type: reusable workflow
+    resolved: true
+    archetype: workflow-repo
+    used_by:
+      - .github/workflows/npm-release-ops.yml
+
+gaps:
+  - config (partial)
+```
+
+**`AGENTS.md`** — execution contract with 8 rules, commands, refs, dependencies, workflow, practices. Works with Claude, Codex, Gemini, Copilot — any agent that reads files.
 
 ---
 
 ## Commands
 
-### `dev.kit` — environment
+| Command | What it does |
+|---------|-------------|
+| `dev.kit` | Check environment, detect repo, show next step |
+| `dev.kit repo` | Analyze factors, trace dependencies, pull GitHub signals, write `context.yaml` |
+| `dev.kit repo --force` | Re-resolve all dependencies from scratch |
+| `dev.kit agent` | Generate `AGENTS.md` from `context.yaml` |
+| `dev.kit learn` | Extract patterns from Claude/Codex sessions into lessons artifact |
 
-Run in any directory. Detects your repo type, checks local tools, reads priority files, and tells you what to do next.
-
-- Auto-detects archetypes: library-cli, runtime-image, wordpress-site, infra-pipeline, workflow-repo
-- Checks local tools: git, gh, npm, docker, jq, cloud CLIs
-- Outputs human text or `--json` for agents
-
-```
-$ dev.kit
-dev.kit
-
-[env]
-  - base tools ok
-
-> my-project • library-cli • profile shell
-
-[read first]
-  - ./README.md
-  - ./docs/architecture.md
-
-[do next]
-  - Inspect git status and worktree shape first.
-  more:              dev.kit repo | dev.kit agent | dev.kit learn
-```
+All commands support `--json` for machine-readable output.
 
 ---
 
-### `dev.kit repo` — repo context
+## Cross-repo tracing
 
-Analyzes your repo against 7 engineering factors, pulls GitHub context via `gh api`, and writes `.rabbit/context.yaml` — a single file with everything an agent needs: refs, commands, GitHub signals, practices, workflow steps, config manifests, and gaps.
+Traces dependencies from 6 sources: workflow reuse, GitHub actions, Docker images, versioned YAML, GitHub URLs, npm packages.
 
-- Writes `.rabbit/context.yaml` — the source of truth for all downstream commands
-- Detects config manifests (YAML files that define workflow and tooling)
-- Pulls open issues, recent PRs, security alerts from GitHub
-- `--check` reports gaps without writing context.yaml
+Same-org repos resolved via `gh api` + sibling directory. Docker images mapped to source repos automatically.
 
+```yaml
+# udx/rabbit-automation-action
+dependencies:
+  - repo: udx/gh-workflows
+    type: reusable workflow
+    resolved: true
+
+  - repo: usabilitydynamics/udx-worker-tooling:0.19.0
+    type: base image
+    resolved: true
+    source_repo: udx/worker-tooling
 ```
-$ dev.kit repo
-dev.kit repo
-
-> my-project • library-cli • mode: learn
-
-[factors]
-  documentation:     ✓ present
-  architecture:      ◦ partial
-  config:            ◦ partial
-  verification:      ✓ present
-  runtime:           ◦ partial
-  build_release_run: ✓ present
-
-[gaps]
-  - 3 factor(s) missing or partial
-
-[context]
-  - .rabbit/context.yaml
-
-[next]
-  agent context:     dev.kit agent
-  session lessons:   dev.kit learn
-```
-
----
-
-### `dev.kit agent` — execution contract
-
-Generates AGENTS.md — a deterministic execution contract that gives any agent everything it needs to work without scanning the filesystem. Auto-generates `.rabbit/context.yaml` if missing.
-
-AGENTS.md includes:
-- **Contract** — 8 rules: no scanning, strict context boundaries, manifests before code, context over memory, verify locally, follow workflow, reuse over invention, remember context
-- **Commands** — verify, build, run entrypoints
-- **Priority refs** — the only files an agent should read
-- **Config manifests** — traceable YAML dependencies with kind labels
-- **GitHub context** — open issues, recent PRs, security alerts (via `gh api`)
-- **Gaps** — incomplete factors to address within the workflow
-- **Full workflow** — execution sequence with operational notes
-- **Engineering practices** — 17 principles from lessons learned across repos
-
-```
-$ dev.kit agent
-dev.kit agent
-
-> my-project • library-cli • profile shell
-
-[commands]
-  verify:            make test
-  build:             make build
-  run:               make run
-
-[context]
-  agents.md:         /path/to/AGENTS.md
-  context.yaml:      /path/to/.rabbit/context.yaml
-
-[start session with]
-  - Following AGENTS.md context and repo workflow, [your task here]
-
-[next]
-  refresh context:   dev.kit repo
-  session lessons:   dev.kit learn
-```
-
-Works with Claude, Codex, Gemini, Copilot — any agent that can read files.
-
----
-
-### `dev.kit learn` — agent experience
-
-Scans recent Claude and Codex sessions, extracts workflow patterns, and writes a lessons artifact at `.rabbit/dev.kit/lessons-*.md`. Lessons feed back into context.yaml on next `dev.kit repo` run.
-
-- Reads Claude and Codex session artifacts automatically
-- Detects workflow patterns: issue-to-scope, verify-before-sync, PR chains
-- Merges incrementally — new sessions add to prior lessons
-- Lessons are referenced from context.yaml and AGENTS.md
-
-```
-$ dev.kit learn
-dev.kit learn
-
-> dev.learn pr • lessons from agent sessions
-
-[sources]
-  claude:            3 session(s) found
-  codex:             1 session(s) found
-
-[learned]
-  - Verify locally before deploying
-  - Use repo workflow assets as the execution contract
-  - Keep the delivery chain explicit
-
-[artifact]
-  - .rabbit/dev.kit/lessons-my-project-2026-04-14.md
-
-[next]
-  refresh context:   dev.kit repo
-  update agent:      dev.kit agent
-```
-
----
-
-## Without agents
-
-Use `dev.kit` directly to:
-
-- validate your environment
-- understand repositories
-- identify structural gaps
-- scaffold and standardize projects
-
-Context is the core output. Agents consume it.
-
----
-
-## Why
-
-**Repo-centric**
-The repository is the source of truth. Context comes from docs, configs, manifests, tests — not prompt memory.
-
-**YAML interfaces + tooling**
-All behavior is defined in YAML manifests. Shell is thin glue. Agents trace dependencies to config, not code.
-
-**Incremental knowledge base**
-Every `dev.kit learn` run adds to a durable lessons artifact. Every lesson is useful — patterns learned from real agent sessions feed back into context.
-
-**Agent-agnostic**
-AGENTS.md works with Claude, Codex, Gemini, Copilot — any agent that reads files. Repo context first, not model-specific prompts.
-
-**TDD-friendly**
-Verification is a core factor. The workflow enforces verify-before-sync. Tests exist or the gap is flagged.
-
-**Reusable workflows**
-Development workflows, PR templates, issue templates, and bot reviewer guidance are defined in YAML configs and applied across repos.
 
 ---
 
@@ -234,8 +121,7 @@ curl -fsSL https://raw.githubusercontent.com/udx/dev.kit/main/bin/scripts/instal
 
 ## Docs
 
-- [Overview](docs/overview.md)
-- [Commands](docs/commands.md)
-- [Workflow Model](docs/workflow.md)
-- [Architecture](docs/architecture.md)
-- [Detection Facets](docs/detection-facets.md)
+- [Overview](docs/overview.md) — design principles and phases
+- [Commands](docs/commands.md) — full command reference with output details
+- [Workflow](docs/workflow.md) — pipeline phases, factors, session flow
+- [Architecture](docs/architecture.md) — config catalog, module map, data flow

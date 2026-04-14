@@ -1,5 +1,16 @@
 # Changes
 
+### 0.5.0
+
+- Slim factors from 7 to 4: documentation, dependencies, config, pipeline
+- Drop architecture, runtime, build_release_run — dev.kit detects repo/CI/CD signals, not app structure
+- Merge test commands and deploy config into single pipeline factor
+- Widen workflow tracing: catch direct actions (`uses: org/repo@ref`), docker actions, workflow images
+- Resolve Docker images to same-org source repos (Docker Hub org ≠ GitHub org matching)
+- Simplify documentation factor to binary present/missing
+- Simplify README as pitch + quick start, move deep details to docs/
+- Add bot feedback loop practice for PR reviews
+
 ### 0.4.0
 
 - Add structured dependency resolution with cross-repo tracing
