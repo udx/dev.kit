@@ -5,10 +5,9 @@ context-env.txt
 # dev.kit repo manifest (local artifact, not for VCS)
 .dev-kit/
 
-# agent
+# agent session data (local, not for VCS)
 .claude/
 .codex/
 .copilot/
 .devin/
-AGENTS.md
 tests/fixtures/tmp-bin/
