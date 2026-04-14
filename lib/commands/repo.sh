@@ -82,7 +82,7 @@ dev_kit_cmd_repo() {
   # ── Factors ──────────────────────────────────────────────────────────────────
   dev_kit_output_section "factors"
   local factor status
-  for factor in documentation architecture dependencies config verification runtime build_release_run; do
+  for factor in documentation dependencies config pipeline; do
     status="$(dev_kit_repo_factor_status "$repo_dir" "$factor")"
     dev_kit_output_status_row "$factor" "$status"
   done
@@ -115,5 +115,5 @@ EOF
   dev_kit_output_list_item "$context_yaml_path"
 
   dev_kit_output_section "next"
-  dev_kit_output_row "required" "dev.kit agent — generate AGENTS.md from this context"
+  dev_kit_output_row "run" "dev.kit agent"
 }

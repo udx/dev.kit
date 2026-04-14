@@ -40,7 +40,7 @@ Validates the local software environment. Each tool is shown with what it enable
 
 ### 2. repo — `dev.kit repo`
 
-Analyzes the repository against 7 engineering factors. Traces cross-repo dependencies from 6 sources. Pulls live GitHub signals. Writes `.rabbit/context.yaml`.
+Analyzes the repository against 4 factors (documentation, dependencies, config, pipeline). Traces cross-repo dependencies from 6 sources. Pulls live GitHub signals. Writes `.rabbit/context.yaml`.
 
 Flags: `--check` (read-only), `--force` (re-resolve dependencies).
 

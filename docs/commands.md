@@ -23,7 +23,7 @@ Use `dev.kit --json` to inspect the full `localhost_tools` inventory and `global
 
 ## `dev.kit repo` — repo context
 
-Analyzes the repository against 7 engineering factors and writes `.rabbit/context.yaml` — the canonical context artifact. Detects config manifests (YAML files that define workflow and tooling).
+Analyzes the repository against 4 engineering factors (documentation, dependencies, config, pipeline) and writes `.rabbit/context.yaml` — the canonical context artifact. Detects config manifests (YAML files that define workflow and tooling).
 
 Two modes:
 

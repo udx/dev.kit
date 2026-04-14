@@ -63,17 +63,12 @@ config:
       files:
         - README.md
         - docs/overview.md
-    verification:
-      dirs:
-        - tests
-      files:
-        - tests/smoke.sh
-    runtime:
-      files:
-        - Dockerfile
     config:
       files:
         - .env.example
-    build_release_run:
+    pipeline:
+      dirs:
+        - tests
+        - .github/workflows
       files:
         - Makefile

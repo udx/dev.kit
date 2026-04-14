@@ -40,7 +40,7 @@ dev_kit_scaffold_gaps_json() {
   local first=1
 
   printf '[\n'
-  for factor in documentation architecture dependencies config verification runtime build_release_run; do
+  for factor in documentation dependencies config pipeline; do
     status="$(dev_kit_repo_factor_status "$repo_root" "$factor")"
     [ "$status" = "missing" ] || [ "$status" = "partial" ] || continue
     local rule_id message

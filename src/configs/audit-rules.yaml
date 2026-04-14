@@ -7,14 +7,6 @@ config:
       factor: documentation
       status: missing
       message: Add a README so humans and agents can orient quickly around purpose, workflow, and boundaries.
-    - id: partial-architecture-contract
-      factor: architecture
-      status: partial
-      message: Some architectural boundaries are visible, but the repository structure is not fully normalized yet. Separate commands, modules, templates, and config more explicitly.
-    - id: missing-architecture-contract
-      factor: architecture
-      status: missing
-      message: Make repository structure more explicit so humans and agents can infer responsibilities without tribal knowledge.
     - id: partial-dependency-contract
       factor: dependencies
       status: partial
@@ -31,27 +23,11 @@ config:
       factor: config
       status: missing
       message: Externalize configuration and document the environment contract so the repo can move cleanly across environments.
-    - id: partial-verification-entrypoint
-      factor: verification
+    - id: partial-pipeline
+      factor: pipeline
       status: partial
-      message: Verification assets exist, but no single entrypoint was detected. Expose one command such as make test or document the canonical runner.
-    - id: missing-verification-entrypoint
-      factor: verification
+      message: Some CI/CD signals detected but the pipeline is incomplete. Add workflow files, test commands, or deploy configuration.
+    - id: missing-pipeline
+      factor: pipeline
       status: missing
-      message: Add a single runnable verification command so agents and humans can validate changes deterministically.
-    - id: partial-runtime-entrypoint
-      factor: runtime
-      status: partial
-      message: Runtime assets exist, but the canonical way to start the app is not normalized yet. Document or expose one entrypoint.
-    - id: missing-runtime-entrypoint
-      factor: runtime
-      status: missing
-      message: Define a canonical runtime entrypoint so the service can be started predictably across environments.
-    - id: partial-build-release-run
-      factor: build_release_run
-      status: partial
-      message: Some build or runtime steps are discoverable, but the build-release-run separation is incomplete. Make the lifecycle explicit.
-    - id: missing-build-release-run
-      factor: build_release_run
-      status: missing
-      message: Define explicit build and run steps so release behavior is reproducible and 12-factor aligned.
+      message: No CI/CD pipeline detected. Add GitHub workflows, test commands, or deploy configuration so the repo can be validated and deployed.

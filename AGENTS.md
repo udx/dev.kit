@@ -67,21 +67,25 @@ YAML definitions are first-class interfaces. They control repo behavior — trac
   - .github/workflows/npm-release-ops.yml
   - deploy.yml
 
+### External dependencies
+
+Cross-repo and upstream references. Same-org repos are resolved with metadata. Trace these for infrastructure, deployment, and build logic.
+
+- **udx/reusable-workflows** (reusable workflow) — workflow-repo — Reusable GitHub Actions workflow templates for CI/CD
+  - `.github/workflows/context7-ops.yml`
+  - `.github/workflows/npm-release-ops.yml`
+
 ### GitHub context
 
 Development signals from [udx/dev.kit](https://github.com/udx/dev.kit).
 
-**Open PRs:**
-
-  - #16 restructure AGENTS.md as execution contract, add GitHub context
-
 **Recent PRs:**
 
+  - #16 restructure AGENTS.md as execution contract, add GitHub context
   - #15 bump version to 0.2.1
   - #14 fix release workflow trigger
   - #13 add package-lock.json for CI cache
   - #12 add npm release workflow, versioning, and changelog
-  - #11 redesign dev.kit: context.yaml pipeline, AGENTS.md with rules + manifests, promptfoo eval
 
 ### Gaps
 

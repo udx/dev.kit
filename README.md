@@ -65,7 +65,6 @@ dependencies:
       - .github/workflows/npm-release-ops.yml
 
 gaps:
-  - architecture (partial)
   - config (partial)
 ```
 
