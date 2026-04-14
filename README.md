@@ -76,12 +76,12 @@ dev.kit
 
 ### `dev.kit repo` — repo context
 
-Analyzes your repo against 7 engineering factors and writes `.rabbit/context.yaml` — a single file with everything an agent needs: refs, commands, practices, workflow steps, config manifests, and gaps.
+Analyzes your repo against 7 engineering factors, pulls GitHub context via `gh api`, and writes `.rabbit/context.yaml` — a single file with everything an agent needs: refs, commands, GitHub signals, practices, workflow steps, config manifests, and gaps.
 
 - Writes `.rabbit/context.yaml` — the source of truth for all downstream commands
 - Detects config manifests (YAML files that define workflow and tooling)
-- `--scaffold` creates missing dirs and files
-- `--check` reports gaps without changing anything
+- Pulls open issues, recent PRs, security alerts from GitHub
+- `--check` reports gaps without writing context.yaml
 
 ```
 $ dev.kit repo
@@ -98,7 +98,7 @@ dev.kit repo
   build_release_run: ✓ present
 
 [gaps]
-  - 3 factor(s) missing or partial — run dev.kit repo --scaffold to apply fixes
+  - 3 factor(s) missing or partial
 
 [context]
   - .rabbit/context.yaml
@@ -106,7 +106,6 @@ dev.kit repo
 [next]
   agent context:     dev.kit agent
   session lessons:   dev.kit learn
-  apply fixes:       dev.kit repo --scaffold
 ```
 
 ---

@@ -9,6 +9,7 @@
 - Add learning workflow patterns: docs-first-alignment, workflow-tracing, verification-scope, legacy-reduction, agent-handoff
 - Enrich knowledge-base.yaml with GitHub as a context source
 - Strengthen post-merge close-out reporting (exact URLs, versions, deltas)
+- Remove `--scaffold` flag (created empty stubs — gap reporting is the useful part)
 - Fix package name to `@udx/dev-kit` (matches npm registry)
 - npm install support (`npm install -g @udx/dev-kit`)
 

@@ -26,9 +26,7 @@ Validates the local software environment and writes a global context file (`$DEV
 
 ### 2. repo — `dev.kit repo`
 
-Builds a resolved view of the repository: docs, scripts, workflows, deploy config, Dockerfile chains, manifests. Identifies gaps against 7 engineering factors. Detects config manifests (YAML files that define workflow and tooling). Writes `.rabbit/context.yaml`.
-
-Can also scaffold missing structure with `--scaffold`.
+Builds a resolved view of the repository: docs, scripts, workflows, deploy config, Dockerfile chains, manifests. Identifies gaps against 7 engineering factors. Detects config manifests (YAML files that define workflow and tooling). Pulls GitHub context via `gh api`. Writes `.rabbit/context.yaml`.
 
 ### 3. agent — `dev.kit agent`
 

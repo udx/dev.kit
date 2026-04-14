@@ -66,12 +66,8 @@ home_usage() {
 
 dev_kit_run_home() {
   local format="${1:-text}"
-  local state="not installed"
+  local state="installed"
   local repo_dir="$(pwd)"
-
-  if [ -d "$DEV_KIT_HOME" ]; then
-    state="installed"
-  fi
 
   # JSON mode: compute everything up front then emit
   if [ "$format" = "json" ]; then
@@ -200,9 +196,8 @@ command_usage() {
   echo "Options:"
   case "$command_name" in
     repo)
-      echo "  --json       Output machine-readable JSON"
-      echo "  --scaffold   Create missing dirs and files"
-      echo "  --check      Report gaps without making changes"
+      echo "  --json     Output machine-readable JSON"
+      echo "  --check    Report gaps without writing context.yaml"
       ;;
     agent)
       echo "  --json     Output machine-readable JSON"

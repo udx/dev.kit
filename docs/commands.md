@@ -25,20 +25,18 @@ Use `dev.kit --json` to inspect the full `localhost_tools` inventory and `global
 
 Analyzes the repository against 7 engineering factors and writes `.rabbit/context.yaml` — the canonical context artifact. Detects config manifests (YAML files that define workflow and tooling).
 
-Three modes:
+Two modes:
 
-- **learn** (default): analyze repo, write `.rabbit/context.yaml`
-- **--scaffold**: also create missing directories and files
+- **learn** (default): analyze repo, pull GitHub context, write `.rabbit/context.yaml`
 - **--check**: report gaps without writing anything
 
 ```bash
 dev.kit repo
-dev.kit repo --scaffold
 dev.kit repo --check
 dev.kit repo --json
 ```
 
-Output includes: archetype, profile, factors (✓ present / ◦ partial / ✗ missing), gaps, config manifests, and context path.
+Output includes: archetype, profile, factors (✓ present / ◦ partial / ✗ missing), gaps, and context path.
 
 ## `dev.kit agent` — execution contract
 

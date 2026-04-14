@@ -54,9 +54,7 @@ dev_kit_cmd_agent() {
       "context=$(dev_kit_json_escape "$context_yaml_path")" \
       "priority_refs=$(dev_kit_repo_priority_refs_json "$repo_dir")" \
       "entrypoints=$(dev_kit_repo_entrypoints_json "$repo_dir")" \
-      "workflow_contract=$(dev_kit_repo_workflow_json "$repo_dir")" \
-      "factors=$(dev_kit_repo_factor_summary_json "$repo_dir")" \
-      "task="
+      "workflow_contract=$(dev_kit_repo_workflow_json "$repo_dir")"
     return 0
   fi
 
