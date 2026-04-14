@@ -79,6 +79,10 @@ Cross-repo and upstream references. Same-org repos are resolved with metadata. T
 
 Development signals from [udx/dev.kit](https://github.com/udx/dev.kit).
 
+**Open PRs:**
+
+  - #17 slim factors, widen tracing, bump to 0.5.0
+
 **Recent PRs:**
 
   - #16 restructure AGENTS.md as execution contract, add GitHub context
@@ -91,9 +95,7 @@ Development signals from [udx/dev.kit](https://github.com/udx/dev.kit).
 
 Incomplete factors. Address within the workflow, not as separate tasks.
 
-  - architecture (partial)
   - config (partial)
-  - runtime (partial)
 
 ## Versioned workflow artifacts
 

@@ -89,9 +89,10 @@ dev_kit_dep_match_image_to_org() {
   local dep_id="$1" current_org="$2" repo_root="$3" gh_auth="$4"
   [ -n "$current_org" ] || return 0
 
-  # Extract image name: strip org prefix and tag
+  # Extract image name: strip org prefix, tag, and digest
   local img_name="${dep_id##*/}"
   img_name="${img_name%%:*}"
+  img_name="${img_name%%@*}"
   [ -n "$img_name" ] || return 0
 
   local parent_dir
@@ -123,6 +124,7 @@ dev_kit_dep_match_image_to_org() {
       fi
     fi
   fi
+  return 0
 }
 
 # Resolve a same-org dependency repo.
@@ -171,43 +173,37 @@ dev_kit_deps_json() {
 
   awk '
     function json_esc(s) { gsub(/\\/, "\\\\", s); gsub(/"/, "\\\"", s); gsub(/\t/, " ", s); return s }
-    BEGIN { printf "["; open = 0 }
+    function flush_ub() {
+      if (ub_count > 0) {
+        printf ", \"used_by\": ["
+        for (i = 1; i <= ub_count; i++) {
+          if (i > 1) printf ", "
+          printf "\"%s\"", json_esc(ub[i])
+        }
+        printf "]"
+      }
+    }
+    BEGIN { printf "["; open = 0; ub_count = 0; in_ub = 0 }
     /^dependencies:/ { in_d=1; next }
-    in_d && /^[a-zA-Z#]/ { if (open) { printf "}"; open = 0 }; in_d=0 }
+    in_d && /^[a-zA-Z#]/ { if (open) { flush_ub(); printf "}"; open = 0 }; in_d=0 }
     !in_d { next }
     /^  - repo:/ {
-      if (open) printf "},"
+      if (open) { flush_ub(); printf "}," }
       sub(/.*repo:[[:space:]]*/, "")
       printf "\n    {\"repo\": \"%s\"", json_esc($0)
-      open = 1
+      open = 1; ub_count = 0; in_ub = 0
       next
     }
-    /^    type:/ {
-      sub(/.*type:[[:space:]]*/, "")
-      printf ", \"type\": \"%s\"", json_esc($0)
-      next
-    }
-    /^    resolved:/ {
-      sub(/.*resolved:[[:space:]]*/, "")
-      printf ", \"resolved\": %s", $0
-      next
-    }
-    /^    archetype:/ {
-      sub(/.*archetype:[[:space:]]*/, "")
-      printf ", \"archetype\": \"%s\"", json_esc($0)
-      next
-    }
-    /^    profile:/ {
-      sub(/.*profile:[[:space:]]*/, "")
-      printf ", \"profile\": \"%s\"", json_esc($0)
-      next
-    }
-    /^    description:/ {
-      sub(/.*description:[[:space:]]*/, "")
-      printf ", \"description\": \"%s\"", json_esc($0)
-      next
-    }
-    END { if (open) printf "}"; printf "\n  ]" }
+    /^    type:/        { sub(/.*type:[[:space:]]*/, "");        printf ", \"type\": \"%s\"", json_esc($0);        in_ub=0; next }
+    /^    resolved:/    { sub(/.*resolved:[[:space:]]*/, "");    printf ", \"resolved\": %s", $0;                  in_ub=0; next }
+    /^    archetype:/   { sub(/.*archetype:[[:space:]]*/, "");   printf ", \"archetype\": \"%s\"", json_esc($0);   in_ub=0; next }
+    /^    profile:/     { sub(/.*profile:[[:space:]]*/, "");     printf ", \"profile\": \"%s\"", json_esc($0);     in_ub=0; next }
+    /^    source_repo:/ { sub(/.*source_repo:[[:space:]]*/, ""); printf ", \"source_repo\": \"%s\"", json_esc($0); in_ub=0; next }
+    /^    description:/ { sub(/.*description:[[:space:]]*/, ""); printf ", \"description\": \"%s\"", json_esc($0); in_ub=0; next }
+    /^    used_by:/     { in_ub = 1; next }
+    in_ub && /^      - / { ub_count++; sub(/^[[:space:]]*- /, ""); ub[ub_count] = $0; next }
+    in_ub && !/^      /  { in_ub = 0 }
+    END { if (open) { flush_ub(); printf "}" }; printf "\n  ]" }
   ' "$context_yaml"
 }
 
@@ -432,7 +428,7 @@ dev_kit_context_yaml_write() {
           *uses:*docker://*|*uses:*Docker://*)
             # Docker action: uses: docker://image
             local _dep_img
-            _dep_img="$(printf '%s' "$_content" | awk '{sub(/.*uses:[[:space:]]*[Dd]ocker:\/\//, ""); sub(/@.*/, ""); print}')"
+            _dep_img="$(printf '%s' "$_content" | awk '{sub(/.*uses:[[:space:]]*[Dd]ocker:\/\//, ""); gsub(/["'"'"']/, ""); sub(/@.*/, ""); print}')"
             [ -n "$_dep_img" ] && printf '%s|docker action|%s\n' "$_dep_img" "$_src_rel" >> "$_dep_triples_file"
             ;;
           *uses:*/*/*@*|*uses:*./*) ;;  # skip local refs and deeply-pathed refs already caught

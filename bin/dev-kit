@@ -191,6 +191,7 @@ command_usage() {
     repo)
       echo "  --json     Output machine-readable JSON"
       echo "  --check    Report gaps without writing context.yaml"
+      echo "  --force    Re-resolve all dependencies from scratch"
       ;;
     agent)
       echo "  --json     Output machine-readable JSON"

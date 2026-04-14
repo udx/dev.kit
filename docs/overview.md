@@ -6,7 +6,7 @@
 
 dev.kit handles deterministic work that should be repeatable:
 - Tool detection and environment validation
-- Repo factor analysis (docs, architecture, dependencies, config, verification, runtime, build)
+- Repo factor analysis (documentation, dependencies, config, pipeline)
 - Cross-repo dependency tracing and resolution
 - GitHub signal collection (issues, PRs, security alerts)
 - Context artifact generation

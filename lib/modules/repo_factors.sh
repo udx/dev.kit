@@ -242,24 +242,33 @@ dev_kit_repo_factor_evidence_json() {
 
 dev_kit_repo_factor_entrypoint() {
   local repo_dir="$1"
-  local factor="$2"
+  local kind="$2"
   local command=""
 
-  case "$factor" in
-    pipeline)
+  case "$kind" in
+    pipeline|verify|verification)
       if dev_kit_repo_has_make_target "$repo_dir" "test"; then
-        printf "%s" "make test"
-        return 0
+        printf "%s" "make test"; return 0
       fi
       if dev_kit_repo_has_node_test_script "$repo_dir"; then
-        printf "%s" "npm test"
-        return 0
+        printf "%s" "npm test"; return 0
       fi
       if dev_kit_repo_has_composer_test_script "$repo_dir"; then
-        printf "%s" "composer test"
-        return 0
+        printf "%s" "composer test"; return 0
       fi
       command="$(dev_kit_repo_documented_command "$repo_dir" "verification" || true)"
+      ;;
+    build|build_release_run)
+      if dev_kit_repo_has_make_target "$repo_dir" "build"; then
+        printf "%s" "make build"; return 0
+      fi
+      command="$(dev_kit_repo_documented_command "$repo_dir" "build" || true)"
+      ;;
+    run|runtime)
+      if dev_kit_repo_has_make_target "$repo_dir" "run"; then
+        printf "%s" "make run"; return 0
+      fi
+      command="$(dev_kit_repo_documented_command "$repo_dir" "run" || true)"
       ;;
     *)
       command=""

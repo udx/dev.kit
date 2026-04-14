@@ -22,6 +22,11 @@ refs:
   - ./src
   - ./tests
 
+commands:
+  verify: make test
+  build: make build
+  run: make run
+
 # GitHub context — development signals from repo history
 github:
   repo: udx/dev.kit
@@ -31,6 +36,8 @@ github:
     - "#14 fix release workflow trigger"
     - "#13 add package-lock.json for CI cache"
     - "#12 add npm release workflow, versioning, and changelog"
+  open_prs:
+    - "#17 slim factors, widen tracing, bump to 0.5.0"
 
 # Gaps — factors that are missing or partial
 gaps:
