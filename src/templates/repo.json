@@ -9,5 +9,5 @@
   "factors": {{factors}},
   "gaps": {{gaps}},
   "actions": {{actions}},
-  "manifest": "{{manifest}}"
+  "context": "{{context}}"
 }

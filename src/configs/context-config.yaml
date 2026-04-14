@@ -24,23 +24,23 @@ config:
     - CONTEXT.md
     - refs.md
     - REFS.md
+  # Paths relative to DEV_KIT_HOME surfaced as fallback refs when absent from target repo.
+  # Local absolute path if dev.kit is installed; GitHub raw URL otherwise.
+  kit_source_refs:
+    - src/configs/github-issues.yaml
+    - src/configs/github-prs.yaml
+    - .github/ISSUE_TEMPLATE
+    - .github/PULL_REQUEST_TEMPLATE.md
+
   priority_paths:
-    - CLAUDE.md
-    - AGENTS.md
     - README.md
     - readme.md
-    - docs/lessons-learned.md
     - docs/architecture.md
-    - CONTEXT.md
-    - context.md
-    - REFS.md
-    - refs.md
-    - .rabbit/infra_configs
+    - docs/lessons-learned.md
     - docs
     - .rabbit
     - .github/workflows
     - Makefile
-    - src/configs/development-practices.yaml
     - package.json
     - composer.json
     - Dockerfile
@@ -59,6 +59,7 @@ config:
     - scripts
     - tests
   repo_doc_paths:
+    - .rabbit/context.yaml
     - CLAUDE.md
     - AGENTS.md
     - README.md
@@ -66,6 +67,7 @@ config:
     - docs/lessons-learned.md
     - docs/architecture.md
     - docs
+    - .rabbit/dev.kit
   marker_groups:
     git_root:
       prefix: git

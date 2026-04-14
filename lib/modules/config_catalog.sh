@@ -77,8 +77,30 @@ EOF
   printf "%s" "$refs" | dev_kit_unique_lines_ci
 }
 
+dev_kit_repo_kit_source_refs() {
+  local repo_dir="${1:-$(pwd)}"
+  local path=""
+  local _gh_raw="https://raw.githubusercontent.com/udx/dev.kit/main"
+
+  while IFS= read -r path; do
+    [ -n "$path" ] || continue
+    [ -e "$repo_dir/$path" ] && continue
+    if [ -n "${DEV_KIT_HOME:-}" ] && [ -e "$DEV_KIT_HOME/$path" ]; then
+      printf "%s/%s\n" "$DEV_KIT_HOME" "$path"
+    else
+      printf "%s/%s\n" "$_gh_raw" "$path"
+    fi
+  done <<EOF
+$(dev_kit_context_list "kit_source_refs")
+EOF
+}
+
 dev_kit_repo_priority_refs() {
-  dev_kit_repo_priority_list "${1:-$(pwd)}" "priority_paths"
+  local repo_dir="${1:-$(pwd)}"
+  {
+    dev_kit_repo_priority_list "$repo_dir" "priority_paths"
+    dev_kit_repo_kit_source_refs "$repo_dir"
+  } | dev_kit_unique_lines_ci
 }
 
 dev_kit_repo_doc_refs() {

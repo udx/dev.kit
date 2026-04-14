@@ -10,7 +10,7 @@ dev_kit_cmd_repo() {
   local repo_name=""
   local gaps_json=""
   local actions_json="[]"
-  local manifest_path=""
+  local context_yaml_path=""
 
   # Parse flags from remaining args (skip format which is first arg)
   if [ "$#" -ge 1 ]; then
@@ -28,15 +28,13 @@ dev_kit_cmd_repo() {
   repo_root="$(dev_kit_repo_root "$repo_dir")"
   repo_dir="${repo_root:-$repo_dir}"
   repo_name="$(dev_kit_repo_name "$repo_dir")"
-  manifest_path="$(dev_kit_scaffold_manifest_path "$repo_dir")"
+  context_yaml_path="$(dev_kit_context_yaml_path "$repo_dir")"
 
   # JSON mode: compute everything up front then emit template
   if [ "$format" = "json" ]; then
     gaps_json="$(dev_kit_scaffold_gaps_json "$repo_dir")"
     if [ "$mode" = "learn" ] || [ "$mode" = "scaffold" ]; then
-      mkdir -p "$(dirname "$manifest_path")"
-      dev_kit_scaffold_manifest_write "$repo_dir" > "$manifest_path"
-      dev_kit_agent_write_agents_md "$manifest_path" "${repo_dir}/AGENTS.md"
+      dev_kit_context_yaml_write "$repo_dir" >/dev/null
     fi
     if [ "$mode" = "scaffold" ]; then
       local archetype plan
@@ -55,7 +53,7 @@ dev_kit_cmd_repo() {
       "factors=$(dev_kit_repo_factor_summary_json "$repo_dir")" \
       "gaps=$gaps_json" \
       "actions=$actions_json" \
-      "manifest=$(dev_kit_json_escape "$manifest_path")"
+      "context=$(dev_kit_json_escape "$context_yaml_path")"
     return 0
   fi
 
@@ -96,7 +94,7 @@ dev_kit_cmd_repo() {
 
   if [ "$mode" = "scaffold" ]; then
     dev_kit_output_section "scaffold"
-    dev_kit_output_list_item "actions applied — see ${manifest_path}"
+    dev_kit_output_list_item "actions applied — see ${context_yaml_path}"
   elif [ -n "$scaffold_plan" ]; then
     dev_kit_output_section "scaffold preview"
     while IFS='|' read -r action rel_path; do
@@ -107,13 +105,11 @@ $scaffold_plan
 EOF
   fi
 
-  # Write manifest after output (slow ~20s; user already sees analysis above)
+  # Write context.yaml after output (slow ~20s; user already sees analysis above)
   if [ "$mode" = "learn" ] || [ "$mode" = "scaffold" ]; then
-    mkdir -p "$(dirname "$manifest_path")"
-    dev_kit_scaffold_manifest_write "$repo_dir" > "$manifest_path"
-    dev_kit_agent_write_agents_md "$manifest_path" "${repo_dir}/AGENTS.md"
+    dev_kit_context_yaml_write "$repo_dir" >/dev/null
   fi
 
-  dev_kit_output_section "manifest"
-  dev_kit_output_list_item "$manifest_path"
+  dev_kit_output_section "context"
+  dev_kit_output_list_item "$context_yaml_path"
 }

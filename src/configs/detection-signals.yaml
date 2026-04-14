@@ -19,7 +19,9 @@ config:
     - wp-content
     - wp-includes
     - node_modules
+    - .next
     - vendor
+    - dist
     - .venv
     - venv
     - .terraform

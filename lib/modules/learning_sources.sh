@@ -138,9 +138,15 @@ dev_kit_learning_claude_projects_root_path() {
   dev_kit_learning_expand_path "$root"
 }
 
+dev_kit_learning_claude_history_path() {
+  local path="${CLAUDE_HISTORY_FILE:-$HOME/.claude/history.jsonl}"
+  dev_kit_learning_expand_path "$path"
+}
+
 dev_kit_learning_claude_project_id() {
-  # /a/b/c  →  -a-b-c  (matches ~/.claude/projects/ naming convention)
-  printf "%s" "$1" | sed 's|/|-|g'
+  # Claude project dirs are path-shaped but sanitize punctuation like dots:
+  # /a/b/dev.kit -> -a-b-dev-kit
+  printf "%s" "$1" | sed -E 's|/|-|g; s|[^[:alnum:]_-]|-|g; s|-+|-|g'
 }
 
 dev_kit_learning_claude_project_dir() {
@@ -154,7 +160,28 @@ dev_kit_learning_claude_recent_session_paths() {
   local repo_dir="$1"
   local lastrun_file="${2:-}"
   local max_recent="${3:-6}"
+  local history_path since_epoch
+  history_path="$(dev_kit_learning_claude_history_path)"
+  since_epoch="0"
+
+  if [ -n "$lastrun_file" ] && [ -f "$lastrun_file" ]; then
+    since_epoch="$(cat "$lastrun_file" 2>/dev/null || printf '0')"
+  fi
+
+  if [ -f "$history_path" ]; then
+    dev_kit_learning_claude_recent_session_paths_from_history "$repo_dir" "$since_epoch" "$max_recent"
+    return 0
+  fi
+
+  dev_kit_learning_claude_recent_session_paths_from_project_dir "$repo_dir" "$lastrun_file" "$max_recent"
+}
+
+dev_kit_learning_claude_recent_session_paths_from_project_dir() {
+  local repo_dir="$1"
+  local lastrun_file="${2:-}"
+  local max_recent="${3:-6}"
   local project_dir
+
   project_dir="$(dev_kit_learning_claude_project_dir "$repo_dir")"
   [ -d "$project_dir" ] || return 0
 
@@ -165,11 +192,67 @@ dev_kit_learning_claude_recent_session_paths() {
   fi | sort -r | head -"$max_recent"
 }
 
+dev_kit_learning_claude_recent_session_paths_from_history() {
+  local repo_dir="$1"
+  local since_epoch="${2:-0}"
+  local max_recent="${3:-6}"
+  local history_path projects_root
+
+  history_path="$(dev_kit_learning_claude_history_path)"
+  projects_root="$(dev_kit_learning_claude_projects_root_path)"
+  [ -f "$history_path" ] || return 0
+  [ -d "$projects_root" ] || return 0
+
+  awk -v project="$repo_dir" -v since_epoch="$since_epoch" '
+    index($0, "\"project\":\"" project "\"") {
+      ts = ""
+      sid = ""
+      if (match($0, /"timestamp":[0-9]+/)) {
+        ts = substr($0, RSTART + 12, RLENGTH - 12)
+      }
+      if (match($0, /"sessionId":"[^"]+"/)) {
+        sid = substr($0, RSTART + 13, RLENGTH - 14)
+      }
+      if (sid == "" || ts == "") next
+      if ((ts / 1000) < since_epoch) next
+      if (!seen[sid] || ts > seen_ts[sid]) {
+        seen[sid] = 1
+        seen_ts[sid] = ts
+      }
+    }
+    END {
+      for (sid in seen) {
+        printf "%s|%s\n", seen_ts[sid], sid
+      }
+    }
+  ' "$history_path" \
+    | sort -t'|' -k1,1nr \
+    | head -"$max_recent" \
+    | while IFS='|' read -r _ts sid; do
+        [ -n "$sid" ] || continue
+        dev_kit_learning_claude_session_path_for_id "$sid" "$repo_dir"
+        printf '\n'
+      done \
+    | awk 'NF && !seen[$0]++'
+}
+
 dev_kit_learning_claude_session_path_for_id() {
   local session_id="$1"
   local repo_dir="${2:-$(pwd)}"
   local path
+
+  [ -n "$session_id" ] || return 0
+
   path="$(dev_kit_learning_claude_project_dir "$repo_dir")/${session_id}.jsonl"
+  if [ -f "$path" ]; then
+    printf "%s" "$path"
+    return 0
+  fi
+
+  path="$(
+    find "$(dev_kit_learning_claude_projects_root_path)" -maxdepth 2 -type f -name "${session_id}.jsonl" 2>/dev/null \
+      | head -n 1
+  )"
   [ -f "$path" ] && printf "%s" "$path"
 }
 
@@ -297,30 +380,137 @@ dev_kit_learning_session_user_prompts() {
 
   case "$source" in
     claude)
-      # Claude: "type":"user" + "promptId" field + string "content" (not array)
-      awk '
-        /"type":"user"/ && /"promptId":"/ && /"isMeta":false/ {
-          if (match($0, /"content":"[^[{][^"\\]*"/)) {
-            value = substr($0, RSTART + 11, RLENGTH - 12)
-            gsub(/\\n/, " ", value)
-            gsub(/\\"/, "\"", value)
-            if (length(value) > 3) print value
+      # Prefer Claude history display lines because they are the stable,
+      # user-facing prompt index keyed by project + sessionId.
+      local history_lines
+      history_lines="$(dev_kit_learning_claude_history_display_lines "$(dev_kit_learning_ref_id "$ref")" "$repo_dir" || true)"
+      if [ -n "$history_lines" ]; then
+        printf '%s\n' "$history_lines" \
+          | dev_kit_learning_clean_prompt_lines \
+          | awk 'NF && !seen[$0]++'
+      else
+        # Fallback to raw transcript parsing when history is unavailable.
+        awk '
+          /"type":"user"/ && /"promptId":"/ && /"isMeta":false/ {
+            if (match($0, /"content":"([^"\\]|\\.)*"/)) {
+              value = substr($0, RSTART + 11, RLENGTH - 12)
+              gsub(/\\n/, " ", value)
+              gsub(/\\"/, "\"", value)
+              if (length(value) > 3) print value
+            }
           }
-        }
-      ' "$path" | awk 'NF && !seen[$0]++'
+        ' "$path" \
+          | dev_kit_learning_clean_prompt_lines \
+          | awk 'NF && !seen[$0]++'
+      fi
       ;;
     *)
-      # Codex: "type":"message","role":"user" with "text":"..."
+      # Codex supports both legacy top-level message lines and current
+      # response_item payloads containing input_text blocks.
       awk '
-        $0 ~ /"type":"message","role":"user"/ && match($0, /"text":"([^"\\]|\\.)*"/) {
-          value = substr($0, RSTART + 8, RLENGTH - 9)
-          gsub(/\\n/, " ", value)
-          gsub(/\\"/, "\"", value)
-          print value
+        {
+          is_user_message = 0
+
+          if ($0 ~ /"type":"response_item"/ && $0 ~ /"payload":\{"type":"message","role":"user"/) {
+            is_user_message = 1
+          } else if ($0 ~ /"type":"message","role":"user"/) {
+            is_user_message = 1
+          }
+
+          if (is_user_message && match($0, /"text":"([^"\\]|\\.)*"/)) {
+            value = substr($0, RSTART + 8, RLENGTH - 9)
+            gsub(/\\n/, " ", value)
+            gsub(/\\"/, "\"", value)
+            print value
+          }
         }
-      ' "$path" | awk 'NF && !seen[$0]++'
+      ' "$path" \
+        | dev_kit_learning_clean_prompt_lines \
+        | awk 'NF && !seen[$0]++'
       ;;
   esac
+}
+
+dev_kit_learning_claude_history_display_lines() {
+  local session_id="$1"
+  local repo_dir="${2:-$(pwd)}"
+  local history_path
+
+  history_path="$(dev_kit_learning_claude_history_path)"
+  [ -f "$history_path" ] || return 1
+  [ -n "$session_id" ] || return 1
+
+  awk -v project="$repo_dir" -v session_id="$session_id" '
+    index($0, "\"project\":\"" project "\"") && index($0, "\"sessionId\":\"" session_id "\"") {
+      if (match($0, /"display":"([^"\\]|\\.)*"/)) {
+        value = substr($0, RSTART + 11, RLENGTH - 12)
+        gsub(/\\n/, " ", value)
+        gsub(/\\"/, "\"", value)
+        print value
+      }
+    }
+  ' "$history_path"
+}
+
+dev_kit_learning_clean_prompt_lines() {
+  awk '
+    function trim(value) {
+      sub(/^[[:space:]]+/, "", value)
+      sub(/[[:space:]]+$/, "", value)
+      return value
+    }
+    function normalize(value) {
+      gsub(/[[:space:]]+/, " ", value)
+      return trim(value)
+    }
+    function clip_before_markers(value, marker_pos) {
+      marker_pos = index(value, " fq // ")
+      if (marker_pos > 0) value = substr(value, 1, marker_pos - 1)
+      marker_pos = index(value, " jonyfq@")
+      if (marker_pos > 0) value = substr(value, 1, marker_pos - 1)
+      marker_pos = index(value, " $ ")
+      if (marker_pos > 0) value = substr(value, 1, marker_pos - 1)
+      marker_pos = index(value, " [summary]")
+      if (marker_pos > 0) value = substr(value, 1, marker_pos - 1)
+      return trim(value)
+    }
+    {
+      line = normalize($0)
+      line = clip_before_markers(line)
+      lower = tolower(line)
+
+      if (line == "") next
+      if (lower ~ /^<image name=/) next
+      if (lower ~ /ag[[:space:]]*ents\.md instructions/) next
+      if (lower ~ /<instructions>/) next
+      if (lower ~ /<environment_context>/) next
+      if (lower ~ /<local-command-caveat>/) next
+      if (lower ~ /<turn_aborted>/) next
+      if (lower ~ /^fq[[:space:]]*\/\//) next
+      if (lower ~ /^jonyfq@.*>[[:space:]]/) next
+      if (lower ~ /^[[]summary[]]$/) next
+      if (lower ~ /^[[]sources[]]$/) next
+      if (lower ~ /^[[]observed[]]$/) next
+      if (lower ~ /^[[]workflow[]]$/) next
+      if (lower ~ /^[[]learned[]]$/) next
+      if (lower ~ /^[[]artifact[]]$/) next
+      if (lower ~ /^[[]send to[]]$/) next
+      if (lower ~ /^dev\.kit learn$/) next
+      if (lower ~ /^installed dev\.kit$/) next
+      if (lower ~ /^find all codex sessions/) next
+      if (lower ~ /^find all claude sessions/) next
+      if (lower ~ /^human-first raw output/) next
+      if (lower ~ /^path:[[:space:]]*~/) next
+      if (lower ~ /^repo:[[:space:]]/) next
+      if (lower ~ /^available:[[:space:]]*$/) next
+      if (lower ~ /^\$[[:space:]]/) next
+      if (lower ~ /^-[[:space:]]+\//) next
+      if (lower ~ /^\/[a-z]/) next
+      if (length(line) > 320) line = substr(line, 1, 317) "..."
+
+      print line
+    }
+  '
 }
 
 # ── URL extraction (works on raw text, same for both sources) ─────────────────
@@ -328,9 +518,15 @@ dev_kit_learning_session_user_prompts() {
 dev_kit_learning_sanitize_url_lines() {
   awk '
     {
-      gsub(/\\+$/, "", $0)
-      gsub(/[")]+$/, "", $0)
-      if (!seen[$0]++) print
+      # Split on literal \n (JSON-escaped newlines that join multiple URLs)
+      n = split($0, segs, /\\n/)
+      for (i = 1; i <= n; i++) {
+        url = segs[i]
+        gsub(/\\+$/, "", url)
+        gsub(/[")]+$/, "", url)
+        gsub(/^[[:space:]]+|[[:space:]]+$/, "", url)
+        if (url != "" && !seen[url]++) print url
+      }
     }
   '
 }

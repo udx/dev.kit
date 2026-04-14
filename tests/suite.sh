@@ -99,17 +99,23 @@ if should_run "core"; then
   repo_json="$(cd "$DOCUMENTED_SHELL_REPO" && dev.kit repo --json)"
   assert_contains "$repo_json" "\"archetype\":"            "repo: reports archetype"
   assert_contains "$repo_json" "\"factors\": {"           "repo: reports factors"
-  assert_contains "$repo_json" "\"manifest\":"             "repo: reports manifest path"
+  assert_contains "$repo_json" "\"context\":"              "repo: reports context path"
 
   cp -R "$SIMPLE_REPO" "$SIMPLE_ACTION_REPO"
-  rm -rf "$SIMPLE_ACTION_REPO/.dev-kit"
+  rm -rf "$SIMPLE_ACTION_REPO/.dev-kit" "$SIMPLE_ACTION_REPO/.rabbit"
   agent_no_manifest="$(cd "$SIMPLE_ACTION_REPO" && dev.kit agent --json 2>&1 || true)"
-  assert_contains "$agent_no_manifest" "\"error\":"        "agent: reports error without manifest"
+  assert_contains "$agent_no_manifest" "\"error\":"        "agent: reports error without context"
 
   (cd "$SIMPLE_ACTION_REPO" && dev.kit repo) >/dev/null 2>&1
   agent_json="$(cd "$SIMPLE_ACTION_REPO" && dev.kit agent --json)"
   assert_contains "$agent_json" "\"archetype\":"           "agent: reports archetype"
   assert_contains "$agent_json" "\"workflow_contract\":"   "agent: reports workflow contract"
+
+  context_yaml="${SIMPLE_ACTION_REPO}/.rabbit/context.yaml"
+  assert_file_exists "$context_yaml"                                   "repo: generates .rabbit/context.yaml"
+  assert_contains "$(cat "$context_yaml")" "kind: repoContext"         "repo: context.yaml has kind header"
+  assert_contains "$(cat "$context_yaml")" "version: udx.io/dev.kit"  "repo: context.yaml has version"
+  assert_contains "$(cat "$context_yaml")" "refs:"                     "repo: context.yaml has refs section"
 fi
 
 # ── archetypes ─────────────────────────────────────────────────────────────────
@@ -125,10 +131,10 @@ fi
 # ── learn ──────────────────────────────────────────────────────────────────────
 
 if should_run "learn"; then
-  LEARN_REPO="$TEST_HOME/learn-test-repo"
+  LEARN_REPO="$TEST_HOME/learn.test-repo"
   cp -R "$DOCUMENTED_SHELL_REPO" "$LEARN_REPO"
-  rm -rf "$LEARN_REPO/.dev-kit"
-  mkdir -p "$LEARN_REPO/.dev-kit"
+  rm -rf "$LEARN_REPO/.dev-kit" "$LEARN_REPO/.rabbit"
+  mkdir -p "$LEARN_REPO/.rabbit/dev.kit"
   LEARN_REPO="$(cd "$LEARN_REPO" && pwd)"  # normalize: macOS TMPDIR has trailing slash → // in paths
 
   # -- codex fixture (points at LEARN_REPO) --
@@ -137,22 +143,29 @@ if should_run "learn"; then
   mkdir -p "$TEST_CODEX_HOME/sessions/2026/04/12"
   cat > "$TEST_CODEX_HOME/sessions/2026/04/12/rollout-2026-04-12T10-00-00-${CODEX_UUID}.jsonl" <<EOF
 {"type":"session_meta","payload":{"id":"$CODEX_UUID","cwd":"$LEARN_REPO","originator":"codex-tui"}}
+{"type":"response_item","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"# AGENTS.md instructions for $LEARN_REPO <INSTRUCTIONS> hidden bootstrap content </INSTRUCTIONS>"}]}}
 {"type":"response_item","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"check deploy.yml and github actions workflow security gaps"}]}}
 {"type":"response_item","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"https://github.com/test/repo/issues/42 related issue"}]}}
 EOF
 
   # -- claude fixture (project dir derived from LEARN_REPO path) --
   CLAUDE_UUID="11111111-2222-3333-4444-555555555555"
-  CLAUDE_PROJECT_ID="$(printf "%s" "$LEARN_REPO" | sed 's|/|-|g')"
+  CLAUDE_PROJECT_ID="$(printf "%s" "$LEARN_REPO" | sed -E 's|/|-|g; s|[^[:alnum:]_-]|-|g; s|-+|-|g')"
   TEST_CLAUDE_PROJECTS="$TEST_HOME/.claude-projects"
+  TEST_CLAUDE_HISTORY="$TEST_HOME/.claude-history.jsonl"
   mkdir -p "$TEST_CLAUDE_PROJECTS/$CLAUDE_PROJECT_ID"
   cat > "$TEST_CLAUDE_PROJECTS/$CLAUDE_PROJECT_ID/${CLAUDE_UUID}.jsonl" <<EOF
 {"type":"user","message":{"role":"user","content":"review .github/workflows and deploy.yml security configuration"},"promptId":"p-001","isMeta":false,"cwd":"$LEARN_REPO","sessionId":"$CLAUDE_UUID"}
 {"type":"user","message":{"role":"user","content":"https://github.com/test/repo/pull/5 check workflow gaps"},"promptId":"p-002","isMeta":false,"cwd":"$LEARN_REPO","sessionId":"$CLAUDE_UUID"}
 EOF
+  cat > "$TEST_CLAUDE_HISTORY" <<EOF
+{"display":"review .github/workflows and deploy.yml security configuration","timestamp":1775930000000,"project":"$LEARN_REPO","sessionId":"$CLAUDE_UUID"}
+{"display":"claude history prefers this compact prompt","timestamp":1775930001000,"project":"$LEARN_REPO","sessionId":"$CLAUDE_UUID"}
+EOF
 
   export CODEX_HOME="$TEST_CODEX_HOME"
   export CLAUDE_PROJECTS_ROOT="$TEST_CLAUDE_PROJECTS"
+  export CLAUDE_HISTORY_FILE="$TEST_CLAUDE_HISTORY"
 
   # 1. codex-only source
   learn_codex="$(cd "$LEARN_REPO" && DEV_KIT_LEARN_SOURCES=codex dev.kit learn --json)"
@@ -174,25 +187,56 @@ EOF
 
   # 4. artifact written (text mode)
   (cd "$LEARN_REPO" && dev.kit learn) >/dev/null 2>&1
-  artifact="$(ls "$LEARN_REPO/.dev-kit/lessons-"*.md 2>/dev/null | head -1)"
+  artifact="$(ls "$LEARN_REPO/.rabbit/dev.kit/lessons-"*.md 2>/dev/null | head -1)"
   assert_file_exists "$artifact"                             "learn: artifact file written"
-  assert_contains "$(cat "$artifact")" "## Session prompts" "learn: artifact has session prompts section"
+  assert_contains "$(cat "$artifact")" "## Workflow rules"  "learn: artifact has workflow rules section"
+  assert_contains "$(cat "$artifact")" "## Ready templates" "learn: artifact has ready templates section"
+  assert_contains "$(cat "$artifact")" "## Evidence highlights" "learn: artifact has evidence highlights section"
   assert_contains "$(cat "$artifact")" "github.com"         "learn: artifact includes referenced URLs"
+  assert_not_contains "$(cat "$artifact")" "AGENTS.md instructions" "learn: artifact excludes bootstrap prompt noise"
+  assert_contains "$(cat "$artifact")" "Use repo workflow assets like deploy.yml" "learn: artifact packages rule guidance"
+  assert_contains "$(cat "$artifact")" '`Workflow tracing`' "learn: artifact packages reusable templates"
+  assert_contains "$(cat "$artifact")" "claude history prefers this compact prompt" "learn: artifact keeps compact evidence highlights"
 
   # 5. incremental: sessions older than last-run are skipped
-  touch -t 203001010000 "$LEARN_REPO/.dev-kit/learn-last-run"
+  touch -t 203001010000 "$LEARN_REPO/.rabbit/dev.kit/learn-last-run"
   learn_incr="$(cd "$LEARN_REPO" && dev.kit learn --json)"
   assert_not_contains "$learn_incr" "$CODEX_UUID"  "learn: incremental skips old codex session"
   assert_not_contains "$learn_incr" "$CLAUDE_UUID" "learn: incremental skips old claude session"
-  rm -f "$LEARN_REPO/.dev-kit/learn-last-run"
 
-  # 6. no sessions — use env to ensure override reaches the subprocess
+  # 6. deleting the artifact resets the incremental baseline and rebuilds from all sessions
+  rm -f "$artifact"
+  learn_rebuild="$(cd "$LEARN_REPO" && dev.kit learn --json)"
+  assert_contains "$learn_rebuild" "$CODEX_UUID"  "learn: missing artifact rebuilds codex history"
+  assert_contains "$learn_rebuild" "$CLAUDE_UUID" "learn: missing artifact rebuilds claude history"
+  rm -f "$LEARN_REPO/.rabbit/dev.kit/learn-last-run"
+
+  # 7. incremental artifact merges previous lessons with new session-derived deltas
+  (cd "$LEARN_REPO" && dev.kit learn) >/dev/null 2>&1
+  sleep 1
+  SECOND_CODEX_UUID="ffffffff-1111-2222-3333-444444444444"
+  mkdir -p "$TEST_CODEX_HOME/sessions/2026/04/13"
+  cat > "$TEST_CODEX_HOME/sessions/2026/04/13/rollout-2026-04-13T12-00-00-${SECOND_CODEX_UUID}.jsonl" <<EOF
+{"type":"session_meta","payload":{"id":"$SECOND_CODEX_UUID","cwd":"$LEARN_REPO","originator":"codex-tui"}}
+{"type":"response_item","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"readme docs first cleanup legacy modules and keep configuration separate from code"}]}}
+{"type":"response_item","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"https://github.com/test/repo/pull/9 review cleanup scope"}]}}
+EOF
+  learn_merge="$(cd "$LEARN_REPO" && dev.kit learn --json)"
+  assert_contains "$learn_merge" "$SECOND_CODEX_UUID" "learn: incremental picks newly added session"
+  (cd "$LEARN_REPO" && dev.kit learn) >/dev/null 2>&1
+  merged_artifact="$(ls "$LEARN_REPO/.rabbit/dev.kit/lessons-"*.md 2>/dev/null | head -1)"
+  merged_artifact_text="$(cat "$merged_artifact")"
+  assert_contains "$merged_artifact_text" "https://github.com/test/repo/issues/42" "learn: merged artifact retains prior references"
+  assert_contains "$merged_artifact_text" "https://github.com/test/repo/pull/9" "learn: merged artifact adds new references"
+  assert_contains "$merged_artifact_text" '`Config-over-code`' "learn: merged artifact adds new reusable template"
+
+  # 8. no sessions — use env to ensure override reaches the subprocess
   learn_empty="$(cd "$LEARN_REPO" && \
     env CODEX_HOME="$TEST_HOME/no-codex" CLAUDE_PROJECTS_ROOT="$TEST_HOME/no-claude" \
     dev.kit learn)"
-  assert_contains "$learn_empty" "no agent sessions" "learn: handles no sessions gracefully"
+  assert_contains "$learn_empty" "no new agent sessions found since the latest lessons artifact" "learn: handles empty incremental runs gracefully"
 
-  unset CODEX_HOME CLAUDE_PROJECTS_ROOT
+  unset CODEX_HOME CLAUDE_PROJECTS_ROOT CLAUDE_HISTORY_FILE
 fi
 
 # ── install ────────────────────────────────────────────────────────────────────

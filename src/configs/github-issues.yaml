@@ -1,0 +1,159 @@
+kind: githubIssues
+version: udx.io/dev.kit/v1
+
+config:
+
+  # ── Label taxonomy ──────────────────────────────────────────────────────────
+  # Apply consistently across repos so agents and humans share the same signal.
+  labels:
+    type:
+      - name: "type:bug"
+        color: "d73a4a"
+        description: "Something isn't working"
+      - name: "type:feature"
+        color: "a2eeef"
+        description: "New capability or enhancement"
+      - name: "type:infra"
+        color: "e4e669"
+        description: "Infrastructure or deployment task"
+      - name: "type:ops"
+        color: "f9d71c"
+        description: "Operational runbook or maintenance"
+      - name: "type:security"
+        color: "b60205"
+        description: "Security or compliance concern"
+      - name: "type:docs"
+        color: "0075ca"
+        description: "Documentation improvement"
+    priority:
+      - name: "priority:critical"
+        color: "b60205"
+        description: "Blocking production or a release"
+      - name: "priority:high"
+        color: "e4e669"
+        description: "Should be resolved this sprint"
+      - name: "priority:normal"
+        color: "0075ca"
+        description: "Standard backlog priority"
+    status:
+      - name: "status:blocked"
+        color: "d93f0b"
+        description: "Cannot proceed — waiting on something external"
+      - name: "status:in-progress"
+        color: "fbca04"
+        description: "Actively being worked"
+
+  # ── Issue templates ─────────────────────────────────────────────────────────
+  # Each template defines required sections and optional hints.
+  # Agents use these as the schema when writing or evaluating issue bodies.
+  templates:
+    bug:
+      description: "Something that used to work (or should work) is broken."
+      sections:
+        - id: summary
+          label: "Summary"
+          required: true
+          hint: "One sentence: what is broken and where."
+        - id: reproduce
+          label: "Steps to reproduce"
+          required: true
+          hint: "Minimal set of commands or actions that trigger the problem."
+        - id: expected
+          label: "Expected behavior"
+          required: true
+        - id: actual
+          label: "Actual behavior"
+          required: true
+        - id: context
+          label: "Context"
+          hint: "Relevant files, logs, environment details, related issue or PR URLs."
+
+    feature:
+      description: "New capability, improvement, or work item."
+      sections:
+        - id: goal
+          label: "Goal"
+          required: true
+          hint: "What capability is being added and why it matters."
+        - id: acceptance
+          label: "Acceptance criteria"
+          required: true
+          hint: "Bullet list — each item must be verifiable and map to a testable condition."
+        - id: context
+          label: "Context"
+          hint: "Relevant files, constraints, related issues or PRs, cross-repo links."
+
+    infra:
+      description: "Infrastructure, deployment, or operational change."
+      sections:
+        - id: goal
+          label: "Goal"
+          required: true
+          hint: "What is being changed and what outcome is expected."
+        - id: scope
+          label: "Scope"
+          hint: "Which services, environments, clusters, or repos are affected."
+        - id: acceptance
+          label: "Acceptance criteria"
+          required: true
+          hint: "Observable evidence that the change is live and stable."
+        - id: context
+          label: "Context"
+          hint: "Deploy config, workflow files, infra docs, runbook links."
+
+  # ── Agent workflow ──────────────────────────────────────────────────────────
+  # Rules for agents working from a GitHub issue.
+  # These are the minimum expectations before, during, and after a task.
+  agent_workflow:
+    before_starting:
+      - id: read-issue
+        message: >
+          Read the full issue body, labels, and comments before writing code or running
+          commands. The issue is the scope contract — do not extend it without flagging.
+      - id: verify-scope
+        message: >
+          Confirm the repo and environment match the issue scope.
+          Use the issue URL as the cross-repo context root when work spans multiple repos.
+      - id: map-acceptance
+        message: >
+          Identify the acceptance criteria explicitly. These define done and gate the PR.
+          If criteria are missing or ambiguous, add a clarifying comment before starting.
+
+    while_working:
+      - id: commit-ref
+        message: >
+          Reference the issue number in every commit message (e.g. "refs #42") and in the
+          PR title. This keeps the delivery chain traceable.
+      - id: scope-change
+        message: >
+          Post an update comment on the issue if scope changes, blockers emerge, or the
+          approach diverges from the description. Do not silently expand scope.
+
+    on_completion:
+      - id: close-link
+        message: >
+          Link the closing PR to the issue using "Closes #N" in the PR body.
+          GitHub will auto-close on merge — do not close the issue manually.
+      - id: verify-criteria
+        message: >
+          Verify all acceptance criteria are met before requesting review.
+          Map each criterion to evidence (test output, deploy log, screenshot).
+      - id: close-comment
+        message: >
+          Post a brief close-out comment with what changed, artifact links (PR, deploy,
+          metrics), and any follow-up items. Keep it under 150 words.
+      - id: backlog-followup
+        message: >
+          If investigation surfaced new gaps, constraints, or follow-up work that falls
+          outside the original scope, open separate issues for each item and reference
+          them in the close-out comment. Do not silently absorb unplanned work.
+
+  # ── Cross-repo linking ──────────────────────────────────────────────────────
+  cross_repo:
+    note: >
+      Use the GitHub issue URL as the shared context root when work spans multiple repos
+      or multiple agents. All agents working the same issue should read the same issue
+      URL before starting and reference it in their outputs.
+    pattern: "https://github.com/{owner}/{repo}/issues/{number}"
+    pr_close_keyword: "Closes"
+    pr_ref_keyword: "refs"

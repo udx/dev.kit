@@ -1,5 +1,7 @@
 # dev.kit
 
+<https://udx.dev/kit>
+
 **A foundation for context-driven development.**
 
 `dev.kit` builds structured context from environment, repository, and accumulated experience — so development is grounded in what actually exists, not assumptions.

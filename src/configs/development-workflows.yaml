@@ -26,6 +26,23 @@ config:
         optional_commands:
           - gh
       steps:
+        - id: context_refresh
+          label: Refresh repo context
+          check: context_refresh
+          optional: true
+          note: >
+            If .rabbit/context.yaml is stale or absent, run `dev.kit repo` then
+            `dev.kit agent` before starting work. A current context.yaml is the
+            source of truth for refs, commands, gaps, and lessons. Do not rely on
+            ad hoc prompt memory when the repo contract can be read from disk.
+        - id: issue_scope
+          label: Read linked GitHub issue and confirm scope
+          check: issue_scope
+          optional: true
+          note: >
+            If a GitHub issue URL is available, read the full body and comments,
+            confirm the repo matches the issue scope, and map acceptance criteria
+            before writing any code. Use the issue URL as the cross-repo context root.
         - id: worktree_status
           label: Inspect git status
           check: git_status
@@ -50,10 +67,44 @@ config:
         - id: pr_prepare
           label: Generate pull request description
           check: pr_prepare
+          note: >
+            Pick the PR template type from src/configs/github-prs.yaml (feature,
+            deployment, ops, hotfix). Fill every required section. Include "Closes #N"
+            for linked issues. Add a "Backlog from this investigation" section for any
+            new gaps found. Use .github/PULL_REQUEST_TEMPLATE.md as the base form.
         - id: pr_create
           label: Create pull request
           check: pr_create
-        - id: actions_verify
-          label: Verify GitHub Actions status
-          check: actions_verify
+        - id: bot_review
+          label: Read and respond to automated reviews
+          check: bot_review
           optional: true
+          note: >
+            After PR creation, wait for Copilot, Devin, and CodeQL reviews.
+            Read each review from github-prs.yaml bot guidance. Address actionable
+            findings — reply to each bot comment. Do not request human review while
+            bot findings are unaddressed.
+        - id: checks_verify
+          label: Verify required status checks
+          check: checks_verify
+          optional: true
+          note: >
+            All required checks must pass before requesting human review.
+            For infra PRs, open check details and review the Terraform plan output.
+            For CodeQL, review findings in the Security tab.
+        - id: issue_update
+          label: Post close-out comment on linked issue
+          check: issue_update
+          optional: true
+          note: >
+            After PR is created, post a brief comment on the linked issue with the PR URL,
+            what changed, and any follow-up items. GitHub auto-closes the issue on merge
+            when "Closes #N" is in the PR body — do not close manually.
+        - id: post_merge
+          label: Post-merge close-out and backlog
+          check: post_merge
+          optional: true
+          note: >
+            After merge: verify issue auto-closed, post close-out comment, open issues
+            for any backlog items from the PR, verify monitoring changes are live.
+            See post_merge steps in github-prs.yaml.

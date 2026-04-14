@@ -10,9 +10,11 @@ config:
   baseline:
     dirs:
       - docs
+      - .github/ISSUE_TEMPLATE
     files:
       - .gitignore
       - AGENTS.md
+      - .github/PULL_REQUEST_TEMPLATE.md
 
   # Additional scaffold items per archetype
   archetypes:

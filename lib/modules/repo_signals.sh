@@ -216,7 +216,7 @@ dev_kit_repo_find() {
 
   while IFS= read -r prune_path; do
     [ -n "$prune_path" ] || continue
-    prune_args+=(-path "$repo_dir/$prune_path" -o)
+    prune_args+=(-name "$prune_path" -o)
   done <<EOF
 $(dev_kit_detection_list "prune_dirs")
 EOF
