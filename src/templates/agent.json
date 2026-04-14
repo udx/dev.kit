@@ -9,6 +9,5 @@
   "priority_refs": {{priority_refs}},
   "entrypoints": {{entrypoints}},
   "workflow_contract": {{workflow_contract}},
-  "factors": {{factors}},
-  "task": "{{task}}"
+  "dependencies": {{dependencies}}
 }

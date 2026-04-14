@@ -2,15 +2,15 @@
 
 ## `dev.kit` — environment
 
-Run from any directory. Validates the local software environment, writes global context, and shows a repo summary if a repo is detected.
+Run from any directory. Validates the local software environment, detects the repo, and guides to the next pipeline step.
 
 **What it checks:**
 
-- Base tools: `git`, `gh`, `npm`, `docker`, `yq`, `jq`
+- Required: `git`, `gh`, `npm`, `docker`, `yq`, `jq` — each shown with what it enables
 - Cloud CLIs: `aws`, `gcloud`, `az` (optional)
-- Recommended packages: `@udx/worker-deployment`, `@udx/mcurl` (optional)
+- Recommended: `@udx/worker-deployment`, `@udx/mcurl` (optional)
 
-**Global context** is cached to `$DEV_KIT_HOME/context-env.txt` (1-hour TTL). Clear it with `rm $DEV_KIT_HOME/context-env.txt` to force a refresh. Capabilities derived from tool state:
+Capabilities derived from tool availability:
 
 | Capability | Requires |
 |---|---|
@@ -25,24 +25,24 @@ Use `dev.kit --json` to inspect the full `localhost_tools` inventory and `global
 
 Analyzes the repository against 7 engineering factors and writes `.rabbit/context.yaml` — the canonical context artifact. Detects config manifests (YAML files that define workflow and tooling).
 
-Three modes:
+Two modes:
 
-- **learn** (default): analyze repo, write `.rabbit/context.yaml`
-- **--scaffold**: also create missing directories and files
+- **learn** (default): analyze repo, pull GitHub context, trace dependencies, write `.rabbit/context.yaml`
 - **--check**: report gaps without writing anything
+- **--force**: re-resolve all dependency repos from scratch (skip cached context.yaml in sibling repos)
 
 ```bash
 dev.kit repo
-dev.kit repo --scaffold
 dev.kit repo --check
+dev.kit repo --force
 dev.kit repo --json
 ```
 
-Output includes: archetype, profile, factors (✓ present / ◦ partial / ✗ missing), gaps, config manifests, and context path.
+Output includes: archetype, profile, factors (✓ present / ◦ partial / ✗ missing), gaps, and context path.
 
-## `dev.kit agent` — agent instructions
+## `dev.kit agent` — execution contract
 
-Generates `AGENTS.md` — a comprehensive guide with anti-drift rules, commands, priority refs, config manifests, full workflow, engineering practices, and lessons from prior sessions.
+Generates `AGENTS.md` — a deterministic execution contract with strict rules, commands, priority refs, config manifests, GitHub context, full workflow, engineering practices, and versioned workflow artifacts.
 
 Auto-generates `.rabbit/context.yaml` if missing — no manual `dev.kit repo` step required.
 
@@ -52,9 +52,11 @@ dev.kit agent --json
 ```
 
 AGENTS.md includes:
-- **Rules** — no filesystem scanning, verify before commit, follow the workflow
+- **Contract** — 8 rules: no scanning, strict boundaries, manifests before code, context over memory, verify locally, follow workflow, reuse over invention, remember context
 - **Config manifests** — traceable YAML dependencies with kind labels
-- **Full workflow** — 15-step execution contract with operational notes
+- **GitHub context** — open issues, recent PRs, security alerts (via `gh api`)
+- **Full workflow** — execution sequence with operational notes
+- **Engineering practices** — 17 principles from lessons learned
 
 ## `dev.kit learn` — agent experience
 

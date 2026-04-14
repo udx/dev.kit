@@ -1,10 +1,5 @@
 #!/usr/bin/env bash
 
-# Cache key: tool lines are written to $DEV_KIT_HOME/context-env.txt on first run.
-# Subsequent calls within the TTL read from the file — no subprocesses spawned.
-# Clear with: rm $DEV_KIT_HOME/context-env.txt
-# Override TTL with: DEV_KIT_ENV_CACHE_TTL_MINUTES=0 (always recompute)
-
 _DEV_KIT_ENV_NPM_ROOT=""
 
 dev_kit_env_npm_root() {
@@ -14,23 +9,12 @@ dev_kit_env_npm_root() {
   printf '%s' "$_DEV_KIT_ENV_NPM_ROOT"
 }
 
-dev_kit_env_context_path() {
-  printf '%s/context-env.txt' "${DEV_KIT_HOME:-$HOME/.udx/dev.kit}"
-}
-
-dev_kit_env_context_is_fresh() {
-  local cache="$1"
-  local ttl="${DEV_KIT_ENV_CACHE_TTL_MINUTES:-60}"
-  [ "$ttl" -eq 0 ] && return 1
-  [ -f "$cache" ] && [ -n "$(find "$cache" -mmin -"$ttl" 2>/dev/null)" ]
-}
-
 dev_kit_env_tool_category() {
   case "$1" in
-    git|gh|npm|docker|yq|jq) printf 'base' ;;
+    git|gh|npm|docker|yq|jq) printf 'required' ;;
     aws|gcloud|az)            printf 'cloud' ;;
     "@udx/"*)                 printf 'recommended' ;;
-    *)                        printf 'base' ;;
+    *)                        printf 'required' ;;
   esac
 }
 
@@ -109,7 +93,7 @@ dev_kit_env_tool_state() {
   esac
 }
 
-# Compute and write tool lines to cache. Called once per session on cache miss.
+# Compute tool detection lines. Recomputed on each run.
 _dev_kit_env_compute_tool_lines() {
   local tool=""
   for tool in git gh npm docker yq jq aws gcloud az "@udx/worker-deployment" "@udx/mcurl"; do
@@ -117,25 +101,9 @@ _dev_kit_env_compute_tool_lines() {
   done
 }
 
-# Returns tool lines, using cache if fresh. Format: tool|category|status
+# Returns tool lines. Format: tool|category|status
 dev_kit_env_tool_lines() {
-  local cache
-  cache="$(dev_kit_env_context_path)"
-
-  if dev_kit_env_context_is_fresh "$cache"; then
-    cat "$cache"
-    return 0
-  fi
-
-  local lines
-  lines="$(_dev_kit_env_compute_tool_lines)"
-  # Write to cache if the home dir is writable
-  local cache_dir
-  cache_dir="$(dirname "$cache")"
-  if [ -d "$cache_dir" ] && [ -w "$cache_dir" ]; then
-    printf '%s\n' "$lines" > "$cache"
-  fi
-  printf '%s\n' "$lines"
+  _dev_kit_env_compute_tool_lines
 }
 
 dev_kit_env_tools_json() {
@@ -167,7 +135,7 @@ EOF
   printf ']'
 }
 
-# Derive capabilities from cached tool lines — no extra subprocess spawns.
+# Derive capabilities from tool lines — no extra subprocess spawns.
 dev_kit_global_context_capabilities_json() {
   local yaml_parsing=false
   local json_parsing=false
@@ -200,7 +168,56 @@ EOF
     "$cloud_aws" "$cloud_gcp" "$cloud_azure"
 }
 
-# Returns space-separated list of missing base tools. Derived from cached lines.
+# Human-readable description of what a tool enables for dev.kit context.
+dev_kit_env_tool_enables() {
+  case "$1" in
+    git)    printf 'version control, branch analysis' ;;
+    gh)     printf 'GitHub issues, PRs, and enrichment' ;;
+    npm)    printf 'package management, global installs' ;;
+    docker) printf 'container builds and runtime' ;;
+    yq)     printf 'YAML parsing in context generation' ;;
+    jq)     printf 'JSON processing for config and API data' ;;
+    aws)    printf 'AWS cloud operations' ;;
+    gcloud) printf 'Google Cloud operations' ;;
+    az)     printf 'Azure cloud operations' ;;
+    "@udx/worker-deployment") printf 'UDX deployment workflows' ;;
+    "@udx/mcurl")             printf 'web fetches for agents' ;;
+    *)      printf 'general tooling' ;;
+  esac
+}
+
+# Print tool status lines grouped by category for text output.
+# Each line: tool (status) — enables description
+dev_kit_env_tools_text() {
+  local line="" tool="" rest="" category="" status="" enables=""
+  local cur_cat=""
+
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    tool="${line%%|*}"
+    rest="${line#*|}"
+    category="${rest%%|*}"
+    status="${rest#*|}"
+    enables="$(dev_kit_env_tool_enables "$tool")"
+
+    if [ "$category" != "$cur_cat" ]; then
+      cur_cat="$category"
+    fi
+
+    case "$status" in
+      missing)
+        printf '%s|✗ %s — %s\n' "$category" "$tool" "$enables"
+        ;;
+      *)
+        printf '%s|✓ %s — %s\n' "$category" "$tool" "$enables"
+        ;;
+    esac
+  done <<EOF
+$(dev_kit_env_tool_lines)
+EOF
+}
+
+# Returns space-separated list of missing required tools.
 dev_kit_env_missing_base_tools() {
   local line=""
   local tool=""
@@ -215,7 +232,7 @@ dev_kit_env_missing_base_tools() {
     rest="${line#*|}"
     category="${rest%%|*}"
     status="${rest#*|}"
-    [ "$category" = "base" ] || continue
+    [ "$category" = "required" ] || continue
     case "$status" in
       missing) missing="${missing:+$missing }$tool" ;;
     esac

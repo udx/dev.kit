@@ -16,9 +16,9 @@ show next steps     write context.yaml   context if needed    write lessons arti
 
 ### Phase 1 — env (`dev.kit`)
 
-Validates the local software environment, writes `$DEV_KIT_HOME/context-env.txt`, detects the current repo, and shows a brief summary.
+Validates the local software environment, detects the current repo, and guides to the next pipeline step. Each tool is shown with what it enables.
 
-Global context capabilities that gate downstream phases:
+Capabilities that gate downstream phases:
 
 | Capability | Requires | If missing |
 |---|---|---|
@@ -31,10 +31,9 @@ Global context capabilities that gate downstream phases:
 
 Analyzes the repository against 7 engineering factors. Detects config manifests (YAML files that define workflow and tooling). Writes `.rabbit/context.yaml`.
 
-Three modes:
+Two modes:
 
-- **learn** (default): analyze and write `.rabbit/context.yaml`
-- **--scaffold**: also create missing directories and baseline files
+- **learn** (default): analyze, pull GitHub context, and write `.rabbit/context.yaml`
 - **--check**: report gaps without writing anything
 
 ### Phase 3 — agent (`dev.kit agent`)

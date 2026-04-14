@@ -31,10 +31,12 @@ config:
           check: context_refresh
           optional: true
           note: >
-            If .rabbit/context.yaml is stale or absent, run `dev.kit repo` then
-            `dev.kit agent` before starting work. A current context.yaml is the
-            source of truth for refs, commands, gaps, and lessons. Do not rely on
-            ad hoc prompt memory when the repo contract can be read from disk.
+            Run `dev.kit` → `dev.kit repo` → `dev.kit agent` before starting work.
+            Each command guides to the next required step. This resyncs repo context,
+            environment state, and the AGENTS.md execution contract. A current
+            context.yaml is the source of truth for refs, commands, gaps, and lessons.
+            Do not rely on ad hoc prompt memory when the repo contract can be read
+            from disk.
         - id: issue_scope
           label: Read linked GitHub issue and confirm scope
           check: issue_scope

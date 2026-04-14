@@ -1,5 +1,29 @@
 # Changes
 
+### 0.4.0
+
+- Add structured dependency resolution with cross-repo tracing
+- Resolve same-org dependencies via `gh api` and sibling directory lookup
+- Track file-level relationships (`used_by`) mapping current repo files to their dependencies
+- Trace 6 dependency sources: workflow reuse, Docker images, Compose images, versioned YAML configs, GitHub URLs, npm packages
+- Add `--force` flag to `dev.kit repo` for full dependency re-resolution
+- Include structured dependencies in JSON output (`repo.json`, `agent.json`)
+- Render dependency relationships in AGENTS.md with resolved metadata and source file mappings
+- Add `dependency_trace_compose_files` and `dependency_trace_url_globs` to detection-signals.yaml
+
+### 0.3.0
+
+- Restructure AGENTS.md as a deterministic execution contract with layered sections
+- Add 8 contract rules: no scanning, strict boundaries, manifests before code, context over memory, verify locally, follow workflow, reuse over invention, remember context
+- Add GitHub context layer to `context.yaml` — open issues, recent PRs, security alerts via `gh api`
+- Add 10 engineering practices from lessons learned: context-over-memory, manifests-before-code, reuse-over-invention, localhost-first, delivery-chain-traceability, structured-outcome-reporting, docs-first-alignment, config-over-code, legacy-reduction, verification-scope
+- Add learning workflow patterns: docs-first-alignment, workflow-tracing, verification-scope, legacy-reduction, agent-handoff
+- Enrich knowledge-base.yaml with GitHub as a context source
+- Strengthen post-merge close-out reporting (exact URLs, versions, deltas)
+- Remove `--scaffold` flag (created empty stubs — gap reporting is the useful part)
+- Fix package name to `@udx/dev-kit` (matches npm registry)
+- npm install support (`npm install -g @udx/dev-kit`)
+
 ### 0.2.1
 
 - Fix release workflow trigger to match reusable-workflows pattern

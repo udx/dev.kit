@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# @description: Learn, improve, or scaffold a repo
+# @description: Analyze repo structure and factors
 
 dev_kit_cmd_repo() {
   local format="${1:-text}"
@@ -9,8 +9,9 @@ dev_kit_cmd_repo() {
   local repo_root=""
   local repo_name=""
   local gaps_json=""
-  local actions_json="[]"
   local context_yaml_path=""
+
+  local force_resolve=0
 
   # Parse flags from remaining args (skip format which is first arg)
   if [ "$#" -ge 1 ]; then
@@ -18,9 +19,14 @@ dev_kit_cmd_repo() {
   fi
   while [ "$#" -gt 0 ]; do
     case "$1" in
-      --scaffold) mode="scaffold" ;;
-      --check)    mode="check"    ;;
-      *)          repo_dir="$1"   ;;
+      --check) mode="check" ;;
+      --force) force_resolve=1 ;;
+      --*)
+        printf 'Unknown flag: %s\n' "$1" >&2
+        printf 'Usage: dev.kit repo [--json] [--check] [--force]\n' >&2
+        return 1
+        ;;
+      *)       repo_dir="$1" ;;
     esac
     shift
   done
@@ -33,14 +39,8 @@ dev_kit_cmd_repo() {
   # JSON mode: compute everything up front then emit template
   if [ "$format" = "json" ]; then
     gaps_json="$(dev_kit_scaffold_gaps_json "$repo_dir")"
-    if [ "$mode" = "learn" ] || [ "$mode" = "scaffold" ]; then
-      dev_kit_context_yaml_write "$repo_dir" >/dev/null
-    fi
-    if [ "$mode" = "scaffold" ]; then
-      local archetype plan
-      archetype="$(dev_kit_repo_primary_archetype "$repo_dir")"
-      plan="$(dev_kit_scaffold_plan "$repo_dir" "$archetype")"
-      actions_json="$(dev_kit_scaffold_apply "$repo_dir" "$plan")"
+    if [ "$mode" = "learn" ]; then
+      dev_kit_context_yaml_write "$repo_dir" "$force_resolve" >/dev/null
     fi
     dev_kit_template_render "repo.json" \
       "command=repo" \
@@ -52,28 +52,34 @@ dev_kit_cmd_repo() {
       "markers=$(dev_kit_repo_markers_json "$repo_dir")" \
       "factors=$(dev_kit_repo_factor_summary_json "$repo_dir")" \
       "gaps=$gaps_json" \
-      "actions=$actions_json" \
-      "context=$(dev_kit_json_escape "$context_yaml_path")"
+      "actions=[]" \
+      "context=$(dev_kit_json_escape "$context_yaml_path")" \
+      "dependencies=$(dev_kit_deps_json "$repo_dir")"
     return 0
   fi
 
   # Text mode: print title immediately, then compute and display progressively.
   dev_kit_output_title "dev.kit repo"
 
-  # Archetype detection + scaffold plan — show spinner during analysis
   dev_kit_spinner_start "analyzing repo"
-  local archetype scaffold_plan
+  local archetype
   archetype="$(dev_kit_repo_primary_archetype "$repo_dir")"
-  scaffold_plan="$(dev_kit_scaffold_plan "$repo_dir" "$archetype")"
   dev_kit_spinner_stop ""
-
-  # scaffold mode: apply the plan now (before output so result shows correctly)
-  if [ "$mode" = "scaffold" ]; then
-    actions_json="$(dev_kit_scaffold_apply "$repo_dir" "$scaffold_plan")"
-  fi
 
   dev_kit_output_summary "${repo_name} • ${archetype} • mode: ${mode}"
 
+  # ── Priority refs — what to read first ─────────────────────────────────────
+  local priority_refs first_ref second_ref
+  priority_refs="$(dev_kit_repo_priority_refs "$repo_dir")"
+  first_ref="$(printf '%s\n' "$priority_refs" | awk 'NF { print; exit }')"
+  second_ref="$(printf '%s\n' "$priority_refs" | awk 'NF { count += 1; if (count == 2) { print; exit } }')"
+  if [ -n "$first_ref" ]; then
+    dev_kit_output_section "read first"
+    dev_kit_output_list_item "$first_ref"
+    [ -n "$second_ref" ] && dev_kit_output_list_item "$second_ref"
+  fi
+
+  # ── Factors ──────────────────────────────────────────────────────────────────
   dev_kit_output_section "factors"
   local factor status
   for factor in documentation architecture dependencies config verification runtime build_release_run; do
@@ -81,53 +87,33 @@ dev_kit_cmd_repo() {
     dev_kit_output_status_row "$factor" "$status"
   done
 
-  # Gaps: factor statuses are now cached — this pass is fast
+  # ── Gaps ─────────────────────────────────────────────────────────────────────
   gaps_json="$(dev_kit_scaffold_gaps_json "$repo_dir")"
   local gap_count
   gap_count="$(printf '%s\n' "$gaps_json" | grep -c '"factor"' 2>/dev/null || printf '0')"
   if [ "$gap_count" -gt 0 ]; then
     dev_kit_output_section "gaps"
-    dev_kit_output_list_item "${gap_count} factor(s) missing or partial — run dev.kit repo --scaffold to apply fixes"
-  else
-    dev_kit_output_section "gaps"
-    dev_kit_output_list_item "no gaps detected"
+    dev_kit_output_list_item "${gap_count} factor(s) missing or partial"
   fi
 
-  if [ "$mode" = "scaffold" ]; then
-    dev_kit_output_section "scaffold"
-    local _action _rel _status
-    while IFS='|' read -r _action _rel_path; do
-      [ -n "$_action" ] || continue
-      _status="$(printf '%s' "$actions_json" | grep -q "\"path\": \"${_rel_path}\".*\"status\": \"ok\"" 2>/dev/null && printf 'ok' || printf 'done')"
-      dev_kit_output_list_item "${_action}: ${_rel_path}"
-    done <<EOF
-$scaffold_plan
-EOF
-    [ -z "$scaffold_plan" ] && dev_kit_output_list_item "no actions needed"
-  elif [ -n "$scaffold_plan" ]; then
-    dev_kit_output_section "scaffold preview"
-    while IFS='|' read -r action rel_path; do
-      [ -n "$action" ] || continue
-      dev_kit_output_list_item "would ${action}: ${rel_path}"
-    done <<EOF
-$scaffold_plan
+  # ── Git state — branch and sync hints ────────────────────────────────────────
+  if dev_kit_sync_has_git_repo "$repo_dir"; then
+    dev_kit_output_section "git"
+    dev_kit_output_list_from_lines <<EOF
+$(dev_kit_sync_start_here_text "$repo_dir" | dev_kit_output_first_lines 3)
 EOF
   fi
 
-  # Write context.yaml after output — user already sees analysis above
-  if [ "$mode" = "learn" ] || [ "$mode" = "scaffold" ]; then
+  # ── Write context.yaml ──────────────────────────────────────────────────────
+  if [ "$mode" = "learn" ]; then
     dev_kit_spinner_start "writing context"
-    dev_kit_context_yaml_write "$repo_dir" >/dev/null
-    dev_kit_spinner_stop "context refreshed"
+    dev_kit_context_yaml_write "$repo_dir" "$force_resolve" >/dev/null
+    dev_kit_spinner_stop ""
   fi
 
   dev_kit_output_section "context"
   dev_kit_output_list_item "$context_yaml_path"
 
   dev_kit_output_section "next"
-  dev_kit_output_row "agent context" "dev.kit agent"
-  dev_kit_output_row "session lessons" "dev.kit learn"
-  if [ "$gap_count" -gt 0 ] && [ "$mode" != "scaffold" ]; then
-    dev_kit_output_row "apply fixes" "dev.kit repo --scaffold"
-  fi
+  dev_kit_output_row "required" "dev.kit agent — generate AGENTS.md from this context"
 }

@@ -6,34 +6,35 @@
 
 Simple. Repo-centric. Agent-agnostic.
 
-`dev.kit` resolves a repository into a working system by building context in three layers:
+`dev.kit` converts a repository into a deterministic execution contract by building context in three layers:
 
-1. **Repo context** — what actually exists: docs, configs, manifests, tests, workflows
+1. **Repo context** — what actually exists: docs, configs, manifests, tests, workflows, GitHub history
 2. **Dev environment** — what tools and auth are available: git, gh, docker, npm, cloud CLIs
 3. **UDX ecosystem** — shared resources: `github.com/udx/*` repos, `@udx/*` npm packages, Docker Hub images
 
-Each layer reduces guesswork. AI agents operate from repo context with traceable YAML dependencies — no scanning, no drift, no guesswork.
+Each layer reduces guesswork. AI agents operate from declared repo context — no scanning, no drift, no invention.
 
 ---
 
 ## Flow
 
 ```
-dev.kit          →  dev.kit repo       →  dev.kit agent     →  dev.kit learn
-─────────────────   ─────────────────    ─────────────────    ─────────────────
-validate env        analyze factors      write AGENTS.md      scan agent sessions
-detect repo         detect manifests     auto-generate        extract patterns
-show next steps     write context.yaml   context if needed    write lessons artifact
+dev.kit          →  dev.kit repo       →  dev.kit agent
+─────────────────   ─────────────────    ─────────────────
+validate env        analyze factors      write AGENTS.md
+detect repo         detect manifests     generate contract
+show next steps     pull GitHub context  from context.yaml
+                    write context.yaml
 ```
 
-Each step feeds the next. `dev.kit agent` auto-generates context if `.rabbit/context.yaml` is absent — no manual steps required.
+The core loop is **repo → agent → work → PR → merge**. `dev.kit agent` auto-generates context if `.rabbit/context.yaml` is absent — no manual steps required. `dev.kit learn` optionally extracts patterns from agent sessions to feed back into future context.
 
 ---
 
 ## Quick start
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/udx/dev.kit/main/bin/scripts/install.sh | bash
+npm install -g @udx/dev-kit
 
 cd my-repo
 dev.kit
@@ -75,12 +76,12 @@ dev.kit
 
 ### `dev.kit repo` — repo context
 
-Analyzes your repo against 7 engineering factors and writes `.rabbit/context.yaml` — a single file with everything an agent needs: refs, commands, practices, workflow steps, config manifests, and gaps.
+Analyzes your repo against 7 engineering factors, pulls GitHub context via `gh api`, and writes `.rabbit/context.yaml` — a single file with everything an agent needs: refs, commands, GitHub signals, practices, workflow steps, config manifests, and gaps.
 
 - Writes `.rabbit/context.yaml` — the source of truth for all downstream commands
 - Detects config manifests (YAML files that define workflow and tooling)
-- `--scaffold` creates missing dirs and files
-- `--check` reports gaps without changing anything
+- Pulls open issues, recent PRs, security alerts from GitHub
+- `--check` reports gaps without writing context.yaml
 
 ```
 $ dev.kit repo
@@ -97,7 +98,7 @@ dev.kit repo
   build_release_run: ✓ present
 
 [gaps]
-  - 3 factor(s) missing or partial — run dev.kit repo --scaffold to apply fixes
+  - 3 factor(s) missing or partial
 
 [context]
   - .rabbit/context.yaml
@@ -105,22 +106,23 @@ dev.kit repo
 [next]
   agent context:     dev.kit agent
   session lessons:   dev.kit learn
-  apply fixes:       dev.kit repo --scaffold
 ```
 
 ---
 
-### `dev.kit agent` — agent instructions
+### `dev.kit agent` — execution contract
 
-Generates AGENTS.md — a comprehensive guide that gives any agent everything it needs to work without scanning the filesystem. Auto-generates `.rabbit/context.yaml` if missing.
+Generates AGENTS.md — a deterministic execution contract that gives any agent everything it needs to work without scanning the filesystem. Auto-generates `.rabbit/context.yaml` if missing.
 
 AGENTS.md includes:
-- **Rules** — anti-drift, anti-scanning constraints
+- **Contract** — 8 rules: no scanning, strict context boundaries, manifests before code, context over memory, verify locally, follow workflow, reuse over invention, remember context
 - **Commands** — verify, build, run entrypoints
 - **Priority refs** — the only files an agent should read
 - **Config manifests** — traceable YAML dependencies with kind labels
-- **Full workflow** — 15-step execution contract with operational notes
-- **Lessons** — patterns learned from prior agent sessions
+- **GitHub context** — open issues, recent PRs, security alerts (via `gh api`)
+- **Gaps** — incomplete factors to address within the workflow
+- **Full workflow** — execution sequence with operational notes
+- **Engineering practices** — 17 principles from lessons learned across repos
 
 ```
 $ dev.kit agent
@@ -221,6 +223,10 @@ Development workflows, PR templates, issue templates, and bot reviewer guidance 
 ## Install
 
 ```bash
+# npm (recommended)
+npm install -g @udx/dev-kit
+
+# or curl
 curl -fsSL https://raw.githubusercontent.com/udx/dev.kit/main/bin/scripts/install.sh | bash
 ```
 

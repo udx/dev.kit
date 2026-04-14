@@ -169,6 +169,45 @@ config:
   verification_globs:
     - *.bats
     - *test*.sh
+  # External dependency tracing — files and dirs to scan for cross-repo references.
+  # Shell code reads these lists and applies pattern-specific extraction.
+  dependency_trace_workflow_dirs:
+    - .github/workflows
+  dependency_trace_container_files:
+    - Dockerfile
+  dependency_trace_deploy_files:
+    - deploy.yml
+    - deploy.yaml
+  dependency_trace_infra_dirs:
+    - terraform
+    - k8s
+  # Dirs scanned recursively for YAML files with kind/version headers.
+  # The version URI (e.g. udx.dev/rabbit-automation-action/gcp-sql-instance/v1)
+  # traces back to source repo and module. This is the primary cross-repo tracing
+  # mechanism — repos declare their infrastructure provider in the version field.
+  dependency_trace_versioned_dirs:
+    - .rabbit
+  # Docker Compose files scanned for image: references.
+  dependency_trace_compose_files:
+    - docker-compose.yml
+    - docker-compose.yaml
+  # File globs scanned for GitHub URL references (github.com/org/repo patterns).
+  # Applied within priority ref dirs and repo root config files.
+  dependency_trace_url_globs:
+    - "*.yaml"
+    - "*.yml"
+    - "*.md"
+  # Manifest files that define where this repo is hosted/deployed.
+  # Listed as config manifests in context.yaml output.
+  manifest_workflow_dirs:
+    - .github/workflows
+  manifest_root_files:
+    - deploy.yml
+    - deploy.yaml
+    - docker-compose.yml
+    - docker-compose.yaml
+    - Chart.yaml
+    - helmfile.yaml
   architecture_command_max_lines: 120
   architecture_module_max_lines: 400
   architecture_present_category_min: 3
