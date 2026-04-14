@@ -94,6 +94,8 @@ config:
         a more accurate summary. If Copilot flags a specific issue in a review comment,
         assess it: fix actionable findings, or reply with a clear explanation of why the
         flag is a false positive. Do not ignore Copilot comments without responding.
+        After addressing each comment, resolve the conversation thread — unresolved
+        Copilot threads block merge.
     devin:
       login: devin-ai-integration
       role: Code review focused on potential bugs.
@@ -202,8 +204,11 @@ config:
         message: >
           After the PR is created, wait for automated reviews: Copilot, Devin,
           CodeQL, GitHub Advanced Security. Read each review. Address actionable
-          findings before requesting human review. Reply to each bot comment —
-          silence implies you have not read it.
+          findings with code fixes. Reply to false positives and design decisions
+          with brief explanations. Resolve every conversation thread after
+          addressing it — unresolved threads block merge even when all checks
+          pass. Loop through bot feedback after each push until all threads are
+          resolved and merge state is CLEAN.
       - id: check-status
         message: >
           Verify all required status checks pass. For infrastructure PRs, open
