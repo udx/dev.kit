@@ -18,6 +18,11 @@ dev_kit_cmd_repo() {
   while [ "$#" -gt 0 ]; do
     case "$1" in
       --check) mode="check" ;;
+      --*)
+        printf 'Unknown flag: %s\n' "$1" >&2
+        printf 'Usage: dev.kit repo [--json] [--check]\n' >&2
+        return 1
+        ;;
       *)       repo_dir="$1" ;;
     esac
     shift

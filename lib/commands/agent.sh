@@ -160,7 +160,7 @@ dev_kit_agent_write_agents_md() {
 
         # Helper: extract github subsection, strip indent and YAML quotes for markdown
         _gh_extract() {
-          awk -v key="^  ${1}:" '$0 ~ key {f=1;next} f && /^    - /{sub(/^    - "?/, "  - "); sub(/"$/, ""); print; next} f && /^[^ ]|^  [a-z]/{f=0}' "$context_yaml"
+          awk -v key="^  ${1}:" '$0 ~ key {f=1;next} f && /^    - /{sub(/^    - "?/, "  - "); sub(/"$/, ""); gsub(/\\"/, "\""); gsub(/\\\\/, "\\"); print; next} f && /^[^ ]|^  [a-z]/{f=0}' "$context_yaml"
         }
 
         _gh_section="$(_gh_extract open_issues)"
@@ -199,7 +199,7 @@ dev_kit_agent_write_agents_md() {
 
       # ── Execution — workflow ─────────────────────────────────────────────────
       local _workflow
-      _workflow="$(awk '/^workflow:/{f=1;next} f && /^[a-zA-Z#]/{f=0} f && /^  - /{gsub(/^  - "/, "  - "); sub(/"$/, ""); print}' "$context_yaml")"
+      _workflow="$(awk '/^workflow:/{f=1;next} f && /^[a-zA-Z#]/{f=0} f && /^  - /{gsub(/^  - "/, "  - "); sub(/"$/, ""); gsub(/\\"/, "\""); gsub(/\\\\/, "\\"); print}' "$context_yaml")"
       if [ -n "$_workflow" ]; then
         printf '## Workflow\n\n'
         printf 'The dev.kit lifecycle: **repo → agent → work → PR → merge**. Follow these steps in order. Steps with notes contain operational guidance.\n\n'
@@ -208,7 +208,7 @@ dev_kit_agent_write_agents_md() {
 
       # ── Principles — engineering practices ───────────────────────────────────
       local _practices
-      _practices="$(awk '/^practices:/{f=1;next} f && /^[a-zA-Z#]/{f=0} f && /^  - /{gsub(/^  - "/, "  - "); sub(/"$/, ""); print}' "$context_yaml")"
+      _practices="$(awk '/^practices:/{f=1;next} f && /^[a-zA-Z#]/{f=0} f && /^  - /{gsub(/^  - "/, "  - "); sub(/"$/, ""); gsub(/\\"/, "\""); gsub(/\\\\/, "\\"); print}' "$context_yaml")"
       if [ -n "$_practices" ]; then
         printf '## Engineering practices\n\n%s\n\n' "$_practices"
       fi

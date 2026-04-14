@@ -199,8 +199,8 @@ dev_kit_context_yaml_write() {
         _gh_owner_repo="${_gh_owner_repo%.git}"
       fi
       if [ -n "$_gh_owner_repo" ]; then
-        # jq yaml_safe: strip newlines/carriage returns, escape inner quotes
-        local _jq_safe='def yaml_safe: gsub("\\r"; " ") | gsub("\\n"; " ") | gsub("\""; "\\\"");'
+        # jq yaml_safe: escape backslashes, strip CR/LF/tabs, escape inner quotes
+        local _jq_safe='def yaml_safe: gsub("\\\\"; "\\\\\\\\") | gsub("\\r"; " ") | gsub("\\n"; " ") | gsub("\\t"; " ") | gsub("\""; "\\\"");'
 
         # Open issues (up to 10, most recent)
         local _gh_issues
