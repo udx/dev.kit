@@ -80,6 +80,51 @@ dev_kit_dep_is_same_org() {
   esac
 }
 
+# Try to match a Docker image name to a same-org GitHub repo.
+# For images like "usabilitydynamics/udx-worker-tooling:0.19.0",
+# the Docker Hub org differs from the GitHub org. Extract the image name
+# and check if a matching repo exists in the current GitHub org.
+# Returns org/repo if found, empty string otherwise.
+dev_kit_dep_match_image_to_org() {
+  local dep_id="$1" current_org="$2" repo_root="$3" gh_auth="$4"
+  [ -n "$current_org" ] || return 0
+
+  # Extract image name: strip org prefix and tag
+  local img_name="${dep_id##*/}"
+  img_name="${img_name%%:*}"
+  [ -n "$img_name" ] || return 0
+
+  local parent_dir
+  parent_dir="$(dirname "$repo_root")"
+
+  # Try exact match: org/image-name
+  if [ -d "${parent_dir}/${img_name}/.git" ]; then
+    printf '%s/%s' "$current_org" "$img_name"
+    return 0
+  fi
+
+  # Try stripping org prefix: "udx-worker-tooling" → "worker-tooling"
+  local stripped="${img_name#"${current_org}-"}"
+  if [ "$stripped" != "$img_name" ] && [ -d "${parent_dir}/${stripped}/.git" ]; then
+    printf '%s/%s' "$current_org" "$stripped"
+    return 0
+  fi
+
+  # Try via gh api if available
+  if [ "$gh_auth" = "available" ]; then
+    if gh api "repos/${current_org}/${img_name}" --silent 2>/dev/null; then
+      printf '%s/%s' "$current_org" "$img_name"
+      return 0
+    fi
+    if [ "$stripped" != "$img_name" ]; then
+      if gh api "repos/${current_org}/${stripped}" --silent 2>/dev/null; then
+        printf '%s/%s' "$current_org" "$stripped"
+        return 0
+      fi
+    fi
+  fi
+}
+
 # Resolve a same-org dependency repo.
 # Outputs tab-delimited: resolved\tarchetype\tprofile\tdescription
 # Strategy: gh api (primary when available) + sibling directory for local context.
@@ -529,11 +574,24 @@ EOF
         printf '    type: %s\n' "$_dep_type"
 
         # Resolve same-org dependencies
+        local _resolve_target=""
         if dev_kit_dep_is_same_org "$_udep" "$_current_org"; then
+          _resolve_target="$_udep"
+        else
+          # For Docker images: try matching image name to a same-org repo
+          case "$_dep_type" in
+            *image*|*docker*)
+              _resolve_target="$(dev_kit_dep_match_image_to_org "$_udep" "$_current_org" "$repo_root" "$_gh_auth_state")"
+              ;;
+          esac
+        fi
+
+        if [ -n "$_resolve_target" ]; then
           local _resolve_out _r_resolved _r_arch _r_profile _r_desc
-          _resolve_out="$(dev_kit_dep_resolve "$_udep" "$repo_root" "$_gh_auth_state" "$force")"
+          _resolve_out="$(dev_kit_dep_resolve "$_resolve_target" "$repo_root" "$_gh_auth_state" "$force")"
           IFS=$'\t' read -r _r_resolved _r_arch _r_profile _r_desc <<< "$_resolve_out"
           printf '    resolved: %s\n' "$_r_resolved"
+          [ -n "$_resolve_target" ] && [ "$_resolve_target" != "$_udep" ] && printf '    source_repo: %s\n' "$_resolve_target"
           [ -n "$_r_arch" ]    && printf '    archetype: %s\n' "$_r_arch"
           [ -n "$_r_profile" ] && printf '    profile: %s\n' "$_r_profile"
           [ -n "$_r_desc" ]    && printf '    description: %s\n' "$_r_desc"
