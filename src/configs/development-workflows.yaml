@@ -11,6 +11,7 @@ config:
       base: base
       feature: feature
     base_branch_names:
+      - latest
       - main
       - master
       - development

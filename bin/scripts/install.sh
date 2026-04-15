@@ -4,7 +4,7 @@ set -euo pipefail
 DEV_KIT_BIN_DIR="${DEV_KIT_BIN_DIR:-$HOME/.local/bin}"
 DEV_KIT_HOME="${DEV_KIT_HOME:-$HOME/.udx/dev.kit}"
 DEV_KIT_INSTALL_REPO="${DEV_KIT_INSTALL_REPO:-udx/dev.kit}"
-DEV_KIT_INSTALL_REF="${DEV_KIT_INSTALL_REF:-main}"
+DEV_KIT_INSTALL_REF="${DEV_KIT_INSTALL_REF:-latest}"
 DEV_KIT_INSTALL_ARCHIVE_URL="${DEV_KIT_INSTALL_ARCHIVE_URL:-https://codeload.github.com/${DEV_KIT_INSTALL_REPO}/tar.gz/refs/heads/${DEV_KIT_INSTALL_REF}}"
 DEV_KIT_INSTALL_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEV_KIT_INSTALL_REPO_DIR="$(cd "${DEV_KIT_INSTALL_SCRIPT_DIR}/../.." 2>/dev/null && pwd || true)"

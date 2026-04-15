@@ -1,5 +1,12 @@
 # Changes
 
+### 0.6.0
+
+- Switch default branch from `main` to `latest` so `npm create` tags align with the branch name
+- Update all workflow triggers, release config, install script, and raw GitHub URLs to reference `latest`
+- Add `latest` to recognized base branch names in development-workflows config
+- Bump fallback default branch from `main` to `latest` in dev_sync
+
 ### 0.5.1
 
 - Fix absolute local paths leaking into context.yaml and AGENTS.md refs
@@ -52,7 +59,7 @@
 ### 0.2.0
 
 - npm release workflow with OIDC provenance via `udx/reusable-workflows`
-- GitHub releases created automatically on merge to main
+- GitHub releases created automatically on merge to default branch
 - `dev.kit --version` flag
 - Copilot review feedback fixes (JSON escaping, cache multi-line values, fixture portability)
 

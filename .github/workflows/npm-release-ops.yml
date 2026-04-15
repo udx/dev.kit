@@ -12,6 +12,6 @@ jobs:
   release:
     uses: udx/reusable-workflows/.github/workflows/npm-release-ops.yml@master
     with:
-      release_branch: main
+      release_branch: latest
       enable_gh_release: true
       dist_dir: "."
