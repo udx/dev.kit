@@ -26,7 +26,7 @@ WordPress website — application code, theme, and plugin assets deployed to a W
 
 ## Workflow
 
-- Read the highest-priority repo refs first: ./.rabbit/context.yaml, ./README.md, ./.rabbit/infra_configs, ./.rabbit, ./.github/workflows, ./package.json, ./wp-config.php, https://raw.githubusercontent.com/udx/dev.kit/main/.github/ISSUE_TEMPLATE, https://raw.githubusercontent.com/udx/dev.kit/main/.github/PULL_REQUEST_TEMPLATE.md, https://raw.githubusercontent.com/udx/dev.kit/main/src/configs/github-issues.yaml, https://raw.githubusercontent.com/udx/dev.kit/main/src/configs/github-prs.yaml
+- Read the highest-priority repo refs first: ./.rabbit/context.yaml, ./README.md, ./.rabbit/infra_configs, ./.rabbit, ./.github/workflows, ./package.json, ./wp-config.php, https://raw.githubusercontent.com/udx/dev.kit/latest/.github/ISSUE_TEMPLATE, https://raw.githubusercontent.com/udx/dev.kit/latest/.github/PULL_REQUEST_TEMPLATE.md, https://raw.githubusercontent.com/udx/dev.kit/latest/src/configs/github-issues.yaml, https://raw.githubusercontent.com/udx/dev.kit/latest/src/configs/github-prs.yaml
 - Run the canonical verification command: `npm test`
 - Review lessons-learned and follow-up outputs after changes stabilize: `dev.kit learn`
 

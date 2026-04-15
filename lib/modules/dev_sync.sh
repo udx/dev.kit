@@ -91,7 +91,7 @@ EOF
 $(dev_kit_sync_base_branch_names)
 EOF
 
-  printf "%s" "main"
+  printf "%s" "latest"
 }
 
 dev_kit_sync_upstream_branch() {

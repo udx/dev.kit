@@ -38,10 +38,10 @@ These files plus config manifests define the complete allowed surface. Do not ex
   - ./src
   - ./scripts
   - ./tests
-  - https://raw.githubusercontent.com/udx/dev.kit/main/src/configs/github-issues.yaml
-  - https://raw.githubusercontent.com/udx/dev.kit/main/src/configs/github-prs.yaml
-  - https://raw.githubusercontent.com/udx/dev.kit/main/.github/ISSUE_TEMPLATE
-  - https://raw.githubusercontent.com/udx/dev.kit/main/.github/PULL_REQUEST_TEMPLATE.md
+  - https://raw.githubusercontent.com/udx/dev.kit/latest/src/configs/github-issues.yaml
+  - https://raw.githubusercontent.com/udx/dev.kit/latest/src/configs/github-prs.yaml
+  - https://raw.githubusercontent.com/udx/dev.kit/latest/.github/ISSUE_TEMPLATE
+  - https://raw.githubusercontent.com/udx/dev.kit/latest/.github/PULL_REQUEST_TEMPLATE.md
 
 ### GitHub context
 

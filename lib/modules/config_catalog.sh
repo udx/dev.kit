@@ -80,8 +80,8 @@ EOF
 dev_kit_repo_kit_source_refs() {
   local repo_dir="${1:-$(pwd)}"
   local path=""
-  local _gh_raw="https://raw.githubusercontent.com/udx/dev.kit/main"
-  local _gh_tree="https://github.com/udx/dev.kit/tree/main"
+  local _gh_raw="https://raw.githubusercontent.com/udx/dev.kit/latest"
+  local _gh_tree="https://github.com/udx/dev.kit/tree/latest"
 
   while IFS= read -r path; do
     [ -n "$path" ] || continue
