@@ -81,13 +81,18 @@ dev_kit_repo_kit_source_refs() {
   local repo_dir="${1:-$(pwd)}"
   local path=""
   local _gh_raw="https://raw.githubusercontent.com/udx/dev.kit/main"
+  local _gh_tree="https://github.com/udx/dev.kit/tree/main"
 
   while IFS= read -r path; do
     [ -n "$path" ] || continue
-    # If the file exists in the target repo, skip — it's already in priority_refs
+    # Skip if already present in the target repo
     [ -e "$repo_dir/$path" ] && continue
-    # Always use GitHub raw URL — never emit absolute local paths
-    printf "%s/%s\n" "$_gh_raw" "$path"
+    # Directories use tree URL (raw 404s on dirs), files use raw URL
+    if [ -n "${DEV_KIT_HOME:-}" ] && [ -d "$DEV_KIT_HOME/$path" ]; then
+      printf "%s/%s\n" "$_gh_tree" "$path"
+    else
+      printf "%s/%s\n" "$_gh_raw" "$path"
+    fi
   done <<EOF
 $(dev_kit_context_list "kit_source_refs")
 EOF
