@@ -1,5 +1,13 @@
 # Changes
 
+### 0.5.1
+
+- Fix absolute local paths leaking into context.yaml and AGENTS.md refs
+- Use GitHub tree URLs for directory refs, raw URLs for file refs
+- Add `cross-repo-issue-context` practice from learned agent sessions
+- Filter placeholder URLs (test/repo, org/repo) from learned references
+- Add regression test for absolute path prevention
+
 ### 0.5.0
 
 - Slim factors from 7 to 4: documentation, dependencies, config, pipeline

@@ -525,6 +525,9 @@ dev_kit_learning_sanitize_url_lines() {
         gsub(/\\+$/, "", url)
         gsub(/[")]+$/, "", url)
         gsub(/^[[:space:]]+|[[:space:]]+$/, "", url)
+        # Skip placeholder/example URLs from prompts and docs
+        if (url ~ /github\.com\/(test|example|org|owner|user)\//) url = ""
+        if (url ~ /github\.com\/[^\/]+\/repo[\/"]/) url = ""
         if (url != "" && !seen[url]++) print url
       }
     }
