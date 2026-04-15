@@ -84,12 +84,10 @@ dev_kit_repo_kit_source_refs() {
 
   while IFS= read -r path; do
     [ -n "$path" ] || continue
+    # If the file exists in the target repo, skip — it's already in priority_refs
     [ -e "$repo_dir/$path" ] && continue
-    if [ -n "${DEV_KIT_HOME:-}" ] && [ -e "$DEV_KIT_HOME/$path" ]; then
-      printf "%s/%s\n" "$DEV_KIT_HOME" "$path"
-    else
-      printf "%s/%s\n" "$_gh_raw" "$path"
-    fi
+    # Always use GitHub raw URL — never emit absolute local paths
+    printf "%s/%s\n" "$_gh_raw" "$path"
   done <<EOF
 $(dev_kit_context_list "kit_source_refs")
 EOF
