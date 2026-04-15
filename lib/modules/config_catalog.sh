@@ -88,7 +88,7 @@ dev_kit_repo_kit_source_refs() {
     # Skip if already present in the target repo
     [ -e "$repo_dir/$path" ] && continue
     # Directories use tree URL (raw 404s on dirs), files use raw URL
-    if [ -n "${DEV_KIT_HOME:-}" ] && [ -d "$DEV_KIT_HOME/$path" ]; then
+    if [ -d "$REPO_DIR/$path" ]; then
       printf "%s/%s\n" "$_gh_tree" "$path"
     else
       printf "%s/%s\n" "$_gh_raw" "$path"

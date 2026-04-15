@@ -114,7 +114,8 @@ if should_run "core"; then
   assert_contains "$(cat "$context_yaml")" "kind: repoContext"         "agent: context.yaml has kind header"
   assert_contains "$(cat "$context_yaml")" "version: udx.io/dev.kit"  "agent: context.yaml has version"
   assert_contains "$(cat "$context_yaml")" "refs:"                     "agent: context.yaml has refs section"
-  assert_not_contains "$(cat "$context_yaml")" "/Users/"               "agent: context.yaml has no absolute paths"
+  assert_not_contains "$(cat "$context_yaml")" "/Users/"               "agent: context.yaml has no absolute paths (macOS)"
+  assert_not_contains "$(cat "$context_yaml")" "/home/"                "agent: context.yaml has no absolute paths (Linux)"
 fi
 
 # ── archetypes ─────────────────────────────────────────────────────────────────
