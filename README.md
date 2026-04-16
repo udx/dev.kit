@@ -4,7 +4,13 @@
 
 **Simple session flow for developers and AI agents.**
 
-dev.kit separates repo facts from agent behavior. It generates `.rabbit/context.yaml` as the structured repo contract, then generates `AGENTS.md` as the execution contract that tells agents how to use that context plus workflow, GitHub, and learning signals.
+dev.kit separates three concerns:
+
+- base repo context signals
+- deterministic tracing and mapping
+- agent execution behavior
+
+It generates `.rabbit/context.yaml` as the structured repo contract, then generates `AGENTS.md` as a built execution artifact that tells agents how to use that context with current GitHub experience first, and repo-declared workflow defaults when GitHub does not provide enough signal.
 
 ```bash
 npm install -g @udx/dev-kit
@@ -67,7 +73,7 @@ gaps:
   - config (partial)
 ```
 
-**`AGENTS.md`** — generated execution contract for agents. It tells them how to start, what to read first, how to use `context.yaml`, how to verify work, and how to follow repo workflow using current GitHub and learned context without relying on stale session memory.
+**`AGENTS.md`** — generated execution artifact for agents. It should stay simpler than `context.yaml`: rules, workflow, verification, and how to use current GitHub and learned context without duplicating refs, manifests, or dependency maps already serialized in `context.yaml`.
 
 ---
 
@@ -87,7 +93,7 @@ All commands support `--json` for machine-readable output.
 
 ## Repo Context
 
-Repo context comes from repo source first: README, docs, workflows, manifests, tests, and other declared refs. That data is serialized into `context.yaml`. `AGENTS.md` then turns that repo map into an operating contract for agents, using workflow guidance, GitHub context, and lessons where available.
+Repo context comes from repo source first: README, docs, workflows, manifests, tests, and other declared refs. `dev.kit repo` then traces and maps dependencies, commands, gaps, and other serializable signals into `context.yaml`. `AGENTS.md` turns that repo map into an operating contract for agents, using current GitHub context as the primary dynamic input and repo workflow/practice catalogs as fallback defaults.
 
 ## Cross-repo tracing
 

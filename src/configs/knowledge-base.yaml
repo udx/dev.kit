@@ -5,16 +5,27 @@ config:
   hierarchy:
     local_repos_root: git/udx
     remote_org_root: github.com/udx
+  agent_experience:
+    order:
+      - repo_contract
+      - github_history
+      - repo_defaults
+      - lessons
+    notes:
+      - Start from the current repo contract on disk.
+      - Use live GitHub issues, pull requests, review state, and commit history as the primary dynamic source.
+      - Fall back to repo-owned workflow and practice catalogs when GitHub history is missing, sparse, or not applicable.
+      - Treat lessons as supporting memory, not as a source of truth.
   sources:
     preferred:
       items:
         - repo docs, configs, templates, and tests
         - repo TODO, context, and refs files when present
+        - remote repos, issues, pull requests, and commit history under github.com/udx/*
         - local repos under git/udx
-        - remote repos and pull requests under github.com/udx/*
         - codex sessions under ~/.codex/sessions when available
     github:
-      description: GitHub experience history enriches repo context with development signals beyond code
+      description: GitHub experience history is the primary dynamic input for agent decisions once the repo contract is loaded
       method: gh api (prefer REST API via gh api over gh subcommands for consistency and reliability)
       items:
         - open issues (scope, labels, assignees)

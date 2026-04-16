@@ -24,8 +24,6 @@ refs:
   - ./lib
   - ./src
   - ./tests
-  - https://raw.githubusercontent.com/udx/dev.kit/latest/.github/ISSUE_TEMPLATE
-  - https://raw.githubusercontent.com/udx/dev.kit/latest/.github/PULL_REQUEST_TEMPLATE.md
 
 commands:
   verify: make test
@@ -43,6 +41,7 @@ practices:
   - "Keep markdown, yaml, diagrams, tests, and command contracts self-contained in the repo so local and remote UDX workflows stay aligned."
   - "Keep deterministic workflow logic in repo config and scripts, and reserve AI agents for reading that contract, generating grounded summaries, and handling non-deterministic judgment without inventing hidden rules."
   - "Operate from repo-declared context at all times. Do not carry assumptions across sessions or rely on prompt history when the repo contract is available on disk."
+  - "After loading the repo contract, prefer current GitHub issues, pull requests, review state, and commit history as the primary dynamic source for agent decisions. Use repo workflow and practice catalogs as fallback defaults when live GitHub signal is missing or thin."
   - "When understanding behavior, read the YAML manifest that defines it before reading the code that implements it. Manifests are the interface — code is the mechanism."
   - "Check existing org patterns, configs, workflows, and templates before creating new ones. Reuse declared patterns instead of inventing alternatives."
   - "Execute verification, builds, and tests locally before any remote operation. Local execution is part of the reproducible repo contract, not a preference."
@@ -59,7 +58,7 @@ practices:
 
 # Canonical agent workflow
 workflow:
-  - "Refresh repo context: Run `dev.kit` → `dev.kit repo` → `dev.kit agent` before starting work. Each command guides to the next required step. This resyncs repo context, environment state, and the AGENTS.md execution contract. A current context.yaml is the source of truth for refs, commands, gaps, and lessons. Do not rely on ad hoc prompt memory when the repo contract can be read from disk."
+  - "Refresh repo context: Run `dev.kit` → `dev.kit repo` → `dev.kit agent` before starting work. Each command guides to the next required step. This resyncs repo context, environment state, and the AGENTS.md execution contract. A current context.yaml is the source of truth for refs, commands, gaps, and lessons. Do not rely on ad hoc prompt memory when the repo contract can be read from disk. When GitHub context is available, prefer current issues, pull requests, review state, and commit history over stale memory or generic workflow defaults."
   - "Read linked GitHub issue and confirm scope: If a GitHub issue URL is available, read the full body and comments, confirm the repo matches the issue scope, and map acceptance criteria before writing any code. Use the issue URL as the cross-repo context root."
   - "Inspect git status"
   - "Analyze local changes"

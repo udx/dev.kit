@@ -37,7 +37,9 @@ config:
             environment state, and the AGENTS.md execution contract. A current
             context.yaml is the source of truth for refs, commands, gaps, and lessons.
             Do not rely on ad hoc prompt memory when the repo contract can be read
-            from disk.
+            from disk. When GitHub context is available, prefer current issues,
+            pull requests, review state, and commit history over stale memory or
+            generic workflow defaults.
         - id: issue_scope
           label: Read linked GitHub issue and confirm scope
           check: issue_scope

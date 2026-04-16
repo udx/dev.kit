@@ -18,8 +18,9 @@ Those commands connect four layers:
 
 1. local environment detection
 2. structured repo context generation
-3. agent contract generation
-4. human or agent execution
+3. deterministic tracing and mapping
+4. agent contract generation
+5. human or agent execution
 
 For agents, this is not only a first-time setup flow. It is the resync loop. On each new interaction or session, rerun the flow so the next action starts from current repo context rather than stale memory.
 
@@ -32,9 +33,14 @@ The split should stay explicit:
 
 `context.yaml` is the fetched map of the repo and its detectable signals.
 
-`AGENTS.md` is the operating contract that tells an agent how to use that map together with workflow expectations, GitHub context, and learned patterns.
+`AGENTS.md` is the operating contract that tells an agent how to use that map together with current GitHub context, learned patterns, and repo workflow defaults.
 
 That separation keeps both artifacts smaller and more reliable.
+
+In practice:
+
+- `context.yaml` owns refs, manifests, commands, dependencies, and gaps
+- `AGENTS.md` points back to `context.yaml` and stays focused on behavior
 
 ## Developer Integration
 
@@ -65,7 +71,9 @@ GitHub and learning data are most useful when they support agent decisions, not 
 In practice:
 
 - repo and integration signals can be serialized into `context.yaml`
-- current issues, PRs, lessons, and workflow expectations become most useful in `AGENTS.md`
+- current issues, PRs, and repo history are the primary dynamic inputs in `AGENTS.md`
+- workflow expectations and practice catalogs act as fallback defaults in `AGENTS.md`
+- lessons remain secondary memory that should not outrank live repo or GitHub state
 
 That gives agents both structure and recency without mixing roles.
 
@@ -96,7 +104,9 @@ That makes behavior inspectable, versioned, and reusable.
 The best integration is:
 
 - `context.yaml` stays factual and structured
+- tracing and mapping stay deterministic
 - `AGENTS.md` stays directive and execution-oriented
+- GitHub experience stays the primary dynamic source for agent judgment
 - both are regenerated cheaply at session start
 
 That gives developers and agents one contract with two surfaces instead of two competing sources of truth.

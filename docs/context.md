@@ -8,6 +8,11 @@ It should answer: what can be fetched from this repo programmatically, what was 
 
 `context.yaml` is the machine-friendly map of the repository. It is not the place for agent policy, step-by-step behavior, or prompt-style instructions.
 
+Its boundary is best understood as two layers combined into one artifact:
+
+- base repo context signals
+- deterministic tracing and mapping built from those signals
+
 Use it for facts such as:
 
 - repo identity
@@ -42,6 +47,19 @@ If the file is missing, `dev.kit agent` can generate it first before writing `AG
 - YAML config catalogs in `src/configs/`
 - GitHub repo signals when available
 
+The important split is:
+
+- signals are the raw repo-facing inputs
+- tracing and mapping are the deterministic transforms `dev.kit` performs on top of them
+
+Examples of tracing and mapping include:
+
+- detecting canonical verify, build, and run commands
+- mapping reusable workflows to upstream repos
+- mapping Docker images to likely source repos
+- mapping versioned YAML contracts to upstream modules or repos
+- mapping dependencies to the local files that use them
+
 The key boundary is simple: if `dev.kit` can detect it, trace it, or serialize it, it belongs here.
 
 ## Main Sections
@@ -58,13 +76,15 @@ The generated file in this repo currently includes:
 - `manifests`
 - `lessons`
 
-Depending on available integrations, it may also include GitHub-derived data.
+Depending on available integrations, it may also include GitHub-derived data. GitHub belongs here only when it can be fetched and serialized as repo experience data. It does not replace the repo contract.
 
 ## What Each Section Means
 
 `repo` identifies the repository through values such as `name`, `archetype`, and `profile`.
 
 `refs` is the priority reading list. It tells an agent or tool which files and directories matter first.
+
+This is the only place refs should live. `AGENTS.md` should point to `context.yaml`, not repeat the ref list.
 
 `commands` is the detected execution surface, such as `verify`, `build`, and `run`.
 
@@ -74,7 +94,7 @@ Depending on available integrations, it may also include GitHub-derived data.
 
 `manifests` lists the config files that define repo behavior. In `dev.kit`, these are first-class interfaces.
 
-`practices` and `workflow` are still structured repo data. They come from repo-owned catalogs, not from prompt-time improvisation.
+`practices` and `workflow` are still structured repo data. They come from repo-owned catalogs, not from prompt-time improvisation. They are repo-declared defaults that agents can fall back to when current GitHub history is thin or absent.
 
 `lessons` links prior session artifacts produced by `dev.kit learn`.
 
@@ -98,9 +118,10 @@ It should let an agent answer questions like:
 
 - What commands exist?
 - What docs and manifests matter first?
+- What repo signals were used?
 - What dependencies are real, and where are they used?
 - Which engineering factors are missing?
-- What workflow steps are already declared by the repo?
+- What workflow defaults are already declared by the repo?
 
 If that data is available in `context.yaml`, the agent does not need to rediscover it by scanning.
 

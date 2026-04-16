@@ -13,6 +13,8 @@ config:
       message: Keep deterministic workflow logic in repo config and scripts, and reserve AI agents for reading that contract, generating grounded summaries, and handling non-deterministic judgment without inventing hidden rules.
     - id: context-over-memory
       message: Operate from repo-declared context at all times. Do not carry assumptions across sessions or rely on prompt history when the repo contract is available on disk.
+    - id: github-history-primary
+      message: After loading the repo contract, prefer current GitHub issues, pull requests, review state, and commit history as the primary dynamic source for agent decisions. Use repo workflow and practice catalogs as fallback defaults when live GitHub signal is missing or thin.
     - id: manifests-before-code
       message: When understanding behavior, read the YAML manifest that defines it before reading the code that implements it. Manifests are the interface — code is the mechanism.
     - id: reuse-over-invention

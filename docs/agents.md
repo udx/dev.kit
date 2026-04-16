@@ -10,6 +10,8 @@ If `context.yaml` answers what is known, `AGENTS.md` answers how an agent should
 
 This is the behavior layer. It tells an agent how to use the fetched repo contract efficiently and with minimal drift.
 
+`AGENTS.md` should stay simpler than `context.yaml`. It is a built artifact, not the full repo map.
+
 One core rule should stay explicit: start each new interaction or session by rerunning:
 
 ```bash
@@ -42,7 +44,8 @@ Raw repo facts are not enough. Agents still need explicit operating instructions
 - how to prioritize manifests over implementation
 - how to follow the repo workflow
 - how to verify before reporting completion
-- how to use repo history, lessons, and GitHub context without drifting
+- how to use current GitHub history as the primary dynamic source
+- how to fall back to repo workflow, practice catalogs, and lessons without drifting
 
 ## Inputs
 
@@ -54,6 +57,13 @@ Raw repo facts are not enough. Agents still need explicit operating instructions
 - lessons from prior agent sessions
 
 That keeps the instructions grounded and refreshable.
+
+The intended decision order is:
+
+1. current repo contract from `.rabbit/context.yaml`
+2. current GitHub experience for this repo
+3. repo-declared default workflows and practices
+4. prior lessons and other secondary history
 
 ## Main Sections
 
@@ -76,9 +86,17 @@ That includes:
 
 - how an agent should start each session
 - how an agent should interpret repo context
-- how an agent should use GitHub issues, PRs, and recent history
+- how an agent should use GitHub issues, PRs, and recent history first
 - how an agent should sequence work and verification
 - how an agent should avoid scanning and guesswork
+
+It should not restate:
+
+- priority refs
+- manifest inventories
+- dependency maps
+
+Those already belong in `.rabbit/context.yaml`.
 
 This is the layer that combines static repo contract with current repo experience.
 
@@ -94,6 +112,10 @@ A useful shorthand is:
 - `AGENTS.md` = instructions for using that knowledge well
 
 They should stay separate, but tightly coupled.
+
+`context.yaml` should stay factual and serializable.
+
+`AGENTS.md` should stay directive, current-state aware, and smaller.
 
 ## Efficiency Goal
 

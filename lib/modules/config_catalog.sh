@@ -77,33 +77,9 @@ EOF
   printf "%s" "$refs" | dev_kit_unique_lines_ci
 }
 
-dev_kit_repo_kit_source_refs() {
-  local repo_dir="${1:-$(pwd)}"
-  local path=""
-  local _gh_raw="https://raw.githubusercontent.com/udx/dev.kit/latest"
-  local _gh_tree="https://github.com/udx/dev.kit/tree/latest"
-
-  while IFS= read -r path; do
-    [ -n "$path" ] || continue
-    # Skip if already present in the target repo
-    [ -e "$repo_dir/$path" ] && continue
-    # Directories use tree URL (raw 404s on dirs), files use raw URL
-    if [ -d "$REPO_DIR/$path" ]; then
-      printf "%s/%s\n" "$_gh_tree" "$path"
-    else
-      printf "%s/%s\n" "$_gh_raw" "$path"
-    fi
-  done <<EOF
-$(dev_kit_context_list "kit_source_refs")
-EOF
-}
-
 dev_kit_repo_priority_refs() {
   local repo_dir="${1:-$(pwd)}"
-  {
-    dev_kit_repo_priority_list "$repo_dir" "priority_paths"
-    dev_kit_repo_kit_source_refs "$repo_dir"
-  } | dev_kit_unique_lines_ci
+  dev_kit_repo_priority_list "$repo_dir" "priority_paths"
 }
 
 dev_kit_repo_doc_refs() {
