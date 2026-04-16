@@ -6,7 +6,29 @@ DEV_KIT_HOME="${DEV_KIT_HOME:-$HOME/.udx/dev.kit}"
 DEV_KIT_INSTALL_REPO="${DEV_KIT_INSTALL_REPO:-udx/dev.kit}"
 DEV_KIT_INSTALL_REF="${DEV_KIT_INSTALL_REF:-latest}"
 DEV_KIT_INSTALL_ARCHIVE_URL="${DEV_KIT_INSTALL_ARCHIVE_URL:-https://codeload.github.com/${DEV_KIT_INSTALL_REPO}/tar.gz/refs/heads/${DEV_KIT_INSTALL_REF}}"
-DEV_KIT_INSTALL_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+dev_kit_install_script_path() {
+  if [ -n "${BASH_SOURCE[0]-}" ]; then
+    printf '%s\n' "${BASH_SOURCE[0]}"
+    return 0
+  fi
+
+  if [ "${0:-}" != "bash" ] && [ "${0:-}" != "-bash" ] && [ -n "${0:-}" ]; then
+    printf '%s\n' "$0"
+    return 0
+  fi
+
+  return 1
+}
+
+dev_kit_install_script_dir() {
+  local script_path=""
+
+  script_path="$(dev_kit_install_script_path)" || return 1
+  cd "$(dirname "$script_path")" && pwd
+}
+
+DEV_KIT_INSTALL_SCRIPT_DIR="$(dev_kit_install_script_dir 2>/dev/null || true)"
 DEV_KIT_INSTALL_REPO_DIR="$(cd "${DEV_KIT_INSTALL_SCRIPT_DIR}/../.." 2>/dev/null && pwd || true)"
 
 if [ -f "$DEV_KIT_INSTALL_REPO_DIR/lib/modules/output.sh" ]; then
@@ -26,7 +48,7 @@ dev_kit_install_repo_dir() {
   local script_dir=""
   local repo_dir=""
 
-  script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  script_dir="$(dev_kit_install_script_dir)" || return 1
   repo_dir="$(cd "${script_dir}/../.." 2>/dev/null && pwd || true)"
 
   if [ -n "$repo_dir" ] && [ -f "$repo_dir/bin/dev-kit" ] && [ -d "$repo_dir/lib" ] && [ -d "$repo_dir/src" ]; then
@@ -53,6 +75,32 @@ dev_kit_install_download() {
 
   echo "curl or wget is required to install dev.kit" >&2
   exit 1
+}
+
+dev_kit_install_remove_npm_install() {
+  if ! command -v npm >/dev/null 2>&1; then
+    return 0
+  fi
+
+  if ! npm list -g @udx/dev-kit --depth=0 >/dev/null 2>&1; then
+    return 0
+  fi
+
+  echo ""
+  echo "dev.kit: detected previous npm installation"
+  echo "  package: @udx/dev-kit"
+
+  if npm uninstall -g @udx/dev-kit >/dev/null 2>&1; then
+    echo ""
+    echo "  removed — curl version is now the single install"
+    echo ""
+    return 0
+  fi
+
+  echo ""
+  echo "  warning: failed to remove npm installation automatically"
+  echo ""
+  return 0
 }
 
 dev_kit_install_extract_root() {
@@ -110,6 +158,8 @@ main() {
     dev_kit_install_usage >&2
     exit 1
   fi
+
+  dev_kit_install_remove_npm_install
 
   source_dir="$(dev_kit_install_source_dir)"
   target="${DEV_KIT_BIN_DIR}/dev.kit"
