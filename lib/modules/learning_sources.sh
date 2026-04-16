@@ -832,3 +832,213 @@ dev_kit_learning_session_sources_json() {
     "$(dev_kit_json_escape "$cwd")" \
     "$(dev_kit_json_escape "$path")"
 }
+
+# ── GitHub history — dynamic PR/issue pattern detection ───────────────────────
+# These functions fetch live data from the GitHub API to detect the user's
+# actual PR description and issue update patterns. No storage — real-time only.
+
+dev_kit_learning_github_owner_repo() {
+  local repo_dir="${1:-$(pwd)}"
+  local origin_url
+  origin_url="$(git -C "$repo_dir" remote get-url origin 2>/dev/null || true)"
+  if [[ "$origin_url" =~ github\.com[:/]([^/]+/[^/]+)(\.git)?$ ]]; then
+    local result="${BASH_REMATCH[1]}"
+    printf "%s" "${result%.git}"
+  fi
+}
+
+# Fetch recent merged PR bodies as delimited blocks.
+# Output: ---PR#number title---\nbody\n---PR_END--- per PR
+dev_kit_learning_github_recent_pr_bodies() {
+  local repo_dir="${1:-$(pwd)}"
+  local sample_size="${2:-8}"
+  local owner_repo
+  owner_repo="$(dev_kit_learning_github_owner_repo "$repo_dir")"
+  [ -n "$owner_repo" ] || return 0
+  dev_kit_sync_can_run_gh || return 0
+  [ "$(dev_kit_sync_gh_auth_state)" = "available" ] || return 0
+
+  gh api "repos/${owner_repo}/pulls?state=closed&sort=updated&direction=desc&per_page=${sample_size}" \
+    2>/dev/null | jq -r '
+    [.[]? | select(.merged_at != null and (.body // "" | length) > 30)] |
+    sort_by(.merged_at) | reverse | .[:8][] |
+    "---PR#\(.number) \(.title)---\n\(.body)\n---PR_END---"
+  ' 2>/dev/null || true
+}
+
+# Detect common ## headings across PR bodies — returns headings found in 2+ PRs.
+dev_kit_learning_github_pr_heading_pattern() {
+  local pr_bodies="$1"
+  [ -n "$pr_bodies" ] || return 0
+  printf '%s\n' "$pr_bodies" | awk '
+    /^---PR#/ { pr_idx++; in_pr=1; next }
+    /^---PR_END---/ { in_pr=0; next }
+    in_pr && /^##[[:space:]]/ {
+      heading = $0
+      sub(/^##[[:space:]]+/, "", heading)
+      sub(/[[:space:]]+$/, "", heading)
+      if (heading != "" && !seen[pr_idx,heading]++) count[heading]++
+    }
+    END {
+      for (h in count) {
+        if (count[h] >= 2) printf "%d|%s\n", count[h], h
+      }
+    }
+  ' | sort -t'|' -k1,1rn | cut -d'|' -f2
+}
+
+# Find the best-structured PR body (most headings) as a reference example.
+# Output: PR number on line 1, body on remaining lines.
+dev_kit_learning_github_best_pr_example() {
+  local pr_bodies="$1"
+  [ -n "$pr_bodies" ] || return 0
+  printf '%s\n' "$pr_bodies" | awk '
+    /^---PR#/ {
+      if (heading_count > best_count) {
+        best_count = heading_count
+        best_title = current_title
+        best_body = current_body
+      }
+      sub(/^---PR#/, "")
+      sub(/---$/, "")
+      current_title = $0
+      current_body = ""
+      heading_count = 0
+      in_pr = 1
+      next
+    }
+    /^---PR_END---/ {
+      if (heading_count > best_count) {
+        best_count = heading_count
+        best_title = current_title
+        best_body = current_body
+      }
+      in_pr = 0
+      next
+    }
+    in_pr {
+      current_body = current_body $0 "\n"
+      if ($0 ~ /^##[[:space:]]/) heading_count++
+    }
+    END {
+      if (best_count > 0) {
+        print best_title
+        printf "%s", best_body
+      }
+    }
+  '
+}
+
+# Fetch recent issue comments by the authenticated user.
+# Output: delimited comment blocks.
+dev_kit_learning_github_recent_issue_comments() {
+  local repo_dir="${1:-$(pwd)}"
+  local sample_size="${2:-20}"
+  local owner_repo gh_user
+  owner_repo="$(dev_kit_learning_github_owner_repo "$repo_dir")"
+  [ -n "$owner_repo" ] || return 0
+  dev_kit_sync_can_run_gh || return 0
+  [ "$(dev_kit_sync_gh_auth_state)" = "available" ] || return 0
+
+  gh_user="$(gh api user --jq '.login' 2>/dev/null || true)"
+  [ -n "$gh_user" ] || return 0
+
+  gh api "repos/${owner_repo}/issues/comments?sort=created&direction=desc&per_page=${sample_size}" \
+    2>/dev/null | jq -r --arg user "$gh_user" '
+    [.[]? | select(.user.login == $user and (.body | length) > 40)] | .[:8][] |
+    "---COMMENT_START---\n\(.body)\n---COMMENT_END---"
+  ' 2>/dev/null || true
+}
+
+# Detect common patterns in issue comments — checklists, status headers, structured updates.
+# Returns a short description of the detected pattern.
+dev_kit_learning_github_issue_update_detect() {
+  local comments="$1"
+  [ -n "$comments" ] || return 0
+  printf '%s\n' "$comments" | awk '
+    /^---COMMENT_START---/ { comment_count++; in_c=1; has_checklist=0; has_heading=0; has_status=0; next }
+    /^---COMMENT_END---/ {
+      if (has_checklist) checklist_count++
+      if (has_heading) heading_count++
+      if (has_status) status_count++
+      in_c=0; next
+    }
+    in_c && /^- \[[ x]\]/ { has_checklist=1 }
+    in_c && /^##[[:space:]]/ { has_heading=1 }
+    in_c && /[Ss]tatus:|[Uu]pdate:|[Pp]rogress:|[Dd]one:|[Nn]ext:/ { has_status=1 }
+    END {
+      if (comment_count == 0) exit
+      if (checklist_count >= 2) printf "checklist-driven updates (%d/%d comments use task checklists)\n", checklist_count, comment_count
+      if (heading_count >= 2) printf "structured sections (%d/%d comments use markdown headings)\n", heading_count, comment_count
+      if (status_count >= 2) printf "status/progress tracking (%d/%d comments include status labels)\n", status_count, comment_count
+    }
+  '
+}
+
+# Extract a good issue comment example (longest with structure).
+dev_kit_learning_github_best_issue_comment() {
+  local comments="$1"
+  [ -n "$comments" ] || return 0
+  printf '%s\n' "$comments" | awk '
+    /^---COMMENT_START---/ {
+      if (length(current_body) > length(best_body) && current_structure > 0) {
+        best_body = current_body
+      }
+      current_body = ""
+      current_structure = 0
+      in_c = 1
+      next
+    }
+    /^---COMMENT_END---/ {
+      if (length(current_body) > length(best_body) && current_structure > 0) {
+        best_body = current_body
+      }
+      in_c = 0
+      next
+    }
+    in_c {
+      current_body = current_body $0 "\n"
+      if ($0 ~ /^##[[:space:]]/ || $0 ~ /^- \[[ x]\]/ || $0 ~ /[Ss]tatus:|[Uu]pdate:/) current_structure++
+    }
+    END {
+      if (best_body != "") printf "%s", best_body
+    }
+  '
+}
+
+# Extract lesson artifact workflow rules and templates for AGENTS.md injection.
+dev_kit_learning_lesson_rules() {
+  local repo_dir="$1"
+  local lessons_dir="${repo_dir}/.rabbit/dev.kit"
+  [ -d "$lessons_dir" ] || return 0
+  local latest
+  latest="$(find "$lessons_dir" -maxdepth 1 -type f -name 'lessons-*.md' 2>/dev/null | sort -r | head -1)"
+  [ -f "$latest" ] || return 0
+
+  awk '
+    /^## Workflow rules/ { in_section=1; next }
+    /^## / && in_section { exit }
+    in_section && /^- / {
+      sub(/^- /, "")
+      print
+    }
+  ' "$latest"
+}
+
+dev_kit_learning_lesson_templates() {
+  local repo_dir="$1"
+  local lessons_dir="${repo_dir}/.rabbit/dev.kit"
+  [ -d "$lessons_dir" ] || return 0
+  local latest
+  latest="$(find "$lessons_dir" -maxdepth 1 -type f -name 'lessons-*.md' 2>/dev/null | sort -r | head -1)"
+  [ -f "$latest" ] || return 0
+
+  awk '
+    /^## Ready templates/ { in_section=1; next }
+    /^## / && in_section { exit }
+    in_section && /^- / {
+      sub(/^- /, "")
+      print
+    }
+  ' "$latest"
+}

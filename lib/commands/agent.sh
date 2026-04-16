@@ -245,6 +245,97 @@ dev_kit_agent_write_agents_md() {
         printf '%s\n\n' "$_workflow"
       fi
 
+      # ── Learned workflow rules (from agent session lessons) ────────────────
+      local _learned_rules _learned_templates
+      _learned_rules="$(dev_kit_learning_lesson_rules "$repo_dir")"
+      _learned_templates="$(dev_kit_learning_lesson_templates "$repo_dir")"
+      if [ -n "$_learned_rules" ] || [ -n "$_learned_templates" ]; then
+        printf '### Learned from prior sessions\n\n'
+        printf 'Patterns detected from agent sessions on this repo. Follow these in addition to the workflow above.\n\n'
+        if [ -n "$_learned_rules" ]; then
+          while IFS= read -r _rule; do
+            [ -n "$_rule" ] || continue
+            printf -- '- %s\n' "$_rule"
+          done <<EOF
+$_learned_rules
+EOF
+          printf '\n'
+        fi
+        if [ -n "$_learned_templates" ]; then
+          printf '**Reusable templates:**\n\n'
+          while IFS= read -r _tmpl; do
+            [ -n "$_tmpl" ] || continue
+            printf -- '- %s\n' "$_tmpl"
+          done <<EOF
+$_learned_templates
+EOF
+          printf '\n'
+        fi
+      fi
+
+      # ── Dynamic PR guide (from repo GitHub history) ──────────────────────────
+      local _pr_bodies _pr_headings _pr_example
+      _pr_bodies="$(dev_kit_learning_github_recent_pr_bodies "$repo_dir" 2>/dev/null || true)"
+      if [ -n "$_pr_bodies" ]; then
+        _pr_headings="$(dev_kit_learning_github_pr_heading_pattern "$_pr_bodies")"
+        _pr_example="$(dev_kit_learning_github_best_pr_example "$_pr_bodies")"
+
+        if [ -n "$_pr_headings" ] || [ -n "$_pr_example" ]; then
+          printf '## PR description guide\n\n'
+          printf '_Detected from recent merged PRs in this repo. Follow this structure when creating PRs._\n\n'
+
+          if [ -n "$_pr_headings" ]; then
+            printf '**Common sections** (appear in multiple PRs):\n\n'
+            while IFS= read -r _h; do
+              [ -n "$_h" ] || continue
+              printf -- '- %s\n' "$_h"
+            done <<EOF
+$_pr_headings
+EOF
+            printf '\n'
+          fi
+
+          if [ -n "$_pr_example" ]; then
+            local _pr_title _pr_body
+            _pr_title="$(printf '%s' "$_pr_example" | head -1)"
+            _pr_body="$(printf '%s' "$_pr_example" | tail -n +2)"
+            if [ -n "$_pr_body" ]; then
+              printf '**Best example** (PR %s):\n\n' "$_pr_title"
+              printf '```markdown\n%s\n```\n\n' "$_pr_body"
+            fi
+          fi
+        fi
+      fi
+
+      # ── Dynamic issue update guide (from repo GitHub history) ────────────────
+      local _issue_comments _issue_patterns _issue_example
+      _issue_comments="$(dev_kit_learning_github_recent_issue_comments "$repo_dir" 2>/dev/null || true)"
+      if [ -n "$_issue_comments" ]; then
+        _issue_patterns="$(dev_kit_learning_github_issue_update_detect "$_issue_comments")"
+        _issue_example="$(dev_kit_learning_github_best_issue_comment "$_issue_comments")"
+
+        if [ -n "$_issue_patterns" ] || [ -n "$_issue_example" ]; then
+          printf '## Issue update guide\n\n'
+          printf '_Detected from recent issue comments by the authenticated user. Follow this style when posting updates._\n\n'
+
+          if [ -n "$_issue_patterns" ]; then
+            printf '**Detected patterns:**\n\n'
+            while IFS= read -r _p; do
+              [ -n "$_p" ] || continue
+              printf -- '- %s\n' "$_p"
+            done <<EOF
+$_issue_patterns
+EOF
+            printf '\n'
+          fi
+
+          if [ -n "$_issue_example" ]; then
+            printf '**Example update:**\n\n'
+            printf '```markdown\n%s\n```\n\n' "$_issue_example"
+          fi
+        fi
+      fi
+
       # ── Principles — engineering practices ───────────────────────────────────
       local _practices
       _practices="$(awk '/^practices:/{f=1;next} f && /^[a-zA-Z#]/{f=0} f && /^  - /{gsub(/^  - "/, "  - "); sub(/"$/, ""); gsub(/\\"/, "\""); gsub(/\\\\/, "\\"); print}' "$context_yaml")"

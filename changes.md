@@ -1,5 +1,12 @@
 # Changes
 
+### 0.7.0
+
+- Dynamic PR description guide in AGENTS.md — fetches recent merged PRs via `gh api`, detects common section headings, includes best-structured PR as a reference example
+- Dynamic issue update guide in AGENTS.md — detects comment patterns (checklists, structured sections, status tracking) from the authenticated user's recent issue comments
+- Inject learned workflow rules from lesson artifacts into AGENTS.md — session-derived patterns appear directly in the workflow section, not just as file refs
+- Fix bare template IDs in lesson artifacts — add flow template cases for `docs-first-alignment`, `workflow-tracing`, `verification-scope`, `legacy-reduction`, `agent-handoff`
+
 ### 0.6.0
 
 - Switch default branch from `main` to `latest` so `npm create` tags align with the branch name

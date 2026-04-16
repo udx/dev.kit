@@ -435,6 +435,21 @@ dev_kit_learning_flow_template() {
     post-follow-up)
       printf '%s' '`Post-merge follow-up`: gather release/workflow evidence and post a concise update with links, findings delta, and next steps.'
       ;;
+    docs-first-alignment)
+      printf '%s' '`Docs-first alignment`: review README, docs, and tests before refactoring, restate the target workflow, then simplify code and remove mismatched legacy paths.'
+      ;;
+    workflow-tracing)
+      printf '%s' '`Workflow tracing`: locate the actual workflow or deploy file first, then trace the commands and supporting docs that drive execution.'
+      ;;
+    verification-scope)
+      printf '%s' '`Verification scope`: run the smallest local check that proves the current change, defer heavyweight coverage to CI, and call the tradeoff out explicitly.'
+      ;;
+    legacy-reduction)
+      printf '%s' '`Legacy reduction`: when a new direction is accepted, archive or delete conflicting old modules/configs instead of carrying both models forward.'
+      ;;
+    agent-handoff)
+      printf '%s' '`Agent handoff`: refresh repo context, manifests, and AGENTS.md before deeper agent work so the repo contract is the source of truth.'
+      ;;
     *)
       printf '%s' "$1"
       ;;
