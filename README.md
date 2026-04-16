@@ -2,9 +2,9 @@
 
 <https://udx.dev/kit>
 
-**Dynamic repo context for developers and AI agents.**
+**Simple session flow for developers and AI agents.**
 
-dev.kit scans what humans and agents shouldn't scan manually — tools, factors, dependencies, cross-repo relationships. It produces one context file. Developers read it. Agents execute from it.
+dev.kit separates repo facts from agent behavior. It generates `.rabbit/context.yaml` as the structured repo contract, then generates `AGENTS.md` as the execution contract that tells agents how to use that context plus workflow, GitHub, and learning signals.
 
 ```bash
 npm install -g @udx/dev-kit
@@ -22,7 +22,7 @@ detect archetype    trace dependencies    write execution contract
 guide to next       write context.yaml    from context.yaml
 ```
 
-Each command enriches context and guides to the next. Run at every session start.
+Each command moves the session forward and tells the next actor what to do. Agents should rerun the flow at each new interaction or session so context, workflow, and repo state stay synced.
 
 ---
 
@@ -37,9 +37,9 @@ dev.kit agent      # generate AGENTS.md execution contract
 
 ---
 
-## What gets generated
+## Generated Context And Workflow
 
-**`.rabbit/context.yaml`** — one file, complete repo context:
+**`.rabbit/context.yaml`** — generated repo map from repo definitions, source files, detected commands, traced dependencies, gaps, and other serializable repo signals:
 
 ```yaml
 repo:
@@ -49,7 +49,6 @@ repo:
 
 refs:
   - ./README.md
-  - ./docs/architecture.md
   - ./package.json
 
 commands:
@@ -68,7 +67,7 @@ gaps:
   - config (partial)
 ```
 
-**`AGENTS.md`** — execution contract with 8 rules, commands, refs, dependencies, workflow, practices. Works with Claude, Codex, Gemini, Copilot — any agent that reads files.
+**`AGENTS.md`** — generated execution contract for agents. It tells them how to start, what to read first, how to use `context.yaml`, how to verify work, and how to follow repo workflow using current GitHub and learned context without relying on stale session memory.
 
 ---
 
@@ -85,6 +84,10 @@ gaps:
 All commands support `--json` for machine-readable output.
 
 ---
+
+## Repo Context
+
+Repo context comes from repo source first: README, docs, workflows, manifests, tests, and other declared refs. That data is serialized into `context.yaml`. `AGENTS.md` then turns that repo map into an operating contract for agents, using workflow guidance, GitHub context, and lessons where available.
 
 ## Cross-repo tracing
 
@@ -113,15 +116,17 @@ dependencies:
 # npm (recommended)
 npm install -g @udx/dev-kit
 
-# or curl
+# no npm?
 curl -fsSL https://raw.githubusercontent.com/udx/dev.kit/latest/bin/scripts/install.sh | bash
 ```
+
+Use one install path at a time. Installing with npm removes the curl-managed `~/.udx/dev.kit` home and shim. Installing with curl removes the global `@udx/dev-kit` package before laying down the local shim and home directory.
 
 ---
 
 ## Docs
 
-- [Overview](docs/overview.md) — design principles and phases
-- [Commands](docs/commands.md) — full command reference with output details
-- [Workflow](docs/workflow.md) — pipeline phases, factors, session flow
-- [Architecture](docs/architecture.md) — config catalog, module map, data flow
+- [Installation](docs/installation.md) — npm and curl installs, cleanup, uninstall, and verification
+- [Context](docs/context.md) — `.rabbit/context.yaml`, its sections, and how it is generated
+- [Agents](docs/agents.md) — `AGENTS.md` generation and how agents use it
+- [Integration](docs/integration.md) — how the CLI, repo context, and agent workflow fit together

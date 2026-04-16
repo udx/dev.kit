@@ -2,7 +2,7 @@
 # Run `dev.kit repo` to refresh.
 kind: repoContext
 version: udx.io/dev.kit/v1
-generated: 2026-04-15
+generated: 2026-04-16
 
 repo:
   name: dev.kit
@@ -11,7 +11,10 @@ repo:
 
 refs:
   - ./README.md
-  - ./docs/architecture.md
+  - ./docs/installation.md
+  - ./docs/context.md
+  - ./docs/agents.md
+  - ./docs/integration.md
   - ./docs
   - ./.rabbit
   - ./.github/workflows
@@ -21,23 +24,13 @@ refs:
   - ./lib
   - ./src
   - ./tests
+  - https://raw.githubusercontent.com/udx/dev.kit/latest/.github/ISSUE_TEMPLATE
+  - https://raw.githubusercontent.com/udx/dev.kit/latest/.github/PULL_REQUEST_TEMPLATE.md
 
 commands:
   verify: make test
   build: make build
   run: make run
-
-# GitHub context — development signals from repo history
-github:
-  repo: udx/dev.kit
-  recent_prs:
-    - "#16 restructure AGENTS.md as execution contract, add GitHub context"
-    - "#15 bump version to 0.2.1"
-    - "#14 fix release workflow trigger"
-    - "#13 add package-lock.json for CI cache"
-    - "#12 add npm release workflow, versioning, and changelog"
-  open_prs:
-    - "#17 slim factors, widen tracing, bump to 0.5.0"
 
 # Gaps — factors that are missing or partial
 gaps:
@@ -62,6 +55,7 @@ practices:
   - "Run the smallest local check that proves the current change. Defer heavyweight coverage to CI and call that tradeoff out explicitly."
   - "Make sure to develop and test incrementally, so it is easier to detect problems early and build on verified behavior."
   - "Make sure to protect development executions with scoped and limited tasks, so failures are easier to isolate and blast radius stays low."
+  - "Use the linked GitHub issue as the cross-repo context root. When work spans multiple repos, the issue URL anchors scope, acceptance criteria, and follow-up across all of them."
 
 # Canonical agent workflow
 workflow:
@@ -90,7 +84,6 @@ dependencies:
     resolved: true
     archetype: workflow-repo
     profile: unknown
-    description: Reusable GitHub Actions workflow templates for CI/CD
     used_by:
       - .github/workflows/context7-ops.yml
       - .github/workflows/npm-release-ops.yml
@@ -117,5 +110,6 @@ manifests:
 
 # Lessons from agent sessions
 lessons:
+  - .rabbit/dev.kit/lessons-dev.kit-2026-04-15.md
   - .rabbit/dev.kit/lessons-dev.kit-2026-04-14.md
 
