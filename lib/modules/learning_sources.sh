@@ -859,9 +859,9 @@ dev_kit_learning_github_recent_pr_bodies() {
   [ "$(dev_kit_sync_gh_auth_state)" = "available" ] || return 0
 
   gh api "repos/${owner_repo}/pulls?state=closed&sort=updated&direction=desc&per_page=${sample_size}" \
-    2>/dev/null | jq -r '
+    2>/dev/null | jq -r --argjson n "$sample_size" '
     [.[]? | select(.merged_at != null and (.body // "" | length) > 30)] |
-    sort_by(.merged_at) | reverse | .[:8][] |
+    sort_by(.merged_at) | reverse | .[:$n][] |
     "---PR#\(.number) \(.title)---\n\(.body)\n---PR_END---"
   ' 2>/dev/null || true
 }
@@ -923,7 +923,9 @@ dev_kit_learning_github_best_pr_example() {
     END {
       if (best_count > 0) {
         print best_title
-        printf "%s", best_body
+        n = split(best_body, lines, "\n")
+        limit = (n < 60) ? n : 60
+        for (i = 1; i <= limit; i++) printf "%s\n", lines[i]
       }
     }
   '
@@ -944,8 +946,8 @@ dev_kit_learning_github_recent_issue_comments() {
   [ -n "$gh_user" ] || return 0
 
   gh api "repos/${owner_repo}/issues/comments?sort=created&direction=desc&per_page=${sample_size}" \
-    2>/dev/null | jq -r --arg user "$gh_user" '
-    [.[]? | select(.user.login == $user and (.body | length) > 40)] | .[:8][] |
+    2>/dev/null | jq -r --arg user "$gh_user" --argjson n "$sample_size" '
+    [.[]? | select(.user.login == $user and (.body | length) > 40)] | .[:$n][] |
     "---COMMENT_START---\n\(.body)\n---COMMENT_END---"
   ' 2>/dev/null || true
 }
@@ -1001,7 +1003,11 @@ dev_kit_learning_github_best_issue_comment() {
       if ($0 ~ /^##[[:space:]]/ || $0 ~ /^- \[[ x]\]/ || $0 ~ /[Ss]tatus:|[Uu]pdate:/) current_structure++
     }
     END {
-      if (best_body != "") printf "%s", best_body
+      if (best_body != "") {
+        n = split(best_body, lines, "\n")
+        limit = (n < 60) ? n : 60
+        for (i = 1; i <= limit; i++) printf "%s\n", lines[i]
+      }
     }
   '
 }
