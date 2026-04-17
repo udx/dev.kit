@@ -216,7 +216,10 @@ dev_kit_learning_write_artifact() {
   mkdir -p "${repo_dir}/.rabbit/dev.kit" 2>/dev/null || true
   previous_workflow_rules="$(dev_kit_learning_previous_section_lines "$previous_artifact" "Workflow rules")"
   previous_references="$(dev_kit_learning_previous_section_lines "$previous_artifact" "Operational references")"
-  previous_templates="$(dev_kit_learning_previous_section_lines "$previous_artifact" "Ready templates")"
+  previous_templates="$(
+    dev_kit_learning_previous_section_lines "$previous_artifact" "Ready templates" \
+      | dev_kit_learning_normalize_template_lines
+  )"
   previous_evidence="$(dev_kit_learning_previous_section_lines "$previous_artifact" "Evidence highlights")"
 
   {
@@ -360,6 +363,20 @@ dev_kit_learning_merge_unique_lines() {
       print
     }
   '
+}
+
+dev_kit_learning_normalize_template_lines() {
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    case "$line" in
+      '`'*)
+        printf '%s\n' "$line"
+        ;;
+      *)
+        printf '%s\n' "$(dev_kit_learning_flow_template "$line")"
+        ;;
+    esac
+  done
 }
 
 dev_kit_learning_evidence_highlights() {

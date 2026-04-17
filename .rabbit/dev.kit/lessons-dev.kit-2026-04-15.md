@@ -66,11 +66,11 @@ Sources: claude (1 session(s)), codex (0 session(s))
 - `Legacy reduction`: when a new direction is accepted, archive or delete conflicting old modules/configs instead of carrying both models forward.
 - `Config-over-code`: express repo rules in YAML/manifests first, then keep shell glue thin and composable.
 - `Agent handoff`: refresh repo context, manifest, and AGENTS instructions before deeper agent work so the repo contract is the source of truth.
-- docs-first-alignment
-- workflow-tracing
-- verification-scope
-- legacy-reduction
-- agent-handoff
+- `Docs-first alignment`: review README, docs, and tests before refactoring, restate the target workflow, then simplify code and remove mismatched legacy paths.
+- `Workflow tracing`: locate the actual workflow or deploy file first, then trace the commands and supporting docs that drive execution.
+- `Verification scope`: run the smallest local check that proves the current change, defer heavyweight coverage to CI, and call the tradeoff out explicitly.
+- `Legacy reduction`: when a new direction is accepted, archive or delete conflicting old modules/configs instead of carrying both models forward.
+- `Agent handoff`: refresh repo context, manifests, and AGENTS.md before deeper agent work so the repo contract is the source of truth.
 
 ## Evidence highlights
 
@@ -82,4 +82,3 @@ Sources: claude (1 session(s)), codex (0 session(s))
 - [claude] [Pasted text #1 +131 lines]
 - [claude] make sure to explore lessons and overall flow, I want - dev.kit - dev.kit repo (generate repo context + experienced knowledge and dev workflow(s)) - dev.kit agent (generate correct flexible agent instructions based on context) - dev.kit learn (generate analyzed agents sessions) use learned lessons to improve dev.kit...
 - [claude] before make changes would be useful to sync uncommited to git
-

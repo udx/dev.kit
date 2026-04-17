@@ -85,7 +85,8 @@ config:
             Pick the PR template type from src/configs/github-prs.yaml (feature,
             deployment, ops, hotfix). Fill every required section. Include "Closes #N"
             for linked issues. Add a "Backlog from this investigation" section for any
-            new gaps found. Use .github/PULL_REQUEST_TEMPLATE.md as the base form.
+            new gaps found. Use github-prs.yaml and current GitHub PR/body patterns
+            in this repo as the base guidance.
         - id: pr_create
           label: Create pull request
           check: pr_create

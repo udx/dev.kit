@@ -69,7 +69,7 @@ The dev.kit lifecycle: **repo → agent → work → PR → merge**. Follow thes
   - Bump version and changelog if supported
   - Create or validate feature branch
   - Push branch to remote
-  - Generate pull request description: Pick the PR template type from src/configs/github-prs.yaml (feature, deployment, ops, hotfix). Fill every required section. Include "Closes #N" for linked issues. Add a "Backlog from this investigation" section for any new gaps found. Use .github/PULL_REQUEST_TEMPLATE.md as the base form.
+  - Generate pull request description: Pick the PR template type from src/configs/github-prs.yaml (feature, deployment, ops, hotfix). Fill every required section. Include "Closes #N" for linked issues. Add a "Backlog from this investigation" section for any new gaps found. Use github-prs.yaml and current GitHub PR/body patterns in this repo as the base guidance.
   - Create pull request
   - Monitor related workflow executions: After PR creation, monitor the related GitHub workflow runs and status checks. Open the run details when needed, watch for failed or stuck jobs, and treat GitHub workflow execution as the primary verification path when the repo already has CI coverage.
   - Loop automated review feedback: After PR creation, wait for Copilot, Devin, and CodeQL reviews. Read each review from github-prs.yaml bot guidance. Address actionable findings with code changes, reply to each bot comment, and resolve the thread when handled. Repeat this loop after each push until bot feedback is clean. Do not request human review while bot findings are unaddressed.
