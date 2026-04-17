@@ -329,65 +329,6 @@ dev_kit_context_yaml_write() {
       printf '%s\n\n' "$_gaps_yaml"
     fi
 
-    # Practices — inlined from dev.kit development-practices.yaml
-    local _practices_file _practices_yaml
-    _practices_file="$(dev_kit_config_path "$DEV_KIT_PRACTICES_CONFIG_FILE")"
-    if [ -f "$_practices_file" ]; then
-      _practices_yaml="$(awk '
-        /^  practices:/ { in_p=1; next }
-        in_p && /^  [a-zA-Z]/ { in_p=0 }
-        in_p && /^      message:/ {
-          sub(/^[[:space:]]*message:[[:space:]]*/, "", $0)
-          gsub(/"/, "\\\"", $0)
-          printf "  - \"%s\"\n", $0
-        }
-      ' "$_practices_file")"
-      if [ -n "$_practices_yaml" ]; then
-        printf '# Engineering practices\n'
-        printf 'practices:\n'
-        printf '%s\n\n' "$_practices_yaml"
-      fi
-    fi
-
-    # Workflow — inlined from dev.kit development-workflows.yaml with operational notes
-    local _workflow_file _workflow_yaml
-    _workflow_file="$(dev_kit_config_path "$DEV_KIT_WORKFLOW_CONFIG_FILE")"
-    if [ -f "$_workflow_file" ]; then
-      _workflow_yaml="$(awk '
-        /^        - id:/ { flush(); label=""; note=""; in_note=0 }
-        /^          label:/ { sub(/^[[:space:]]*label:[[:space:]]*/, "", $0); label=$0 }
-        /^          note:[[:space:]]*>/ { in_note=1; next }
-        in_note && /^            / {
-          sub(/^[[:space:]]+/, "", $0)
-          note = (note == "") ? $0 : note " " $0
-          next
-        }
-        in_note { flush(); in_note=0 }
-        function flush() {
-          if (label != "") {
-            gsub(/"/, "\\\"", label)
-            gsub(/"/, "\\\"", note)
-            if (note != "") printf "  - \"%s: %s\"\n", label, note
-            else            printf "  - \"%s\"\n", label
-          }
-        }
-        END { flush() }
-      ' "$_workflow_file")"
-      if [ -n "$_workflow_yaml" ]; then
-        printf '# Canonical agent workflow\n'
-        printf 'workflow:\n'
-        printf '%s\n\n' "$_workflow_yaml"
-      fi
-    else
-      # Fallback to repo-derived steps when dev.kit workflow config is absent
-      local _fallback_yaml
-      _fallback_yaml="$(dev_kit_repo_workflow_json "$repo_root" | jq -r '.[]? | "  - " + .label' 2>/dev/null)"
-      if [ -n "$_fallback_yaml" ]; then
-        printf 'workflow:\n'
-        printf '%s\n\n' "$_fallback_yaml"
-      fi
-    fi
-
     # ── External dependencies — structured cross-repo tracing ──────────────
     # Collect (dep_id|type|source_file) triples from multiple sources,
     # then group by dep and resolve same-org repos for rich metadata.

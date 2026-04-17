@@ -62,7 +62,8 @@ config:
     documentation:
       files:
         - README.md
-        - docs/overview.md
+        - docs/integration.md
+        - docs/context.md
     config:
       files:
         - .env.example

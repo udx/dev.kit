@@ -109,13 +109,25 @@ if should_run "core"; then
   assert_contains "$agent_json" "\"archetype\":"           "agent: auto-generates context on demand"
   assert_contains "$agent_json" "\"workflow_contract\":"   "agent: reports workflow contract"
 
+  agent_text="$(cd "$SIMPLE_ACTION_REPO" && dev.kit agent)"
+  assert_contains "$agent_text" "dev.kit → dev.kit repo → dev.kit agent" "agent: text output reminds session resync flow"
+
   context_yaml="${SIMPLE_ACTION_REPO}/.rabbit/context.yaml"
   assert_file_exists "$context_yaml"                                   "agent: creates .rabbit/context.yaml"
   assert_contains "$(cat "$context_yaml")" "kind: repoContext"         "agent: context.yaml has kind header"
   assert_contains "$(cat "$context_yaml")" "version: udx.io/dev.kit"  "agent: context.yaml has version"
   assert_contains "$(cat "$context_yaml")" "refs:"                     "agent: context.yaml has refs section"
+  assert_contains "$(cat "$context_yaml")" "./package.json"            "agent: context.yaml keeps repo refs"
   assert_not_contains "$(cat "$context_yaml")" "/Users/"               "agent: context.yaml has no absolute paths (macOS)"
   assert_not_contains "$(cat "$context_yaml")" "/home/"                "agent: context.yaml has no absolute paths (Linux)"
+  assert_not_contains "$(cat "$context_yaml")" "practices:"            "agent: context.yaml does not inline engineering practices"
+  assert_not_contains "$(cat "$context_yaml")" "workflow:"             "agent: context.yaml does not inline agent workflow"
+  assert_contains "$(cat "${SIMPLE_ACTION_REPO}/AGENTS.md")" "Prefer live GitHub experience over generic defaults." "agent: AGENTS.md prefers live GitHub context"
+  assert_contains "$(cat "${SIMPLE_ACTION_REPO}/AGENTS.md")" "Prefer workflow verification, not automatic local enforcement." "agent: AGENTS.md prefers workflow verification"
+  assert_contains "$(cat "${SIMPLE_ACTION_REPO}/AGENTS.md")" "Monitor related workflow executions" "agent: AGENTS.md includes workflow monitoring loop"
+  assert_contains "$(cat "${SIMPLE_ACTION_REPO}/AGENTS.md")" "Loop automated review feedback" "agent: AGENTS.md includes bot feedback loop"
+  assert_contains "$(cat "${SIMPLE_ACTION_REPO}/AGENTS.md")" 'All refs, config manifests, command surfaces, dependencies, and gaps live in `.rabbit/context.yaml`.' "agent: AGENTS.md points inventory back to context"
+  assert_not_contains "$(cat "${SIMPLE_ACTION_REPO}/AGENTS.md")" "### Priority refs" "agent: AGENTS.md does not duplicate refs"
 fi
 
 # ── archetypes ─────────────────────────────────────────────────────────────────
@@ -245,24 +257,52 @@ fi
 if should_run "install" && [ -n "${CI:-}" ]; then
   INSTALLER_COPY="$TEST_HOME/install.sh"
   ARCHIVE_FILE="$TEST_HOME/dev-kit-main.tar.gz"
+  FAKE_BIN_DIR="$TEST_HOME/fake-bin"
+  FAKE_NPM_LOG="$TEST_HOME/fake-npm.log"
   cp "$REPO_DIR/bin/scripts/install.sh" "$INSTALLER_COPY"
   tar -czf "$ARCHIVE_FILE" --exclude=".git" --exclude="node_modules" --exclude="vendor" \
     -C "$(dirname "$REPO_DIR")" "$(basename "$REPO_DIR")"
+  mkdir -p "$FAKE_BIN_DIR"
+  cat > "$FAKE_BIN_DIR/npm" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+echo "$*" >> "$FAKE_NPM_LOG"
+if [ "\${1:-}" = "list" ] && [ "\${2:-}" = "-g" ] && [ "\${3:-}" = "@udx/dev-kit" ] && [ "\${4:-}" = "--depth=0" ]; then
+  exit 0
+fi
+if [ "\${1:-}" = "uninstall" ] && [ "\${2:-}" = "-g" ] && [ "\${3:-}" = "@udx/dev-kit" ]; then
+  exit 0
+fi
+exit 1
+EOF
+  chmod +x "$FAKE_BIN_DIR/npm"
 
   unset DEV_KIT_HOME DEV_KIT_BIN_DIR
-  INSTALL_OUTPUT="$(DEV_KIT_INSTALL_ARCHIVE_URL="file://$ARCHIVE_FILE" HOME="$TEST_HOME" bash "$INSTALLER_COPY")"
+  INSTALL_OUTPUT="$(PATH="$FAKE_BIN_DIR:$PATH" DEV_KIT_INSTALL_ARCHIVE_URL="file://$ARCHIVE_FILE" HOME="$TEST_HOME" bash "$INSTALLER_COPY")"
   DEV_KIT_HOME="$TEST_HOME/.udx/dev.kit"
   DEV_KIT_BIN_DIR="$TEST_HOME/.local/bin"
 
+  assert_contains "$INSTALL_OUTPUT" "detected previous npm installation" "install: detects npm install"
+  assert_contains "$INSTALL_OUTPUT" "curl version is now the single install" "install: removes npm install"
   assert_contains "$INSTALL_OUTPUT" "Installed dev.kit"           "install: reports success"
   assert_file_exists "$DEV_KIT_HOME/bin/dev-kit"                  "install: command binary present"
   assert_file_exists "$DEV_KIT_HOME/lib/commands/repo.sh"         "install: repo command present"
   assert_symlink_target "$DEV_KIT_BIN_DIR/dev.kit" "$DEV_KIT_HOME/bin/dev-kit" "install: global symlink correct"
+  assert_contains "$(cat "$FAKE_NPM_LOG")" "list -g @udx/dev-kit --depth=0" "install: checks npm install"
+  assert_contains "$(cat "$FAKE_NPM_LOG")" "uninstall -g @udx/dev-kit" "install: uninstalls npm package"
 
   UNINSTALL_OUTPUT="$(HOME="$TEST_HOME" "$DEV_KIT_HOME/bin/dev-kit" uninstall --yes)"
   assert_contains "$UNINSTALL_OUTPUT" "Removed dev.kit"           "uninstall: reports removal"
   assert_file_missing "$DEV_KIT_BIN_DIR/dev.kit"                  "uninstall: removes symlink"
   assert_file_missing "$DEV_KIT_HOME"                             "uninstall: removes home"
+
+  : > "$FAKE_NPM_LOG"
+  INSTALL_OUTPUT_STDIN="$(PATH="$FAKE_BIN_DIR:$PATH" DEV_KIT_INSTALL_ARCHIVE_URL="file://$ARCHIVE_FILE" HOME="$TEST_HOME" bash < "$INSTALLER_COPY")"
+  assert_contains "$INSTALL_OUTPUT_STDIN" "detected previous npm installation" "install stdin: detects npm install"
+  assert_contains "$INSTALL_OUTPUT_STDIN" "Installed dev.kit"     "install stdin: reports success"
+  assert_file_exists "$DEV_KIT_HOME/bin/dev-kit"                  "install stdin: command binary present"
+  assert_symlink_target "$DEV_KIT_BIN_DIR/dev.kit" "$DEV_KIT_HOME/bin/dev-kit" "install stdin: global symlink correct"
+  assert_contains "$(cat "$FAKE_NPM_LOG")" "uninstall -g @udx/dev-kit" "install stdin: uninstalls npm package"
 elif should_run "install"; then
   pass "install group skipped outside CI (run with CI=1 to enable)"
 fi

@@ -1,5 +1,21 @@
 # Changes
 
+### 0.8.0
+
+- Keep `.rabbit/context.yaml` focused on repo facts, tracing, commands, and gaps instead of inlining engineering practices and canonical workflow text
+- Generate workflow and practice guidance for `AGENTS.md` directly from the config catalogs and learning sources, simplifying the boundary between repo context and agent behavior
+- Rework the docs surface around that model: simplify the README, add focused `installation`, `context`, `agents`, and `integration` docs, and remove older overlapping overview/workflow/architecture pages
+- Tighten GitHub-first workflow guidance across configs, generated agent instructions, and learned templates, including repo-pattern reuse, history-aware debugging, and bot-feedback loops
+- Simplify lesson/template generation by consolidating workflow-tracing signals, deduping reusable templates by template name, and filtering unresolved placeholder template IDs from generated output
+- Clean up install and packaging flow with global npm postinstall cleanup and explicit npm-versus-curl ownership rules
+
+### 0.7.0
+
+- Dynamic PR description guide in AGENTS.md — fetches recent merged PRs via `gh api`, detects common section headings, includes best-structured PR as a reference example
+- Dynamic issue update guide in AGENTS.md — detects comment patterns (checklists, structured sections, status tracking) from the authenticated user's recent issue comments
+- Inject learned workflow rules from lesson artifacts into AGENTS.md — session-derived patterns appear directly in the workflow section, not just as file refs
+- Fix bare template IDs in lesson artifacts — add flow template cases for `docs-first-alignment`, `workflow-tracing`, `verification-scope`, `legacy-reduction`, `agent-handoff`
+
 ### 0.6.0
 
 - Switch default branch from `main` to `latest` so `npm create` tags align with the branch name

@@ -2,9 +2,17 @@
 
 <https://udx.dev/kit>
 
-**Dynamic repo context for developers and AI agents.**
+**GitHub-first session flow for developers and AI agents.**
 
-dev.kit scans what humans and agents shouldn't scan manually — tools, factors, dependencies, cross-repo relationships. It produces one context file. Developers read it. Agents execute from it.
+dev.kit separates three concerns:
+
+- base repo context signals
+- deterministic tracing and mapping
+- agent execution behavior
+
+It generates `.rabbit/context.yaml` as the structured repo contract, then generates `AGENTS.md` as a built execution artifact that tells agents how to use that context with current GitHub experience first, and repo-declared workflow defaults when GitHub does not provide enough signal.
+
+In practice, dev.kit is middleware between repo facts and live GitHub experience. It keeps each work session anchored to the repo contract, then pushes developers and agents to use current issues, pull requests, review threads, workflow runs, and prior repo patterns before inventing new approaches.
 
 ```bash
 npm install -g @udx/dev-kit
@@ -22,7 +30,7 @@ detect archetype    trace dependencies    write execution contract
 guide to next       write context.yaml    from context.yaml
 ```
 
-Each command enriches context and guides to the next. Run at every session start.
+Each command moves the session forward and tells the next actor what to do. Agents should rerun the flow at each new interaction or session so context, workflow, and repo state stay synced.
 
 ---
 
@@ -35,11 +43,19 @@ dev.kit repo       # analyze factors, trace deps, write .rabbit/context.yaml
 dev.kit agent      # generate AGENTS.md execution contract
 ```
 
+The intended operating loop is:
+
+1. install `dev.kit`
+2. start work with `dev.kit`, `dev.kit repo`, and `dev.kit agent`
+3. read `.rabbit/context.yaml` and `AGENTS.md`
+4. do the actual implementation using current GitHub repo experience first
+5. resync the same flow at the next interaction or after repo changes
+
 ---
 
-## What gets generated
+## Generated Context And Workflow
 
-**`.rabbit/context.yaml`** — one file, complete repo context:
+**`.rabbit/context.yaml`** — generated repo map from repo definitions, source files, detected commands, traced dependencies, gaps, and other serializable repo signals:
 
 ```yaml
 repo:
@@ -49,7 +65,6 @@ repo:
 
 refs:
   - ./README.md
-  - ./docs/architecture.md
   - ./package.json
 
 commands:
@@ -68,7 +83,12 @@ gaps:
   - config (partial)
 ```
 
-**`AGENTS.md`** — execution contract with 8 rules, commands, refs, dependencies, workflow, practices. Works with Claude, Codex, Gemini, Copilot — any agent that reads files.
+**`AGENTS.md`** — generated execution artifact for agents. It should stay simpler than `context.yaml`: rules, workflow, verification, and how to use current GitHub and learned context without duplicating refs, manifests, or dependency maps already serialized in `context.yaml`.
+
+Together, these two artifacts create a disciplined loop:
+
+- `context.yaml` says what the repo declares and what dev.kit could trace
+- `AGENTS.md` says how to act on that contract using live GitHub experience first
 
 ---
 
@@ -85,6 +105,12 @@ gaps:
 All commands support `--json` for machine-readable output.
 
 ---
+
+## Repo Context
+
+Repo context comes from repo source first: README, docs, workflows, manifests, tests, and other declared refs. `dev.kit repo` then traces and maps dependencies, commands, gaps, and other serializable signals into `context.yaml`. `AGENTS.md` turns that repo map into an operating contract for agents, using current GitHub context as the primary dynamic input and repo workflow/practice catalogs as fallback defaults.
+
+That means dev.kit does not just tell an agent what files exist. It also pushes the session toward the repo's real delivery loop: branch naming based on repo history, issue and PR writing based on existing patterns, bot feedback loops, and workflow status checks before close-out.
 
 ## Cross-repo tracing
 
@@ -113,15 +139,17 @@ dependencies:
 # npm (recommended)
 npm install -g @udx/dev-kit
 
-# or curl
+# no npm?
 curl -fsSL https://raw.githubusercontent.com/udx/dev.kit/latest/bin/scripts/install.sh | bash
 ```
+
+Use one install path at a time. Installing with npm removes the curl-managed `~/.udx/dev.kit` home and shim. Installing with curl removes the global `@udx/dev-kit` package before laying down the local shim and home directory.
 
 ---
 
 ## Docs
 
-- [Overview](docs/overview.md) — design principles and phases
-- [Commands](docs/commands.md) — full command reference with output details
-- [Workflow](docs/workflow.md) — pipeline phases, factors, session flow
-- [Architecture](docs/architecture.md) — config catalog, module map, data flow
+- [Installation](docs/installation.md) — npm and curl installs, cleanup, uninstall, and verification
+- [Context](docs/context.md) — `.rabbit/context.yaml`, its sections, and how it is generated
+- [Agents](docs/agents.md) — `AGENTS.md` generation and how agents use it
+- [Integration](docs/integration.md) — how the CLI, repo context, and agent workflow fit together

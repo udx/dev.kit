@@ -185,10 +185,12 @@ config:
   # ── Agent workflow for PRs ──────────────────────────────────────────────────
   agent_workflow:
     before_creating:
-      - id: verify-locally
+      - id: verify-surface
         message: >
-          Run the canonical verify command (make test or equivalent) locally before
-          pushing. Do not open a PR with failing local checks.
+          Detect the canonical verify command from repo context and note it in your
+          working plan, but prefer GitHub workflow executions when the repo already
+          has CI coverage. Use local verification for scoped debugging, reproducing
+          workflow failures, or covering gaps in workflow coverage.
       - id: pick-template
         message: >
           Pick the PR template type (feature, deployment, ops, hotfix) that matches
@@ -200,6 +202,12 @@ config:
           (cross-repo dependencies), call them out explicitly in the PR body.
 
     after_creating:
+      - id: monitor-workflows
+        message: >
+          After the PR is created, monitor the related GitHub workflow runs and
+          status checks. Open failing or slow runs, review the logs, and treat
+          workflow execution as the primary verification path when the repo already
+          has CI coverage.
       - id: read-bot-reviews
         message: >
           After the PR is created, wait for automated reviews: Copilot, Devin,
@@ -208,7 +216,7 @@ config:
           with brief explanations. Resolve every conversation thread after
           addressing it — unresolved threads block merge even when all checks
           pass. Loop through bot feedback after each push until all threads are
-          resolved and merge state is CLEAN.
+          resolved, comments are answered, and merge state is CLEAN.
       - id: check-status
         message: >
           Verify all required status checks pass. For infrastructure PRs, open

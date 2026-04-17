@@ -37,7 +37,9 @@ config:
             environment state, and the AGENTS.md execution contract. A current
             context.yaml is the source of truth for refs, commands, gaps, and lessons.
             Do not rely on ad hoc prompt memory when the repo contract can be read
-            from disk.
+            from disk. When GitHub context is available, prefer current issues,
+            pull requests, review state, and commit history over stale memory or
+            generic workflow defaults.
         - id: issue_scope
           label: Read linked GitHub issue and confirm scope
           check: issue_scope
@@ -46,6 +48,15 @@ config:
             If a GitHub issue URL is available, read the full body and comments,
             confirm the repo matches the issue scope, and map acceptance criteria
             before writing any code. Use the issue URL as the cross-repo context root.
+        - id: github_pattern_reuse
+          label: Reuse GitHub repo patterns
+          check: github_pattern_reuse
+          optional: true
+          note: >
+            Before creating a branch, PR, issue, or status update, inspect the
+            repo's recent GitHub history and reuse its established naming and
+            writing patterns. Treat existing branch names, PR titles and bodies,
+            issue templates, and close-out comments as the default style guide.
         - id: worktree_status
           label: Inspect git status
           check: git_status
@@ -74,19 +85,30 @@ config:
             Pick the PR template type from src/configs/github-prs.yaml (feature,
             deployment, ops, hotfix). Fill every required section. Include "Closes #N"
             for linked issues. Add a "Backlog from this investigation" section for any
-            new gaps found. Use .github/PULL_REQUEST_TEMPLATE.md as the base form.
+            new gaps found. Use github-prs.yaml and current GitHub PR/body patterns
+            in this repo as the base guidance.
         - id: pr_create
           label: Create pull request
           check: pr_create
+        - id: workflow_monitor
+          label: Monitor related workflow executions
+          check: workflow_monitor
+          optional: true
+          note: >
+            After PR creation, monitor the related GitHub workflow runs and status
+            checks. Open the run details when needed, watch for failed or stuck jobs,
+            and treat GitHub workflow execution as the primary verification path when
+            the repo already has CI coverage.
         - id: bot_review
-          label: Read and respond to automated reviews
+          label: Loop automated review feedback
           check: bot_review
           optional: true
           note: >
             After PR creation, wait for Copilot, Devin, and CodeQL reviews.
             Read each review from github-prs.yaml bot guidance. Address actionable
-            findings — reply to each bot comment. Do not request human review while
-            bot findings are unaddressed.
+            findings with code changes, reply to each bot comment, and resolve the
+            thread when handled. Repeat this loop after each push until bot feedback
+            is clean. Do not request human review while bot findings are unaddressed.
         - id: checks_verify
           label: Verify required status checks
           check: checks_verify
@@ -94,7 +116,10 @@ config:
           note: >
             All required checks must pass before requesting human review.
             For infra PRs, open check details and review the Terraform plan output.
-            For CodeQL, review findings in the Security tab.
+            For CodeQL, review findings in the Security tab. When the repo already
+            has GitHub workflow coverage, prefer those executions as the primary
+            verification path and monitor them closely. Use local verification to
+            reproduce failures or cover gaps, not as a universal gate.
         - id: issue_update
           label: Post close-out comment on linked issue
           check: issue_update

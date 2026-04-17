@@ -1,6 +1,6 @@
 {
   "name": "@udx/dev-kit",
-  "version": "0.6.0",
+  "version": "0.8.0",
   "description": "Context-driven engineering toolkit for AI agents and developers",
   "license": "MIT",
   "repository": {
@@ -9,6 +9,9 @@
   },
   "homepage": "https://github.com/udx/dev.kit",
   "bugs": "https://github.com/udx/dev.kit/issues",
+  "scripts": {
+    "postinstall": "if [ \"$npm_config_global\" = \"true\" ]; then bash bin/scripts/npm-postinstall.sh || true; fi"
+  },
   "bin": {
     "dev.kit": "bin/dev-kit",
     "dev-kit": "bin/dev-kit"

@@ -216,7 +216,10 @@ dev_kit_learning_write_artifact() {
   mkdir -p "${repo_dir}/.rabbit/dev.kit" 2>/dev/null || true
   previous_workflow_rules="$(dev_kit_learning_previous_section_lines "$previous_artifact" "Workflow rules")"
   previous_references="$(dev_kit_learning_previous_section_lines "$previous_artifact" "Operational references")"
-  previous_templates="$(dev_kit_learning_previous_section_lines "$previous_artifact" "Ready templates")"
+  previous_templates="$(
+    dev_kit_learning_previous_section_lines "$previous_artifact" "Ready templates" \
+      | dev_kit_learning_normalize_template_lines
+  )"
   previous_evidence="$(dev_kit_learning_previous_section_lines "$previous_artifact" "Evidence highlights")"
 
   {
@@ -352,10 +355,28 @@ dev_kit_learning_merge_unique_lines() {
     {
       gsub(/^[[:space:]]+|[[:space:]]+$/, "", $0)
       if ($0 == "") next
-      if (seen[$0]++) next
+      key = $0
+      if (match($0, /^`[^`]+`:/)) {
+        key = substr($0, RSTART, RLENGTH)
+      }
+      if (seen[key]++) next
       print
     }
   '
+}
+
+dev_kit_learning_normalize_template_lines() {
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    case "$line" in
+      '`'*)
+        printf '%s\n' "$line"
+        ;;
+      *)
+        printf '%s\n' "$(dev_kit_learning_flow_template "$line")"
+        ;;
+    esac
+  done
 }
 
 dev_kit_learning_evidence_highlights() {
@@ -423,17 +444,35 @@ dev_kit_learning_flow_template() {
     issue-scope)
       printf '%s' '`Issue-to-scope`: start from the linked issue, confirm repo/workspace match, and restate the exact scope before changing code.'
       ;;
-    workflow-source)
-      printf '%s' '`Workflow tracing`: locate the actual workflow file or deploy source first, then trace the commands and supporting docs that really drive execution.'
-      ;;
     verify-before-sync)
-      printf '%s' '`Verify-before-sync`: run the relevant local build/test check before syncing, reporting completion, or preparing the PR.'
+      printf '%s' '`Verify-before-sync`: detect the repo verification surface, prefer GitHub workflow runs when the repo already has CI coverage, and use local checks for scoped debugging or reproduction.'
       ;;
     pr-chain)
       printf '%s' '`Delivery chain`: sync the branch, prepare the PR in repo style, and connect the related issue before close-out.'
       ;;
+    github-style-reuse)
+      printf '%s' '`GitHub style reuse`: inspect recent branch names, PRs, issues, and close-out comments, then reuse the repo'\''s current naming and writing patterns.'
+      ;;
     post-follow-up)
       printf '%s' '`Post-merge follow-up`: gather release/workflow evidence and post a concise update with links, findings delta, and next steps.'
+      ;;
+    docs-first-alignment)
+      printf '%s' '`Docs-first alignment`: review README, docs, and tests before refactoring, restate the target workflow, then simplify code and remove mismatched legacy paths.'
+      ;;
+    workflow-tracing)
+      printf '%s' '`Workflow tracing`: locate the actual workflow or deploy file first, then trace the commands and supporting docs that drive execution.'
+      ;;
+    verification-scope)
+      printf '%s' '`Verification scope`: run the smallest local check that proves the current change, defer heavyweight coverage to CI, and call the tradeoff out explicitly.'
+      ;;
+    legacy-reduction)
+      printf '%s' '`Legacy reduction`: when a new direction is accepted, archive or delete conflicting old modules/configs instead of carrying both models forward.'
+      ;;
+    agent-handoff)
+      printf '%s' '`Agent handoff`: refresh repo context, manifests, and AGENTS.md before deeper agent work so the repo contract is the source of truth.'
+      ;;
+    history-debugging)
+      printf '%s' '`History-aware debugging`: use related issues, PRs, and recent repo history first to understand prior changes and likely regressions before widening scope.'
       ;;
     *)
       printf '%s' "$1"

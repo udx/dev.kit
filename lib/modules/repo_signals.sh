@@ -481,26 +481,6 @@ EOF
   return 1
 }
 
-dev_kit_repo_has_architecture_sections() {
-  local repo_dir="$1"
-  local doc_file=""
-  local regex=""
-
-  regex="$(dev_kit_detection_pattern "architecture_sections")"
-  [ -n "$regex" ] || return 1
-
-  while IFS= read -r doc_file; do
-    [ -n "$doc_file" ] || continue
-    if dev_kit_repo_pattern_in_file "$doc_file" "$regex"; then
-      return 0
-    fi
-  done <<EOF
-$(dev_kit_repo_markdown_files "$repo_dir")
-EOF
-
-  return 1
-}
-
 dev_kit_repo_count_dir_hits_from_list() {
   local repo_dir="$1"
   local list_name="$2"
@@ -518,94 +498,6 @@ EOF
 
   printf '%s' "$count"
 }
-
-dev_kit_repo_count_category_hits() {
-  local repo_dir="$1"
-  local count=0
-
-  if dev_kit_repo_count_dir_hits_from_list "$repo_dir" "architecture_command_dirs" | awk '$1 > 0 { exit 0 } $1 <= 0 { exit 1 }'; then
-    count=$((count + 1))
-  fi
-
-  if dev_kit_repo_count_dir_hits_from_list "$repo_dir" "architecture_logic_dirs" | awk '$1 > 0 { exit 0 } $1 <= 0 { exit 1 }'; then
-    count=$((count + 1))
-  fi
-
-  if dev_kit_repo_count_dir_hits_from_list "$repo_dir" "architecture_view_dirs" | awk '$1 > 0 { exit 0 } $1 <= 0 { exit 1 }'; then
-    count=$((count + 1))
-  fi
-
-  if dev_kit_repo_count_dir_hits_from_list "$repo_dir" "architecture_config_dirs" | awk '$1 > 0 { exit 0 } $1 <= 0 { exit 1 }'; then
-    count=$((count + 1))
-  fi
-
-  printf '%s' "$count"
-}
-
-dev_kit_repo_max_lines_in_dirs() {
-  local repo_dir="$1"
-  local dir_list="$2"
-  local max_lines=0
-  local dir_path=""
-  local pattern=""
-  local file_path=""
-  local line_count=0
-
-  while IFS= read -r dir_path; do
-    [ -n "$dir_path" ] || continue
-    [ -d "$repo_dir/$dir_path" ] || continue
-
-    while IFS= read -r pattern; do
-      [ -n "$pattern" ] || continue
-      while IFS= read -r file_path; do
-        [ -n "$file_path" ] || continue
-        line_count="$(wc -l < "$file_path" | tr -d ' ')"
-        if [ "$line_count" -gt "$max_lines" ]; then
-          max_lines="$line_count"
-        fi
-      done <<EOF_FILES
-$(find "$repo_dir/$dir_path" -type f -name "$pattern" -print)
-EOF_FILES
-    done <<EOF_PATTERNS
-$(dev_kit_detection_list "architecture_source_globs")
-EOF_PATTERNS
-  done <<EOF_DIRS
-$(dev_kit_detection_list "$dir_list")
-EOF_DIRS
-
-  printf '%s' "$max_lines"
-}
-
-dev_kit_repo_has_thin_command_layer() {
-  local repo_dir="$1"
-  local max_lines=""
-  local threshold=""
-
-  threshold="$(dev_kit_detection_scalar "architecture_command_max_lines")"
-  [ -n "$threshold" ] || threshold=120
-
-  if ! dev_kit_repo_count_dir_hits_from_list "$repo_dir" "architecture_command_dirs" | awk '$1 > 0 { exit 0 } $1 <= 0 { exit 1 }'; then
-    return 1
-  fi
-
-  max_lines="$(dev_kit_repo_max_lines_in_dirs "$repo_dir" "architecture_command_dirs")"
-  [ -n "$max_lines" ] || max_lines=0
-  [ "$max_lines" -le "$threshold" ]
-}
-
-dev_kit_repo_has_oversized_module() {
-  local repo_dir="$1"
-  local max_lines=""
-  local threshold=""
-
-  threshold="$(dev_kit_detection_scalar "architecture_module_max_lines")"
-  [ -n "$threshold" ] || threshold=400
-
-  max_lines="$(dev_kit_repo_max_lines_in_dirs "$repo_dir" "architecture_logic_dirs")"
-  [ -n "$max_lines" ] || max_lines=0
-  [ "$max_lines" -gt "$threshold" ]
-}
-
 dev_kit_repo_profiles() {
   local repo_dir="$1"
   local profiles=""
