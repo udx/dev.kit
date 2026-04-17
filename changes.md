@@ -7,7 +7,7 @@
 - Rework the docs surface around that model: simplify the README, add focused `installation`, `context`, `agents`, and `integration` docs, and remove older overlapping overview/workflow/architecture pages
 - Tighten GitHub-first workflow guidance across configs, generated agent instructions, and learned templates, including repo-pattern reuse, history-aware debugging, and bot-feedback loops
 - Simplify lesson/template generation by consolidating workflow-tracing signals, deduping reusable templates by template name, and filtering unresolved placeholder template IDs from generated output
-- Clean up install and packaging flow with npm postinstall support and explicit npm-versus-curl ownership rules
+- Clean up install and packaging flow with global npm postinstall cleanup and explicit npm-versus-curl ownership rules
 
 ### 0.7.0
 

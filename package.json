@@ -10,7 +10,7 @@
   "homepage": "https://github.com/udx/dev.kit",
   "bugs": "https://github.com/udx/dev.kit/issues",
   "scripts": {
-    "postinstall": "bash bin/scripts/npm-postinstall.sh || true"
+    "postinstall": "if [ \"$npm_config_global\" = \"true\" ]; then bash bin/scripts/npm-postinstall.sh || true; fi"
   },
   "bin": {
     "dev.kit": "bin/dev-kit",
