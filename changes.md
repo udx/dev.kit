@@ -1,5 +1,12 @@
 # Changes
 
+### 0.8.0
+
+- Keep `.rabbit/context.yaml` focused on repo facts and tracing instead of inlining engineering practices and agent workflow guidance
+- Generate workflow and practice guidance for `AGENTS.md` directly from the config catalogs, keeping the repo context and agent contract boundaries cleaner
+- Refine the GitHub-first workflow language across docs, configs, and generated agent guidance
+- Simplify lesson generation by consolidating workflow-tracing signals, deduping reusable templates by template name, and adding GitHub-style/history-aware guidance
+
 ### 0.7.0
 
 - Dynamic PR description guide in AGENTS.md — fetches recent merged PRs via `gh api`, detects common section headings, includes best-structured PR as a reference example
