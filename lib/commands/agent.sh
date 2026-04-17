@@ -115,8 +115,8 @@ dev_kit_agent_github_section() {
   local context_yaml="$1"
   local section_name="$2"
 
-  awk -v key="^  " section_name ":" '
-    $0 ~ key { in_section = 1; next }
+  awk -v section_name="$section_name" '
+    $0 == "  " section_name ":" { in_section = 1; next }
     in_section && /^    - / {
       sub(/^    - "?/, "  - ")
       sub(/"$/, "")

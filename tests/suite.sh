@@ -266,7 +266,7 @@ if should_run "install" && [ -n "${CI:-}" ]; then
   cat > "$FAKE_BIN_DIR/npm" <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
-echo "\$*" >> "$FAKE_NPM_LOG"
+echo "$*" >> "$FAKE_NPM_LOG"
 if [ "\${1:-}" = "list" ] && [ "\${2:-}" = "-g" ] && [ "\${3:-}" = "@udx/dev-kit" ] && [ "\${4:-}" = "--depth=0" ]; then
   exit 0
 fi

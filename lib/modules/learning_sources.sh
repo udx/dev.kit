@@ -1044,6 +1044,7 @@ dev_kit_learning_lesson_templates() {
     /^## / && in_section { exit }
     in_section && /^- / {
       sub(/^- /, "")
+      if ($0 ~ /^[a-z0-9_-]+$/) next
       print
     }
   ' "$latest"

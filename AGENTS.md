@@ -105,11 +105,6 @@ Patterns detected from agent sessions on this repo. Follow these in addition to 
 - `Legacy reduction`: when a new direction is accepted, archive or delete conflicting old modules/configs instead of carrying both models forward.
 - `Config-over-code`: express repo rules in YAML/manifests first, then keep shell glue thin and composable.
 - `Agent handoff`: refresh repo context, manifest, and AGENTS instructions before deeper agent work so the repo contract is the source of truth.
-- docs-first-alignment
-- workflow-tracing
-- verification-scope
-- legacy-reduction
-- agent-handoff
 
 ## Engineering practices
 
