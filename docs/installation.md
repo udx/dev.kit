@@ -7,6 +7,16 @@
 
 Whichever path you use last becomes the active install. The installer cleans up the other path first so one install owns `dev.kit` at a time.
 
+Installation only puts the command on the machine. The normal operating loop starts after install:
+
+```bash
+dev.kit
+dev.kit repo
+dev.kit agent
+```
+
+That loop refreshes repo context, regenerates `AGENTS.md`, and makes the next work step explicit before an agent or developer starts changing the repo.
+
 ## Recommended Path
 
 Use npm when it is available:
@@ -92,3 +102,12 @@ dev.kit
 ```
 
 That confirms the command resolves correctly and shows the next step in the session flow.
+
+After that, continue with:
+
+```bash
+dev.kit repo
+dev.kit agent
+```
+
+The goal is not only to confirm that the binary works. The goal is to start the session from current repo contract and current GitHub-aware workflow guidance rather than stale local memory.

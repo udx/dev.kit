@@ -12,7 +12,7 @@ This repository is a deterministic execution contract. Agents MUST interpret dec
 2. **Context boundaries are strict.** Read only files in Priority refs and Config manifests. If a file is not listed, do not read it unless a listed file explicitly references it.
 3. **Manifests before code.** When you need to understand behavior, read the YAML manifest that defines it — not the code that implements it. Manifests are the interface.
 4. **Context over memory.** Operate from repo-declared context. Do not carry assumptions from prior sessions or rely on prompt history when the contract is on disk.
-5. **Verify locally before committing.** Run the verify command before reporting work as done. Local execution is part of the contract.
+5. **Prefer workflow verification, not automatic local enforcement.** Detect the repo verify command from `context.yaml`, prefer GitHub workflow executions when the repo already has CI coverage, and use local verification to reproduce failures, debug quickly, or cover workflow gaps.
 6. **Follow the Workflow below.** Do not invent ad hoc steps or skip phases. The workflow is the execution sequence.
 7. **Reuse over invention.** Check existing org patterns, configs, and workflows before creating new ones.
 8. **Prefer live GitHub experience over generic defaults.** After loading the repo contract, use current issues, pull requests, review state, and commit history as the primary dynamic source. Fall back to workflow and practice catalogs when GitHub signal is missing, thin, or irrelevant.
@@ -61,6 +61,7 @@ The dev.kit lifecycle: **repo → agent → work → PR → merge**. Follow thes
 
   - Refresh repo context: Run `dev.kit` → `dev.kit repo` → `dev.kit agent` before starting work. Each command guides to the next required step. This resyncs repo context, environment state, and the AGENTS.md execution contract. A current context.yaml is the source of truth for refs, commands, gaps, and lessons. Do not rely on ad hoc prompt memory when the repo contract can be read from disk. When GitHub context is available, prefer current issues, pull requests, review state, and commit history over stale memory or generic workflow defaults.
   - Read linked GitHub issue and confirm scope: If a GitHub issue URL is available, read the full body and comments, confirm the repo matches the issue scope, and map acceptance criteria before writing any code. Use the issue URL as the cross-repo context root.
+  - Reuse GitHub repo patterns: Before creating a branch, PR, issue, or status update, inspect the repo's recent GitHub history and reuse its established naming and writing patterns. Treat existing branch names, PR titles and bodies, issue templates, and close-out comments as the default style guide.
   - Inspect git status
   - Analyze local changes
   - Analyze branch state
@@ -70,8 +71,9 @@ The dev.kit lifecycle: **repo → agent → work → PR → merge**. Follow thes
   - Push branch to remote
   - Generate pull request description: Pick the PR template type from src/configs/github-prs.yaml (feature, deployment, ops, hotfix). Fill every required section. Include "Closes #N" for linked issues. Add a "Backlog from this investigation" section for any new gaps found. Use .github/PULL_REQUEST_TEMPLATE.md as the base form.
   - Create pull request
-  - Read and respond to automated reviews: After PR creation, wait for Copilot, Devin, and CodeQL reviews. Read each review from github-prs.yaml bot guidance. Address actionable findings — reply to each bot comment. Do not request human review while bot findings are unaddressed.
-  - Verify required status checks: All required checks must pass before requesting human review. For infra PRs, open check details and review the Terraform plan output. For CodeQL, review findings in the Security tab.
+  - Monitor related workflow executions: After PR creation, monitor the related GitHub workflow runs and status checks. Open the run details when needed, watch for failed or stuck jobs, and treat GitHub workflow execution as the primary verification path when the repo already has CI coverage.
+  - Loop automated review feedback: After PR creation, wait for Copilot, Devin, and CodeQL reviews. Read each review from github-prs.yaml bot guidance. Address actionable findings with code changes, reply to each bot comment, and resolve the thread when handled. Repeat this loop after each push until bot feedback is clean. Do not request human review while bot findings are unaddressed.
+  - Verify required status checks: All required checks must pass before requesting human review. For infra PRs, open check details and review the Terraform plan output. For CodeQL, review findings in the Security tab. When the repo already has GitHub workflow coverage, prefer those executions as the primary verification path and monitor them closely. Use local verification to reproduce failures or cover gaps, not as a universal gate.
   - Post close-out comment on linked issue: After PR is created, post a brief comment on the linked issue with the PR URL, what changed, and any follow-up items. GitHub auto-closes the issue on merge when "Closes #N" is in the PR body — do not close manually.
   - Post-merge close-out and backlog: After merge: verify issue auto-closed, post close-out comment, open issues for any backlog items from the PR, verify monitoring changes are live. See post_merge steps in github-prs.yaml.
 
@@ -117,16 +119,18 @@ Patterns detected from agent sessions on this repo. Follow these in addition to 
   - Keep deterministic workflow logic in repo config and scripts, and reserve AI agents for reading that contract, generating grounded summaries, and handling non-deterministic judgment without inventing hidden rules.
   - Operate from repo-declared context at all times. Do not carry assumptions across sessions or rely on prompt history when the repo contract is available on disk.
   - After loading the repo contract, prefer current GitHub issues, pull requests, review state, and commit history as the primary dynamic source for agent decisions. Use repo workflow and practice catalogs as fallback defaults when live GitHub signal is missing or thin.
+  - Reuse the repo's current GitHub patterns for branch names, PR titles and descriptions, issue writeups, and follow-up comments instead of inventing a new style for each change.
   - When understanding behavior, read the YAML manifest that defines it before reading the code that implements it. Manifests are the interface — code is the mechanism.
   - Check existing org patterns, configs, workflows, and templates before creating new ones. Reuse declared patterns instead of inventing alternatives.
-  - Execute verification, builds, and tests locally before any remote operation. Local execution is part of the reproducible repo contract, not a preference.
+  - Detect the repo's canonical verification surface from context, but prefer GitHub workflow executions and monitor their outcomes when the repo already has CI coverage. Use local verification for quick scoped debugging, missing CI coverage, or reproducing workflow failures.
+  - After a PR exists, read automated review feedback, fix actionable findings, reply to false positives, resolve threads, and repeat until workflow state and bot feedback are clean.
   - Keep the delivery chain explicit — branch, PR, and issue must be connected before close-out. Do not treat any step as done until the link to the next step is visible.
   - Report outcomes with exact URLs, versions, findings deltas, and next steps so follow-up can be reused by humans and agents without drift.
   - Use README, docs, and tests as the first alignment surface before broad refactors. Read the declared workflow before changing the implementation.
   - Do not require custom repo files for dev.kit to work. Prefer standard engineering signals such as README, docs, tests, manifests, workflows, and deployment config, with dev.kit-owned continuity treated as optional acceleration only.
   - Express repo rules in YAML manifests first, then keep shell glue thin and composable. Policy belongs in config, not buried in imperative scripts.
   - When a new direction is accepted, archive or delete conflicting old modules and configs instead of carrying both models forward.
-  - Run the smallest local check that proves the current change. Defer heavyweight coverage to CI and call that tradeoff out explicitly.
+  - If local verification is needed, run the smallest local check that proves the current change. Prefer broader or slower coverage in GitHub workflows, monitor the workflow run, and call the tradeoff out explicitly.
   - Make sure to develop and test incrementally, so it is easier to detect problems early and build on verified behavior.
   - Make sure to protect development executions with scoped and limited tasks, so failures are easier to isolate and blast radius stays low.
   - Use the linked GitHub issue as the cross-repo context root. When work spans multiple repos, the issue URL anchors scope, acceptance criteria, and follow-up across all of them.

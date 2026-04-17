@@ -120,7 +120,12 @@ if should_run "core"; then
   assert_contains "$(cat "$context_yaml")" "./package.json"            "agent: context.yaml keeps repo refs"
   assert_not_contains "$(cat "$context_yaml")" "/Users/"               "agent: context.yaml has no absolute paths (macOS)"
   assert_not_contains "$(cat "$context_yaml")" "/home/"                "agent: context.yaml has no absolute paths (Linux)"
+  assert_not_contains "$(cat "$context_yaml")" "practices:"            "agent: context.yaml does not inline engineering practices"
+  assert_not_contains "$(cat "$context_yaml")" "workflow:"             "agent: context.yaml does not inline agent workflow"
   assert_contains "$(cat "${SIMPLE_ACTION_REPO}/AGENTS.md")" "Prefer live GitHub experience over generic defaults." "agent: AGENTS.md prefers live GitHub context"
+  assert_contains "$(cat "${SIMPLE_ACTION_REPO}/AGENTS.md")" "Prefer workflow verification, not automatic local enforcement." "agent: AGENTS.md prefers workflow verification"
+  assert_contains "$(cat "${SIMPLE_ACTION_REPO}/AGENTS.md")" "Monitor related workflow executions" "agent: AGENTS.md includes workflow monitoring loop"
+  assert_contains "$(cat "${SIMPLE_ACTION_REPO}/AGENTS.md")" "Loop automated review feedback" "agent: AGENTS.md includes bot feedback loop"
   assert_contains "$(cat "${SIMPLE_ACTION_REPO}/AGENTS.md")" 'All refs, config manifests, command surfaces, dependencies, and gaps live in `.rabbit/context.yaml`.' "agent: AGENTS.md points inventory back to context"
   assert_not_contains "$(cat "${SIMPLE_ACTION_REPO}/AGENTS.md")" "### Priority refs" "agent: AGENTS.md does not duplicate refs"
 fi

@@ -43,9 +43,10 @@ Raw repo facts are not enough. Agents still need explicit operating instructions
 - what to read first
 - how to prioritize manifests over implementation
 - how to follow the repo workflow
-- how to verify before reporting completion
+- how to choose between GitHub workflow verification and local verification
 - how to use current GitHub history as the primary dynamic source
 - how to fall back to repo workflow, practice catalogs, and lessons without drifting
+- how to loop on PR reviews, status checks, and follow-up comments until delivery is actually clean
 
 ## Inputs
 
@@ -64,6 +65,8 @@ The intended decision order is:
 2. current GitHub experience for this repo
 3. repo-declared default workflows and practices
 4. prior lessons and other secondary history
+
+That order matters. `AGENTS.md` should keep agents from skipping straight to implementation when the repo already has issue history, open PR discussion, branch conventions, workflow results, or bot feedback that should shape the next action.
 
 ## Main Sections
 
@@ -89,6 +92,28 @@ That includes:
 - how an agent should use GitHub issues, PRs, and recent history first
 - how an agent should sequence work and verification
 - how an agent should avoid scanning and guesswork
+
+This is also where dev.kit can keep common GitHub-facing behaviors explicit, for example:
+
+- derive branch, issue, and PR naming from current repo patterns
+- write PR bodies and issue updates in the style the repo already uses
+- monitor workflow runs after a push
+- read bot feedback, reply, fix, and resolve threads before human review
+
+Verification should follow the same priority:
+
+1. detect the repo's canonical verify surface from `context.yaml`
+2. prefer GitHub workflow executions and monitor them when the repo already has CI coverage
+3. use local verification when GitHub coverage is missing, when a workflow failure needs local reproduction, or when a quick scoped local check is the fastest way to debug
+
+So `AGENTS.md` should acknowledge local verify commands from repo context, but it should not enforce local execution as a universal rule.
+
+After a PR exists, the same contract should stay explicit:
+
+1. monitor related GitHub workflow executions and status checks
+2. loop bot feedback on the PR
+3. fix issues, reply to comments, and resolve threads
+4. repeat until workflow state and bot feedback are clean
 
 It should not restate:
 

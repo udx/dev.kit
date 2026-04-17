@@ -4,6 +4,8 @@
 
 The goal is not to generate more files. The goal is to reduce uncertainty about what exists, what matters, and how to act.
 
+Another way to say it: dev.kit is middleware between repo-declared context and live GitHub experience. It keeps agents and developers grounded in the repo contract, then points them toward the current issue, PR, review, and workflow state that should drive the next decision.
+
 ## Core Flow
 
 The integration model starts with three commands:
@@ -14,7 +16,7 @@ dev.kit repo
 dev.kit agent
 ```
 
-Those commands connect four layers:
+Those commands connect five layers:
 
 1. local environment detection
 2. structured repo context generation
@@ -40,7 +42,7 @@ That separation keeps both artifacts smaller and more reliable.
 In practice:
 
 - `context.yaml` owns refs, manifests, commands, dependencies, and gaps
-- `AGENTS.md` points back to `context.yaml` and stays focused on behavior
+- `AGENTS.md` points back to `context.yaml` and stays focused on workflow, practices, and behavior
 
 ## Developer Integration
 
@@ -53,6 +55,8 @@ For developers, `dev.kit` provides:
 
 This reduces time spent rediscovering how a repo works.
 
+It also shortens common GitHub loops. Instead of inventing a new branch name, PR structure, or issue update style each time, the repo contract can point the session back to current repo patterns and current review state first.
+
 ## Agent Integration
 
 For agents, `dev.kit` provides:
@@ -63,6 +67,8 @@ For agents, `dev.kit` provides:
 - JSON output for automation and toolchains
 
 This means agents can spend less effort on discovery and more effort on scoped execution.
+
+That execution should stay GitHub-aware. The intended behavior is not just "read files, then code." It is "refresh repo contract, inspect current GitHub experience, act, then loop on workflows and automated review until the change is actually ready."
 
 ## GitHub And History
 
@@ -83,9 +89,11 @@ The generated workflow is intended to fit into normal engineering work:
 
 1. start the session with `dev.kit`, `dev.kit repo`, and `dev.kit agent`
 2. read the generated repo contract and agent contract
-3. do the actual implementation or review work
-4. verify with repo-declared commands
-5. optionally run `dev.kit learn` so session outcomes feed future runs
+3. inspect current GitHub issue, PR, review, and branch context before inventing a new path
+4. do the actual implementation or review work
+5. verify through the repo-declared surface, preferring GitHub workflow runs when the repo already has CI coverage
+6. loop on bot reviews, workflow failures, and follow-up comments until the delivery chain is clean
+7. optionally run `dev.kit learn` so session outcomes feed future runs
 
 ## Config-Driven Integration
 

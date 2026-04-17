@@ -83,6 +83,97 @@ dev_kit_cmd_agent() {
   dev_kit_output_list_item "Run dev.kit → dev.kit repo → dev.kit agent at each new interaction or after repo updates to resync."
 }
 
+dev_kit_agent_context_list() {
+  local context_yaml="$1"
+  local section_name="$2"
+
+  awk -v section_name="$section_name" '
+    $0 == section_name ":" { in_section = 1; next }
+    in_section && /^[a-zA-Z#]/ { exit }
+    in_section && /^  - / {
+      gsub(/^  - "/, "  - ")
+      sub(/"$/, "")
+      gsub(/\\"/, "\"")
+      gsub(/\\\\/, "\\")
+      print
+    }
+  ' "$context_yaml"
+}
+
+dev_kit_agent_context_multiline_block() {
+  local context_yaml="$1"
+  local section_name="$2"
+
+  awk -v section_name="$section_name" '
+    $0 == section_name ":" { in_section = 1; next }
+    in_section && /^[a-zA-Z#]/ { exit }
+    in_section { print }
+  ' "$context_yaml"
+}
+
+dev_kit_agent_github_section() {
+  local context_yaml="$1"
+  local section_name="$2"
+
+  awk -v key="^  " section_name ":" '
+    $0 ~ key { in_section = 1; next }
+    in_section && /^    - / {
+      sub(/^    - "?/, "  - ")
+      sub(/"$/, "")
+      gsub(/\\"/, "\"")
+      gsub(/\\\\/, "\\")
+      print
+      next
+    }
+    in_section && /^[^ ]|^  [a-z]/ { exit }
+  ' "$context_yaml"
+}
+
+dev_kit_agent_practice_lines() {
+  local practices_file=""
+  practices_file="$(dev_kit_practices_config_path)"
+  [ -f "$practices_file" ] || return 0
+
+  awk '
+    $1 == "config:" { in_config = 1; next }
+    in_config && $1 == "practices:" { in_practices = 1; next }
+    in_practices && $1 == "-" && $2 == "id:" { next }
+    in_practices && $1 == "message:" {
+      $1 = ""
+      sub(/^ /, "")
+      printf "  - %s\n", $0
+    }
+  ' "$practices_file"
+}
+
+dev_kit_agent_workflow_lines() {
+  local workflow_file=""
+  workflow_file="$(dev_kit_workflow_config_path)"
+
+  if [ -f "$workflow_file" ]; then
+    awk '
+      /^        - id:/ { flush(); label=""; note=""; in_note=0; next }
+      /^          label:/ { sub(/^[[:space:]]*label:[[:space:]]*/, "", $0); label=$0; next }
+      /^          note:[[:space:]]*>/ { in_note=1; next }
+      in_note && /^            / {
+        sub(/^[[:space:]]+/, "", $0)
+        note = (note == "") ? $0 : note " " $0
+        next
+      }
+      in_note { flush(); in_note=0 }
+      function flush() {
+        if (label == "") return
+        if (note != "") printf "  - %s: %s\n", label, note
+        else            printf "  - %s\n", label
+      }
+      END { flush() }
+    ' "$workflow_file"
+    return 0
+  fi
+
+  dev_kit_repo_workflow_json "${1:-$(pwd)}" | jq -r '.[]? | "  - " + .label' 2>/dev/null || true
+}
+
 # Write AGENTS.md — the repo's execution contract for AI agents.
 # All content is derived from context.yaml. Agents operate from this file,
 # not from filesystem discovery.
@@ -107,7 +198,7 @@ dev_kit_agent_write_agents_md() {
       printf '2. **Context boundaries are strict.** Read only files in Priority refs and Config manifests. If a file is not listed, do not read it unless a listed file explicitly references it.\n'
       printf '3. **Manifests before code.** When you need to understand behavior, read the YAML manifest that defines it — not the code that implements it. Manifests are the interface.\n'
       printf '4. **Context over memory.** Operate from repo-declared context. Do not carry assumptions from prior sessions or rely on prompt history when the contract is on disk.\n'
-      printf '5. **Verify locally before committing.** Run the verify command before reporting work as done. Local execution is part of the contract.\n'
+      printf '5. **Prefer workflow verification, not automatic local enforcement.** Detect the repo verify command from `context.yaml`, prefer GitHub workflow executions when the repo already has CI coverage, and use local verification to reproduce failures, debug quickly, or cover workflow gaps.\n'
       printf '6. **Follow the Workflow below.** Do not invent ad hoc steps or skip phases. The workflow is the execution sequence.\n'
       printf '7. **Reuse over invention.** Check existing org patterns, configs, and workflows before creating new ones.\n'
       printf '8. **Prefer live GitHub experience over generic defaults.** After loading the repo contract, use current issues, pull requests, review state, and commit history as the primary dynamic source. Fall back to workflow and practice catalogs when GitHub signal is missing, thin, or irrelevant.\n'
@@ -126,7 +217,7 @@ dev_kit_agent_write_agents_md() {
 
       # ── commands ─────────────────────────────────────────────────────────────
       local _cmds
-      _cmds="$(awk '/^commands:/{f=1;next} f && /^[a-zA-Z#]/{f=0} f' "$context_yaml")"
+      _cmds="$(dev_kit_agent_context_multiline_block "$context_yaml" "commands")"
       if [ -n "$_cmds" ]; then
         printf '### Commands\n\n```\n%s\n```\n\n' "$_cmds"
       fi
@@ -144,27 +235,22 @@ dev_kit_agent_write_agents_md() {
         printf '### GitHub context\n\n'
         printf 'Development signals from [%s](https://github.com/%s). Treat this as the primary dynamic source for current repo experience.\n\n' "$_gh_repo" "$_gh_repo"
 
-        # Helper: extract github subsection, strip indent and YAML quotes for markdown
-        _gh_extract() {
-          awk -v key="^  ${1}:" '$0 ~ key {f=1;next} f && /^    - /{sub(/^    - "?/, "  - "); sub(/"$/, ""); gsub(/\\"/, "\""); gsub(/\\\\/, "\\"); print; next} f && /^[^ ]|^  [a-z]/{f=0}' "$context_yaml"
-        }
-
-        _gh_section="$(_gh_extract open_issues)"
+        _gh_section="$(dev_kit_agent_github_section "$context_yaml" "open_issues")"
         [ -n "$_gh_section" ] && printf '**Open issues:**\n\n%s\n\n' "$_gh_section"
 
-        _gh_section="$(_gh_extract open_prs)"
+        _gh_section="$(dev_kit_agent_github_section "$context_yaml" "open_prs")"
         [ -n "$_gh_section" ] && printf '**Open PRs:**\n\n%s\n\n' "$_gh_section"
 
-        _gh_section="$(_gh_extract recent_prs)"
+        _gh_section="$(dev_kit_agent_github_section "$context_yaml" "recent_prs")"
         [ -n "$_gh_section" ] && printf '**Recent PRs:**\n\n%s\n\n' "$_gh_section"
 
-        _gh_section="$(_gh_extract security_alerts)"
+        _gh_section="$(dev_kit_agent_github_section "$context_yaml" "security_alerts")"
         [ -n "$_gh_section" ] && printf '**Security alerts:**\n\n%s\n\n' "$_gh_section"
       fi
 
       # ── gaps ─────────────────────────────────────────────────────────────────
       local _gaps
-      _gaps="$(awk '/^gaps:/{f=1;next} f && /^[a-zA-Z#]/{f=0} f && /^  - /' "$context_yaml")"
+      _gaps="$(dev_kit_agent_context_list "$context_yaml" "gaps")"
       if [ -n "$_gaps" ]; then
         printf '### Gaps\n\n'
         printf 'Incomplete factors. Address within the workflow, not as separate tasks.\n\n'
@@ -173,7 +259,7 @@ dev_kit_agent_write_agents_md() {
 
       # ── Versioned workflow artifacts ─────────────────────────────────────────
       local _lessons
-      _lessons="$(awk '/^lessons:/{f=1;next} f && /^[a-zA-Z#]/{f=0} f && /^  - /' "$context_yaml")"
+      _lessons="$(dev_kit_agent_context_list "$context_yaml" "lessons")"
       printf '## Versioned workflow artifacts\n\n'
       printf '`.rabbit/` contains generated context downstream of repo signals. These are versioned artifacts, not primary sources.\n\n'
       printf '  - `.rabbit/context.yaml` — generated execution contract (source of truth for this file)\n'
@@ -185,7 +271,7 @@ dev_kit_agent_write_agents_md() {
 
       # ── Execution — workflow ─────────────────────────────────────────────────
       local _workflow
-      _workflow="$(awk '/^workflow:/{f=1;next} f && /^[a-zA-Z#]/{f=0} f && /^  - /{gsub(/^  - "/, "  - "); sub(/"$/, ""); gsub(/\\"/, "\""); gsub(/\\\\/, "\\"); print}' "$context_yaml")"
+      _workflow="$(dev_kit_agent_workflow_lines "$repo_dir")"
       if [ -n "$_workflow" ]; then
         printf '## Workflow\n\n'
         printf 'The dev.kit lifecycle: **repo → agent → work → PR → merge**. Follow these steps in order. Use them as repo-declared defaults when live GitHub context does not provide a more specific current signal. Steps with notes contain operational guidance.\n\n'
@@ -285,7 +371,7 @@ EOF
 
       # ── Principles — engineering practices ───────────────────────────────────
       local _practices
-      _practices="$(awk '/^practices:/{f=1;next} f && /^[a-zA-Z#]/{f=0} f && /^  - /{gsub(/^  - "/, "  - "); sub(/"$/, ""); gsub(/\\"/, "\""); gsub(/\\\\/, "\\"); print}' "$context_yaml")"
+      _practices="$(dev_kit_agent_practice_lines)"
       if [ -n "$_practices" ]; then
         printf '## Engineering practices\n\n%s\n\n' "$_practices"
       fi

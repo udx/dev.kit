@@ -21,7 +21,7 @@ Use it for facts such as:
 - detected gaps
 - manifests that define behavior
 - traced dependencies and where they are used
-- workflow and practice data that can be emitted from repo-owned config
+- GitHub-derived repo experience that can be serialized cleanly
 
 ## How It Is Produced
 
@@ -70,13 +70,20 @@ The generated file in this repo currently includes:
 - `refs`
 - `commands`
 - `gaps`
-- `practices`
-- `workflow`
 - `dependencies`
 - `manifests`
 - `lessons`
 
 Depending on available integrations, it may also include GitHub-derived data. GitHub belongs here only when it can be fetched and serialized as repo experience data. It does not replace the repo contract.
+
+Examples of GitHub-derived data that fit here:
+
+- open pull requests
+- recent pull request history
+- linked issue references
+- repo URLs that anchor the current work
+
+Those belong here because they can be serialized as current repo experience. Review decisions, step-by-step agent behavior, and how to respond to live findings still belong in `AGENTS.md`.
 
 ## What Each Section Means
 
@@ -94,8 +101,6 @@ This is the only place refs should live. `AGENTS.md` should point to `context.ya
 
 `manifests` lists the config files that define repo behavior. In `dev.kit`, these are first-class interfaces.
 
-`practices` and `workflow` are still structured repo data. They come from repo-owned catalogs, not from prompt-time improvisation. They are repo-declared defaults that agents can fall back to when current GitHub history is thin or absent.
-
 `lessons` links prior session artifacts produced by `dev.kit learn`.
 
 ## What Does Not Belong Here
@@ -107,6 +112,8 @@ It is not where you explain:
 - how an agent should interpret ambiguity
 - how an agent should sequence work for a user
 - how an agent should balance repo context against current task context
+- how an agent should loop on bot review comments
+- how an agent should decide between local verification and GitHub workflow verification
 
 That layer belongs in `AGENTS.md`.
 
@@ -121,7 +128,7 @@ It should let an agent answer questions like:
 - What repo signals were used?
 - What dependencies are real, and where are they used?
 - Which engineering factors are missing?
-- What workflow defaults are already declared by the repo?
+- Which repo facts and traced signals are already available?
 
 If that data is available in `context.yaml`, the agent does not need to rediscover it by scanning.
 

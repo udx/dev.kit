@@ -280,7 +280,7 @@ dev_kit_sync_hook_recommendation() {
   fi
 
   if [ "$hook_name" = "pre-push" ] && rg -n "bash tests/run.sh" "$hook_file" >/dev/null 2>&1; then
-    printf "%s" "Before push, make sure the local verification runtime is ready for bash tests/run.sh."
+    printf "%s" "Before push, identify the repo verification surface; prefer GitHub workflow runs when available, and use local execution to reproduce or isolate failures."
     return 0
   fi
 

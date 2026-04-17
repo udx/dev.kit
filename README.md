@@ -2,7 +2,7 @@
 
 <https://udx.dev/kit>
 
-**Simple session flow for developers and AI agents.**
+**GitHub-first session flow for developers and AI agents.**
 
 dev.kit separates three concerns:
 
@@ -11,6 +11,8 @@ dev.kit separates three concerns:
 - agent execution behavior
 
 It generates `.rabbit/context.yaml` as the structured repo contract, then generates `AGENTS.md` as a built execution artifact that tells agents how to use that context with current GitHub experience first, and repo-declared workflow defaults when GitHub does not provide enough signal.
+
+In practice, dev.kit is middleware between repo facts and live GitHub experience. It keeps each work session anchored to the repo contract, then pushes developers and agents to use current issues, pull requests, review threads, workflow runs, and prior repo patterns before inventing new approaches.
 
 ```bash
 npm install -g @udx/dev-kit
@@ -40,6 +42,14 @@ dev.kit            # check tools, detect repo
 dev.kit repo       # analyze factors, trace deps, write .rabbit/context.yaml
 dev.kit agent      # generate AGENTS.md execution contract
 ```
+
+The intended operating loop is:
+
+1. install `dev.kit`
+2. start work with `dev.kit`, `dev.kit repo`, and `dev.kit agent`
+3. read `.rabbit/context.yaml` and `AGENTS.md`
+4. do the actual implementation using current GitHub repo experience first
+5. resync the same flow at the next interaction or after repo changes
 
 ---
 
@@ -75,6 +85,11 @@ gaps:
 
 **`AGENTS.md`** — generated execution artifact for agents. It should stay simpler than `context.yaml`: rules, workflow, verification, and how to use current GitHub and learned context without duplicating refs, manifests, or dependency maps already serialized in `context.yaml`.
 
+Together, these two artifacts create a disciplined loop:
+
+- `context.yaml` says what the repo declares and what dev.kit could trace
+- `AGENTS.md` says how to act on that contract using live GitHub experience first
+
 ---
 
 ## Commands
@@ -94,6 +109,8 @@ All commands support `--json` for machine-readable output.
 ## Repo Context
 
 Repo context comes from repo source first: README, docs, workflows, manifests, tests, and other declared refs. `dev.kit repo` then traces and maps dependencies, commands, gaps, and other serializable signals into `context.yaml`. `AGENTS.md` turns that repo map into an operating contract for agents, using current GitHub context as the primary dynamic input and repo workflow/practice catalogs as fallback defaults.
+
+That means dev.kit does not just tell an agent what files exist. It also pushes the session toward the repo's real delivery loop: branch naming based on repo history, issue and PR writing based on existing patterns, bot feedback loops, and workflow status checks before close-out.
 
 ## Cross-repo tracing
 

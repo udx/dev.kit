@@ -13,7 +13,7 @@ config:
   workflows:
     pr-lessons:
       name: dev.learn pr
-      description: Generate lightweight lessons-learned from recent pull requests and route follow-ups into durable repo artifacts
+      description: Generate lightweight lessons-learned from recent pull requests and agent sessions, then route reusable workflow patterns into durable repo artifacts
       sources:
         - recent pull requests
         - docs/pull-requests.md
@@ -33,16 +33,9 @@ config:
         - /issues/
         - issue details
         - affected code path
-    workflow-source:
-      threshold: 2
-      message: Locate the repo workflow source that actually drives execution, such as deploy.yml or an explicit workflow file.
-      patterns:
-        - deploy.yml
-        - workflow
-        - what deploy.yml actually does
     verify-before-sync:
       threshold: 2
-      message: Run local verification before syncing or reporting completion.
+      message: Prefer GitHub workflow verification when the repo has CI coverage, monitor the run, and use local verification only when you need a quick scoped check or a reproduction path.
       patterns:
         - make build
         - confirm build
@@ -54,6 +47,14 @@ config:
         - sync to remote
         - brief pr
         - related github issue
+    github-style-reuse:
+      threshold: 2
+      message: Before creating a branch, PR, issue, or GitHub update, inspect recent repo history and reuse the repo's established naming and writing patterns.
+      patterns:
+        - previous prs
+        - repo style
+        - branch name
+        - title and description
     post-follow-up:
       threshold: 2
       message: After merge or release, collect workflow and artifact evidence, then post a concise linked update with next steps.
@@ -75,12 +76,15 @@ config:
       message: Locate the actual workflow or deploy file first, then trace the commands and supporting docs that drive execution.
       patterns:
         - deploy.yml
+        - .github/workflows
         - workflow file
+        - workflow gaps
+        - what deploy.yml actually does
         - what actually runs
         - trace
     verification-scope:
       threshold: 2
-      message: Run the smallest local check that proves the current change, defer heavyweight coverage to CI, and call the tradeoff out explicitly.
+      message: If local verification is needed, run the smallest local check that proves the current change. Prefer broader or slower coverage in GitHub workflows, monitor the run, and call the tradeoff out explicitly.
       patterns:
         - make test
         - local check
@@ -102,10 +106,18 @@ config:
         - dev.kit agent
         - refresh context
         - agents.md
+    history-debugging:
+      threshold: 2
+      message: When debugging or widening scope, use related GitHub issues, PRs, and recent repo history first to understand prior changes and possible regressions.
+      patterns:
+        - previous changes
+        - breaking change
+        - related prs
+        - debug
   session_rules:
     verify-before-deploy:
       threshold: 2
-      message: Verify the build or runtime locally before running deploy-oriented workflow assets or reporting the change as complete.
+      message: Prefer the repo's GitHub workflow executions for build or runtime verification before deploy-oriented steps, and use local verification when you need to reproduce or isolate a failure.
       patterns:
         - make build
         - confirm build
@@ -124,6 +136,14 @@ config:
         - sync to remote
         - brief pr
         - related github issue
+    bot-review-loop:
+      threshold: 2
+      message: After a PR exists, read automated review feedback, fix actionable findings, reply to false positives, resolve the threads, and repeat until bot feedback is clean.
+      patterns:
+        - codeql
+        - copilot
+        - devin
+        - review comment
     source-backed-updates:
       threshold: 3
       message: Report outcomes with exact URLs, versions, findings deltas, and next steps so the follow-up can be reused by humans and agents without drift.
