@@ -90,7 +90,8 @@ dev_kit_cmd_repo() {
   # ── Gaps ─────────────────────────────────────────────────────────────────────
   gaps_json="$(dev_kit_scaffold_gaps_json "$repo_dir")"
   local gap_count
-  gap_count="$(printf '%s\n' "$gaps_json" | grep -c '"factor"' 2>/dev/null || printf '0')"
+  gap_count="$(printf '%s\n' "$gaps_json" | grep -c '"factor"' 2>/dev/null || true)"
+  gap_count="${gap_count:-0}"
   if [ "$gap_count" -gt 0 ]; then
     dev_kit_output_section "gaps"
     dev_kit_output_list_item "${gap_count} factor(s) missing or partial"

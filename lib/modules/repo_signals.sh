@@ -236,6 +236,9 @@ dev_kit_repo_has_glob() {
   local repo_dir="$1"
   local pattern="$2"
 
+  pattern="${pattern#\"}"
+  pattern="${pattern%\"}"
+
   if [[ "$pattern" == */* ]]; then
     dev_kit_repo_find "$repo_dir" -type f -path "$repo_dir/$pattern" -print -quit | grep -q .
     return $?
@@ -251,6 +254,8 @@ dev_kit_repo_find_from_glob_list() {
 
   while IFS= read -r pattern; do
     [ -n "$pattern" ] || continue
+    pattern="${pattern#\"}"
+    pattern="${pattern%\"}"
     if [[ "$pattern" == */* ]]; then
       dev_kit_repo_find "$repo_dir" -type f -path "$repo_dir/$pattern" -print
     else

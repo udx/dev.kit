@@ -3,6 +3,33 @@
 DEV_KIT_SYNC_GH_AUTH_STATE_CACHE=""
 DEV_KIT_SYNC_GH_AUTH_STATE_CACHE_READY=0
 
+dev_kit_sync_default_hooks_dir() {
+  printf '%s' '.githooks'
+}
+
+dev_kit_sync_text_max_next_steps() {
+  printf '%s' '4'
+}
+
+dev_kit_sync_branch_role_base() {
+  printf '%s' 'base'
+}
+
+dev_kit_sync_branch_role_feature() {
+  printf '%s' 'feature'
+}
+
+dev_kit_sync_base_branch_names() {
+  cat <<'EOF'
+latest
+main
+master
+development
+staging
+trunk
+EOF
+}
+
 dev_kit_sync_has_git_repo() {
   git -C "$1" rev-parse --git-dir >/dev/null 2>&1
 }
@@ -765,11 +792,9 @@ dev_kit_sync_step_state() {
 
 dev_kit_sync_step_lines() {
   local repo_dir="$1"
-  local workflow_id="${2:-$(dev_kit_sync_default_workflow)}"
   local step_line=""
   local step_id=""
   local step_label=""
-  local step_check=""
   local state_line=""
   local status=""
   local summary=""
@@ -779,20 +804,17 @@ dev_kit_sync_step_lines() {
     step_id="${step_line%%|*}"
     step_line="${step_line#*|}"
     step_label="${step_line%%|*}"
-    step_line="${step_line#*|}"
-    step_check="${step_line%%|*}"
     state_line="$(dev_kit_sync_step_state "$repo_dir" "$step_id")"
     status="${state_line%%|*}"
     summary="${state_line#*|}"
     printf "%s|%s|%s|%s\n" "$step_id" "$step_label" "$status" "$summary"
   done <<EOF
-$(dev_kit_workflow_step_lines "$workflow_id")
+$(dev_kit_sync_step_definitions)
 EOF
 }
 
 dev_kit_sync_steps_json() {
   local repo_dir="$1"
-  local workflow_id="${2:-$(dev_kit_sync_default_workflow)}"
   local first=1
   local line=""
   local step_id=""
@@ -816,7 +838,7 @@ dev_kit_sync_steps_json() {
       "$step_id" "$step_label" "$status" "$(dev_kit_json_escape "$summary")"
     first=0
   done <<EOF
-$(dev_kit_sync_step_lines "$repo_dir" "$workflow_id")
+$(dev_kit_sync_step_lines "$repo_dir")
 EOF
   if [ "$first" -eq 0 ]; then
     printf '\n  '
@@ -893,8 +915,7 @@ EOF
 
 dev_kit_sync_steps_text() {
   local repo_dir="$1"
-  local workflow_id="${2:-$(dev_kit_sync_default_workflow)}"
-  local max_steps="${3:-$(dev_kit_sync_text_max_next_steps)}"
+  local max_steps="${2:-$(dev_kit_sync_text_max_next_steps)}"
   local line=""
   local step_id=""
   local step_label=""
@@ -922,7 +943,7 @@ dev_kit_sync_steps_text() {
       printed=$((printed + 1))
     fi
   done <<EOF
-$(dev_kit_sync_step_lines "$repo_dir" "$workflow_id")
+$(dev_kit_sync_step_lines "$repo_dir")
 EOF
 
   if [ "$printed" -eq 0 ]; then
@@ -933,4 +954,19 @@ EOF
   if [ "$total" -gt "$printed" ]; then
     printf '  - additional workflow detail is available in --json output\n'
   fi
+}
+
+dev_kit_sync_step_definitions() {
+  cat <<'EOF'
+worktree_status|Inspect git status
+change_analysis|Analyze local changes
+branch_analysis|Analyze branch state
+logical_commits|Group logical commits
+release_metadata|Bump version and changelog if supported
+branch_prepare|Create or validate feature branch
+remote_push|Push branch to remote
+pr_prepare|Generate pull request description
+pr_create|Create pull request
+actions_verify|Verify required status checks
+EOF
 }

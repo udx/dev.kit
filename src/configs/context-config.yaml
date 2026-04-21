@@ -28,9 +28,11 @@ config:
     - README.md
     - readme.md
     - docs/installation.md
-    - docs/context.md
-    - docs/agents.md
-    - docs/integration.md
+    - docs/how-it-works.md
+    - docs/environment-config.md
+    - docs/context-coverage.md
+    - docs/experience-guidance.md
+    - docs/smart-dependency-detection.md
     - docs/lessons-learned.md
     - docs
     - .rabbit
@@ -60,9 +62,11 @@ config:
     - README.md
     - readme.md
     - docs/installation.md
-    - docs/context.md
-    - docs/agents.md
-    - docs/integration.md
+    - docs/how-it-works.md
+    - docs/environment-config.md
+    - docs/context-coverage.md
+    - docs/experience-guidance.md
+    - docs/smart-dependency-detection.md
     - docs/lessons-learned.md
     - docs
     - .rabbit/dev.kit

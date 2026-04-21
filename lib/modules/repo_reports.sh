@@ -40,7 +40,8 @@ dev_kit_repo_agent_contract_text() {
   local repo_dir="$1"
 
   printf '%s\n' "Use dev.kit JSON output as the machine contract: dev.kit --json, dev.kit repo --json, dev.kit agent --json."
-  dev_kit_practice_message_list "standard-repo-first" "strict-agent-boundary" | sed -n '1,2p'
+  printf '%s\n' "Start from repo context first. Treat `.rabbit/context.yaml` as the primary machine-readable contract."
+  printf '%s\n' "Keep agent-specific guidance small, repo-aware, and secondary to repo-native files."
 
   if [ -f "$repo_dir/AGENTS.md" ]; then
     printf '%s\n' "AGENTS.md exists; treat it as a local agent override after repo-native refs, not as the primary repo contract."

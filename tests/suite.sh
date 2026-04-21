@@ -11,7 +11,9 @@ SIMPLE_REPO="$REPO_DIR/tests/fixtures/simple-repo"
 DOCUMENTED_SHELL_REPO="$REPO_DIR/tests/fixtures/documented-shell-repo"
 DOCKER_REPO="$REPO_DIR/tests/fixtures/docker-repo"
 WORDPRESS_REPO="$REPO_DIR/tests/fixtures/wordpress-repo"
+KUBERNETES_REPO="$REPO_DIR/tests/fixtures/kubernetes-repo"
 SIMPLE_ACTION_REPO="$TEST_HOME/simple-action-repo"
+HOME_ACTION_REPO="$TEST_HOME/home-action-repo"
 AVAILABLE_TEST_GROUPS="core archetypes learn install"
 TEST_ONLY="${DEV_KIT_TEST_ONLY:-}"
 
@@ -79,19 +81,42 @@ ln -sf "$REPO_DIR/bin/dev-kit" "$DEV_KIT_BIN_DIR/dev.kit"
 export PATH="$DEV_KIT_BIN_DIR:$PATH"
 # shellcheck disable=SC1090
 . "$DEV_KIT_HOME/bin/env/dev-kit.sh"
+while IFS= read -r module_file; do
+  [ -n "$module_file" ] || continue
+  [ "$module_file" = "$REPO_DIR/lib/modules/bootstrap.sh" ] && continue
+  # shellcheck disable=SC1090
+  . "$module_file"
+done <<EOF
+$(dev_kit_module_paths)
+EOF
 
 # ── core ───────────────────────────────────────────────────────────────────────
 
 if should_run "core"; then
-  home_json="$(cd "$DOCUMENTED_SHELL_REPO" && dev.kit --json)"
+  cp -R "$DOCUMENTED_SHELL_REPO" "$HOME_ACTION_REPO"
+  rm -rf "$HOME_ACTION_REPO/.dev-kit" "$HOME_ACTION_REPO/.rabbit" "$HOME_ACTION_REPO/AGENTS.md"
+
+  home_json="$(cd "$HOME_ACTION_REPO" && dev.kit --json)"
   assert_contains "$home_json" "\"repo_detected\": true"   "home: detects repo"
   assert_contains "$home_json" "\"priority_refs\": ["      "home: reports priority refs"
   assert_contains "$home_json" "\"next_git_action\":"      "home: reports next git action"
+  assert_contains "$home_json" "\"synced\": {"             "home: reports synced artifacts"
   assert_contains "$home_json" "\"helpers\": ["            "home: reports helpers"
 
-  home_text="$(cd "$DOCUMENTED_SHELL_REPO" && dev.kit)"
+  home_text="$(cd "$HOME_ACTION_REPO" && dev.kit)"
   assert_contains "$home_text" "[required]"                 "home text: renders env tools"
-  assert_contains "$home_text" "[do next]"                 "home text: renders do-next"
+  assert_contains "$home_text" "[synced]"                   "home text: syncs repo artifacts"
+  assert_contains "$home_text" "AGENTS.md"                  "home text: mentions generated AGENTS.md"
+  assert_file_exists "$HOME_ACTION_REPO/.rabbit/context.yaml" "home: writes context.yaml"
+  assert_file_exists "$HOME_ACTION_REPO/AGENTS.md"             "home: writes AGENTS.md"
+
+  env_json="$(cd "$HOME_ACTION_REPO" && dev.kit env --json)"
+  assert_contains "$env_json" "\"command\": \"env\""       "env: reports command name"
+  assert_contains "$env_json" "\"config\":"                "env: reports config block"
+
+  env_config_text="$(cd "$HOME_ACTION_REPO" && dev.kit env --config)"
+  assert_contains "$env_config_text" "[config]"            "env text: renders config section"
+  assert_file_exists "$DEV_KIT_HOME/config/env.yaml"       "env: creates config file on demand"
 
   norepo="$(cd "$TEST_HOME" && dev.kit)"
   assert_contains "$norepo" "no repo detected"             "home: handles non-repo dir"
@@ -124,8 +149,9 @@ if should_run "core"; then
   assert_not_contains "$(cat "$context_yaml")" "workflow:"             "agent: context.yaml does not inline agent workflow"
   assert_contains "$(cat "${SIMPLE_ACTION_REPO}/AGENTS.md")" "Prefer live GitHub experience over generic defaults." "agent: AGENTS.md prefers live GitHub context"
   assert_contains "$(cat "${SIMPLE_ACTION_REPO}/AGENTS.md")" "Prefer workflow verification, not automatic local enforcement." "agent: AGENTS.md prefers workflow verification"
-  assert_contains "$(cat "${SIMPLE_ACTION_REPO}/AGENTS.md")" "Monitor related workflow executions" "agent: AGENTS.md includes workflow monitoring loop"
-  assert_contains "$(cat "${SIMPLE_ACTION_REPO}/AGENTS.md")" "Loop automated review feedback" "agent: AGENTS.md includes bot feedback loop"
+  assert_contains "$(cat "${SIMPLE_ACTION_REPO}/AGENTS.md")" "Use these repo-derived steps as the default operating path." "agent: AGENTS.md uses repo-derived workflow guidance"
+  assert_contains "$(cat "${SIMPLE_ACTION_REPO}/AGENTS.md")" "Read the highest-priority repo refs first" "agent: AGENTS.md includes repo-derived read-first workflow"
+  assert_contains "$(cat "${SIMPLE_ACTION_REPO}/AGENTS.md")" "Keep generated guidance lightweight." "agent: AGENTS.md keeps principles lightweight"
   assert_contains "$(cat "${SIMPLE_ACTION_REPO}/AGENTS.md")" 'All refs, config manifests, command surfaces, dependencies, and gaps live in `.rabbit/context.yaml`.' "agent: AGENTS.md points inventory back to context"
   assert_not_contains "$(cat "${SIMPLE_ACTION_REPO}/AGENTS.md")" "### Priority refs" "agent: AGENTS.md does not duplicate refs"
 fi
@@ -138,6 +164,20 @@ if should_run "archetypes"; then
 
   docker_json="$(cd "$DOCKER_REPO" && dev.kit repo --json)"
   assert_contains "$docker_json" "\"archetype\": \"runtime-image\""      "archetype: docker fixture"
+
+  kubernetes_facets="$(dev_kit_repo_facets "$KUBERNETES_REPO")"
+  assert_contains "$kubernetes_facets" "platform:kubernetes"             "archetype: k8s fixture detected from manifest content"
+  assert_contains "$kubernetes_facets" "deploy:kubernetes-manifests"     "archetype: k8s fixture marks deploy facet"
+
+  HELM_ONLY_REPO="$TEST_HOME/helm-only-repo"
+  mkdir -p "$HELM_ONLY_REPO"
+  cat > "$HELM_ONLY_REPO/Chart.yaml" <<'EOF'
+apiVersion: v2
+name: example
+version: 0.1.0
+EOF
+  helm_only_facets="$(dev_kit_repo_facets "$HELM_ONLY_REPO")"
+  assert_not_contains "$helm_only_facets" "platform:kubernetes"          "archetype: Chart.yaml alone does not imply kubernetes"
 fi
 
 # ── learn ──────────────────────────────────────────────────────────────────────

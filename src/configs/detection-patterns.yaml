@@ -9,3 +9,5 @@ config:
     env_var: ([A-Z][A-Z0-9_]{2,}=|\$\{[A-Z][A-Z0-9_]{2,}\})
     workflow_contract: (workflow_call:|workflow_dispatch:|inputs:|outputs:)
     documentation_sections: (##[[:space:]]+(Quick Start|Usage|Development|Examples|Resources|Docs|Documentation))
+    yaml_api_version: ^[[:space:]]*apiVersion:[[:space:]]*[^[:space:]]
+    yaml_kind: ^[[:space:]]*kind:[[:space:]]*[^[:space:]]

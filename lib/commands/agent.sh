@@ -129,49 +129,34 @@ dev_kit_agent_github_section() {
   ' "$context_yaml"
 }
 
-dev_kit_agent_practice_lines() {
-  local practices_file=""
-  practices_file="$(dev_kit_practices_config_path)"
-  [ -f "$practices_file" ] || return 0
+dev_kit_agent_workflow_lines() {
+  local repo_dir="${1:-$(pwd)}"
+  local step_line=""
+  local step_label=""
+  local step_command=""
 
-  awk '
-    $1 == "config:" { in_config = 1; next }
-    in_config && $1 == "practices:" { in_practices = 1; next }
-    in_practices && $1 == "-" && $2 == "id:" { next }
-    in_practices && $1 == "message:" {
-      $1 = ""
-      sub(/^ /, "")
-      printf "  - %s\n", $0
-    }
-  ' "$practices_file"
+  while IFS= read -r step_line; do
+    [ -n "$step_line" ] || continue
+    step_line="${step_line#*|}"
+    step_label="${step_line%%|*}"
+    step_command="${step_line#*|}"
+    if [ -n "$step_command" ]; then
+      printf '  - %s: %s\n' "$step_label" "$step_command"
+    else
+      printf '  - %s\n' "$step_label"
+    fi
+  done <<EOF
+$(dev_kit_repo_workflow_steps "$repo_dir")
+EOF
 }
 
-dev_kit_agent_workflow_lines() {
-  local workflow_file=""
-  workflow_file="$(dev_kit_workflow_config_path)"
-
-  if [ -f "$workflow_file" ]; then
-    awk '
-      /^        - id:/ { flush(); label=""; note=""; in_note=0; next }
-      /^          label:/ { sub(/^[[:space:]]*label:[[:space:]]*/, "", $0); label=$0; next }
-      /^          note:[[:space:]]*>/ { in_note=1; next }
-      in_note && /^            / {
-        sub(/^[[:space:]]+/, "", $0)
-        note = (note == "") ? $0 : note " " $0
-        next
-      }
-      in_note { flush(); in_note=0 }
-      function flush() {
-        if (label == "") return
-        if (note != "") printf "  - %s: %s\n", label, note
-        else            printf "  - %s\n", label
-      }
-      END { flush() }
-    ' "$workflow_file"
-    return 0
-  fi
-
-  dev_kit_repo_workflow_json "${1:-$(pwd)}" | jq -r '.[]? | "  - " + .label' 2>/dev/null || true
+dev_kit_agent_principle_lines() {
+  cat <<'EOF'
+  - Start from `.rabbit/context.yaml`, then read only the highest-priority repo refs it points to.
+  - Prefer repo-declared commands, manifests, workflows, and tests over ad hoc exploration.
+  - Treat current GitHub state as useful live context when available, not as a mandatory workflow for every task.
+  - Keep generated guidance lightweight. Do not duplicate repo context already serialized in `.rabbit/context.yaml`.
+EOF
 }
 
 # Write AGENTS.md — the repo's execution contract for AI agents.
@@ -274,7 +259,7 @@ dev_kit_agent_write_agents_md() {
       _workflow="$(dev_kit_agent_workflow_lines "$repo_dir")"
       if [ -n "$_workflow" ]; then
         printf '## Workflow\n\n'
-        printf 'The dev.kit lifecycle: **repo → agent → work → PR → merge**. Follow these steps in order. Use them as repo-declared defaults when live GitHub context does not provide a more specific current signal. Steps with notes contain operational guidance.\n\n'
+        printf 'Use these repo-derived steps as the default operating path. Adapt them to the current agent role instead of forcing a single development lifecycle onto every task.\n\n'
         printf '%s\n\n' "$_workflow"
       fi
 
@@ -371,7 +356,7 @@ EOF
 
       # ── Principles — engineering practices ───────────────────────────────────
       local _practices
-      _practices="$(dev_kit_agent_practice_lines)"
+      _practices="$(dev_kit_agent_principle_lines)"
       if [ -n "$_practices" ]; then
         printf '## Engineering practices\n\n%s\n\n' "$_practices"
       fi

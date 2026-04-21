@@ -68,8 +68,8 @@ dev_kit_cmd_learn() {
       "session=null" \
       "flow=$flow_json" \
       "shared_context=$shared_context_json" \
-      "knowledge_base=$(dev_kit_knowledge_hierarchy_json)" \
-      "knowledge_sources=$(dev_kit_knowledge_preferred_sources | dev_kit_lines_to_json_array)"
+      "knowledge_base=$(dev_kit_learning_knowledge_hierarchy_json)" \
+      "knowledge_sources=$(dev_kit_learning_knowledge_sources | dev_kit_lines_to_json_array)"
     return 0
   fi
 

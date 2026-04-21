@@ -30,7 +30,7 @@ dev_kit_command_description() {
 }
 
 dev_kit_public_command_names() {
-  printf '%s\n' repo agent learn uninstall
+  printf '%s\n' env repo agent learn uninstall
 }
 
 dev_kit_command_file_path() {

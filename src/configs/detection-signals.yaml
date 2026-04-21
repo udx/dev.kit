@@ -42,6 +42,13 @@ config:
     - GNUmakefile
   node_files:
     - package.json
+  wordpress_files:
+    - wp-config.php
+  wordpress_dirs:
+    - wp-content
+    - wp-content/plugins
+    - wp-content/themes
+    - wp-content/mu-plugins
   php_files:
     - composer.json
     - phpunit.xml
@@ -101,12 +108,24 @@ config:
     - terraform
     - k8s
     - cd
+  terraform_files:
+    - main.tf
+    - variables.tf
+  terraform_dirs:
+    - terraform
+  terraform_globs:
+    - terraform/*.tf
+    - terraform/**/*.tf
+    - "*.tf"
   verification_files:
     - phpunit.xml
     - phpunit.xml.dist
   verification_globs:
     - *.bats
     - *test*.sh
+  yaml_manifest_globs:
+    - "*.yaml"
+    - "*.yml"
   # External dependency tracing — files and dirs to scan for cross-repo references.
   # Shell code reads these lists and applies pattern-specific extraction.
   dependency_trace_workflow_dirs:

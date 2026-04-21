@@ -11,11 +11,9 @@ Installation only puts the command on the machine. The normal operating loop sta
 
 ```bash
 dev.kit
-dev.kit repo
-dev.kit agent
 ```
 
-That loop refreshes repo context, regenerates `AGENTS.md`, and makes the next work step explicit before an agent or developer starts changing the repo.
+`dev.kit` is the happy path. It checks the environment, refreshes repo context, and regenerates `AGENTS.md` when a repo is detected. Use `dev.kit repo` or `dev.kit agent` only when you want to refresh one layer independently.
 
 ## Recommended Path
 
@@ -101,13 +99,13 @@ After either install path, verify the active install with:
 dev.kit
 ```
 
-That confirms the command resolves correctly and shows the next step in the session flow.
+That confirms the command resolves correctly and runs the normal guided flow when a repo is detected.
 
-After that, continue with:
+If you want to inspect or control environment capabilities directly, continue with:
 
 ```bash
-dev.kit repo
-dev.kit agent
+dev.kit env
+dev.kit env --config
 ```
 
-The goal is not only to confirm that the binary works. The goal is to start the session from current repo contract and current GitHub-aware workflow guidance rather than stale local memory.
+Use `dev.kit repo` and `dev.kit agent` separately only when one generated artifact needs to be refreshed on its own.

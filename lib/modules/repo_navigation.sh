@@ -7,7 +7,7 @@ DEV_KIT_MODULE_REPO_DIR_CACHE=""
 dev_kit_local_repos_root_path() {
   local root=""
 
-  root="$(dev_kit_knowledge_local_repos_root)"
+  root="${DEV_KIT_LOCAL_REPOS_ROOT:-git/udx}"
   [ -n "$root" ] || return 1
   printf "%s/%s" "$HOME" "$root"
 }

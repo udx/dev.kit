@@ -10,6 +10,25 @@ DEV_KIT_DISCOVERED_SESSION_CACHE_VALUE=""
 DEV_KIT_SESSION_CONTENT_CACHE_KEY=""
 DEV_KIT_SESSION_CONTENT_CACHE_VALUE=""
 
+dev_kit_learning_knowledge_hierarchy_json() {
+  local local_root remote_root
+  local_root="${DEV_KIT_LOCAL_REPOS_ROOT:-git/udx}"
+  remote_root="${DEV_KIT_REMOTE_ORG_ROOT:-github.com/udx}"
+  printf '{ "local_repos_root": "%s", "remote_org_root": "%s" }' \
+    "$(dev_kit_json_escape "$local_root")" \
+    "$(dev_kit_json_escape "$remote_root")"
+}
+
+dev_kit_learning_knowledge_sources() {
+  cat <<'EOF'
+repo docs, configs, templates, and tests
+repo TODO, context, and refs files when present
+remote repos, issues, pull requests, and commit history under github.com/udx/*
+local repos under git/udx
+codex sessions under ~/.codex/sessions when available
+EOF
+}
+
 # ── ref helpers ────────────────────────────────────────────────────────────────
 
 dev_kit_learning_ref_source() {

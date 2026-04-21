@@ -2,6 +2,77 @@
 
 _DEV_KIT_ENV_NPM_ROOT=""
 
+dev_kit_env_config_path() {
+  printf '%s/config/env.yaml' "$DEV_KIT_HOME"
+}
+
+dev_kit_env_config_ensure() {
+  local config_path=""
+  local config_dir=""
+
+  config_path="$(dev_kit_env_config_path)"
+  config_dir="$(dirname "$config_path")"
+  mkdir -p "$config_dir"
+
+  if [ ! -f "$config_path" ]; then
+    cat > "$config_path" <<'EOF'
+kind: envConfig
+version: udx.io/dev.kit/v1
+
+config:
+  disabled_tools: []
+  disabled_credentials: []
+EOF
+  fi
+}
+
+dev_kit_env_config_list() {
+  local list_name="$1"
+  local config_path=""
+
+  config_path="$(dev_kit_env_config_path)"
+  [ -f "$config_path" ] || return 0
+
+  awk -v list_name="$list_name" '
+    $1 == "config:" { in_config = 1; next }
+    in_config && $1 == list_name ":" {
+      in_list = 1
+      line = $0
+      if (line ~ /\[\]/) exit
+      next
+    }
+    in_list && /^[[:space:]]*-/ {
+      sub(/^[[:space:]]*-[[:space:]]*/, "", $0)
+      print
+      next
+    }
+    in_list && /^[^[:space:]]|^  [A-Za-z0-9_-]+:/ { exit }
+  ' "$config_path"
+}
+
+dev_kit_env_config_has_value() {
+  local list_name="$1"
+  local value="$2"
+  local item=""
+
+  while IFS= read -r item; do
+    [ -n "$item" ] || continue
+    [ "$item" = "$value" ] && return 0
+  done <<EOF
+$(dev_kit_env_config_list "$list_name")
+EOF
+
+  return 1
+}
+
+dev_kit_env_tool_disabled() {
+  dev_kit_env_config_has_value "disabled_tools" "$1"
+}
+
+dev_kit_env_credential_disabled() {
+  dev_kit_env_config_has_value "disabled_credentials" "$1"
+}
+
 dev_kit_env_npm_root() {
   if [ -z "$_DEV_KIT_ENV_NPM_ROOT" ] && command -v npm >/dev/null 2>&1; then
     _DEV_KIT_ENV_NPM_ROOT="$(npm root -g 2>/dev/null)"
@@ -43,6 +114,11 @@ dev_kit_env_tool_state() {
   local tool="$1"
   local version=""
 
+  if dev_kit_env_tool_disabled "$tool"; then
+    printf 'disabled by config'
+    return 0
+  fi
+
   case "$tool" in
     "@udx/"*)
       local npm_root=""
@@ -68,6 +144,11 @@ dev_kit_env_tool_state() {
 
   case "$tool" in
     gh)
+      if dev_kit_env_credential_disabled "gh"; then
+        version="$(dev_kit_env_tool_version "$tool")"
+        printf 'available (%s, auth disabled by config)' "${version:-installed}"
+        return 0
+      fi
       case "$(dev_kit_sync_gh_auth_state)" in
         available)
           version="$(dev_kit_env_tool_version "$tool")"
@@ -83,6 +164,15 @@ dev_kit_env_tool_state() {
       esac
       ;;
     *)
+      case "$tool" in
+        aws|gcloud|az)
+          if dev_kit_env_credential_disabled "$tool"; then
+            version="$(dev_kit_env_tool_version "$tool")"
+            printf 'available (%s, auth disabled by config)' "${version:-installed}"
+            return 0
+          fi
+          ;;
+      esac
       version="$(dev_kit_env_tool_version "$tool")"
       if [ -n "$version" ]; then
         printf 'available (%s)' "$version"
@@ -205,6 +295,9 @@ dev_kit_env_tools_text() {
     fi
 
     case "$status" in
+      disabled*)
+        printf '%s|○ %s — %s\n' "$category" "$tool" "$enables"
+        ;;
       missing)
         printf '%s|✗ %s — %s\n' "$category" "$tool" "$enables"
         ;;

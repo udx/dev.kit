@@ -8,8 +8,7 @@
 # Agents use this to know WHAT each YAML controls before reading it.
 dev_kit_manifest_kind_description() {
   case "$1" in
-    archetypeRules)       printf 'archetype definitions and matching rules' ;;
-    archetypeSignals)     printf 'file/dir signals for framework and platform detection' ;;
+    repoArchetypes)       printf 'repo archetype definitions and matching rules' ;;
     auditRules)           printf 'factor gap messages and improvement guidance' ;;
     contextConfig)        printf 'repo root markers and priority paths' ;;
     detectionPatterns)    printf 'regex patterns for build/verify/run command detection' ;;
