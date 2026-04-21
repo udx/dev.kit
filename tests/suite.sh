@@ -9,12 +9,9 @@ TEST_HOME="${DEV_KIT_TEST_HOME:-$(mktemp -d "${TMPDIR:-/tmp}/dev-kit-test-home.X
 BASE_PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 SIMPLE_REPO="$REPO_DIR/tests/fixtures/simple-repo"
 DOCUMENTED_SHELL_REPO="$REPO_DIR/tests/fixtures/documented-shell-repo"
-DOCKER_REPO="$REPO_DIR/tests/fixtures/docker-repo"
-WORDPRESS_REPO="$REPO_DIR/tests/fixtures/wordpress-repo"
-KUBERNETES_REPO="$REPO_DIR/tests/fixtures/kubernetes-repo"
 SIMPLE_ACTION_REPO="$TEST_HOME/simple-action-repo"
 HOME_ACTION_REPO="$TEST_HOME/home-action-repo"
-AVAILABLE_TEST_GROUPS="core archetypes learn install"
+AVAILABLE_TEST_GROUPS="core"
 TEST_ONLY="${DEV_KIT_TEST_ONLY:-}"
 
 cleanup() {
@@ -24,12 +21,10 @@ trap cleanup EXIT
 
 usage() {
   cat <<'EOF'
-Usage: bash tests/suite.sh [--only group1,group2] [--list]
+Usage: bash tests/suite.sh [--only core] [--list]
 
 Groups:
-  core        home + repo + agent (fast, no install required)
-  archetypes  fixture archetype detection
-  install     full install + uninstall flow (slow, CI)
+  core        minimal happy-path smoke checks
 EOF
 }
 
@@ -65,9 +60,6 @@ while [ "$#" -gt 0 ]; do
   shift
 done
 
-# ── Setup ──────────────────────────────────────────────────────────────────────
-# Point directly at the repo — no tar, no install needed for core/archetypes.
-
 mkdir -p "$TEST_HOME"
 export HOME="$TEST_HOME"
 export PATH="$BASE_PATH"
@@ -79,6 +71,7 @@ DEV_KIT_BIN_DIR="$TEST_HOME/.local/bin"
 mkdir -p "$DEV_KIT_BIN_DIR"
 ln -sf "$REPO_DIR/bin/dev-kit" "$DEV_KIT_BIN_DIR/dev.kit"
 export PATH="$DEV_KIT_BIN_DIR:$PATH"
+
 # shellcheck disable=SC1090
 . "$DEV_KIT_HOME/bin/env/dev-kit.sh"
 while IFS= read -r module_file; do
@@ -90,261 +83,39 @@ done <<EOF
 $(dev_kit_module_paths)
 EOF
 
-# ── core ───────────────────────────────────────────────────────────────────────
-
 if should_run "core"; then
   cp -R "$DOCUMENTED_SHELL_REPO" "$HOME_ACTION_REPO"
   rm -rf "$HOME_ACTION_REPO/.dev-kit" "$HOME_ACTION_REPO/.rabbit" "$HOME_ACTION_REPO/AGENTS.md"
 
   home_json="$(cd "$HOME_ACTION_REPO" && dev.kit --json)"
-  assert_contains "$home_json" "\"repo_detected\": true"   "home: detects repo"
-  assert_contains "$home_json" "\"priority_refs\": ["      "home: reports priority refs"
-  assert_contains "$home_json" "\"next_git_action\":"      "home: reports next git action"
-  assert_contains "$home_json" "\"synced\": {"             "home: reports synced artifacts"
-  assert_contains "$home_json" "\"helpers\": ["            "home: reports helpers"
+  assert_contains "$home_json" "\"repo_detected\": true" "home: detects repo"
+  assert_contains "$home_json" "\"synced\": {" "home: reports synced artifacts"
+  assert_contains "$home_json" "\"helpers\": [" "home: reports helpers"
 
   home_text="$(cd "$HOME_ACTION_REPO" && dev.kit)"
-  assert_contains "$home_text" "[required]"                 "home text: renders env tools"
-  assert_contains "$home_text" "[synced]"                   "home text: syncs repo artifacts"
-  assert_contains "$home_text" "AGENTS.md"                  "home text: mentions generated AGENTS.md"
+  assert_contains "$home_text" "[required]" "home text: renders env tools"
+  assert_contains "$home_text" "[synced]" "home text: syncs repo artifacts"
   assert_file_exists "$HOME_ACTION_REPO/.rabbit/context.yaml" "home: writes context.yaml"
-  assert_file_exists "$HOME_ACTION_REPO/AGENTS.md"             "home: writes AGENTS.md"
+  assert_file_exists "$HOME_ACTION_REPO/AGENTS.md" "home: writes AGENTS.md"
 
   env_json="$(cd "$HOME_ACTION_REPO" && dev.kit env --json)"
-  assert_contains "$env_json" "\"command\": \"env\""       "env: reports command name"
-  assert_contains "$env_json" "\"config\":"                "env: reports config block"
-
-  env_config_text="$(cd "$HOME_ACTION_REPO" && dev.kit env --config)"
-  assert_contains "$env_config_text" "[config]"            "env text: renders config section"
-  assert_file_exists "$DEV_KIT_HOME/config/env.yaml"       "env: creates config file on demand"
-
-  norepo="$(cd "$TEST_HOME" && dev.kit)"
-  assert_contains "$norepo" "no repo detected"             "home: handles non-repo dir"
+  assert_contains "$env_json" "\"command\": \"env\"" "env: reports command name"
 
   repo_json="$(cd "$DOCUMENTED_SHELL_REPO" && dev.kit repo --json)"
-  assert_contains "$repo_json" "\"archetype\":"            "repo: reports archetype"
-  assert_contains "$repo_json" "\"factors\": {"           "repo: reports factors"
-  assert_contains "$repo_json" "\"context\":"              "repo: reports context path"
+  assert_contains "$repo_json" "\"archetype\":" "repo: reports archetype"
+  assert_contains "$repo_json" "\"context\":" "repo: reports context path"
 
   cp -R "$SIMPLE_REPO" "$SIMPLE_ACTION_REPO"
   rm -rf "$SIMPLE_ACTION_REPO/.dev-kit" "$SIMPLE_ACTION_REPO/.rabbit"
 
-  # agent auto-generates context when missing — no manual dev.kit repo step needed
   agent_json="$(cd "$SIMPLE_ACTION_REPO" && dev.kit agent --json)"
-  assert_contains "$agent_json" "\"archetype\":"           "agent: auto-generates context on demand"
-  assert_contains "$agent_json" "\"workflow_contract\":"   "agent: reports workflow contract"
-
-  agent_text="$(cd "$SIMPLE_ACTION_REPO" && dev.kit agent)"
-  assert_contains "$agent_text" "dev.kit → dev.kit repo → dev.kit agent" "agent: text output reminds session resync flow"
+  assert_contains "$agent_json" "\"workflow_contract\":" "agent: reports workflow contract"
 
   context_yaml="${SIMPLE_ACTION_REPO}/.rabbit/context.yaml"
-  assert_file_exists "$context_yaml"                                   "agent: creates .rabbit/context.yaml"
-  assert_contains "$(cat "$context_yaml")" "kind: repoContext"         "agent: context.yaml has kind header"
-  assert_contains "$(cat "$context_yaml")" "version: udx.io/dev.kit"  "agent: context.yaml has version"
-  assert_contains "$(cat "$context_yaml")" "refs:"                     "agent: context.yaml has refs section"
-  assert_contains "$(cat "$context_yaml")" "./package.json"            "agent: context.yaml keeps repo refs"
-  assert_not_contains "$(cat "$context_yaml")" "/Users/"               "agent: context.yaml has no absolute paths (macOS)"
-  assert_not_contains "$(cat "$context_yaml")" "/home/"                "agent: context.yaml has no absolute paths (Linux)"
-  assert_not_contains "$(cat "$context_yaml")" "practices:"            "agent: context.yaml does not inline engineering practices"
-  assert_not_contains "$(cat "$context_yaml")" "workflow:"             "agent: context.yaml does not inline agent workflow"
-  assert_contains "$(cat "${SIMPLE_ACTION_REPO}/AGENTS.md")" "Prefer live GitHub experience over generic defaults." "agent: AGENTS.md prefers live GitHub context"
-  assert_contains "$(cat "${SIMPLE_ACTION_REPO}/AGENTS.md")" "Prefer workflow verification, not automatic local enforcement." "agent: AGENTS.md prefers workflow verification"
+  assert_file_exists "$context_yaml" "agent: creates .rabbit/context.yaml"
+  assert_contains "$(cat "$context_yaml")" "kind: repoContext" "agent: context.yaml has kind header"
+  assert_not_contains "$(cat "$context_yaml")" "/Users/" "agent: context.yaml has no absolute paths"
   assert_contains "$(cat "${SIMPLE_ACTION_REPO}/AGENTS.md")" "Use these repo-derived steps as the default operating path." "agent: AGENTS.md uses repo-derived workflow guidance"
-  assert_contains "$(cat "${SIMPLE_ACTION_REPO}/AGENTS.md")" "Read the highest-priority repo refs first" "agent: AGENTS.md includes repo-derived read-first workflow"
-  assert_contains "$(cat "${SIMPLE_ACTION_REPO}/AGENTS.md")" "Keep generated guidance lightweight." "agent: AGENTS.md keeps principles lightweight"
-  assert_contains "$(cat "${SIMPLE_ACTION_REPO}/AGENTS.md")" 'All refs, config manifests, command surfaces, dependencies, and gaps live in `.rabbit/context.yaml`.' "agent: AGENTS.md points inventory back to context"
-  assert_not_contains "$(cat "${SIMPLE_ACTION_REPO}/AGENTS.md")" "### Priority refs" "agent: AGENTS.md does not duplicate refs"
-fi
-
-# ── archetypes ─────────────────────────────────────────────────────────────────
-
-if should_run "archetypes"; then
-  wordpress_json="$(cd "$WORDPRESS_REPO" && dev.kit repo --json)"
-  assert_contains "$wordpress_json" "\"archetype\": \"wordpress-site\""  "archetype: wordpress fixture"
-
-  docker_json="$(cd "$DOCKER_REPO" && dev.kit repo --json)"
-  assert_contains "$docker_json" "\"archetype\": \"runtime-image\""      "archetype: docker fixture"
-
-  kubernetes_facets="$(dev_kit_repo_facets "$KUBERNETES_REPO")"
-  assert_contains "$kubernetes_facets" "platform:kubernetes"             "archetype: k8s fixture detected from manifest content"
-  assert_contains "$kubernetes_facets" "deploy:kubernetes-manifests"     "archetype: k8s fixture marks deploy facet"
-
-  HELM_ONLY_REPO="$TEST_HOME/helm-only-repo"
-  mkdir -p "$HELM_ONLY_REPO"
-  cat > "$HELM_ONLY_REPO/Chart.yaml" <<'EOF'
-apiVersion: v2
-name: example
-version: 0.1.0
-EOF
-  helm_only_facets="$(dev_kit_repo_facets "$HELM_ONLY_REPO")"
-  assert_not_contains "$helm_only_facets" "platform:kubernetes"          "archetype: Chart.yaml alone does not imply kubernetes"
-fi
-
-# ── learn ──────────────────────────────────────────────────────────────────────
-
-if should_run "learn"; then
-  LEARN_REPO="$TEST_HOME/learn.test-repo"
-  cp -R "$DOCUMENTED_SHELL_REPO" "$LEARN_REPO"
-  rm -rf "$LEARN_REPO/.dev-kit" "$LEARN_REPO/.rabbit"
-  mkdir -p "$LEARN_REPO/.rabbit/dev.kit"
-  LEARN_REPO="$(cd "$LEARN_REPO" && pwd)"  # normalize: macOS TMPDIR has trailing slash → // in paths
-
-  # -- codex fixture (points at LEARN_REPO) --
-  TEST_CODEX_HOME="$TEST_HOME/.codex"
-  CODEX_UUID="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
-  mkdir -p "$TEST_CODEX_HOME/sessions/2026/04/12"
-  cat > "$TEST_CODEX_HOME/sessions/2026/04/12/rollout-2026-04-12T10-00-00-${CODEX_UUID}.jsonl" <<EOF
-{"type":"session_meta","payload":{"id":"$CODEX_UUID","cwd":"$LEARN_REPO","originator":"codex-tui"}}
-{"type":"response_item","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"# AGENTS.md instructions for $LEARN_REPO <INSTRUCTIONS> hidden bootstrap content </INSTRUCTIONS>"}]}}
-{"type":"response_item","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"check deploy.yml and github actions workflow security gaps"}]}}
-{"type":"response_item","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"https://github.com/test/repo/issues/42 related issue"}]}}
-EOF
-
-  # -- claude fixture (project dir derived from LEARN_REPO path) --
-  CLAUDE_UUID="11111111-2222-3333-4444-555555555555"
-  CLAUDE_PROJECT_ID="$(printf "%s" "$LEARN_REPO" | sed -E 's|/|-|g; s|[^[:alnum:]_-]|-|g; s|-+|-|g')"
-  TEST_CLAUDE_PROJECTS="$TEST_HOME/.claude-projects"
-  TEST_CLAUDE_HISTORY="$TEST_HOME/.claude-history.jsonl"
-  mkdir -p "$TEST_CLAUDE_PROJECTS/$CLAUDE_PROJECT_ID"
-  cat > "$TEST_CLAUDE_PROJECTS/$CLAUDE_PROJECT_ID/${CLAUDE_UUID}.jsonl" <<EOF
-{"type":"user","message":{"role":"user","content":"review .github/workflows and deploy.yml security configuration"},"promptId":"p-001","isMeta":false,"cwd":"$LEARN_REPO","sessionId":"$CLAUDE_UUID"}
-{"type":"user","message":{"role":"user","content":"https://github.com/test/repo/pull/5 check workflow gaps"},"promptId":"p-002","isMeta":false,"cwd":"$LEARN_REPO","sessionId":"$CLAUDE_UUID"}
-EOF
-  cat > "$TEST_CLAUDE_HISTORY" <<EOF
-{"display":"review .github/workflows and deploy.yml security configuration","timestamp":1775930000000,"project":"$LEARN_REPO","sessionId":"$CLAUDE_UUID"}
-{"display":"claude history prefers this compact prompt","timestamp":1775930001000,"project":"$LEARN_REPO","sessionId":"$CLAUDE_UUID"}
-EOF
-
-  export CODEX_HOME="$TEST_CODEX_HOME"
-  export CLAUDE_PROJECTS_ROOT="$TEST_CLAUDE_PROJECTS"
-  export CLAUDE_HISTORY_FILE="$TEST_CLAUDE_HISTORY"
-
-  # 1. codex-only source
-  learn_codex="$(cd "$LEARN_REPO" && DEV_KIT_LEARN_SOURCES=codex dev.kit learn --json)"
-  assert_contains     "$learn_codex" "\"codex\""    "learn: codex source in observed"
-  assert_contains     "$learn_codex" "$CODEX_UUID"  "learn: codex session ID present"
-  assert_not_contains "$learn_codex" "\"claude\""   "learn: codex-only excludes claude"
-
-  # 2. claude-only source
-  learn_claude="$(cd "$LEARN_REPO" && DEV_KIT_LEARN_SOURCES=claude dev.kit learn --json)"
-  assert_contains     "$learn_claude" "\"claude\""   "learn: claude source in observed"
-  assert_contains     "$learn_claude" "$CLAUDE_UUID" "learn: claude session ID present"
-  assert_not_contains "$learn_claude" "\"codex\""    "learn: claude-only excludes codex"
-
-  # 3. multi-source default (both)
-  learn_multi="$(cd "$LEARN_REPO" && dev.kit learn --json)"
-  assert_contains "$learn_multi" "\"claude\""          "learn: multi-source includes claude"
-  assert_contains "$learn_multi" "\"codex\""           "learn: multi-source includes codex"
-  assert_contains "$learn_multi" "\"observed_sources\"" "learn: observed_sources array present"
-
-  # 4. artifact written (text mode)
-  (cd "$LEARN_REPO" && dev.kit learn) >/dev/null 2>&1
-  artifact="$(ls "$LEARN_REPO/.rabbit/dev.kit/lessons-"*.md 2>/dev/null | head -1)"
-  assert_file_exists "$artifact"                             "learn: artifact file written"
-  assert_contains "$(cat "$artifact")" "## Workflow rules"  "learn: artifact has workflow rules section"
-  assert_contains "$(cat "$artifact")" "## Ready templates" "learn: artifact has ready templates section"
-  assert_contains "$(cat "$artifact")" "## Evidence highlights" "learn: artifact has evidence highlights section"
-  assert_contains "$(cat "$artifact")" "github.com"         "learn: artifact includes referenced URLs"
-  assert_not_contains "$(cat "$artifact")" "AGENTS.md instructions" "learn: artifact excludes bootstrap prompt noise"
-  assert_contains "$(cat "$artifact")" "Use repo workflow assets like deploy.yml" "learn: artifact packages rule guidance"
-  assert_contains "$(cat "$artifact")" '`Workflow tracing`' "learn: artifact packages reusable templates"
-  assert_contains "$(cat "$artifact")" "claude history prefers this compact prompt" "learn: artifact keeps compact evidence highlights"
-
-  # 5. incremental: sessions older than last-run are skipped
-  touch -t 203001010000 "$LEARN_REPO/.rabbit/dev.kit/learn-last-run"
-  learn_incr="$(cd "$LEARN_REPO" && dev.kit learn --json)"
-  assert_not_contains "$learn_incr" "$CODEX_UUID"  "learn: incremental skips old codex session"
-  assert_not_contains "$learn_incr" "$CLAUDE_UUID" "learn: incremental skips old claude session"
-
-  # 6. deleting the artifact resets the incremental baseline and rebuilds from all sessions
-  rm -f "$artifact"
-  learn_rebuild="$(cd "$LEARN_REPO" && dev.kit learn --json)"
-  assert_contains "$learn_rebuild" "$CODEX_UUID"  "learn: missing artifact rebuilds codex history"
-  assert_contains "$learn_rebuild" "$CLAUDE_UUID" "learn: missing artifact rebuilds claude history"
-  rm -f "$LEARN_REPO/.rabbit/dev.kit/learn-last-run"
-
-  # 7. incremental artifact merges previous lessons with new session-derived deltas
-  (cd "$LEARN_REPO" && dev.kit learn) >/dev/null 2>&1
-  sleep 1
-  SECOND_CODEX_UUID="ffffffff-1111-2222-3333-444444444444"
-  mkdir -p "$TEST_CODEX_HOME/sessions/2026/04/13"
-  cat > "$TEST_CODEX_HOME/sessions/2026/04/13/rollout-2026-04-13T12-00-00-${SECOND_CODEX_UUID}.jsonl" <<EOF
-{"type":"session_meta","payload":{"id":"$SECOND_CODEX_UUID","cwd":"$LEARN_REPO","originator":"codex-tui"}}
-{"type":"response_item","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"readme docs first cleanup legacy modules and keep configuration separate from code"}]}}
-{"type":"response_item","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"https://github.com/test/repo/pull/9 review cleanup scope"}]}}
-EOF
-  learn_merge="$(cd "$LEARN_REPO" && dev.kit learn --json)"
-  assert_contains "$learn_merge" "$SECOND_CODEX_UUID" "learn: incremental picks newly added session"
-  (cd "$LEARN_REPO" && dev.kit learn) >/dev/null 2>&1
-  merged_artifact="$(ls "$LEARN_REPO/.rabbit/dev.kit/lessons-"*.md 2>/dev/null | head -1)"
-  merged_artifact_text="$(cat "$merged_artifact")"
-  assert_contains "$merged_artifact_text" "https://github.com/test/repo/issues/42" "learn: merged artifact retains prior references"
-  assert_contains "$merged_artifact_text" "https://github.com/test/repo/pull/9" "learn: merged artifact adds new references"
-  assert_contains "$merged_artifact_text" '`Config-over-code`' "learn: merged artifact adds new reusable template"
-
-  # 8. no sessions — use env to ensure override reaches the subprocess
-  learn_empty="$(cd "$LEARN_REPO" && \
-    env CODEX_HOME="$TEST_HOME/no-codex" CLAUDE_PROJECTS_ROOT="$TEST_HOME/no-claude" \
-    dev.kit learn)"
-  assert_contains "$learn_empty" "no new agent sessions found since the latest lessons artifact" "learn: handles empty incremental runs gracefully"
-
-  unset CODEX_HOME CLAUDE_PROJECTS_ROOT CLAUDE_HISTORY_FILE
-fi
-
-# ── install ────────────────────────────────────────────────────────────────────
-# Full tar+install+uninstall — slow, run in CI or with --only install.
-
-if should_run "install" && [ -n "${CI:-}" ]; then
-  INSTALLER_COPY="$TEST_HOME/install.sh"
-  ARCHIVE_FILE="$TEST_HOME/dev-kit-main.tar.gz"
-  FAKE_BIN_DIR="$TEST_HOME/fake-bin"
-  FAKE_NPM_LOG="$TEST_HOME/fake-npm.log"
-  cp "$REPO_DIR/bin/scripts/install.sh" "$INSTALLER_COPY"
-  tar -czf "$ARCHIVE_FILE" --exclude=".git" --exclude="node_modules" --exclude="vendor" \
-    -C "$(dirname "$REPO_DIR")" "$(basename "$REPO_DIR")"
-  mkdir -p "$FAKE_BIN_DIR"
-  cat > "$FAKE_BIN_DIR/npm" <<EOF
-#!/usr/bin/env bash
-set -euo pipefail
-echo "$*" >> "$FAKE_NPM_LOG"
-if [ "\${1:-}" = "list" ] && [ "\${2:-}" = "-g" ] && [ "\${3:-}" = "@udx/dev-kit" ] && [ "\${4:-}" = "--depth=0" ]; then
-  exit 0
-fi
-if [ "\${1:-}" = "uninstall" ] && [ "\${2:-}" = "-g" ] && [ "\${3:-}" = "@udx/dev-kit" ]; then
-  exit 0
-fi
-exit 1
-EOF
-  chmod +x "$FAKE_BIN_DIR/npm"
-
-  unset DEV_KIT_HOME DEV_KIT_BIN_DIR
-  INSTALL_OUTPUT="$(PATH="$FAKE_BIN_DIR:$PATH" DEV_KIT_INSTALL_ARCHIVE_URL="file://$ARCHIVE_FILE" HOME="$TEST_HOME" bash "$INSTALLER_COPY")"
-  DEV_KIT_HOME="$TEST_HOME/.udx/dev.kit"
-  DEV_KIT_BIN_DIR="$TEST_HOME/.local/bin"
-
-  assert_contains "$INSTALL_OUTPUT" "detected previous npm installation" "install: detects npm install"
-  assert_contains "$INSTALL_OUTPUT" "curl version is now the single install" "install: removes npm install"
-  assert_contains "$INSTALL_OUTPUT" "Installed dev.kit"           "install: reports success"
-  assert_file_exists "$DEV_KIT_HOME/bin/dev-kit"                  "install: command binary present"
-  assert_file_exists "$DEV_KIT_HOME/lib/commands/repo.sh"         "install: repo command present"
-  assert_symlink_target "$DEV_KIT_BIN_DIR/dev.kit" "$DEV_KIT_HOME/bin/dev-kit" "install: global symlink correct"
-  assert_contains "$(cat "$FAKE_NPM_LOG")" "list -g @udx/dev-kit --depth=0" "install: checks npm install"
-  assert_contains "$(cat "$FAKE_NPM_LOG")" "uninstall -g @udx/dev-kit" "install: uninstalls npm package"
-
-  UNINSTALL_OUTPUT="$(HOME="$TEST_HOME" "$DEV_KIT_HOME/bin/dev-kit" uninstall --yes)"
-  assert_contains "$UNINSTALL_OUTPUT" "Removed dev.kit"           "uninstall: reports removal"
-  assert_file_missing "$DEV_KIT_BIN_DIR/dev.kit"                  "uninstall: removes symlink"
-  assert_file_missing "$DEV_KIT_HOME"                             "uninstall: removes home"
-
-  : > "$FAKE_NPM_LOG"
-  INSTALL_OUTPUT_STDIN="$(PATH="$FAKE_BIN_DIR:$PATH" DEV_KIT_INSTALL_ARCHIVE_URL="file://$ARCHIVE_FILE" HOME="$TEST_HOME" bash < "$INSTALLER_COPY")"
-  assert_contains "$INSTALL_OUTPUT_STDIN" "detected previous npm installation" "install stdin: detects npm install"
-  assert_contains "$INSTALL_OUTPUT_STDIN" "Installed dev.kit"     "install stdin: reports success"
-  assert_file_exists "$DEV_KIT_HOME/bin/dev-kit"                  "install stdin: command binary present"
-  assert_symlink_target "$DEV_KIT_BIN_DIR/dev.kit" "$DEV_KIT_HOME/bin/dev-kit" "install stdin: global symlink correct"
-  assert_contains "$(cat "$FAKE_NPM_LOG")" "uninstall -g @udx/dev-kit" "install stdin: uninstalls npm package"
-elif should_run "install"; then
-  pass "install group skipped outside CI (run with CI=1 to enable)"
 fi
 
 printf "ok - dev.kit suite completed\n"

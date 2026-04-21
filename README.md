@@ -60,11 +60,13 @@ Use one install path at a time. Installing with npm removes the curl-managed `~/
 
 ## Testing
 
-For fast local checks, the repo still includes a shell test suite:
+For fast local checks, keep the local smoke test minimal:
 
 ```bash
 bash tests/suite.sh --only core
 ```
+
+That script only covers the local happy path for `dev.kit`, `env`, `repo`, and `agent`.
 
 For installed-CLI testing in a real worker environment, use the published worker image:
 
@@ -72,7 +74,7 @@ For installed-CLI testing in a real worker environment, use the published worker
 bash tests/worker-smoke.sh
 ```
 
-That runner:
+That runner is the main integration path. It:
 
 - installs the current repo with `npm install -g /workspace`
 - runs the installed `dev.kit` inside `usabilitydynamics/udx-worker:latest`
@@ -80,3 +82,5 @@ That runner:
 - copies the target repo into scratch space by default so repo context can be intentionally broken without touching the original checkout
 - supports `DEV_KIT_TEST_DISABLED_TOOLS` and `DEV_KIT_TEST_DISABLED_CREDS` for env-config scenarios
 - supports `DEV_KIT_TEST_PREPARE_CMD` for lightweight repo mutation before running `dev.kit`
+
+Heavier coverage such as context-gap testing, env toggles, and real-repo mutation should move to the worker-based path instead of growing the local smoke suite.
