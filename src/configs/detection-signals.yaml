@@ -1,5 +1,6 @@
 kind: detectionSignals
-version: udx.io/dev.kit/v1
+version: udx.dev/dev.kit/v1
+description: File, directory, and glob signals for factor and dependency detection
 
 config:
   documentation_files:
@@ -42,6 +43,10 @@ config:
     - GNUmakefile
   node_files:
     - package.json
+  next_files:
+    - next.config.js
+    - next.config.mjs
+    - next.config.ts
   wordpress_files:
     - wp-config.php
   wordpress_dirs:
@@ -73,6 +78,7 @@ config:
     - .env.example
     - .env.sample
     - .env.template
+  config_runtime_files:
     - docker-compose.yml
     - docker-compose.yaml
     - deploy.yml
@@ -132,12 +138,6 @@ config:
     - .github/workflows
   dependency_trace_container_files:
     - Dockerfile
-  dependency_trace_deploy_files:
-    - deploy.yml
-    - deploy.yaml
-  dependency_trace_infra_dirs:
-    - terraform
-    - k8s
   # Dirs scanned recursively for YAML files with kind/version headers.
   # The version URI (e.g. udx.dev/rabbit-automation-action/gcp-sql-instance/v1)
   # traces back to source repo and module. This is the primary cross-repo tracing
@@ -158,6 +158,13 @@ config:
   # Listed as config manifests in context.yaml output.
   manifest_workflow_dirs:
     - .github/workflows
+  manifest_config_dirs:
+    - src/configs
+    - configs
+  manifest_backend_module_dirs:
+    - cd/terraform/modules
+    - terraform/modules
+    - modules
   manifest_root_files:
     - deploy.yml
     - deploy.yaml
@@ -165,3 +172,4 @@ config:
     - docker-compose.yaml
     - Chart.yaml
     - helmfile.yaml
+    - evals/promptfooconfig.yaml

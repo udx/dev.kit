@@ -93,7 +93,7 @@ write_env_config() {
   mkdir -p "$config_dir"
   cat > "$config_dir/env.yaml" <<EOF
 kind: envConfig
-version: udx.io/dev.kit/v1
+version: udx.dev/dev.kit/v1
 
 config:
   disabled_tools:${tools_yaml}

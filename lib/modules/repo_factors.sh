@@ -72,9 +72,9 @@ _dev_kit_repo_factor_status_compute() {
       fi
       ;;
     config)
-      if dev_kit_repo_has_any_file_from_list "$repo_dir" "config_contract_files" && dev_kit_repo_documented_env_var "$repo_dir"; then
+      if dev_kit_repo_has_any_file_from_list "$repo_dir" "config_contract_files"; then
         printf "%s" "present"
-      elif dev_kit_repo_has_any_file_from_list "$repo_dir" "config_contract_files" || dev_kit_repo_documented_env_var "$repo_dir"; then
+      elif dev_kit_repo_has_any_file_from_list "$repo_dir" "config_runtime_files" || dev_kit_repo_documented_env_var "$repo_dir"; then
         printf "%s" "partial"
       else
         printf "%s" "missing"
@@ -157,16 +157,28 @@ EOF
       while IFS= read -r path; do
         [ -n "$path" ] || continue
         if dev_kit_has_file "$repo_dir" "$path"; then
-          evidence="${evidence}${path}
+          evidence="${evidence}env contract: ${path}
 "
         fi
       done <<EOF
 $(dev_kit_detection_list "config_contract_files")
 EOF
-      if dev_kit_repo_documented_env_var "$repo_dir"; then
-        evidence="${evidence}documented env vars
+      while IFS= read -r path; do
+        [ -n "$path" ] || continue
+        if dev_kit_has_file "$repo_dir" "$path"; then
+          evidence="${evidence}runtime config: ${path}
 "
-      fi
+        fi
+      done <<EOF
+$(dev_kit_detection_list "config_runtime_files")
+EOF
+      while IFS= read -r path; do
+        [ -n "$path" ] || continue
+        evidence="${evidence}env vars documented in ${path}
+"
+      done <<EOF
+$(dev_kit_repo_documented_env_var_sources "$repo_dir")
+EOF
       ;;
     pipeline)
       # Test signals
@@ -240,47 +252,114 @@ dev_kit_repo_factor_evidence_json() {
   dev_kit_repo_factor_evidence "$1" "$2" | dev_kit_lines_to_json_array
 }
 
+dev_kit_repo_command_kind_id() {
+  case "$1" in
+    pipeline|verify|verification) printf '%s' "verify" ;;
+    build|build_release_run)       printf '%s' "build" ;;
+    run|runtime)                   printf '%s' "run" ;;
+    *) return 1 ;;
+  esac
+}
+
+dev_kit_repo_command_detection_result() {
+  local repo_dir="$1"
+  local kind="$2"
+  local command_kind=""
+  local source_type=""
+
+  command_kind="$(dev_kit_repo_command_kind_id "$kind" 2>/dev/null || true)"
+  [ -n "$command_kind" ] || return 1
+
+  while IFS= read -r source_type; do
+    [ -n "$source_type" ] || continue
+    case "$source_type:$command_kind" in
+      make_targets:verify)
+        if dev_kit_repo_has_make_target "$repo_dir" "test"; then
+          printf '%s|%s|%s\n' "make_targets" "make test" "Makefile"
+          return 0
+        fi
+        ;;
+      make_targets:build)
+        if dev_kit_repo_has_make_target "$repo_dir" "build"; then
+          printf '%s|%s|%s\n' "make_targets" "make build" "Makefile"
+          return 0
+        fi
+        ;;
+      make_targets:run)
+        if dev_kit_repo_has_make_target "$repo_dir" "run"; then
+          printf '%s|%s|%s\n' "make_targets" "make run" "Makefile"
+          return 0
+        fi
+        ;;
+      package_scripts:verify)
+        if dev_kit_repo_has_node_test_script "$repo_dir"; then
+          printf '%s|%s|%s\n' "package_scripts" "npm test" "package.json"
+          return 0
+        fi
+        if dev_kit_repo_has_composer_test_script "$repo_dir"; then
+          printf '%s|%s|%s\n' "package_scripts" "composer test" "composer.json"
+          return 0
+        fi
+        ;;
+      package_scripts:build)
+        if dev_kit_repo_has_node_build_script "$repo_dir"; then
+          printf '%s|%s|%s\n' "package_scripts" "npm run build" "package.json"
+          return 0
+        fi
+        if dev_kit_repo_has_composer_build_script "$repo_dir"; then
+          printf '%s|%s|%s\n' "package_scripts" "composer build" "composer.json"
+          return 0
+        fi
+        ;;
+      package_scripts:run)
+        if dev_kit_repo_has_node_start_script "$repo_dir"; then
+          printf '%s|%s|%s\n' "package_scripts" "npm start" "package.json"
+          return 0
+        fi
+        ;;
+      documented_commands:verify)
+        local documented_command documented_source
+        documented_command="$(dev_kit_repo_documented_command "$repo_dir" "verification" || true)"
+        documented_source="$(dev_kit_repo_documented_command_source "$repo_dir" "verification" || true)"
+        if [ -n "$documented_command" ]; then
+          printf '%s|%s|%s\n' "documented_commands" "$documented_command" "$documented_source"
+          return 0
+        fi
+        ;;
+      documented_commands:build)
+        local documented_command documented_source
+        documented_command="$(dev_kit_repo_documented_command "$repo_dir" "build" || true)"
+        documented_source="$(dev_kit_repo_documented_command_source "$repo_dir" "build" || true)"
+        if [ -n "$documented_command" ]; then
+          printf '%s|%s|%s\n' "documented_commands" "$documented_command" "$documented_source"
+          return 0
+        fi
+        ;;
+      documented_commands:run)
+        local documented_command documented_source
+        documented_command="$(dev_kit_repo_documented_command "$repo_dir" "run" || true)"
+        documented_source="$(dev_kit_repo_documented_command_source "$repo_dir" "run" || true)"
+        if [ -n "$documented_command" ]; then
+          printf '%s|%s|%s\n' "documented_commands" "$documented_command" "$documented_source"
+          return 0
+        fi
+        ;;
+    esac
+  done <<EOF
+$(dev_kit_context_section_list "commands" "prefer_sources")
+EOF
+
+  return 1
+}
+
 dev_kit_repo_factor_entrypoint() {
   local repo_dir="$1"
   local kind="$2"
-  local command=""
+  local result=""
 
-  case "$kind" in
-    pipeline|verify|verification)
-      if dev_kit_repo_has_make_target "$repo_dir" "test"; then
-        printf "%s" "make test"; return 0
-      fi
-      if dev_kit_repo_has_node_test_script "$repo_dir"; then
-        printf "%s" "npm test"; return 0
-      fi
-      if dev_kit_repo_has_composer_test_script "$repo_dir"; then
-        printf "%s" "composer test"; return 0
-      fi
-      command="$(dev_kit_repo_documented_command "$repo_dir" "verification" || true)"
-      ;;
-    build|build_release_run)
-      if dev_kit_repo_has_make_target "$repo_dir" "build"; then
-        printf "%s" "make build"; return 0
-      fi
-      command="$(dev_kit_repo_documented_command "$repo_dir" "build" || true)"
-      ;;
-    run|runtime)
-      if dev_kit_repo_has_make_target "$repo_dir" "run"; then
-        printf "%s" "make run"; return 0
-      fi
-      command="$(dev_kit_repo_documented_command "$repo_dir" "run" || true)"
-      ;;
-    *)
-      command=""
-      ;;
-  esac
-
-  if [ -n "$command" ]; then
-    printf "%s" "$command"
-    return 0
-  fi
-
-  return 1
+  result="$(dev_kit_repo_command_detection_result "$repo_dir" "$kind" 2>/dev/null || true)"
+  [ -n "$result" ] || return 1
+  printf "%s" "$(printf '%s' "$result" | cut -d'|' -f2)"
 }
 
 dev_kit_repo_factor_ids() {

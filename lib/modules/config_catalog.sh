@@ -43,6 +43,74 @@ dev_kit_context_marker_group_paths() {
   dev_kit_yaml_named_block_list "$(dev_kit_context_config_path)" "marker_groups" "$1" "paths"
 }
 
+dev_kit_context_section_ids() {
+  dev_kit_yaml_named_block_ids "$(dev_kit_context_config_path)" "context_sections"
+}
+
+dev_kit_context_section_field() {
+  dev_kit_yaml_named_block_scalar "$(dev_kit_context_config_path)" "context_sections" "$1" "$2"
+}
+
+dev_kit_context_section_notes() {
+  dev_kit_yaml_named_block_list "$(dev_kit_context_config_path)" "context_sections" "$1" "notes"
+}
+
+dev_kit_context_section_list() {
+  dev_kit_yaml_named_block_list "$(dev_kit_context_config_path)" "context_sections" "$1" "$2"
+}
+
+dev_kit_context_section_context_list_values() {
+  local section_id="$1"
+  local key="$2"
+  local list_name=""
+
+  while IFS= read -r list_name; do
+    [ -n "$list_name" ] || continue
+    dev_kit_context_list "$list_name"
+  done <<EOF
+$(dev_kit_context_section_list "$section_id" "$key")
+EOF
+}
+
+dev_kit_context_section_detection_list_values() {
+  local section_id="$1"
+  local key="$2"
+  local list_name=""
+
+  while IFS= read -r list_name; do
+    [ -n "$list_name" ] || continue
+    dev_kit_detection_list "$list_name"
+  done <<EOF
+$(dev_kit_context_section_list "$section_id" "$key")
+EOF
+}
+
+dev_kit_context_section_list_has_value() {
+  local section_id="$1"
+  local key="$2"
+  local expected="$3"
+  local value=""
+
+  while IFS= read -r value; do
+    [ -n "$value" ] || continue
+    [ "$value" = "$expected" ] && return 0
+  done <<EOF
+$(dev_kit_context_section_list "$section_id" "$key")
+EOF
+
+  return 1
+}
+
+dev_kit_ref_is_excluded() {
+  case "$1" in
+    package-lock.json|composer.lock|yarn.lock|pnpm-lock.yaml|bun.lockb|Cargo.lock|Gemfile.lock)
+      return 0
+      ;;
+  esac
+
+  return 1
+}
+
 dev_kit_repo_priority_refs_json() {
   dev_kit_repo_priority_refs "$1" | dev_kit_lines_to_json_array
 }
@@ -52,13 +120,52 @@ dev_kit_repo_priority_list() {
   local list_name="$2"
   local path=""
   local refs=""
+  local pattern=""
+  local match=""
 
   while IFS= read -r path; do
     [ -n "$path" ] || continue
-    if [ -e "$repo_dir/$path" ]; then
-      refs="${refs}./${path}
+    path="${path#\"}"
+    path="${path%\"}"
+    case "$path" in
+      *"*"*|*"?"*|*"["*)
+        pattern="${path#./}"
+        if [[ "$pattern" == */* ]]; then
+          while IFS= read -r match; do
+            [ -n "$match" ] || continue
+            match="${match#"${repo_dir}/"}"
+            case "$match" in
+              *_old.md|*_old.markdown|README_old.md|readme_old.md) continue ;;
+            esac
+            dev_kit_ref_is_excluded "$match" && continue
+            refs="${refs}./${match}
 "
-    fi
+          done <<EOF
+$(dev_kit_repo_find "$repo_dir" \( -type f -o -type d \) -path "$repo_dir/$pattern" -print 2>/dev/null | sort)
+EOF
+        else
+          while IFS= read -r match; do
+            [ -n "$match" ] || continue
+            match="${match#"${repo_dir}/"}"
+            case "$match" in
+              *_old.md|*_old.markdown|README_old.md|readme_old.md) continue ;;
+            esac
+            dev_kit_ref_is_excluded "$match" && continue
+            refs="${refs}./${match}
+"
+          done <<EOF
+$(find "$repo_dir" -maxdepth 1 \( -type f -o -type d \) -name "$pattern" 2>/dev/null | sort)
+EOF
+        fi
+        ;;
+      *)
+        if [ -e "$repo_dir/$path" ]; then
+          dev_kit_ref_is_excluded "$path" && continue
+          refs="${refs}./${path}
+"
+        fi
+        ;;
+    esac
   done <<EOF
 $(dev_kit_context_list "$list_name")
 EOF
@@ -68,7 +175,23 @@ EOF
 
 dev_kit_repo_priority_refs() {
   local repo_dir="${1:-$(pwd)}"
-  dev_kit_repo_priority_list "$repo_dir" "priority_paths"
+  local list_name=""
+  local refs=""
+
+  while IFS= read -r list_name; do
+    [ -n "$list_name" ] || continue
+    refs="${refs}$(dev_kit_repo_priority_list "$repo_dir" "$list_name")
+"
+  done <<EOF
+$(dev_kit_context_section_list "refs" "source_lists")
+EOF
+
+  if [ -z "$refs" ]; then
+    dev_kit_repo_priority_list "$repo_dir" "priority_paths"
+    return 0
+  fi
+
+  printf "%s" "$refs" | dev_kit_unique_lines_ci
 }
 
 dev_kit_repo_doc_refs() {

@@ -1,5 +1,6 @@
 kind: learningWorkflows
-version: udx.io/dev.kit/v1
+version: udx.dev/dev.kit/v1
+description: Local lesson extraction workflows and session discovery rules
 
 config:
   source_discovery:

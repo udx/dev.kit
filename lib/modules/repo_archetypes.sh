@@ -21,6 +21,31 @@ EOF
   return 1
 }
 
+dev_kit_repo_has_yaml_manifest() {
+  local repo_dir="$1"
+  local file_path=""
+  local rel_path=""
+
+  while IFS= read -r file_path; do
+    [ -n "$file_path" ] || continue
+    rel_path="${file_path#"${repo_dir}/"}"
+    case "$rel_path" in
+      .github/workflows/*|.rabbit/context.yaml) continue ;;
+    esac
+    if awk '
+      /^[[:space:]]*#/ { next }
+      /^[[:space:]]*(kind|apiVersion|version|services|resources|modules|config):[[:space:]]*/ { found=1; exit }
+      END { exit found ? 0 : 1 }
+    ' "$file_path"; then
+      return 0
+    fi
+  done <<EOF
+$(dev_kit_repo_find_from_glob_list "$repo_dir" "yaml_manifest_globs")
+EOF
+
+  return 1
+}
+
 dev_kit_repo_has_facet_in_text() {
   local facets="$1"
   local facet="$2"
@@ -67,6 +92,16 @@ framework:wp-config.php
      dev_kit_repo_has_any_dir_from_list "$repo_dir" "wordpress_dirs"; }; then
     has_wordpress=1
     facets="${facets}framework:wordpress
+"
+  fi
+
+  if dev_kit_repo_has_next_app "$repo_dir"; then
+    facets="${facets}framework:next
+"
+  fi
+
+  if dev_kit_repo_has_yaml_manifest "$repo_dir"; then
+    facets="${facets}manifest:yaml
 "
   fi
 
@@ -118,6 +153,11 @@ manifest:package.json
 
   if ! dev_kit_repo_has_facet_in_text "$facets" "package:node" && dev_kit_has_file "$repo_dir" "package.json"; then
     facets="${facets}package:node
+"
+  fi
+
+  if dev_kit_repo_has_node_bin "$repo_dir"; then
+    facets="${facets}package:cli
 "
   fi
 

@@ -16,6 +16,16 @@ dev_kit_repo_entrypoints_json() {
     "$(if [ -n "$run_cmd" ]; then printf '"%s"' "$(dev_kit_json_escape "$run_cmd")"; else printf 'null'; fi)"
 }
 
+dev_kit_repo_entrypoint_source() {
+  local repo_dir="$1"
+  local kind="$2"
+  local result=""
+
+  result="$(dev_kit_repo_command_detection_result "$repo_dir" "$kind" 2>/dev/null || true)"
+  [ -n "$result" ] || return 1
+  printf "%s" "$(printf '%s' "$result" | cut -d'|' -f3)"
+}
+
 dev_kit_repo_workflow_steps() {
   local repo_dir="$1"
   local verify_cmd=""

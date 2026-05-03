@@ -17,7 +17,7 @@ dev_kit_env_config_ensure() {
   if [ ! -f "$config_path" ]; then
     cat > "$config_path" <<'EOF'
 kind: envConfig
-version: udx.io/dev.kit/v1
+version: udx.dev/dev.kit/v1
 
 config:
   disabled_tools: []

@@ -4,7 +4,6 @@
   "path": "{{path}}",
   "mode": "{{mode}}",
   "archetype": "{{archetype}}",
-  "profile": "{{profile}}",
   "markers": {{markers}},
   "factors": {{factors}},
   "gaps": {{gaps}},
