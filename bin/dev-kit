@@ -70,7 +70,7 @@ dev_kit_run_home() {
   local state="installed"
   local repo_dir="$(pwd)"
   local repo_root="" repo_detected="false" repo_kind="workspace"
-  local archetype="n/a" profile="n/a" git_state="no"
+  local archetype="n/a" git_state="no"
   local priority_refs="" next_git_action=""
   local context_yaml_path="" agents_md_path=""
 
@@ -79,7 +79,6 @@ dev_kit_run_home() {
     repo_detected="true"
     repo_kind="repo"
     archetype="$(dev_kit_repo_primary_archetype "$repo_root")"
-    profile="$(dev_kit_repo_primary_profile "$repo_root")"
     context_yaml_path="$(dev_kit_context_yaml_path "$repo_root")"
     agents_md_path="${repo_root}/AGENTS.md"
     if dev_kit_sync_has_git_repo "$repo_root"; then
@@ -104,11 +103,10 @@ dev_kit_run_home() {
     printf '    "repo_detected": %s,\n' "$repo_detected"
     printf '    "kind": "%s"' "$(dev_kit_json_escape "$repo_kind")"
     if [ "$repo_detected" = "true" ]; then
-      printf ',\n    "repo": { "name": "%s", "root": "%s", "archetype": "%s", "profile": "%s", "git": %s, "markers": %s, "priority_refs": %s, "entrypoints": %s, "next_git_action": %s }\n' \
+      printf ',\n    "repo": { "name": "%s", "root": "%s", "archetype": "%s", "git": %s, "markers": %s, "priority_refs": %s, "entrypoints": %s, "next_git_action": %s }\n' \
         "$(dev_kit_json_escape "$(dev_kit_repo_name "$repo_root")")" \
         "$(dev_kit_json_escape "$repo_root")" \
         "$(dev_kit_json_escape "$archetype")" \
-        "$(dev_kit_json_escape "$profile")" \
         "$([ "$git_state" = "yes" ] && printf 'true' || printf 'false')" \
         "$(dev_kit_repo_markers_json "$repo_root")" \
         "$(dev_kit_repo_priority_refs_json "$repo_root")" \
@@ -164,27 +162,26 @@ EOF
   if [ -n "$repo_root" ]; then
     dev_kit_spinner_start "syncing repo context"
     archetype="$(dev_kit_repo_primary_archetype "$repo_root")"
-    profile="$(dev_kit_repo_primary_profile "$repo_root")"
     context_yaml_path="$(dev_kit_context_yaml_path "$repo_root")"
     agents_md_path="${repo_root}/AGENTS.md"
     dev_kit_context_yaml_write "$repo_root" >/dev/null
     dev_kit_agent_write_agents_md "$repo_root" "$agents_md_path"
     dev_kit_spinner_stop ""
 
-    dev_kit_output_summary "$(dev_kit_repo_name "$repo_root") • ${archetype} • profile ${profile}"
+    dev_kit_output_summary "$(dev_kit_repo_name "$repo_root") • ${archetype}"
 
     dev_kit_output_section "synced"
     dev_kit_output_row "context" "$context_yaml_path"
     dev_kit_output_row "agents" "$agents_md_path"
 
-    dev_kit_output_section "subcommands"
-    dev_kit_output_list_item 'Use `dev.kit env` to inspect tools and environment config.'
-    dev_kit_output_list_item 'Use `dev.kit repo` to refresh only repo context.'
-    dev_kit_output_list_item 'Use `dev.kit agent` to regenerate only `AGENTS.md`.'
+    dev_kit_output_section "next"
+    dev_kit_output_row "env" "dev.kit env"
+    dev_kit_output_row "repo" "dev.kit repo"
+    dev_kit_output_row "agent" "dev.kit agent"
   else
     dev_kit_output_summary "no repo detected at ${repo_dir}"
-    dev_kit_output_section "do next"
-    dev_kit_output_list_item "Navigate into a repo, then run dev.kit again."
+    dev_kit_output_section "next"
+    dev_kit_output_row "start" "cd <repo> && dev.kit"
   fi
 }
 

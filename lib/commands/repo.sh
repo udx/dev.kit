@@ -48,7 +48,6 @@ dev_kit_cmd_repo() {
       "path=$(dev_kit_json_escape "$repo_dir")" \
       "mode=$(dev_kit_json_escape "$mode")" \
       "archetype=$(dev_kit_json_escape "$(dev_kit_repo_primary_archetype "$repo_dir")")" \
-      "profile=$(dev_kit_json_escape "$(dev_kit_repo_primary_profile "$repo_dir")")" \
       "markers=$(dev_kit_repo_markers_json "$repo_dir")" \
       "factors=$(dev_kit_repo_factor_summary_json "$repo_dir")" \
       "gaps=$gaps_json" \
@@ -116,5 +115,8 @@ EOF
   dev_kit_output_list_item "$context_yaml_path"
 
   dev_kit_output_section "next"
-  dev_kit_output_row "run" "dev.kit agent"
+  dev_kit_output_row "agent" "dev.kit agent"
+  if [ "$gap_count" -gt 0 ]; then
+    dev_kit_output_row "repair" "follow AGENTS.md gap repair loop, then dev.kit repo"
+  fi
 }

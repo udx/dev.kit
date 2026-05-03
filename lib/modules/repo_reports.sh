@@ -40,7 +40,7 @@ dev_kit_repo_agent_contract_text() {
   local repo_dir="$1"
 
   printf '%s\n' "Use dev.kit JSON output as the machine contract: dev.kit --json, dev.kit repo --json, dev.kit agent --json."
-  printf '%s\n' "Start from repo context first. Treat `.rabbit/context.yaml` as the primary machine-readable contract."
+  printf '%s\n' 'Start from repo context first. Treat `.rabbit/context.yaml` as the primary machine-readable contract.'
   printf '%s\n' "Keep agent-specific guidance small, repo-aware, and secondary to repo-native files."
 
   if [ -f "$repo_dir/AGENTS.md" ]; then
