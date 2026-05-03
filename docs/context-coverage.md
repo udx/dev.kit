@@ -15,14 +15,14 @@ It should answer three questions:
 Typical sections include:
 
 - repo identity
-- priority refs
-- detected verify, build, and run commands
-- gaps
-- manifests
+- direct-read refs
+- detected verify, build, and run commands with source hints
+- structured gaps with factor, status, message, and evidence
+- manifests as structured entries
 - dependencies
-- lessons
 
 Depending on the repo and environment, it may also include live repo experience that can be serialized safely.
+Dynamic GitHub state such as issues, pull requests, reviews, workflow runs, and alerts is intentionally not serialized. Agents should fetch those live with `gh` when the current task needs them.
 
 ## What Gaps Mean
 
@@ -33,6 +33,13 @@ That means a gap can represent:
 - something missing
 - something incomplete
 - something present but too thin to treat as strong coverage
+
+Each gap entry should say:
+
+- which factor is weak
+- whether it is `missing` or `partial`
+- the current message for that condition
+- the observed evidence that led to that result
 
 This is why context coverage testing should include broken or degraded repos, not only healthy ones.
 
@@ -46,6 +53,7 @@ It is not the right place for:
 - long-form operating guidance
 - issue or PR handling advice
 - subjective reasoning about what an agent should do next
+- local-only lesson artifacts
 
 Those belong in `AGENTS.md`.
 

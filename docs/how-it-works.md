@@ -31,7 +31,7 @@ Those are useful when only one layer needs to be refreshed, but the default expe
 - `.rabbit/context.yaml`
 - `AGENTS.md`
 
-`.rabbit/context.yaml` is the structured repo contract. It contains repo identity, priority refs, detected commands, gaps, manifests, and dependency traces.
+`.rabbit/context.yaml` is the structured repo contract. It contains repo identity, direct-read refs, detected commands with their source, structured gaps, manifests, and dependency traces.
 
 `AGENTS.md` is the generated guidance layer for agents. It points back to `context.yaml` instead of duplicating it, and focuses on how the agent should operate from the repo contract.
 
@@ -39,6 +39,19 @@ The intended split is:
 
 - `context.yaml` answers what the repo declares
 - `AGENTS.md` answers how an agent should use that declaration
+
+## Repo Assets
+
+The repo is intentionally split into a small set of assets:
+
+- `src/configs/*.yaml` defines repo detection, context sections, signal lists, gap rules, and learning guidance.
+- `lib/modules/*.sh` implements thin, config-driven detection and rendering helpers.
+- `lib/commands/*.sh` exposes the public command flow: `env`, `repo`, `agent`, `learn`, and `uninstall`.
+- `bin/dev-kit` is the CLI entrypoint and the only happy-path runner.
+- `.rabbit/context.yaml` and `AGENTS.md` are generated outputs, refreshed from repo signals.
+- `tests/` contains the local smoke suite for the basic command flow.
+
+Backend-specific details such as Terraform modules, Docker images, GitHub workflows, and package scripts should appear as traced manifest or dependency details. They should not become top-level repo identities unless the repo explicitly declares that contract.
 
 ## Command Roles
 
@@ -48,7 +61,7 @@ The intended split is:
 
 `dev.kit agent` reads repo context and generates `AGENTS.md`.
 
-`dev.kit learn` extracts lessons from prior agent sessions into `.rabbit/dev.kit/`.
+`dev.kit learn` extracts optional local lessons into `.rabbit/dev.kit/`. Those artifacts are local-only and are not part of the committed repo contract.
 
 ## Working Model
 

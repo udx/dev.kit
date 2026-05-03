@@ -22,9 +22,11 @@ The tracing model is deterministic.
 If `dev.kit` can resolve a dependency confidently, it records:
 
 - the dependency target
-- its type
+- its kind
 - whether it was resolved
 - where it is used in the current repo
+
+For versioned manifests such as `udx.dev/dev.kit/v1`, the domain is treated as an org hint and the repo segment is normalized into a GitHub-style slug such as `udx/dev.kit`.
 
 When possible, same-org dependencies are resolved from current GitHub metadata and local sibling repos. Docker images may also be mapped back to likely source repos.
 

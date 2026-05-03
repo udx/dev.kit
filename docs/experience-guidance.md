@@ -28,7 +28,7 @@ That is why generated guidance should be shaped by:
 
 - repo contract first
 - live repo experience where it is relevant and available
-- lessons and fallback defaults last
+- small built-in defaults last
 
 ## Why This Layer Exists
 

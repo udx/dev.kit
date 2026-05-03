@@ -33,7 +33,7 @@ dev.kit agent      # refresh only AGENTS.md
 | `dev.kit repo` | Analyze factors, trace dependencies, pull GitHub signals, write `context.yaml` |
 | `dev.kit repo --force` | Re-resolve all dependencies from scratch |
 | `dev.kit agent` | Generate `AGENTS.md` from `context.yaml` |
-| `dev.kit learn` | Extract patterns from Claude/Codex sessions into lessons artifact |
+| `dev.kit learn` | Extract optional local lessons from Claude/Codex sessions into `.rabbit/dev.kit/` |
 
 All commands support `--json` for machine-readable output.
 
