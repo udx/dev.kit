@@ -49,8 +49,6 @@ dev_kit_repo_workflow_steps() {
     printf "run|Use the canonical runtime command instead of ad hoc startup paths|%s\n" "$run_cmd"
   fi
 
-  printf "learn|Review lessons-learned and follow-up outputs after changes stabilize|dev.kit learn\n"
-
 }
 
 

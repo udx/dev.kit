@@ -35,5 +35,4 @@ Use these repo-derived steps as the default operating path. Adapt them to the cu
 
   - Read the highest-priority repo refs first: ./README.md, ./changes.md, ./deploy.yml, ./.github/workflows, ./Makefile, ./docs
   - Run the canonical verification command: make test
-  - Review lessons-learned and follow-up outputs after changes stabilize: dev.kit learn
 

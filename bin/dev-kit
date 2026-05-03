@@ -133,8 +133,7 @@ dev_kit_run_home() {
     printf '  "helpers": [\n'
     printf '    { "id": "env", "label": "Inspect environment tools and config", "command": "dev.kit env" },\n'
     printf '    { "id": "repo", "label": "Analyse repo structure and factors", "command": "dev.kit repo" },\n'
-    printf '    { "id": "agent", "label": "Start an AI session with repo context", "command": "dev.kit agent" },\n'
-    printf '    { "id": "learn", "label": "Review lessons-learned workflow", "command": "dev.kit learn" }\n'
+    printf '    { "id": "agent", "label": "Start an AI session with repo context", "command": "dev.kit agent" }\n'
     printf '  ]\n'
     printf '}\n'
     return 0
@@ -202,10 +201,6 @@ command_usage() {
       ;;
     agent)
       echo "  --json     Output machine-readable JSON"
-      ;;
-    learn)
-      echo "  --json     Output machine-readable JSON"
-      echo "  --workflow Override the configured learn workflow id"
       ;;
     uninstall)
       echo "  --yes      Remove dev.kit without a confirmation prompt"

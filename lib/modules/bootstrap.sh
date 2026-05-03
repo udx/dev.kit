@@ -19,7 +19,6 @@ $REPO_DIR/lib/modules/repo_factors.sh
 $REPO_DIR/lib/modules/repo_reports.sh
 $REPO_DIR/lib/modules/repo_workflows.sh
 $REPO_DIR/lib/modules/dev_sync.sh
-$REPO_DIR/lib/modules/learning_sources.sh
 $REPO_DIR/lib/modules/repo_scaffold.sh
 EOF
 }
@@ -30,7 +29,7 @@ dev_kit_command_description() {
 }
 
 dev_kit_public_command_names() {
-  printf '%s\n' env repo agent learn uninstall
+  printf '%s\n' env repo agent uninstall
 }
 
 dev_kit_command_file_path() {

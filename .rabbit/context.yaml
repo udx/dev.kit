@@ -79,9 +79,6 @@ manifests:
   - path: src/configs/detection-signals.yaml
     kind: detectionSignals
     description: File, directory, and glob signals for factor and dependency detection
-  - path: src/configs/learning-workflows.yaml
-    kind: learningWorkflows
-    description: Local lesson extraction workflows and session discovery rules
   - path: .github/workflows/context7-ops.yml
     kind: githubWorkflow
   - path: .github/workflows/npm-release-ops.yml

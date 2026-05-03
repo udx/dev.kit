@@ -20,7 +20,6 @@ The lower-level commands still exist:
 - `dev.kit env`
 - `dev.kit repo`
 - `dev.kit agent`
-- `dev.kit learn`
 
 Those are useful when only one layer needs to be refreshed, but the default experience should start from `dev.kit`.
 
@@ -44,9 +43,9 @@ The intended split is:
 
 The repo is intentionally split into a small set of assets:
 
-- `src/configs/*.yaml` defines repo detection, context sections, signal lists, gap rules, and learning guidance.
+- `src/configs/*.yaml` defines repo detection, context sections, signal lists, and gap rules.
 - `lib/modules/*.sh` implements thin, config-driven detection and rendering helpers.
-- `lib/commands/*.sh` exposes the public command flow: `env`, `repo`, `agent`, `learn`, and `uninstall`.
+- `lib/commands/*.sh` exposes the public command flow: `env`, `repo`, `agent`, and `uninstall`.
 - `bin/dev-kit` is the CLI entrypoint and the only happy-path runner.
 - `.rabbit/context.yaml` and `AGENTS.md` are generated outputs, refreshed from repo signals.
 - `tests/` contains the local smoke suite for the basic command flow.
@@ -60,8 +59,6 @@ Backend-specific details such as Terraform modules, Docker images, GitHub workfl
 `dev.kit repo` analyzes the repository and writes `.rabbit/context.yaml`.
 
 `dev.kit agent` reads repo context and generates `AGENTS.md`.
-
-`dev.kit learn` extracts optional local lessons into `.rabbit/dev.kit/`. Those artifacts are local-only and are not part of the committed repo contract.
 
 ## Working Model
 

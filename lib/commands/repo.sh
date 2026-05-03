@@ -5,7 +5,7 @@
 dev_kit_cmd_repo() {
   local format="${1:-text}"
   local repo_dir="$(pwd)"
-  local mode="learn"
+  local mode="write"
   local repo_root=""
   local repo_name=""
   local gaps_json=""
@@ -39,7 +39,7 @@ dev_kit_cmd_repo() {
   # JSON mode: compute everything up front then emit template
   if [ "$format" = "json" ]; then
     gaps_json="$(dev_kit_scaffold_gaps_json "$repo_dir")"
-    if [ "$mode" = "learn" ]; then
+    if [ "$mode" = "write" ]; then
       dev_kit_context_yaml_write "$repo_dir" "$force_resolve" >/dev/null
     fi
     dev_kit_template_render "repo.json" \
@@ -105,7 +105,7 @@ EOF
   fi
 
   # ── Write context.yaml ──────────────────────────────────────────────────────
-  if [ "$mode" = "learn" ]; then
+  if [ "$mode" = "write" ]; then
     dev_kit_spinner_start "writing context"
     dev_kit_context_yaml_write "$repo_dir" "$force_resolve" >/dev/null
     dev_kit_spinner_stop ""

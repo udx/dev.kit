@@ -7,7 +7,6 @@ SOURCE_REPO="${DEV_KIT_TEST_SOURCE_REPO:-$REPO_DIR}"
 TARGET_REPO="${DEV_KIT_TEST_TARGET_REPO:-$REPO_DIR}"
 TARGET_REPO_NAME="${DEV_KIT_TEST_TARGET_REPO_NAME:-target-repo}"
 KEEP_HOME="${DEV_KIT_TEST_KEEP_HOME:-0}"
-RUN_LEARN="${DEV_KIT_TEST_RUN_LEARN:-0}"
 TEST_HOME="${DEV_KIT_TEST_HOME:-$(mktemp -d "${TMPDIR:-/tmp}/dev-kit-worker-home.XXXXXX")}"
 DISABLED_TOOLS="${DEV_KIT_TEST_DISABLED_TOOLS:-}"
 DISABLED_CREDS="${DEV_KIT_TEST_DISABLED_CREDS:-}"
@@ -32,7 +31,6 @@ Environment:
   DEV_KIT_TEST_DISABLED_CREDS     Comma-separated credentials to disable in env config
   DEV_KIT_TEST_SCRATCH_MODE       copy or direct (default: copy)
   DEV_KIT_TEST_PREPARE_CMD        Shell command to run against the test repo copy before dev.kit
-  DEV_KIT_TEST_RUN_LEARN          Also run `dev.kit learn --json` (default: 0)
 EOF
 }
 
@@ -147,8 +145,4 @@ docker run --rm \
     dev.kit repo --json
     printf '\n== dev.kit agent --json ==\n'
     dev.kit agent --json
-    if [ \"$RUN_LEARN\" = \"1\" ]; then
-      printf '\n== dev.kit learn --json ==\n'
-      dev.kit learn --json
-    fi
   "
