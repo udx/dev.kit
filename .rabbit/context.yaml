@@ -57,6 +57,30 @@ dependencies:
     used_by:
       - .github/workflows/context7-ops.yml
       - .github/workflows/npm-release-ops.yml
+  - repo: udx/dev.kit
+    kind: manifest contract (v1)
+    resolved: true
+    declared_as: udx.dev/dev.kit/v1
+    archetype: package-cli
+    used_by:
+      - src/configs/archetypes.yaml
+      - src/configs/audit-rules.yaml
+      - src/configs/context-config.yaml
+      - src/configs/detection-patterns.yaml
+      - src/configs/detection-signals.yaml
+  - repo: udx/worker
+    kind: manifest contract (deploy)
+    resolved: true
+    declared_as: udx.io/worker-v1/deploy
+    archetype: runtime-image
+    description: UDX Worker Docker image
+    used_by:
+      - deploy.yml
+  - repo: org/repo
+    kind: github reference
+    resolved: false
+    used_by:
+      - src/configs/detection-signals.yaml
 
 # Manifests — YAML files that define detection rules, workflows, evaluation, deploy, or runtime behavior.
 # Note: Include manifests that materially shape repo behavior or agent understanding.
@@ -67,24 +91,93 @@ manifests:
   - path: src/configs/archetypes.yaml
     kind: repoArchetypes
     description: Repo archetype definitions and matching rules
+    declared_as: udx.dev/dev.kit/v1
+    source_repo: udx/dev.kit
+    used_by:
+      - lib/modules/config_catalog.sh
+    evidence:
+      - version: udx.dev/dev.kit/v1
+      - path reference: lib/modules/config_catalog.sh
   - path: src/configs/audit-rules.yaml
     kind: auditRules
     description: Gap messages and guidance for missing or partial repo factors
+    declared_as: udx.dev/dev.kit/v1
+    source_repo: udx/dev.kit
+    used_by:
+      - lib/modules/config_catalog.sh
+    evidence:
+      - version: udx.dev/dev.kit/v1
+      - path reference: lib/modules/config_catalog.sh
   - path: src/configs/context-config.yaml
     kind: contextConfig
     description: Repo root markers, direct-read refs, and documentation priority order
+    declared_as: udx.dev/dev.kit/v1
+    source_repo: udx/dev.kit
+    used_by:
+      - lib/modules/config_catalog.sh
+    evidence:
+      - version: udx.dev/dev.kit/v1
+      - path reference: lib/modules/config_catalog.sh
   - path: src/configs/detection-patterns.yaml
     kind: detectionPatterns
     description: Regex patterns for command, workflow, and env detection
+    declared_as: udx.dev/dev.kit/v1
+    source_repo: udx/dev.kit
+    used_by:
+      - lib/modules/repo_signals.sh
+    evidence:
+      - version: udx.dev/dev.kit/v1
+      - path reference: lib/modules/repo_signals.sh
   - path: src/configs/detection-signals.yaml
     kind: detectionSignals
     description: File, directory, and glob signals for factor and dependency detection
+    declared_as: udx.dev/dev.kit/v1
+    source_repo: org/repo
+    used_by:
+      - lib/modules/repo_signals.sh
+    evidence:
+      - version: udx.dev/dev.kit/v1
+      - github reference: org/repo
+      - path reference: lib/modules/repo_signals.sh
   - path: .github/workflows/context7-ops.yml
     kind: githubWorkflow
   - path: .github/workflows/npm-release-ops.yml
     kind: githubWorkflow
+    used_by:
+      - .claude/settings.local.json
+      - README_old.md
+    evidence:
+      - path reference: .claude/settings.local.json
+      - path reference: README_old.md
   - path: deploy.yml
     kind: workerDeployConfig
+    declared_as: udx.io/worker-v1/deploy
+    source_repo: udx/worker
+    used_by:
+      - Makefile
+      - tests/suite.sh
+      - tests/fixtures/docker-repo/.dev-kit/manifest.json
+      - tests/fixtures/docker-repo/.rabbit/context.yaml
+      - .claude/settings.local.json
+      - lib/modules/repo_scaffold.sh
+      - src/configs/detection-signals.yaml
+      - src/configs/context-config.yaml
+    evidence:
+      - version: udx.io/worker-v1/deploy
+      - path reference: Makefile
+      - path reference: tests/suite.sh
+      - path reference: tests/fixtures/docker-repo/.dev-kit/manifest.json
+      - path reference: tests/fixtures/docker-repo/.rabbit/context.yaml
+      - path reference: .claude/settings.local.json
+      - path reference: lib/modules/repo_scaffold.sh
+      - path reference: src/configs/detection-signals.yaml
+      - path reference: src/configs/context-config.yaml
   - path: evals/promptfooconfig.yaml
     description: "dev.kit context impact — with vs without AGENTS.md"
+    used_by:
+      - Makefile
+      - src/configs/detection-signals.yaml
+    evidence:
+      - path reference: Makefile
+      - path reference: src/configs/detection-signals.yaml
 

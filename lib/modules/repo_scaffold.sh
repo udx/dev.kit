@@ -92,6 +92,152 @@ $(dev_kit_manifest_module_values "$manifest_path")
 EOF
 }
 
+dev_kit_github_repo_refs_in_file() {
+  local file_path="$1"
+  local repo_ref=""
+
+  [ -f "$file_path" ] || return 0
+
+  while IFS= read -r repo_ref; do
+    [ -n "$repo_ref" ] || continue
+    printf '%s\n' "$repo_ref"
+  done <<EOF
+$(
+  {
+    grep -oE 'github\.com[:/][A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+' "$file_path" 2>/dev/null || true
+  } | awk '
+    {
+      sub(/github\.com[\/:]+/, "")
+      sub(/\.git$/, "")
+      if ($0 != "") print
+    }
+  ' | awk '!seen[$0]++'
+)
+EOF
+}
+
+dev_kit_manifest_version_value() {
+  local manifest_path="$1"
+
+  [ -f "$manifest_path" ] || return 0
+
+  awk '
+    /^version:[[:space:]]*/ {
+      value = $0
+      sub(/^version:[[:space:]]*/, "", value)
+      gsub(/["'\''"]/, "", value)
+      gsub(/[[:space:]]+$/, "", value)
+      if (value != "") print value
+      exit
+    }
+  ' "$manifest_path"
+}
+
+dev_kit_manifest_comment_repo_refs() {
+  local manifest_path="$1"
+
+  dev_kit_github_repo_refs_in_file "$manifest_path"
+}
+
+dev_kit_manifest_usage_paths() {
+  local repo_root="$1"
+  local manifest_rel="$2"
+  local scan_file=""
+  local scan_rel=""
+
+  [ -n "$manifest_rel" ] || return 0
+
+  while IFS= read -r scan_file; do
+    [ -f "$scan_file" ] || continue
+    scan_rel="${scan_file#"${repo_root}/"}"
+
+    case "$scan_rel" in
+      "$manifest_rel"|.git/*|.rabbit/*|AGENTS.md) continue ;;
+    esac
+
+    if grep -Fq -- "$manifest_rel" "$scan_file" 2>/dev/null; then
+      printf '%s\n' "$scan_rel"
+    fi
+  done <<EOF
+$(dev_kit_repo_find "$repo_root" -type f 2>/dev/null)
+EOF
+}
+
+dev_kit_manifest_source_repo() {
+  local manifest_path="$1"
+  local comment_repo=""
+  local version_value=""
+  local version_repo=""
+
+  comment_repo="$(dev_kit_manifest_comment_repo_refs "$manifest_path" | head -n 1)"
+  if [ -n "$comment_repo" ]; then
+    printf '%s\n' "$comment_repo"
+    return 0
+  fi
+
+  version_value="$(dev_kit_manifest_version_value "$manifest_path")"
+  if [ -n "$version_value" ]; then
+    version_repo="$(dev_kit_dep_version_repo_slug "$version_value" 2>/dev/null || true)"
+    if [ -n "$version_repo" ]; then
+      printf '%s\n' "$version_repo"
+      return 0
+    fi
+  fi
+
+  return 0
+}
+
+dev_kit_manifest_provenance_yaml() {
+  local repo_root="$1"
+  local manifest_rel="$2"
+  local manifest_path="${repo_root}/${manifest_rel}"
+  local declared_as=""
+  local source_repo=""
+  local evidence_yaml=""
+  local evidence_item=""
+  local usage_paths=""
+  local usage_path=""
+  local comment_repo=""
+
+  declared_as="$(dev_kit_manifest_version_value "$manifest_path")"
+  source_repo="$(dev_kit_manifest_source_repo "$manifest_path")"
+  usage_paths="$(dev_kit_manifest_usage_paths "$repo_root" "$manifest_rel" | awk '!seen[$0]++')"
+
+  [ -n "$declared_as" ] && printf '    declared_as: %s\n' "$declared_as"
+  [ -n "$source_repo" ] && printf '    source_repo: %s\n' "$source_repo"
+
+  if [ -n "$usage_paths" ]; then
+    printf '    used_by:\n'
+    while IFS= read -r usage_path; do
+      [ -n "$usage_path" ] || continue
+      printf '      - %s\n' "$usage_path"
+    done <<EOF
+$usage_paths
+EOF
+  fi
+
+  [ -n "$declared_as" ] && evidence_yaml="${evidence_yaml}      - version: ${declared_as}\n"
+
+  while IFS= read -r comment_repo; do
+    [ -n "$comment_repo" ] || continue
+    evidence_yaml="${evidence_yaml}      - github reference: ${comment_repo}\n"
+  done <<EOF
+$(dev_kit_manifest_comment_repo_refs "$manifest_path")
+EOF
+
+  while IFS= read -r evidence_item; do
+    [ -n "$evidence_item" ] || continue
+    evidence_yaml="${evidence_yaml}      - path reference: ${evidence_item}\n"
+  done <<EOF
+$usage_paths
+EOF
+
+  if [ -n "$evidence_yaml" ]; then
+    printf '    evidence:\n'
+    printf '%b' "$evidence_yaml"
+  fi
+}
+
 dev_kit_manifest_yaml_item() {
   local repo_root="$1"
   local manifest_rel="$2"
@@ -111,6 +257,7 @@ dev_kit_manifest_yaml_item() {
   printf '  - path: %s\n' "$manifest_rel"
   [ -n "$manifest_kind" ] && printf '    kind: %s\n' "$manifest_kind"
   [ -n "$manifest_description" ] && printf '    description: %s\n' "$manifest_description"
+  dev_kit_manifest_provenance_yaml "$repo_root" "$manifest_rel"
   dev_kit_manifest_backend_yaml "$repo_root" "$manifest_rel"
 }
 
@@ -162,15 +309,13 @@ dev_kit_dep_version_repo_slug() {
   [ -n "$domain" ] || return 1
   [ -n "$repo_name" ] || return 1
 
-  case "$domain" in
-    *.dev)
-      org_name="${domain%%.*}"
-      if [ -n "$org_name" ]; then
-        printf '%s/%s' "$org_name" "$repo_name"
-        return 0
-      fi
-      ;;
-  esac
+  org_name="${domain%%.*}"
+  repo_name="$(printf '%s' "$repo_name" | sed -E 's/-v[0-9]+([._-][A-Za-z0-9._-]+)?$//')"
+
+  if [ -n "$org_name" ] && [ "$org_name" != "$domain" ]; then
+    printf '%s/%s' "$org_name" "$repo_name"
+    return 0
+  fi
 
   printf '%s' "$repo_name"
 }
@@ -575,18 +720,16 @@ EOF
         [ -f "$_vf" ] || continue
         case "$_vf" in */context.yaml) continue ;; esac
         local _vf_rel="${_vf#"${repo_root}/"}"
-        awk -v src="$_vf_rel" '
-          /^version:/{
-            v=$2; n=split(v, p, "/")
-            if (n >= 3 && p[1] ~ /\./) {
-              repo=p[2]
-              module=(n >= 4 ? p[3] : "")
-              if (module != "") printf "%s|versioned config (%s)|%s\n", $2, module, src
-              else printf "%s|versioned config|%s\n", $2, src
-            }
-            exit
-          }
-        ' "$_vf" >> "$_dep_triples_file"
+        local _vf_version _vf_module
+        _vf_version="$(dev_kit_manifest_version_value "$_vf")"
+        if [ -n "$_vf_version" ]; then
+          _vf_module="$(printf '%s' "$_vf_version" | cut -d/ -f3)"
+          if [ -n "$_vf_module" ] && [ "$_vf_module" != "$_vf_version" ]; then
+            printf '%s|versioned config (%s)|%s\n' "$_vf_version" "$_vf_module" "$_vf_rel" >> "$_dep_triples_file"
+          else
+            printf '%s|versioned config|%s\n' "$_vf_version" "$_vf_rel" >> "$_dep_triples_file"
+          fi
+        fi
       done <<EOF
 $(find "${repo_root}/${_dep_dir}" -type f \( -name '*.yaml' -o -name '*.yml' \) 2>/dev/null)
 EOF
@@ -594,26 +737,96 @@ EOF
 $(dev_kit_context_section_detection_list_values "dependencies" "versioned_dirs")
 EOF
 
-    # Source 5: GitHub URLs — github.com/org/repo in config/manifest files
+    # Source 4b: Versioned manifests declared by repo contract sections
+    while IFS= read -r _manifest_dir; do
+      [ -n "$_manifest_dir" ] && [ -d "${repo_root}/${_manifest_dir}" ] || continue
+      while IFS= read -r _vf; do
+        [ -f "$_vf" ] || continue
+        case "$_vf" in */context.yaml) continue ;; esac
+        local _vf_rel="${_vf#"${repo_root}/"}"
+        local _vf_version _vf_module
+        _vf_version="$(dev_kit_manifest_version_value "$_vf")"
+        if [ -n "$_vf_version" ]; then
+          _vf_module="$(printf '%s' "$_vf_version" | cut -d/ -f3)"
+          if [ -n "$_vf_module" ] && [ "$_vf_module" != "$_vf_version" ]; then
+            printf '%s|manifest contract (%s)|%s\n' "$_vf_version" "$_vf_module" "$_vf_rel" >> "$_dep_triples_file"
+          else
+            printf '%s|manifest contract|%s\n' "$_vf_version" "$_vf_rel" >> "$_dep_triples_file"
+          fi
+        fi
+      done <<EOF
+$(find "${repo_root}/${_manifest_dir}" -maxdepth 1 \( -name '*.yaml' -o -name '*.yml' \) 2>/dev/null | sort)
+EOF
+    done <<EOF
+$(printf '%s\n%s\n' \
+  "$(dev_kit_context_section_detection_list_values "manifests" "config_dirs")" \
+  "$(dev_kit_context_section_detection_list_values "manifests" "workflow_dirs")" | awk '!seen[$0]++')
+EOF
+
+    while IFS= read -r _vf_rel; do
+      [ -n "$_vf_rel" ] && [ -f "${repo_root}/${_vf_rel}" ] || continue
+      local _vf_path="${repo_root}/${_vf_rel}"
+      local _vf_version _vf_module
+      _vf_version="$(dev_kit_manifest_version_value "$_vf_path")"
+      if [ -n "$_vf_version" ]; then
+        _vf_module="$(printf '%s' "$_vf_version" | cut -d/ -f3)"
+        if [ -n "$_vf_module" ] && [ "$_vf_module" != "$_vf_version" ]; then
+          printf '%s|manifest contract (%s)|%s\n' "$_vf_version" "$_vf_module" "$_vf_rel" >> "$_dep_triples_file"
+        else
+          printf '%s|manifest contract|%s\n' "$_vf_version" "$_vf_rel" >> "$_dep_triples_file"
+        fi
+      fi
+    done <<EOF
+$(dev_kit_context_section_detection_list_values "manifests" "root_files")
+EOF
+
+    # Source 5: GitHub URLs — github.com/org/repo in repo docs and manifest files
     local _url_glob
     while IFS= read -r _url_glob; do
       [ -n "$_url_glob" ] || continue
       while IFS= read -r _uf; do
         [ -f "$_uf" ] || continue
         local _uf_rel="${_uf#"${repo_root}/"}"
-        grep -oE 'github\.com[:/][A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+' "$_uf" 2>/dev/null | \
-          awk -v src="$_uf_rel" -v self_repo="$_repo" '{
-            sub(/github\.com[\/:]+/, "")
-            sub(/\.git$/, "")
-            # Skip self-references and file-path-like matches
-            if ($0 == self_repo || $0 ~ /\.(md|yml|yaml|json|sh|txt)$/) next
-            printf "%s|github reference|%s\n", $0, src
-          }' >> "$_dep_triples_file"
+        while IFS= read -r _repo_ref; do
+          [ -n "$_repo_ref" ] || continue
+          [ "$_repo_ref" = "$_repo" ] && continue
+          case "$_repo_ref" in
+            *.md|*.yml|*.yaml|*.json|*.sh|*.txt) continue ;;
+          esac
+          printf '%s|github reference|%s\n' "$_repo_ref" "$_uf_rel" >> "$_dep_triples_file"
+        done <<EOF
+$(dev_kit_github_repo_refs_in_file "$_uf")
+EOF
       done <<EOF
 $(find "$repo_root" -maxdepth 1 -name "$_url_glob" -not -name 'AGENTS.md' 2>/dev/null)
 EOF
     done <<EOF
 $(dev_kit_context_section_detection_list_values "dependencies" "url_globs")
+EOF
+
+    local _url_dir
+    while IFS= read -r _url_dir; do
+      [ -n "$_url_dir" ] && [ -d "${repo_root}/${_url_dir}" ] || continue
+      while IFS= read -r _uf; do
+        [ -f "$_uf" ] || continue
+        local _uf_rel="${_uf#"${repo_root}/"}"
+        while IFS= read -r _repo_ref; do
+          [ -n "$_repo_ref" ] || continue
+          [ "$_repo_ref" = "$_repo" ] && continue
+          case "$_repo_ref" in
+            *.md|*.yml|*.yaml|*.json|*.sh|*.txt) continue ;;
+          esac
+          printf '%s|github reference|%s\n' "$_repo_ref" "$_uf_rel" >> "$_dep_triples_file"
+        done <<EOF
+$(dev_kit_github_repo_refs_in_file "$_uf")
+EOF
+      done <<EOF
+$(find "${repo_root}/${_url_dir}" -type f \( -name '*.yaml' -o -name '*.yml' -o -name '*.md' \) 2>/dev/null)
+EOF
+    done <<EOF
+$(printf '%s\n%s\n' \
+  "$(dev_kit_context_section_detection_list_values "manifests" "config_dirs")" \
+  "$(dev_kit_context_section_detection_list_values "manifests" "workflow_dirs")" | awk '!seen[$0]++')
 EOF
 
     # Source 6: npm packages from package.json
@@ -624,31 +837,49 @@ EOF
       ' "${repo_root}/package.json" 2>/dev/null >> "$_dep_triples_file" || true
     fi
 
+    # Normalize dependency identifiers so multiple evidence types can collapse
+    # into a single repo-level dependency entry.
+    local _dep_norm_file
+    _dep_norm_file="$(mktemp "${TMPDIR:-/tmp}/dev-kit-deps-norm.XXXXXX")"
+
+    while IFS='|' read -r _dep_id _dep_kind _dep_src; do
+      [ -n "${_dep_id:-}" ] || continue
+
+      local _dep_key="$_dep_id"
+      local _dep_declared_as=""
+
+      case "$_dep_kind" in
+        versioned\ config*|manifest\ contract*)
+          _dep_declared_as="$_dep_id"
+          _dep_key="$(dev_kit_dep_version_repo_slug "$_dep_id" 2>/dev/null || true)"
+          [ -n "$_dep_key" ] || _dep_key="$_dep_id"
+          ;;
+      esac
+
+      printf '%s|%s|%s|%s\n' "$_dep_key" "$_dep_kind" "$_dep_src" "$_dep_declared_as" >> "$_dep_norm_file"
+    done < "$_dep_triples_file"
+
     # ── Group triples by dep, resolve same-org, emit structured YAML ─────
-    if [ -s "$_dep_triples_file" ]; then
+    if [ -s "$_dep_norm_file" ]; then
       dev_kit_context_section_comment_block "dependencies"
       printf 'dependencies:\n'
 
       # Get unique dep identifiers in discovery order
-      awk -F'|' '!seen[$1]++ {print $1}' "$_dep_triples_file" | while IFS= read -r _udep; do
+      awk -F'|' '!seen[$1]++ {print $1}' "$_dep_norm_file" | while IFS= read -r _udep; do
         [ -n "$_udep" ] || continue
 
         # Primary type (first seen)
         local _dep_type
-        _dep_type="$(awk -F'|' -v k="$_udep" '$1 == k {print $2; exit}' "$_dep_triples_file")"
+        _dep_type="$(awk -F'|' -v k="$_udep" '$1 == k {print $2; exit}' "$_dep_norm_file")"
 
         # Unique used_by files
         local _used_by
-        _used_by="$(awk -F'|' -v k="$_udep" '$1 == k {print $3}' "$_dep_triples_file" | sort -u)"
+        _used_by="$(awk -F'|' -v k="$_udep" '$1 == k {print $3}' "$_dep_norm_file" | sort -u)"
+
+        local _declared_as=""
+        _declared_as="$(awk -F'|' -v k="$_udep" '$1 == k && $4 != "" {print $4; exit}' "$_dep_norm_file")"
 
         local _display_repo="$_udep"
-        local _normalized_repo=""
-        case "$_dep_type" in
-          versioned\ config*)
-            _normalized_repo="$(dev_kit_dep_version_repo_slug "$_udep" 2>/dev/null || true)"
-            [ -n "$_normalized_repo" ] && _display_repo="$_normalized_repo"
-            ;;
-        esac
 
         printf '  - repo: %s\n' "$_display_repo"
         printf '    kind: %s\n' "$_dep_type"
@@ -671,13 +902,13 @@ EOF
           _resolve_out="$(dev_kit_dep_resolve "$_resolve_target" "$repo_root" "$_gh_auth_state" "$force")"
           IFS=$'\t' read -r _r_resolved _r_arch _r_desc <<< "$_resolve_out"
           printf '    resolved: %s\n' "$_r_resolved"
-          [ -n "$_normalized_repo" ] && [ "$_normalized_repo" != "$_udep" ] && printf '    declared_as: %s\n' "$_udep"
+          [ -n "$_declared_as" ] && printf '    declared_as: %s\n' "$_declared_as"
           [ -n "$_resolve_target" ] && [ "$_resolve_target" != "$_display_repo" ] && printf '    source_repo: %s\n' "$_resolve_target"
           [ -n "$_r_arch" ]    && printf '    archetype: %s\n' "$_r_arch"
           [ -n "$_r_desc" ]    && printf '    description: %s\n' "$_r_desc"
         else
           printf '    resolved: false\n'
-          [ -n "$_normalized_repo" ] && [ "$_normalized_repo" != "$_udep" ] && printf '    declared_as: %s\n' "$_udep"
+          [ -n "$_declared_as" ] && printf '    declared_as: %s\n' "$_declared_as"
         fi
 
         # Emit used_by
@@ -693,6 +924,7 @@ EOF
     fi
 
     rm -f "$_dep_triples_file"
+    rm -f "$_dep_norm_file"
 
     local _manifests_yaml=""
     local _yaml_file _yaml_rel _yaml_kind _yaml_desc _manifest_meta _manifest_dir

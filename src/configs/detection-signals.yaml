@@ -141,6 +141,7 @@ config:
   manifest_config_dirs:
     - src/configs
     - configs
+    - cd/configs
   manifest_backend_module_dirs:
     - cd/terraform/modules
     - terraform/modules

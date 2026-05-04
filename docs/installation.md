@@ -7,13 +7,27 @@
 
 Whichever path you use last becomes the active install. The installer cleans up the other path first so one install owns `dev.kit` at a time.
 
-Installation only puts the command on the machine. The normal operating loop starts after install:
+Installation only puts the command on the machine. Before relying on `dev.kit` for a session, make sure the active install is current, then start the normal operating loop:
 
 ```bash
 dev.kit
 ```
 
 `dev.kit` is the happy path. It checks the environment, refreshes repo context, and regenerates `AGENTS.md` when a repo is detected. Use `dev.kit repo` or `dev.kit agent` only when you want to refresh one layer independently.
+
+## Upgrade
+
+Refresh `dev.kit` with the same install path you use already:
+
+```bash
+# npm-managed install
+npm install -g @udx/dev-kit
+
+# curl-managed install
+curl -fsSL https://raw.githubusercontent.com/udx/dev.kit/latest/bin/scripts/install.sh | bash
+```
+
+The generated `AGENTS.md` guidance assumes agents start from a current `dev.kit` install before reading repo context.
 
 ## Recommended Path
 

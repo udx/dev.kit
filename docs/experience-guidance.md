@@ -24,10 +24,11 @@ It should not force one fixed software-delivery script onto every agent role.
 The generated guidance should make a few behaviors explicit:
 
 1. start new sessions with `dev.kit`
-2. read `.rabbit/context.yaml` before broad exploration
-3. treat repo-owned files and manifests as the primary contract
-4. if gaps exist, repair the source assets that should declare the missing contract
-5. rerun `dev.kit repo` after those fixes so the agent continues from regenerated context
+2. make sure the local `dev.kit` install is current before relying on its generated context
+3. read `.rabbit/context.yaml` before broad exploration
+4. treat repo-owned files and manifests as the primary contract
+5. if gaps exist, repair the source assets that should declare the missing contract
+6. rerun `dev.kit repo` after those fixes so the agent continues from regenerated context
 
 That is how `AGENTS.md` becomes an enforcement layer instead of just a note file.
 
@@ -56,6 +57,9 @@ It should also keep the instructions provider-neutral so the same repo contract 
 The practical session-start rule remains simple:
 
 ```bash
+npm install -g @udx/dev-kit
+# or refresh via the curl installer
+
 dev.kit
 ```
 

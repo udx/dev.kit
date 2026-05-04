@@ -9,8 +9,10 @@ TEST_HOME="${DEV_KIT_TEST_HOME:-$(mktemp -d "${TMPDIR:-/tmp}/dev-kit-test-home.X
 BASE_PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 SIMPLE_REPO="$REPO_DIR/tests/fixtures/simple-repo"
 DOCUMENTED_SHELL_REPO="$REPO_DIR/tests/fixtures/documented-shell-repo"
+DOCKER_REPO="$REPO_DIR/tests/fixtures/docker-repo"
 SIMPLE_ACTION_REPO="$TEST_HOME/simple-action-repo"
 HOME_ACTION_REPO="$TEST_HOME/home-action-repo"
+DOCKER_ACTION_REPO="$TEST_HOME/docker-action-repo"
 AVAILABLE_TEST_GROUPS="core"
 TEST_ONLY="${DEV_KIT_TEST_ONLY:-}"
 
@@ -116,6 +118,16 @@ if should_run "core"; then
   assert_contains "$(cat "$context_yaml")" "kind: repoContext" "agent: context.yaml has kind header"
   assert_not_contains "$(cat "$context_yaml")" "/Users/" "agent: context.yaml has no absolute paths"
   assert_contains "$(cat "${SIMPLE_ACTION_REPO}/AGENTS.md")" "Use these repo-derived steps as the default operating path." "agent: AGENTS.md uses repo-derived workflow guidance"
+
+  cp -R "$DOCKER_REPO" "$DOCKER_ACTION_REPO"
+  rm -rf "$DOCKER_ACTION_REPO/.rabbit" "$DOCKER_ACTION_REPO/AGENTS.md"
+
+  docker_repo_json="$(cd "$DOCKER_ACTION_REPO" && dev.kit repo --json)"
+  assert_contains "$docker_repo_json" "\"context\":" "docker repo: reports context path"
+
+  docker_context_yaml="${DOCKER_ACTION_REPO}/.rabbit/context.yaml"
+  assert_contains "$(cat "$docker_context_yaml")" "path: deploy.yml" "docker repo: includes deploy manifest"
+  assert_contains "$(cat "$docker_context_yaml")" "source_repo: udx/worker" "docker repo: traces manifest owner from version"
 fi
 
 printf "ok - dev.kit suite completed\n"

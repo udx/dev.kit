@@ -173,7 +173,7 @@ dev_kit_agent_write_agents_md() {
       printf '\n'
 
       printf '## Operating contract\n\n'
-      printf '1. Start each session by running `dev.kit`, then refresh focused layers with `dev.kit repo` or `dev.kit agent` after repo changes.\n'
+      printf '1. Before each session, make sure `dev.kit` itself is up to date, then run `dev.kit`. Refresh focused layers with `dev.kit repo` or `dev.kit agent` after repo changes.\n'
       printf '2. Read `.rabbit/context.yaml` first. It is the machine contract for refs, commands, dependencies, manifests, and gaps.\n'
       printf '3. Read only the refs, manifests, dependency context, and explicitly referenced paths from `context.yaml`. Avoid broad filesystem scans.\n'
       printf '4. Prefer manifests and repo-declared commands over implementation guesses. Do not edit generated `.rabbit/context.yaml` directly.\n'

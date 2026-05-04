@@ -21,6 +21,10 @@ npm install -g @udx/dev-kit
 ## Quick start
 
 ```bash
+# first make sure your dev.kit install is current
+# npm install -g @udx/dev-kit
+# or: curl -fsSL https://raw.githubusercontent.com/udx/dev.kit/latest/bin/scripts/install.sh | bash
+
 cd my-repo
 dev.kit            # happy path: env + repo context + AGENTS.md
 dev.kit env        # inspect tools, auth, and capability controls
@@ -33,11 +37,12 @@ dev.kit agent      # refresh only AGENTS.md
 
 The intended loop is simple:
 
-1. run `dev.kit` at the start of a session
-2. let `dev.kit env` shape what capabilities are actually available
-3. let `dev.kit repo` write the current repo contract into `.rabbit/context.yaml`
-4. let `dev.kit agent` generate operating guidance from that contract
-5. if gaps are detected, fix the repo-owned source assets, rerun `dev.kit repo`, then validate the regenerated context
+1. make sure the local `dev.kit` install is current
+2. run `dev.kit` at the start of a session
+3. let `dev.kit env` shape what capabilities are actually available
+4. let `dev.kit repo` write the current repo contract into `.rabbit/context.yaml`
+5. let `dev.kit agent` generate operating guidance from that contract
+6. if gaps are detected, fix the repo-owned source assets, rerun `dev.kit repo`, then validate the regenerated context
 
 That keeps context dynamic, grounded in repo signals, and resistant to drift.
 
@@ -101,4 +106,10 @@ For installed-CLI testing in a real worker environment:
 bash tests/worker-smoke.sh
 ```
 
-The worker runner is the main integration path for heavier scenarios such as gap repair, env toggles, and real-repo mutation.
+For opt-in validation against real local repos:
+
+```bash
+bash tests/real-repos.sh /path/to/repo1 /path/to/repo2
+```
+
+The worker runner is the main integration path for heavier scenarios such as gap repair, env toggles, and real-repo mutation. Real-repo testing is local-only and can include both public and private repos without baking those assumptions into CI.
