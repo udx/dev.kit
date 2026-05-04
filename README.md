@@ -2,136 +2,74 @@
 
 <https://udx.dev/kit>
 
-**GitHub-first session flow for developers and AI agents.**
+**Repository context coverage and agent operating guidance.**
 
-dev.kit separates three concerns:
+`dev.kit` turns repo design into a usable contract for agents.
 
-- base repo context signals
-- deterministic tracing and mapping
-- agent execution behavior
+It does three things:
 
-It generates `.rabbit/context.yaml` as the structured repo contract, then generates `AGENTS.md` as a built execution artifact that tells agents how to use that context with current GitHub experience first, and repo-declared workflow defaults when GitHub does not provide enough signal.
+1. inspect what the current environment can really support
+2. detect and serialize repo context into `.rabbit/context.yaml`
+3. generate `AGENTS.md` so each new session starts from current repo reality instead of prompt memory
 
-In practice, dev.kit is middleware between repo facts and live GitHub experience. It keeps each work session anchored to the repo contract, then pushes developers and agents to use current issues, pull requests, review threads, workflow runs, and prior repo patterns before inventing new approaches.
+The model is repo-first, gap-aware, and regeneration-friendly. `dev.kit` should describe what the repo declares, note what it cannot confirm yet, and make the next repair step obvious.
 
 ```bash
 npm install -g @udx/dev-kit
 ```
 
----
-
-## How it works
-
-```
-dev.kit          →  dev.kit repo        →  dev.kit agent
-─────────────────   ──────────────────    ──────────────────
-check environment   analyze repo          generate AGENTS.md
-detect archetype    trace dependencies    write execution contract
-guide to next       write context.yaml    from context.yaml
-```
-
-Each command moves the session forward and tells the next actor what to do. Agents should rerun the flow at each new interaction or session so context, workflow, and repo state stay synced.
-
----
-
 ## Quick start
 
 ```bash
+# first make sure your dev.kit install is current
+# npm install -g @udx/dev-kit
+# or: curl -fsSL https://raw.githubusercontent.com/udx/dev.kit/latest/bin/scripts/install.sh | bash
+
 cd my-repo
-dev.kit            # check tools, detect repo
-dev.kit repo       # analyze factors, trace deps, write .rabbit/context.yaml
-dev.kit agent      # generate AGENTS.md execution contract
+dev.kit            # happy path: env + repo context + AGENTS.md
+dev.kit env        # inspect tools, auth, and capability controls
+dev.kit env --config
+dev.kit repo       # refresh only .rabbit/context.yaml
+dev.kit agent      # refresh only AGENTS.md
 ```
 
-The intended operating loop is:
+## Operating loop
 
-1. install `dev.kit`
-2. start work with `dev.kit`, `dev.kit repo`, and `dev.kit agent`
-3. read `.rabbit/context.yaml` and `AGENTS.md`
-4. do the actual implementation using current GitHub repo experience first
-5. resync the same flow at the next interaction or after repo changes
+The intended loop is simple:
 
----
+1. make sure the local `dev.kit` install is current
+2. run `dev.kit` at the start of a session
+3. let `dev.kit env` shape what capabilities are actually available
+4. let `dev.kit repo` write the current repo contract into `.rabbit/context.yaml`
+5. let `dev.kit agent` generate operating guidance from that contract
+6. if gaps are detected, fix the repo-owned source assets, rerun `dev.kit repo`, then validate the regenerated context
 
-## Generated Context And Workflow
-
-**`.rabbit/context.yaml`** — generated repo map from repo definitions, source files, detected commands, traced dependencies, gaps, and other serializable repo signals:
-
-```yaml
-repo:
-  name: dev.kit
-  archetype: library-cli
-  profile: node
-
-refs:
-  - ./README.md
-  - ./package.json
-
-commands:
-  verify: make test
-  build: make build
-
-dependencies:
-  - repo: udx/reusable-workflows
-    type: reusable workflow
-    resolved: true
-    archetype: workflow-repo
-    used_by:
-      - .github/workflows/npm-release-ops.yml
-
-gaps:
-  - config (partial)
-```
-
-**`AGENTS.md`** — generated execution artifact for agents. It should stay simpler than `context.yaml`: rules, workflow, verification, and how to use current GitHub and learned context without duplicating refs, manifests, or dependency maps already serialized in `context.yaml`.
-
-Together, these two artifacts create a disciplined loop:
-
-- `context.yaml` says what the repo declares and what dev.kit could trace
-- `AGENTS.md` says how to act on that contract using live GitHub experience first
-
----
+That keeps context dynamic, grounded in repo signals, and resistant to drift.
 
 ## Commands
 
-| Command | What it does |
-|---------|-------------|
-| `dev.kit` | Check environment, detect repo, show next step |
-| `dev.kit repo` | Analyze factors, trace dependencies, pull GitHub signals, write `context.yaml` |
-| `dev.kit repo --force` | Re-resolve all dependencies from scratch |
-| `dev.kit agent` | Generate `AGENTS.md` from `context.yaml` |
-| `dev.kit learn` | Extract patterns from Claude/Codex sessions into lessons artifact |
+| Command | Role |
+|---------|------|
+| `dev.kit` | Start here. Refresh environment awareness, repo context, and agent guidance together. |
+| `dev.kit env` | Detect tools, auth state, and local capability controls so later steps stay honest. |
+| `dev.kit env --config` | Create or update env config for disabling specific tools or credentials. |
+| `dev.kit repo` | Detect refs, commands, gaps, manifests, and dependencies, then write `.rabbit/context.yaml`. |
+| `dev.kit repo --force` | Re-resolve dependency context from scratch. |
+| `dev.kit agent` | Generate `AGENTS.md` from the current repo contract and its gaps. |
 
-All commands support `--json` for machine-readable output.
+All commands support `--json` for machine-readable output and should guide the next step in human- and agent-friendly terms.
 
----
+## Generated artifacts
 
-## Repo Context
+`dev.kit` produces two main artifacts:
 
-Repo context comes from repo source first: README, docs, workflows, manifests, tests, and other declared refs. `dev.kit repo` then traces and maps dependencies, commands, gaps, and other serializable signals into `context.yaml`. `AGENTS.md` turns that repo map into an operating contract for agents, using current GitHub context as the primary dynamic input and repo workflow/practice catalogs as fallback defaults.
+- `.rabbit/context.yaml` — the machine-readable repo contract
+- `AGENTS.md` — the generated operating layer for agents
 
-That means dev.kit does not just tell an agent what files exist. It also pushes the session toward the repo's real delivery loop: branch naming based on repo history, issue and PR writing based on existing patterns, bot feedback loops, and workflow status checks before close-out.
+Keep the boundary strict:
 
-## Cross-repo tracing
-
-Traces dependencies from 6 sources: workflow reuse, GitHub actions, Docker images, versioned YAML, GitHub URLs, npm packages.
-
-Same-org repos resolved via `gh api` + sibling directory. Docker images mapped to source repos automatically.
-
-```yaml
-# udx/rabbit-automation-action
-dependencies:
-  - repo: udx/gh-workflows
-    type: reusable workflow
-    resolved: true
-
-  - repo: usabilitydynamics/udx-worker-tooling:0.19.0
-    type: base image
-    resolved: true
-    source_repo: udx/worker-tooling
-```
-
----
+- `context.yaml` is for repo facts, traces, commands, manifests, dependencies, and gaps
+- `AGENTS.md` is for how an agent should operate from that contract, including gap-repair behavior
 
 ## Install
 
@@ -143,13 +81,35 @@ npm install -g @udx/dev-kit
 curl -fsSL https://raw.githubusercontent.com/udx/dev.kit/latest/bin/scripts/install.sh | bash
 ```
 
-Use one install path at a time. Installing with npm removes the curl-managed `~/.udx/dev.kit` home and shim. Installing with curl removes the global `@udx/dev-kit` package before laying down the local shim and home directory.
-
----
+Use one install path at a time. Installing with npm removes the curl-managed home and shim. Installing with curl removes the global npm package first. More detail: [Installation](docs/installation.md).
 
 ## Docs
 
+- [How It Works](docs/how-it-works.md) — command flow, generated artifacts, and regeneration loop
+- [Environment Config](docs/environment-config.md) — capability detection and env controls
+- [Context Coverage](docs/context-coverage.md) — what `context.yaml` should contain and what gaps mean
+- [Experience Guidance](docs/experience-guidance.md) — what `AGENTS.md` should instruct agents to do
+- [Smart Dependency Detection](docs/smart-dependency-detection.md) — deterministic cross-repo and manifest tracing
 - [Installation](docs/installation.md) — npm and curl installs, cleanup, uninstall, and verification
-- [Context](docs/context.md) — `.rabbit/context.yaml`, its sections, and how it is generated
-- [Agents](docs/agents.md) — `AGENTS.md` generation and how agents use it
-- [Integration](docs/integration.md) — how the CLI, repo context, and agent workflow fit together
+
+## Testing
+
+For fast local checks:
+
+```bash
+bash tests/suite.sh --only core
+```
+
+For installed-CLI testing in a real worker environment:
+
+```bash
+bash tests/worker-smoke.sh
+```
+
+For opt-in validation against real local repos:
+
+```bash
+bash tests/real-repos.sh /path/to/repo1 /path/to/repo2
+```
+
+The worker runner is the main integration path for heavier scenarios such as gap repair, env toggles, and real-repo mutation. Real-repo testing is local-only and can include both public and private repos without baking those assumptions into CI.

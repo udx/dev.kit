@@ -1,10 +1,14 @@
 WORKER_IMAGE := usabilitydynamics/udx-worker:latest
 
-.PHONY: test test-docker test-docker-pull test-shell eval eval-view
+.PHONY: test test-real test-docker test-docker-pull test-shell eval eval-view
 
 # Run tests locally
 test:
 	bash tests/suite.sh
+
+# Run optional local integration checks against real repos
+test-real:
+	bash tests/real-repos.sh
 
 # Run tests inside the worker container via deploy.yml
 # Requires @udx/worker-deployment: npm install -g @udx/worker-deployment

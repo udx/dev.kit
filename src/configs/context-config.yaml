@@ -1,7 +1,75 @@
 kind: contextConfig
-version: udx.io/dev.kit/v1
+version: udx.dev/dev.kit/v1
+description: Repo root markers, direct-read refs, and documentation priority order
 
 config:
+  context_sections:
+    refs:
+      title: Refs
+      summary: Direct-read files and paths that define the repo contract.
+      notes:
+        - Include only files or directories an agent should read before code exploration.
+        - Prefer README, focused docs, workflows, manifests, and explicit operational files.
+        - Exclude broad implementation directories unless they are the contract themselves.
+      source_lists:
+        - priority_paths
+    commands:
+      title: Commands
+      summary: Canonical repo entrypoints detected from strong repo signals.
+      notes:
+        - Prefer declared make targets and package scripts before regex matches in docs.
+        - Emit only commands that can be traced to a concrete source.
+        - Record the source path so the command can be reviewed and corrected.
+      command_kinds:
+        - verify
+        - build
+        - run
+      prefer_sources:
+        - make_targets
+        - package_scripts
+        - documented_commands
+    gaps:
+      title: Gaps
+      summary: Factors that are missing or only partially supported by current repo signals.
+      notes:
+        - Base the result on explicit factor rules, not free-form judgment.
+        - Include message and evidence so the status can be reviewed.
+        - Prefer traceable refs and missing signals over vague advice.
+      factor_ids:
+        - documentation
+        - dependencies
+        - config
+        - pipeline
+    dependencies:
+      title: Dependencies
+      summary: External repos, actions, images, or versioned manifests this repo relies on.
+      notes:
+        - Capture behavior defined outside the current checkout.
+        - Normalize same-org versioned refs into repo slugs when possible.
+        - Keep where-used tracing so the dependency can be followed back to its source.
+      workflow_dirs:
+        - dependency_trace_workflow_dirs
+      container_files:
+        - dependency_trace_container_files
+      compose_files:
+        - dependency_trace_compose_files
+      versioned_dirs:
+        - dependency_trace_versioned_dirs
+      url_globs:
+        - dependency_trace_url_globs
+    manifests:
+      title: Manifests
+      summary: YAML files that define detection rules, workflows, evaluation, deploy, or runtime behavior.
+      notes:
+        - Include manifests that materially shape repo behavior or agent understanding.
+        - Prefer structured kind and description metadata from the manifest itself.
+        - Include eval and workflow manifests, not only deploy manifests.
+      workflow_dirs:
+        - manifest_workflow_dirs
+      config_dirs:
+        - manifest_config_dirs
+      root_files:
+        - manifest_root_files
   repo_root_files:
     - README.md
     - readme.md
@@ -15,57 +83,28 @@ config:
     - .git
     - .github
     - .rabbit
-  repo_note_files:
-    - CLAUDE.md
-    - AGENTS.md
-    - todo.md
-    - TODO.md
-    - context.md
-    - CONTEXT.md
-    - refs.md
-    - REFS.md
   priority_paths:
-    - README.md
-    - readme.md
-    - docs/installation.md
-    - docs/context.md
-    - docs/agents.md
-    - docs/integration.md
-    - docs/lessons-learned.md
-    - docs
-    - .rabbit
+    - README*
+    - readme*
+    - changes.md
+    - CHANGELOG.md
+    - "*.yaml"
+    - "*.yml"
     - .github/workflows
     - Makefile
-    - package.json
-    - composer.json
     - Dockerfile
-    - docker-compose.yml
-    - docker-compose.yaml
-    - deploy.yml
-    - deploy.yaml
     - wp-config.php
-    - Chart.yaml
-    - helmfile.yaml
-    - k8s
-    - charts
-    - terraform
-    - lib
-    - src
-    - scripts
-    - tests
+    - examples
+    - docs
   repo_doc_paths:
     - .rabbit/context.yaml
     - CLAUDE.md
     - AGENTS.md
-    - README.md
-    - readme.md
-    - docs/installation.md
-    - docs/context.md
-    - docs/agents.md
-    - docs/integration.md
-    - docs/lessons-learned.md
+    - README*
+    - readme*
+    - docs/*.md
+    - docs/*/*.md
     - docs
-    - .rabbit/dev.kit
   marker_groups:
     git_root:
       prefix: git
@@ -132,11 +171,6 @@ config:
       kind: dir
       paths:
         - .rabbit
-    infra_configs:
-      prefix: infra
-      kind: dir
-      paths:
-        - .rabbit/infra_configs
     docs_dir:
       prefix: docs
       kind: dir

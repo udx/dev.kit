@@ -5,7 +5,7 @@
 dev_kit_cmd_repo() {
   local format="${1:-text}"
   local repo_dir="$(pwd)"
-  local mode="learn"
+  local mode="write"
   local repo_root=""
   local repo_name=""
   local gaps_json=""
@@ -39,7 +39,7 @@ dev_kit_cmd_repo() {
   # JSON mode: compute everything up front then emit template
   if [ "$format" = "json" ]; then
     gaps_json="$(dev_kit_scaffold_gaps_json "$repo_dir")"
-    if [ "$mode" = "learn" ]; then
+    if [ "$mode" = "write" ]; then
       dev_kit_context_yaml_write "$repo_dir" "$force_resolve" >/dev/null
     fi
     dev_kit_template_render "repo.json" \
@@ -48,7 +48,6 @@ dev_kit_cmd_repo() {
       "path=$(dev_kit_json_escape "$repo_dir")" \
       "mode=$(dev_kit_json_escape "$mode")" \
       "archetype=$(dev_kit_json_escape "$(dev_kit_repo_primary_archetype "$repo_dir")")" \
-      "profile=$(dev_kit_json_escape "$(dev_kit_repo_primary_profile "$repo_dir")")" \
       "markers=$(dev_kit_repo_markers_json "$repo_dir")" \
       "factors=$(dev_kit_repo_factor_summary_json "$repo_dir")" \
       "gaps=$gaps_json" \
@@ -90,7 +89,8 @@ dev_kit_cmd_repo() {
   # ── Gaps ─────────────────────────────────────────────────────────────────────
   gaps_json="$(dev_kit_scaffold_gaps_json "$repo_dir")"
   local gap_count
-  gap_count="$(printf '%s\n' "$gaps_json" | grep -c '"factor"' 2>/dev/null || printf '0')"
+  gap_count="$(printf '%s\n' "$gaps_json" | grep -c '"factor"' 2>/dev/null || true)"
+  gap_count="${gap_count:-0}"
   if [ "$gap_count" -gt 0 ]; then
     dev_kit_output_section "gaps"
     dev_kit_output_list_item "${gap_count} factor(s) missing or partial"
@@ -105,7 +105,7 @@ EOF
   fi
 
   # ── Write context.yaml ──────────────────────────────────────────────────────
-  if [ "$mode" = "learn" ]; then
+  if [ "$mode" = "write" ]; then
     dev_kit_spinner_start "writing context"
     dev_kit_context_yaml_write "$repo_dir" "$force_resolve" >/dev/null
     dev_kit_spinner_stop ""
@@ -115,5 +115,8 @@ EOF
   dev_kit_output_list_item "$context_yaml_path"
 
   dev_kit_output_section "next"
-  dev_kit_output_row "run" "dev.kit agent"
+  dev_kit_output_row "agent" "dev.kit agent"
+  if [ "$gap_count" -gt 0 ]; then
+    dev_kit_output_row "repair" "follow AGENTS.md gap repair loop, then dev.kit repo"
+  fi
 }

@@ -5,52 +5,42 @@ DEV_KIT_REPO_FACETS_CACHE_VALUE=""
 DEV_KIT_REPO_ARCHETYPES_CACHE_REPO=""
 DEV_KIT_REPO_ARCHETYPES_CACHE_VALUE=""
 
-dev_kit_repo_has_any_dir_from_signal_list() {
+dev_kit_repo_has_kubernetes_manifest() {
   local repo_dir="$1"
-  local list_name="$2"
-  local path=""
+  local file_path=""
 
-  while IFS= read -r path; do
-    [ -n "$path" ] || continue
-    if dev_kit_repo_has_dir "$repo_dir" "$path"; then
+  while IFS= read -r file_path; do
+    [ -n "$file_path" ] || continue
+    if dev_kit_repo_file_has_all_patterns "$file_path" "yaml_api_version" "yaml_kind"; then
       return 0
     fi
   done <<EOF
-$(dev_kit_archetype_signal_list "$list_name")
+$(dev_kit_repo_find_from_glob_list "$repo_dir" "yaml_manifest_globs")
 EOF
 
   return 1
 }
 
-dev_kit_repo_has_any_file_from_signal_list() {
+dev_kit_repo_has_yaml_manifest() {
   local repo_dir="$1"
-  local list_name="$2"
-  local path=""
+  local file_path=""
+  local rel_path=""
 
-  while IFS= read -r path; do
-    [ -n "$path" ] || continue
-    if dev_kit_has_file "$repo_dir" "$path"; then
+  while IFS= read -r file_path; do
+    [ -n "$file_path" ] || continue
+    rel_path="${file_path#"${repo_dir}/"}"
+    case "$rel_path" in
+      .github/workflows/*|.rabbit/context.yaml) continue ;;
+    esac
+    if awk '
+      /^[[:space:]]*#/ { next }
+      /^[[:space:]]*(kind|apiVersion|version|services|resources|modules|config):[[:space:]]*/ { found=1; exit }
+      END { exit found ? 0 : 1 }
+    ' "$file_path"; then
       return 0
     fi
   done <<EOF
-$(dev_kit_archetype_signal_list "$list_name")
-EOF
-
-  return 1
-}
-
-dev_kit_repo_has_any_glob_from_signal_list() {
-  local repo_dir="$1"
-  local list_name="$2"
-  local pattern=""
-
-  while IFS= read -r pattern; do
-    [ -n "$pattern" ] || continue
-    if dev_kit_repo_has_glob "$repo_dir" "$pattern"; then
-      return 0
-    fi
-  done <<EOF
-$(dev_kit_archetype_signal_list "$list_name")
+$(dev_kit_repo_find_from_glob_list "$repo_dir" "yaml_manifest_globs")
 EOF
 
   return 1
@@ -98,17 +88,25 @@ framework:wp-config.php
       ;;
   esac
 
-  if [ "$has_wordpress" -eq 0 ] && { dev_kit_repo_has_any_file_from_signal_list "$repo_dir" "wordpress_files" || \
-     dev_kit_repo_has_any_dir_from_signal_list "$repo_dir" "wordpress_dirs"; }; then
+  if [ "$has_wordpress" -eq 0 ] && { dev_kit_repo_has_any_file_from_list "$repo_dir" "wordpress_files" || \
+     dev_kit_repo_has_any_dir_from_list "$repo_dir" "wordpress_dirs"; }; then
     has_wordpress=1
     facets="${facets}framework:wordpress
 "
   fi
 
-  # K8s: only actual manifests or Helm charts — Terraform alone does not imply platform:kubernetes
-  if dev_kit_repo_has_any_file_from_signal_list "$repo_dir" "kubernetes_files" || \
-     dev_kit_repo_has_any_dir_from_signal_list "$repo_dir" "kubernetes_dirs" || \
-     dev_kit_repo_has_any_glob_from_signal_list "$repo_dir" "kubernetes_globs"; then
+  if dev_kit_repo_has_next_app "$repo_dir"; then
+    facets="${facets}framework:next
+"
+  fi
+
+  if dev_kit_repo_has_yaml_manifest "$repo_dir"; then
+    facets="${facets}manifest:yaml
+"
+  fi
+
+  # K8s: only actual manifests with apiVersion + kind — chart metadata alone does not imply platform:kubernetes
+  if dev_kit_repo_has_kubernetes_manifest "$repo_dir"; then
     has_kubernetes=1
     facets="${facets}platform:kubernetes
 deploy:kubernetes-manifests
@@ -116,9 +114,9 @@ deploy:kubernetes-manifests
   fi
 
   # Terraform: standalone detection independent of K8s
-  if dev_kit_repo_has_any_file_from_signal_list "$repo_dir" "terraform_files" || \
-     dev_kit_repo_has_any_dir_from_signal_list "$repo_dir" "terraform_dirs" || \
-     dev_kit_repo_has_any_glob_from_signal_list "$repo_dir" "terraform_globs"; then
+  if dev_kit_repo_has_any_file_from_list "$repo_dir" "terraform_files" || \
+     dev_kit_repo_has_any_dir_from_list "$repo_dir" "terraform_dirs" || \
+     dev_kit_repo_has_any_glob_from_list "$repo_dir" "terraform_globs"; then
     facets="${facets}deploy:terraform
 "
   fi
@@ -155,6 +153,11 @@ manifest:package.json
 
   if ! dev_kit_repo_has_facet_in_text "$facets" "package:node" && dev_kit_has_file "$repo_dir" "package.json"; then
     facets="${facets}package:node
+"
+  fi
+
+  if dev_kit_repo_has_node_bin "$repo_dir"; then
+    facets="${facets}package:cli
 "
   fi
 
@@ -333,38 +336,6 @@ EOF
 
   dev_kit_cache_set "$_ck" "$_result"
   printf '%s' "$_result"
-}
-
-dev_kit_repo_archetypes_text() {
-  dev_kit_repo_archetypes "$1" | dev_kit_lines_to_csv
-}
-
-dev_kit_repo_archetypes_json() {
-  dev_kit_repo_archetypes "$1" | dev_kit_lines_to_json_array
-}
-
-dev_kit_repo_facets_text() {
-  local facets=""
-
-  facets="$(dev_kit_repo_facets "$1")"
-  if [ -z "$facets" ]; then
-    printf "%s" "none"
-    return 0
-  fi
-
-  printf "%s" "$facets" | dev_kit_lines_to_csv
-}
-
-dev_kit_repo_facets_json() {
-  local facets=""
-
-  facets="$(dev_kit_repo_facets "$1")"
-  if [ -z "$facets" ]; then
-    printf "%s" "[]"
-    return 0
-  fi
-
-  printf "%s" "$facets" | dev_kit_lines_to_json_array
 }
 
 dev_kit_repo_has_runtime_signals() {

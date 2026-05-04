@@ -1,5 +1,6 @@
 kind: auditRules
-version: udx.io/dev.kit/v1
+version: udx.dev/dev.kit/v1
+description: Gap messages and guidance for missing or partial repo factors
 
 config:
   rules:
@@ -18,11 +19,11 @@ config:
     - id: partial-config-contract
       factor: config
       status: partial
-      message: Config signals exist, but the environment contract is only partially documented. Add an example env file or clearer config documentation.
+      message: Config signals exist, but no explicit env contract file was detected. Add .env.example, .env.sample, or .env.template when runtime configuration is required.
     - id: missing-config-contract
       factor: config
       status: missing
-      message: Externalize configuration and document the environment contract so the repo can move cleanly across environments.
+      message: No explicit configuration contract was detected. Add runtime config docs or an env example when the repo requires environment configuration.
     - id: partial-pipeline
       factor: pipeline
       status: partial

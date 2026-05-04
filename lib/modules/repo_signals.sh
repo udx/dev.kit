@@ -25,12 +25,6 @@ dev_kit_detection_list() {
   dev_kit_yaml_config_list "$(dev_kit_detection_signals_path)" "$list_name"
 }
 
-dev_kit_detection_scalar() {
-  local key="$1"
-
-  dev_kit_yaml_config_scalar "$(dev_kit_detection_signals_path)" "$key"
-}
-
 dev_kit_repo_name() {
   basename "${1:-$(pwd)}"
 }
@@ -169,19 +163,6 @@ EOF
   printf "%s" "$DEV_KIT_REPO_MARKERS_CACHE_VALUE"
 }
 
-dev_kit_repo_markers_text() {
-  local repo_dir="${1:-$(pwd)}"
-  local markers=""
-
-  markers="$(dev_kit_repo_marker_lines "$repo_dir")"
-  if [ -z "$markers" ]; then
-    printf "%s" "none"
-    return 0
-  fi
-
-  printf "%s" "$markers" | dev_kit_lines_to_csv
-}
-
 dev_kit_repo_markers_json() {
   local repo_dir="${1:-$(pwd)}"
   local markers=""
@@ -236,6 +217,9 @@ dev_kit_repo_has_glob() {
   local repo_dir="$1"
   local pattern="$2"
 
+  pattern="${pattern#\"}"
+  pattern="${pattern%\"}"
+
   if [[ "$pattern" == */* ]]; then
     dev_kit_repo_find "$repo_dir" -type f -path "$repo_dir/$pattern" -print -quit | grep -q .
     return $?
@@ -251,6 +235,8 @@ dev_kit_repo_find_from_glob_list() {
 
   while IFS= read -r pattern; do
     [ -n "$pattern" ] || continue
+    pattern="${pattern#\"}"
+    pattern="${pattern%\"}"
     if [[ "$pattern" == */* ]]; then
       dev_kit_repo_find "$repo_dir" -type f -path "$repo_dir/$pattern" -print
     else
@@ -265,6 +251,25 @@ dev_kit_repo_markdown_files() {
   local repo_dir="$1"
 
   dev_kit_repo_find_from_glob_list "$repo_dir" "markdown_file_globs" | sort -u
+}
+
+dev_kit_repo_command_doc_files() {
+  local repo_dir="$1"
+  local ref=""
+
+  while IFS= read -r ref; do
+    [ -n "$ref" ] || continue
+    ref="${ref#./}"
+    [ -f "$repo_dir/$ref" ] || continue
+    case "$ref" in
+      AGENTS.md|CLAUDE.md|.rabbit/*) continue ;;
+    esac
+    case "$ref" in
+      *.md|*.markdown) printf '%s/%s\n' "$repo_dir" "$ref" ;;
+    esac
+  done <<EOF
+$(dev_kit_repo_doc_refs "$repo_dir")
+EOF
 }
 
 dev_kit_repo_has_any_file_from_list() {
@@ -386,7 +391,9 @@ dev_kit_repo_documented_command() {
   while IFS= read -r doc_file; do
     command="$(awk -v regex="$regex" '
       match($0, regex) {
-        print substr($0, RSTART, RLENGTH)
+        command = substr($0, RSTART, RLENGTH)
+        gsub(/^`|`$/, "", command)
+        print command
         exit
       }
     ' "$doc_file")"
@@ -395,7 +402,29 @@ dev_kit_repo_documented_command() {
       return 0
     fi
   done <<EOF
-$(dev_kit_repo_markdown_files "$repo_dir")
+$(dev_kit_repo_command_doc_files "$repo_dir")
+EOF
+
+  return 1
+}
+
+dev_kit_repo_documented_command_source() {
+  local repo_dir="$1"
+  local kind="$2"
+  local doc_file=""
+  local regex=""
+
+  regex="$(dev_kit_detection_pattern "$kind")"
+  [ -n "$regex" ] || return 1
+
+  while IFS= read -r doc_file; do
+    [ -n "$doc_file" ] || continue
+    if awk -v regex="$regex" 'match($0, regex) { found = 1; exit } END { exit found ? 0 : 1 }' "$doc_file"; then
+      printf "%s" "${doc_file#"${repo_dir}/"}"
+      return 0
+    fi
+  done <<EOF
+$(dev_kit_repo_command_doc_files "$repo_dir")
 EOF
 
   return 1
@@ -437,11 +466,56 @@ dev_kit_repo_has_node_test_script() {
   dev_kit_repo_manifest_has_script "$1" "package.json" "test"
 }
 
+dev_kit_repo_has_node_build_script() {
+  dev_kit_repo_manifest_has_script "$1" "package.json" "build"
+}
+
+dev_kit_repo_has_node_start_script() {
+  dev_kit_repo_manifest_has_script "$1" "package.json" "start"
+}
+
+dev_kit_repo_has_node_bin() {
+  local repo_dir="$1"
+
+  [ -f "$repo_dir/package.json" ] || return 1
+  jq -e '.bin // empty' "$repo_dir/package.json" >/dev/null 2>&1
+}
+
+dev_kit_repo_has_node_package() {
+  local repo_dir="$1"
+  local package_name="$2"
+
+  [ -f "$repo_dir/package.json" ] || return 1
+  jq -e --arg package_name "$package_name" '
+    ((.dependencies // {}) + (.devDependencies // {}))[$package_name] // empty
+  ' "$repo_dir/package.json" >/dev/null 2>&1
+}
+
+dev_kit_repo_has_next_app() {
+  local repo_dir="$1"
+
+  if dev_kit_repo_has_any_file_from_list "$repo_dir" "next_files"; then
+    return 0
+  fi
+
+  dev_kit_repo_has_node_package "$repo_dir" "next"
+}
+
 dev_kit_repo_has_composer_test_script() {
   dev_kit_repo_manifest_has_script "$1" "composer.json" "test"
 }
 
+dev_kit_repo_has_composer_build_script() {
+  dev_kit_repo_manifest_has_script "$1" "composer.json" "build"
+}
+
 dev_kit_repo_documented_env_var() {
+  local repo_dir="$1"
+
+  [ -n "$(dev_kit_repo_documented_env_var_sources "$repo_dir")" ]
+}
+
+dev_kit_repo_documented_env_var_sources() {
   local repo_dir="$1"
   local doc_file=""
   local regex=""
@@ -452,13 +526,11 @@ dev_kit_repo_documented_env_var() {
   while IFS= read -r doc_file; do
     [ -n "$doc_file" ] || continue
     if dev_kit_repo_pattern_in_file "$doc_file" "$regex"; then
-      return 0
+      printf '%s\n' "${doc_file#"${repo_dir}/"}"
     fi
   done <<EOF
 $(dev_kit_repo_markdown_files "$repo_dir")
 EOF
-
-  return 1
 }
 
 dev_kit_repo_has_documentation_sections() {
@@ -479,81 +551,4 @@ $(dev_kit_repo_markdown_files "$repo_dir")
 EOF
 
   return 1
-}
-
-dev_kit_repo_count_dir_hits_from_list() {
-  local repo_dir="$1"
-  local list_name="$2"
-  local path=""
-  local count=0
-
-  while IFS= read -r path; do
-    [ -n "$path" ] || continue
-    if dev_kit_repo_has_dir "$repo_dir" "$path"; then
-      count=$((count + 1))
-    fi
-  done <<EOF
-$(dev_kit_detection_list "$list_name")
-EOF
-
-  printf '%s' "$count"
-}
-dev_kit_repo_profiles() {
-  local repo_dir="$1"
-  local profiles=""
-
-  if dev_kit_repo_has_any_file_from_list "$repo_dir" "node_files"; then
-    profiles="${profiles}node
-"
-  fi
-
-  if dev_kit_repo_has_any_file_from_list "$repo_dir" "php_files"; then
-    profiles="${profiles}php
-"
-  fi
-
-  if dev_kit_repo_has_any_glob_from_list "$repo_dir" "shell_globs" || dev_kit_repo_has_any_dir_from_list "$repo_dir" "shell_dirs"; then
-    profiles="${profiles}shell
-"
-  fi
-
-  if dev_kit_repo_has_any_file_from_list "$repo_dir" "container_files" || dev_kit_repo_has_any_glob_from_list "$repo_dir" "container_globs"; then
-    profiles="${profiles}container
-"
-  fi
-
-  if [ -z "$profiles" ]; then
-    printf "%s\n" "unknown"
-    return 0
-  fi
-
-  printf "%s" "$profiles" | awk '!seen[$0]++'
-}
-
-dev_kit_repo_primary_profile() {
-  local repo_dir="$1"
-  local profiles=""
-  local profile=""
-
-  profiles="$(dev_kit_repo_profiles "$repo_dir")"
-
-  for profile in node php container shell unknown; do
-    case "
-$profiles
-" in
-      *"
-$profile
-"*) printf "%s" "$profile"; return 0 ;;
-    esac
-  done
-
-  printf "%s" "unknown"
-}
-
-dev_kit_repo_profiles_text() {
-  dev_kit_repo_profiles "$1" | dev_kit_lines_to_csv
-}
-
-dev_kit_repo_profiles_json() {
-  dev_kit_repo_profiles "$1" | dev_kit_lines_to_json_array
 }

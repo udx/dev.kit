@@ -1,6 +1,0 @@
-services:
-  - module: "aws-cloudfront-distribution"
-    id: "wordpress-site-#{Environment}"
-    configurations:
-      aliases:
-        - "wordpress-site-develop-alex.rabbit.ci"

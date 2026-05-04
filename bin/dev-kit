@@ -38,7 +38,8 @@ usage() {
   local command_name=""
   local description=""
   cat <<'EOF'
-Usage: dev.kit <command>
+Usage: dev.kit [--json]
+       dev.kit <command>
 
 Commands:
 EOF
@@ -61,34 +62,35 @@ EOF
 home_usage() {
   echo "Usage: dev.kit [--json]"
   echo
-  echo "Shows repo-aware landing output for the current directory."
+  echo "Checks environment, refreshes repo context, and generates agent guidance when a repo is detected."
 }
 
 dev_kit_run_home() {
   local format="${1:-text}"
   local state="installed"
   local repo_dir="$(pwd)"
+  local repo_root="" repo_detected="false" repo_kind="workspace"
+  local archetype="n/a" git_state="no"
+  local priority_refs="" next_git_action=""
+  local context_yaml_path="" agents_md_path=""
 
-  # JSON mode: compute everything up front then emit
-  if [ "$format" = "json" ]; then
-    local repo_root="" repo_detected="false" repo_kind="workspace"
-    local archetype="n/a" profile="n/a" git_state="no"
-    local priority_refs="" next_git_action=""
-
-    repo_root="$(dev_kit_repo_root "$repo_dir")"
-    if [ -n "$repo_root" ]; then
-      repo_detected="true"
-      repo_kind="repo"
-      archetype="$(dev_kit_repo_primary_archetype "$repo_root")"
-      profile="$(dev_kit_repo_primary_profile "$repo_root")"
-      if dev_kit_sync_has_git_repo "$repo_root"; then
-        git_state="yes"
-      fi
-      priority_refs="$(dev_kit_repo_priority_refs "$repo_root")"
-      if [ "$git_state" = "yes" ]; then
-        next_git_action="$(dev_kit_sync_next_hint "$repo_root")"
-      fi
+  repo_root="$(dev_kit_repo_root "$repo_dir")"
+  if [ -n "$repo_root" ]; then
+    repo_detected="true"
+    repo_kind="repo"
+    archetype="$(dev_kit_repo_primary_archetype "$repo_root")"
+    context_yaml_path="$(dev_kit_context_yaml_path "$repo_root")"
+    agents_md_path="${repo_root}/AGENTS.md"
+    if dev_kit_sync_has_git_repo "$repo_root"; then
+      git_state="yes"
     fi
+    priority_refs="$(dev_kit_repo_priority_refs "$repo_root")"
+    if [ "$git_state" = "yes" ]; then
+      next_git_action="$(dev_kit_sync_next_hint "$repo_root")"
+    fi
+
+    dev_kit_context_yaml_write "$repo_root" >/dev/null
+    dev_kit_agent_write_agents_md "$repo_root" "$agents_md_path"
   fi
 
   if [ "$format" = "json" ]; then
@@ -101,11 +103,10 @@ dev_kit_run_home() {
     printf '    "repo_detected": %s,\n' "$repo_detected"
     printf '    "kind": "%s"' "$(dev_kit_json_escape "$repo_kind")"
     if [ "$repo_detected" = "true" ]; then
-      printf ',\n    "repo": { "name": "%s", "root": "%s", "archetype": "%s", "profile": "%s", "git": %s, "markers": %s, "priority_refs": %s, "entrypoints": %s, "next_git_action": %s }\n' \
+      printf ',\n    "repo": { "name": "%s", "root": "%s", "archetype": "%s", "git": %s, "markers": %s, "priority_refs": %s, "entrypoints": %s, "next_git_action": %s }\n' \
         "$(dev_kit_json_escape "$(dev_kit_repo_name "$repo_root")")" \
         "$(dev_kit_json_escape "$repo_root")" \
         "$(dev_kit_json_escape "$archetype")" \
-        "$(dev_kit_json_escape "$profile")" \
         "$([ "$git_state" = "yes" ] && printf 'true' || printf 'false')" \
         "$(dev_kit_repo_markers_json "$repo_root")" \
         "$(dev_kit_repo_priority_refs_json "$repo_root")" \
@@ -114,6 +115,11 @@ dev_kit_run_home() {
     else
       printf '\n'
     fi
+    printf '  },\n'
+    printf '  "synced": {\n'
+    printf '    "repo_detected": %s,\n' "$repo_detected"
+    printf '    "context": %s,\n' "$(if [ -n "$context_yaml_path" ]; then printf '"%s"' "$(dev_kit_json_escape "$context_yaml_path")"; else printf 'null'; fi)"
+    printf '    "agents_md": %s\n' "$(if [ -n "$agents_md_path" ]; then printf '"%s"' "$(dev_kit_json_escape "$agents_md_path")"; else printf 'null'; fi)"
     printf '  },\n'
     printf '  "localhost_tools": %s,\n' "$(dev_kit_env_tools_json)"
     printf '  "global_context": { "capabilities": %s },\n' "$(dev_kit_global_context_capabilities_json)"
@@ -125,9 +131,9 @@ dev_kit_run_home() {
       printf '  "agent_contract": [],\n'
     fi
     printf '  "helpers": [\n'
+    printf '    { "id": "env", "label": "Inspect environment tools and config", "command": "dev.kit env" },\n'
     printf '    { "id": "repo", "label": "Analyse repo structure and factors", "command": "dev.kit repo" },\n'
-    printf '    { "id": "agent", "label": "Start an AI session with repo context", "command": "dev.kit agent" },\n'
-    printf '    { "id": "learn", "label": "Review lessons-learned workflow", "command": "dev.kit learn" }\n'
+    printf '    { "id": "agent", "label": "Start an AI session with repo context", "command": "dev.kit agent" }\n'
     printf '  ]\n'
     printf '}\n'
     return 0
@@ -152,33 +158,29 @@ $(dev_kit_env_tools_text)
 EOF
 
   # ── Repo detection ──────────────────────────────────────────────────────────
-  local repo_root=""
-  repo_root="$(dev_kit_repo_root "$repo_dir")"
-
   if [ -n "$repo_root" ]; then
-    dev_kit_spinner_start "detecting repo"
-    local archetype profile
+    dev_kit_spinner_start "syncing repo context"
     archetype="$(dev_kit_repo_primary_archetype "$repo_root")"
-    profile="$(dev_kit_repo_primary_profile "$repo_root")"
+    context_yaml_path="$(dev_kit_context_yaml_path "$repo_root")"
+    agents_md_path="${repo_root}/AGENTS.md"
+    dev_kit_context_yaml_write "$repo_root" >/dev/null
+    dev_kit_agent_write_agents_md "$repo_root" "$agents_md_path"
     dev_kit_spinner_stop ""
 
-    dev_kit_output_summary "$(dev_kit_repo_name "$repo_root") • ${archetype} • profile ${profile}"
+    dev_kit_output_summary "$(dev_kit_repo_name "$repo_root") • ${archetype}"
 
-    dev_kit_output_section "do next"
-    # Guide to the next required step in the pipeline
-    local _context_yaml="${repo_root}/.rabbit/context.yaml"
-    local _agents_md="${repo_root}/AGENTS.md"
-    if [ ! -f "$_context_yaml" ]; then
-      dev_kit_output_row "required" "dev.kit repo  — analyse repo and write context.yaml"
-    elif [ ! -f "$_agents_md" ]; then
-      dev_kit_output_row "required" "dev.kit agent — generate AGENTS.md from context"
-    else
-      dev_kit_output_row "required" "dev.kit repo  — refresh context before starting work"
-    fi
+    dev_kit_output_section "synced"
+    dev_kit_output_row "context" "$context_yaml_path"
+    dev_kit_output_row "agents" "$agents_md_path"
+
+    dev_kit_output_section "next"
+    dev_kit_output_row "env" "dev.kit env"
+    dev_kit_output_row "repo" "dev.kit repo"
+    dev_kit_output_row "agent" "dev.kit agent"
   else
     dev_kit_output_summary "no repo detected at ${repo_dir}"
-    dev_kit_output_section "do next"
-    dev_kit_output_list_item "Navigate into a repo, then run dev.kit again."
+    dev_kit_output_section "next"
+    dev_kit_output_row "start" "cd <repo> && dev.kit"
   fi
 }
 
@@ -193,12 +195,12 @@ command_usage() {
       echo "  --check    Report gaps without writing context.yaml"
       echo "  --force    Re-resolve all dependencies from scratch"
       ;;
+    env)
+      echo "  --json     Output machine-readable JSON"
+      echo "  --config   Create or inspect the environment config file"
+      ;;
     agent)
       echo "  --json     Output machine-readable JSON"
-      ;;
-    learn)
-      echo "  --json     Output machine-readable JSON"
-      echo "  --workflow Override the configured learn workflow id"
       ;;
     uninstall)
       echo "  --yes      Remove dev.kit without a confirmation prompt"

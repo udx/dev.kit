@@ -3,7 +3,6 @@
   "repo": "{{repo}}",
   "path": "{{path}}",
   "archetype": "{{archetype}}",
-  "profile": "{{profile}}",
   "agents_md": "{{agents_md}}",
   "context": "{{context}}",
   "priority_refs": {{priority_refs}},
