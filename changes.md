@@ -1,6 +1,6 @@
 # Changes
 
-### 0.8.0
+### 0.9.0
 
 - Add `dev.kit env` and env config controls so repo and agent output can reflect actual tool and credential availability
 - Keep `.rabbit/context.yaml` focused on repo facts, tracing, commands, and gaps instead of inlining engineering practices and canonical workflow text
