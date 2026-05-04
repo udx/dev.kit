@@ -30,6 +30,8 @@ For versioned manifests such as `udx.dev/dev.kit/v1`, the domain is treated as a
 
 When possible, same-org dependencies are resolved from current GitHub metadata and local sibling repos. Docker images may also be mapped back to likely source repos.
 
+The point is not to invent a full dependency graph. The point is to make execution-shaping external context visible and traceable.
+
 ## Why It Matters
 
 This is what makes `context.yaml` more useful than a plain file inventory.
@@ -41,3 +43,5 @@ A repo often depends on workflows, images, or external modules that live elsewhe
 Dependency detection still follows the same rule as the rest of `dev.kit`: report what can actually be observed.
 
 If a dependency cannot be resolved confidently from the available repo and environment signals, it should remain partial rather than be invented.
+
+That is also why unresolved or weak dependency coverage should feed the broader gap-repair loop instead of being hidden.

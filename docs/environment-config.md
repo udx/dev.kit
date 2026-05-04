@@ -19,6 +19,12 @@ dev.kit env
 
 This lets `dev.kit` describe real capability instead of pretending GitHub, cloud, or dependency resolution is available when it is not.
 
+That output should shape subsequent behavior:
+
+- repo guidance should only recommend capabilities that are actually available
+- dependency and GitHub-aware tracing should be thinner when required tools or auth are unavailable
+- agent instructions should stay honest about what can be done from the current environment
+
 ## `--config`
 
 Use:
@@ -65,3 +71,5 @@ Examples:
 - if only local repo signals are available, generated output should stay grounded in those signals
 
 That makes the generated contract more honest and more reusable across local agents, remote agents, and controlled worker environments.
+
+In other words, `dev.kit env` is not a side utility. It is the capability layer that makes later repo and agent outputs trustworthy.

@@ -24,6 +24,8 @@ Typical sections include:
 Depending on the repo and environment, it may also include live repo experience that can be serialized safely.
 Dynamic GitHub state such as issues, pull requests, reviews, workflow runs, and alerts is intentionally not serialized. Agents should fetch those live with `gh` when the current task needs them.
 
+This is important: `context.yaml` is not trying to be a complete narrative. It is trying to be a usable contract with explicit coverage boundaries.
+
 ## What Gaps Mean
 
 `gaps` is not a generic TODO list. It is the set of engineering factors that `dev.kit` could not confirm fully from the available signals.
@@ -42,6 +44,18 @@ Each gap entry should say:
 - the observed evidence that led to that result
 
 This is why context coverage testing should include broken or degraded repos, not only healthy ones.
+
+## Gap Repair Loop
+
+Gaps are meant to drive a repair loop:
+
+1. read the gap and its evidence
+2. identify the repo-owned source asset that should carry that contract
+3. patch that source asset instead of editing generated output
+4. rerun `dev.kit repo`
+5. confirm that the regenerated context improved
+
+That means gaps are part of maximum context discovery, not just an error report.
 
 ## What Does Not Belong There
 
@@ -67,3 +81,9 @@ The coverage model is repo-first:
 - report gaps where coverage is weak
 
 That keeps `context.yaml` useful both for healthy repos and for repos that need cleanup.
+
+The measure of success is not perfect inference. It is:
+
+- strong traceability where possible
+- explicit unknowns where not
+- a clear path to improve repo coverage over time
