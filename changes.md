@@ -8,6 +8,10 @@
 - Tighten GitHub-first workflow guidance across configs, generated agent instructions, and learned templates, including repo-pattern reuse, history-aware debugging, and bot-feedback loops
 - Simplify lesson/template generation by consolidating workflow-tracing signals, deduping reusable templates by template name, and filtering unresolved placeholder template IDs from generated output
 - Clean up install and packaging flow with global npm postinstall cleanup and explicit npm-versus-curl ownership rules
+- Improve manifest contract tracing with repo-owned evidence from top-level `version` headers, GitHub references, and actual usage paths
+- Collapse duplicate dependency evidence into single repo entries and avoid false dependency traces from nested YAML metadata
+- Add optional `tests/real-repos.sh` coverage for local public/private repos and trim unused synthetic fixtures
+- Add upgrade-first guidance to generated `AGENTS.md` and installation/experience docs so new sessions start from the current `dev.kit` build
 
 ### 0.7.0
 
