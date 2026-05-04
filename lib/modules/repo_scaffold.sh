@@ -109,6 +109,7 @@ $(
     {
       sub(/github\.com[\/:]+/, "")
       sub(/\.git$/, "")
+      if ($0 == "org/repo" || $0 == "test/repo") next
       if ($0 != "") print
     }
   ' | awk '!seen[$0]++'

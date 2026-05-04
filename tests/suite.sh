@@ -99,6 +99,7 @@ if should_run "core"; then
   assert_contains "$home_text" "[synced]" "home text: syncs repo artifacts"
   assert_file_exists "$HOME_ACTION_REPO/.rabbit/context.yaml" "home: writes context.yaml"
   assert_file_exists "$HOME_ACTION_REPO/AGENTS.md" "home: writes AGENTS.md"
+  assert_not_contains "$(dev_kit_github_repo_refs_in_file "$REPO_DIR/src/configs/detection-signals.yaml")" "org/repo" "home: ignores placeholder github refs"
 
   env_json="$(cd "$HOME_ACTION_REPO" && dev.kit env --json)"
   assert_contains "$env_json" "\"command\": \"env\"" "env: reports command name"

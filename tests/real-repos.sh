@@ -68,11 +68,15 @@ for repo_path in "${repo_paths[@]}"; do
   repo_path="$(cd "$repo_path" 2>/dev/null && pwd || true)"
   [ -n "$repo_path" ] || { printf 'repo not found\n' >&2; exit 1; }
   [ -d "$repo_path/.git" ] || { printf 'not a git repo: %s\n' "$repo_path" >&2; exit 1; }
+  run_out="$(mktemp "$TEST_HOME/dev-kit-real.XXXXXX.out")"
 
   printf '\n===== %s =====\n' "$repo_path"
   (
     cd "$repo_path"
-    dev.kit >/tmp/dev-kit-real.out
+    if ! dev.kit >"$run_out"; then
+      cat "$run_out" >&2
+      exit 1
+    fi
     [ -f .rabbit/context.yaml ] || { printf 'missing .rabbit/context.yaml\n' >&2; exit 1; }
     [ -f AGENTS.md ] || { printf 'missing AGENTS.md\n' >&2; exit 1; }
 

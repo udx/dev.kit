@@ -2,14 +2,15 @@
 
 ### 0.8.0
 
+- Add `dev.kit env` and env config controls so repo and agent output can reflect actual tool and credential availability
 - Keep `.rabbit/context.yaml` focused on repo facts, tracing, commands, and gaps instead of inlining engineering practices and canonical workflow text
-- Generate workflow and practice guidance for `AGENTS.md` directly from the config catalogs and learning sources, simplifying the boundary between repo context and agent behavior
+- Generate workflow guidance for `AGENTS.md` directly from the config catalogs and repo context, simplifying the boundary between repo context and agent behavior
 - Rework the docs surface around that model: simplify the README, add focused `installation`, `context`, `agents`, and `integration` docs, and remove older overlapping overview/workflow/architecture pages
-- Tighten GitHub-first workflow guidance across configs, generated agent instructions, and learned templates, including repo-pattern reuse, history-aware debugging, and bot-feedback loops
-- Simplify lesson/template generation by consolidating workflow-tracing signals, deduping reusable templates by template name, and filtering unresolved placeholder template IDs from generated output
+- Tighten GitHub-first workflow guidance across configs and generated agent instructions
+- Remove `dev.kit learn` from the public command surface and trim the related configs, templates, and docs
 - Clean up install and packaging flow with global npm postinstall cleanup and explicit npm-versus-curl ownership rules
 - Improve manifest contract tracing with repo-owned evidence from top-level `version` headers, GitHub references, and actual usage paths
-- Collapse duplicate dependency evidence into single repo entries and avoid false dependency traces from nested YAML metadata
+- Collapse duplicate dependency evidence into single repo entries and avoid false dependency traces from nested YAML metadata or placeholder GitHub refs
 - Add optional `tests/real-repos.sh` coverage for local public/private repos and trim unused synthetic fixtures
 - Add upgrade-first guidance to generated `AGENTS.md` and installation/experience docs so new sessions start from the current `dev.kit` build
 

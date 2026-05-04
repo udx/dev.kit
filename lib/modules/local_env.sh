@@ -70,7 +70,17 @@ dev_kit_env_tool_disabled() {
 }
 
 dev_kit_env_credential_disabled() {
-  dev_kit_env_config_has_value "disabled_credentials" "$1"
+  local credential="$1"
+
+  if dev_kit_env_config_has_value "disabled_credentials" "$credential"; then
+    return 0
+  fi
+
+  case "$credential" in
+    gh) dev_kit_env_config_has_value "disabled_credentials" "github" ;;
+    github) dev_kit_env_config_has_value "disabled_credentials" "gh" ;;
+    *) return 1 ;;
+  esac
 }
 
 dev_kit_env_npm_root() {

@@ -54,7 +54,7 @@ config:
     - gh
     - docker
   disabled_credentials:
-    - github
+    - gh
     - aws
 ```
 

@@ -76,11 +76,6 @@ dependencies:
     description: UDX Worker Docker image
     used_by:
       - deploy.yml
-  - repo: org/repo
-    kind: github reference
-    resolved: false
-    used_by:
-      - src/configs/detection-signals.yaml
 
 # Manifests — YAML files that define detection rules, workflows, evaluation, deploy, or runtime behavior.
 # Note: Include manifests that materially shape repo behavior or agent understanding.
@@ -132,12 +127,13 @@ manifests:
     kind: detectionSignals
     description: File, directory, and glob signals for factor and dependency detection
     declared_as: udx.dev/dev.kit/v1
-    source_repo: org/repo
+    source_repo: udx/dev.kit
     used_by:
+      - tests/suite.sh
       - lib/modules/repo_signals.sh
     evidence:
       - version: udx.dev/dev.kit/v1
-      - github reference: org/repo
+      - path reference: tests/suite.sh
       - path reference: lib/modules/repo_signals.sh
   - path: .github/workflows/context7-ops.yml
     kind: githubWorkflow
@@ -145,10 +141,8 @@ manifests:
     kind: githubWorkflow
     used_by:
       - .claude/settings.local.json
-      - README_old.md
     evidence:
       - path reference: .claude/settings.local.json
-      - path reference: README_old.md
   - path: deploy.yml
     kind: workerDeployConfig
     declared_as: udx.io/worker-v1/deploy
