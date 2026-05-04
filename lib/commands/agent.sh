@@ -82,23 +82,6 @@ dev_kit_cmd_agent() {
   dev_kit_output_row "full" "dev.kit"
 }
 
-dev_kit_agent_context_list() {
-  local context_yaml="$1"
-  local section_name="$2"
-
-  awk -v section_name="$section_name" '
-    $0 == section_name ":" { in_section = 1; next }
-    in_section && /^[a-zA-Z#]/ { exit }
-    in_section && /^  - / {
-      gsub(/^  - "/, "  - ")
-      sub(/"$/, "")
-      gsub(/\\"/, "\"")
-      gsub(/\\\\/, "\\")
-      print
-    }
-  ' "$context_yaml"
-}
-
 dev_kit_agent_context_multiline_block() {
   local context_yaml="$1"
   local section_name="$2"

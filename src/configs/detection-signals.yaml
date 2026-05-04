@@ -26,10 +26,8 @@ config:
     - .venv
     - venv
     - .terraform
-    - dist
     - build
     - coverage
-    - .next
     - .nuxt
     - .turbo
     - .cache
@@ -41,8 +39,6 @@ config:
     - Makefile
     - makefile
     - GNUmakefile
-  node_files:
-    - package.json
   next_files:
     - next.config.js
     - next.config.mjs
@@ -54,10 +50,6 @@ config:
     - wp-content/plugins
     - wp-content/themes
     - wp-content/mu-plugins
-  php_files:
-    - composer.json
-    - phpunit.xml
-    - phpunit.xml.dist
   container_files:
     - Dockerfile
     - docker-compose.yml
@@ -86,12 +78,6 @@ config:
   runtime_files:
     - Dockerfile
     - Procfile
-  shell_dirs:
-    - bin
-    - scripts
-    - lib
-  shell_globs:
-    - *.sh
   test_dirs:
     - tests
     - test
@@ -123,12 +109,6 @@ config:
     - terraform/*.tf
     - terraform/**/*.tf
     - "*.tf"
-  verification_files:
-    - phpunit.xml
-    - phpunit.xml.dist
-  verification_globs:
-    - *.bats
-    - *test*.sh
   yaml_manifest_globs:
     - "*.yaml"
     - "*.yml"

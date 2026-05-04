@@ -83,15 +83,6 @@ config:
     - .git
     - .github
     - .rabbit
-  repo_note_files:
-    - CLAUDE.md
-    - AGENTS.md
-    - todo.md
-    - TODO.md
-    - context.md
-    - CONTEXT.md
-    - refs.md
-    - REFS.md
   priority_paths:
     - README*
     - readme*

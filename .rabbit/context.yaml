@@ -2,7 +2,7 @@
 # Run `dev.kit repo` to refresh.
 kind: repoContext
 version: udx.dev/dev.kit/v1
-generated: 2026-05-03
+generated: 2026-05-04
 
 repo:
   name: dev.kit

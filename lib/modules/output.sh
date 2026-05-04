@@ -117,9 +117,3 @@ dev_kit_output_status_row() {
   esac
   printf '  %-*s %s %s\n' "$DEV_KIT_OUTPUT_LABEL_WIDTH" "${label}:" "$icon" "$status"
 }
-
-# ── Navigation hint ───────────────────────────────────────────────────────────
-
-dev_kit_output_hint() {
-  printf '  %s %s\n' "→" "$1"
-}

@@ -40,10 +40,6 @@ dev_kit_context_marker_group_paths() {
   dev_kit_yaml_named_block_list "$(dev_kit_context_config_path)" "marker_groups" "$1" "paths"
 }
 
-dev_kit_context_section_ids() {
-  dev_kit_yaml_named_block_ids "$(dev_kit_context_config_path)" "context_sections"
-}
-
 dev_kit_context_section_field() {
   dev_kit_yaml_named_block_scalar "$(dev_kit_context_config_path)" "context_sections" "$1" "$2"
 }
@@ -54,19 +50,6 @@ dev_kit_context_section_notes() {
 
 dev_kit_context_section_list() {
   dev_kit_yaml_named_block_list "$(dev_kit_context_config_path)" "context_sections" "$1" "$2"
-}
-
-dev_kit_context_section_context_list_values() {
-  local section_id="$1"
-  local key="$2"
-  local list_name=""
-
-  while IFS= read -r list_name; do
-    [ -n "$list_name" ] || continue
-    dev_kit_context_list "$list_name"
-  done <<EOF
-$(dev_kit_context_section_list "$section_id" "$key")
-EOF
 }
 
 dev_kit_context_section_detection_list_values() {
@@ -80,22 +63,6 @@ dev_kit_context_section_detection_list_values() {
   done <<EOF
 $(dev_kit_context_section_list "$section_id" "$key")
 EOF
-}
-
-dev_kit_context_section_list_has_value() {
-  local section_id="$1"
-  local key="$2"
-  local expected="$3"
-  local value=""
-
-  while IFS= read -r value; do
-    [ -n "$value" ] || continue
-    [ "$value" = "$expected" ] && return 0
-  done <<EOF
-$(dev_kit_context_section_list "$section_id" "$key")
-EOF
-
-  return 1
 }
 
 dev_kit_ref_is_excluded() {

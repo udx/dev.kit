@@ -25,12 +25,6 @@ dev_kit_detection_list() {
   dev_kit_yaml_config_list "$(dev_kit_detection_signals_path)" "$list_name"
 }
 
-dev_kit_detection_scalar() {
-  local key="$1"
-
-  dev_kit_yaml_config_scalar "$(dev_kit_detection_signals_path)" "$key"
-}
-
 dev_kit_repo_name() {
   basename "${1:-$(pwd)}"
 }
@@ -167,19 +161,6 @@ EOF
 
   DEV_KIT_REPO_MARKERS_CACHE_VALUE="$(printf "%s" "$markers" | dev_kit_unique_lines_ci)"
   printf "%s" "$DEV_KIT_REPO_MARKERS_CACHE_VALUE"
-}
-
-dev_kit_repo_markers_text() {
-  local repo_dir="${1:-$(pwd)}"
-  local markers=""
-
-  markers="$(dev_kit_repo_marker_lines "$repo_dir")"
-  if [ -z "$markers" ]; then
-    printf "%s" "none"
-    return 0
-  fi
-
-  printf "%s" "$markers" | dev_kit_lines_to_csv
 }
 
 dev_kit_repo_markers_json() {
@@ -570,22 +551,4 @@ $(dev_kit_repo_markdown_files "$repo_dir")
 EOF
 
   return 1
-}
-
-dev_kit_repo_count_dir_hits_from_list() {
-  local repo_dir="$1"
-  local list_name="$2"
-  local path=""
-  local count=0
-
-  while IFS= read -r path; do
-    [ -n "$path" ] || continue
-    if dev_kit_repo_has_dir "$repo_dir" "$path"; then
-      count=$((count + 1))
-    fi
-  done <<EOF
-$(dev_kit_detection_list "$list_name")
-EOF
-
-  printf '%s' "$count"
 }

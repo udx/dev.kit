@@ -244,10 +244,6 @@ EOF
   printf "%s" "$evidence" | awk '!seen[$0]++'
 }
 
-dev_kit_repo_factor_evidence_text() {
-  dev_kit_repo_factor_evidence "$1" "$2" | dev_kit_lines_to_csv
-}
-
 dev_kit_repo_factor_evidence_json() {
   dev_kit_repo_factor_evidence "$1" "$2" | dev_kit_lines_to_json_array
 }

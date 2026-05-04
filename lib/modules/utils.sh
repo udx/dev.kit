@@ -140,29 +140,6 @@ dev_kit_yaml_config_list() {
   ' "$file_path"
 }
 
-dev_kit_yaml_config_scalar() {
-  local file_path="$1"
-  local key="$2"
-
-  awk -v key="$key" '
-    $1 == "config:" {
-      in_config = 1
-      next
-    }
-
-    in_config && $0 ~ /^  [A-Za-z0-9_-]+:/ {
-      current = $1
-      sub(":", "", current)
-      if (current != key) {
-        next
-      }
-      sub(/^[[:space:]]*[A-Za-z0-9_-]+:[[:space:]]*/, "", $0)
-      print
-      exit
-    }
-  ' "$file_path"
-}
-
 dev_kit_yaml_mapping_list() {
   local file_path="$1"
   local section="$2"

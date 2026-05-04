@@ -338,38 +338,6 @@ EOF
   printf '%s' "$_result"
 }
 
-dev_kit_repo_archetypes_text() {
-  dev_kit_repo_archetypes "$1" | dev_kit_lines_to_csv
-}
-
-dev_kit_repo_archetypes_json() {
-  dev_kit_repo_archetypes "$1" | dev_kit_lines_to_json_array
-}
-
-dev_kit_repo_facets_text() {
-  local facets=""
-
-  facets="$(dev_kit_repo_facets "$1")"
-  if [ -z "$facets" ]; then
-    printf "%s" "none"
-    return 0
-  fi
-
-  printf "%s" "$facets" | dev_kit_lines_to_csv
-}
-
-dev_kit_repo_facets_json() {
-  local facets=""
-
-  facets="$(dev_kit_repo_facets "$1")"
-  if [ -z "$facets" ]; then
-    printf "%s" "[]"
-    return 0
-  fi
-
-  printf "%s" "$facets" | dev_kit_lines_to_json_array
-}
-
 dev_kit_repo_has_runtime_signals() {
   local repo_dir="$1"
 
